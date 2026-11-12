@@ -36,6 +36,7 @@ Repository = "https://github.com/noahnkr/waymark"
 
 [dependency-groups]
 dev = [
+    "codespell>=2.4",
     "mypy>=2.4",
     "pytest>=9.2",
     "ruff>=0.17",
@@ -56,6 +57,13 @@ testpaths = ["tests"]
 addopts = ["-ra", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = ["error"]
+
+[tool.codespell]
+# American English everywhere: the last dictionary rejects British spellings.
+builtin = "clear,rare,en-GB_to_en-US"
+check-hidden = true
+check-filenames = true
+skip = ".git,.venv,dist,uv.lock,.mypy_cache,.pytest_cache,.ruff_cache,__pycache__"
 
 [tool.mypy]
 strict = true

@@ -19,11 +19,12 @@ uv run pytest            # tests
 uv run ruff check .      # lint
 uv run ruff format .     # format
 uv run mypy              # strict type check
+uv run codespell         # spelling, American English
 uv run wm --version      # run the command
 ```
 
 CI runs the tests on Windows, macOS and Linux, each on Python 3.11 and the
-newest Python release, plus the lint, format and strict type checks.
+newest Python release, plus the lint, format, strict type and spelling checks.
 
 ### Dev tools
 
@@ -34,8 +35,10 @@ newest Python release, plus the lint, format and strict type checks.
 | pytest | The standard test runner; plain asserts and temporary-directory fixtures |
 | ruff | Linter and formatter in one fast tool, so there is one style configuration |
 | mypy | The reference type checker; `strict` mode keeps the code fully typed |
+| codespell | Spelling check with a British-to-American dictionary, so the project stays in American English |
 
 ### Commits
 
 Commits follow the [Conventional Commits](https://www.conventionalcommits.org/)
-format, scoped by component, for example `feat(cli): ...`.
+format, scoped by component, for example `feat(cli): ...`. Everything is written
+in American English, commit messages and pull requests included.
