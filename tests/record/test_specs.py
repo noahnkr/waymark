@@ -77,6 +77,12 @@ def test_text_outside_a_requirement_is_a_problem() -> None:
     assert codes(text) == ["unexpected-text"]
 
 
+def test_comment_over_several_lines_under_the_title_is_not_stray_text() -> None:
+    hint = "# Search\n\n<!-- a hint\n     over two lines -->\n<!-- and one more -->\n"
+    assert codes(spec().replace("# Search\n", hint)) == []
+    assert codes(spec().replace("# Search\n", hint + "Stray.\n")) == ["unexpected-text"]
+
+
 def test_spec_sections_are_purpose_and_requirements_only() -> None:
     assert codes(spec() + "\n## Notes\n\nExtra.\n") == ["unknown-section"]
     assert codes("# Search\n\n## Requirements\n") == ["missing-section"]

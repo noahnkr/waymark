@@ -9,6 +9,9 @@ PROPOSAL = "proposal.md"
 GOAL = "goal.md"
 ROADMAP = "roadmap.md"
 EXPLORATION = "exploration.md"
+DELTA = "delta.md"
+DESIGN = "design.md"
+TASKS = "tasks.md"
 
 
 def render(name: str, **values: str) -> str:

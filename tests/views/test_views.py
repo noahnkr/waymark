@@ -94,7 +94,8 @@ def test_every_payload_names_its_schema_and_version(project: Workspace) -> None:
         payloads.show(record, "faster-search"),
         payloads.show(record, "caching"),
     ]
-    assert {payload["schema"].removeprefix("wm.") for payload in built} == set(VERSIONS)
+    views = {name for name in VERSIONS if not name.startswith(("instructions", "context"))}
+    assert {payload["schema"].removeprefix("wm.") for payload in built} == views
     assert set(SCHEMAS) == set(VERSIONS)
     for payload in built:
         valid(payload)
