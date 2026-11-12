@@ -7,6 +7,7 @@ folder while a test runs.
 import datetime
 from pathlib import Path
 
+from waymark import __version__
 from waymark.record.fingerprint import change_fingerprint
 from waymark.record.project import RECORD_DIR, find_project
 from waymark.record.proposal import format_acceptance
@@ -14,7 +15,10 @@ from waymark.record.record import Record, load_record
 from waymark.record.state import ChangeState, RecordState, derive_state
 from waymark.record.text import Document
 
-CONFIG = 'wm_version = "0.1.0"\ndefault_review = "self"\nagent_tools = ["some-tool"]\n'
+CONFIG = (
+    f'wm_version = "{__version__}"\nrecord_format = 1\n'
+    'default_review = "self"\nagent_tools = ["some-tool"]\n'
+)
 ATLAS_CONFIG = (
     CONFIG
     + '\n[atlas]\nname = "suite"\n\n[atlas.repos.api]\npath = "../suite-api"\n\n[atlas.repos.web]\n'

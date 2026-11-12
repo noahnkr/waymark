@@ -231,7 +231,7 @@ def test_second_changes_verdict_goes_to_the_human(workspace: Workspace) -> None:
         "  - (reopened) 2026-01-17\n"
         "  - (review) 2026-01-18 changes: still off by one\n",
     )
-    assert state.items[0].escalated == "a second review asked for changes"
+    assert state.items[0].escalated == "a second review asked for changes: still off by one"
     assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)
 
 
@@ -241,7 +241,9 @@ def test_spec_gap_verdict_goes_to_the_human(workspace: Workspace) -> None:
         HEAD + "- [x] 1.1 Cap it\n  - (review) 2026-01-16 spec-gap: no scenario for zero results\n"
         "- [ ] 1.2 Next\n",
     )
-    assert state.items[0].escalated == "the reviewer found a spec gap"
+    assert state.items[0].escalated == (
+        "the reviewer found a spec gap: no scenario for zero results"
+    )
     assert step(state) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
     workspace.replace(TASKS_FILE, "- [ ] 1.2 Next\n", "- [x] 1.2 Next\n" + SELF_REVIEW)
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)

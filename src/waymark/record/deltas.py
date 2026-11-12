@@ -208,6 +208,21 @@ def delta_mismatches(spec: Spec | None, delta: Delta) -> tuple[Problem, ...]:
     return tuple(problems)
 
 
+def delta_is_merged(spec: Spec | None, delta: Delta) -> bool:
+    """Whether the spec already reads the way the delta says it should."""
+    if spec is None or spec.problems:
+        return False
+    for requirement in (*delta.added, *delta.modified):
+        living = spec.requirement(requirement.name)
+        if living is None or living.block != requirement.block:
+            return False
+    if any(spec.requirement(removal.name) is not None for removal in delta.removed):
+        return False
+    if delta.purpose is not None and spec.purpose != delta.purpose:
+        return False
+    return delta.repos is None or spec.repos == delta.repos
+
+
 def _new_spec_text(delta: Delta) -> str:
     newline = delta.doc.newline
     lines = [f"# {delta.title}", ""]

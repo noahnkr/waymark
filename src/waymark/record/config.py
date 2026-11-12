@@ -11,7 +11,12 @@ from waymark.record.terms import Layout, ReviewLevel
 CONFIG_FILE = "config.toml"
 
 _REPO_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
-_TOP_KEYS = frozenset({"wm_version", "default_review", "commit_scopes", "agent_tools", "atlas"})
+RECORD_FORMAT = 1
+"""The record format this version of wm reads and writes."""
+
+_TOP_KEYS = frozenset(
+    {"wm_version", "record_format", "default_review", "commit_scopes", "agent_tools", "atlas"}
+)
 _ATLAS_KEYS = frozenset({"name", "repos"})
 _REPO_KEYS = frozenset({"path"})
 
@@ -29,6 +34,7 @@ class Config:
     """The settings wm reads."""
 
     wm_version: str
+    record_format: int
     default_review: ReviewLevel
     commit_scopes: tuple[str, ...] | None
     agent_tools: tuple[str, ...]
@@ -71,6 +77,17 @@ class _Reader:
         if isinstance(value, list) and all(isinstance(item, str) and item for item in value):
             return tuple(value)
         self.problem("invalid-setting", f'Set "{key}" to a list of non-empty strings.')
+        return None
+
+    def format_number(self, table: dict[str, Any]) -> int | None:
+        value = table.get("record_format")
+        if isinstance(value, int) and not isinstance(value, bool) and value >= 1:
+            return value
+        self.problem(
+            "invalid-setting",
+            'Set "record_format" to the record\'s format number. It is written by wm; '
+            f"a record made by this version has {RECORD_FORMAT}.",
+        )
         return None
 
     def review_level(self, table: dict[str, Any]) -> ReviewLevel | None:
@@ -116,6 +133,7 @@ def parse_config(text: str) -> tuple[Config | None, tuple[Problem, ...]]:
 
     reader.unknown_keys(data, _TOP_KEYS, "")
     wm_version = reader.string(data, "wm_version")
+    record_format = reader.format_number(data)
     default_review = reader.review_level(data)
     agent_tools = reader.strings(data, "agent_tools")
     commit_scopes = reader.strings(data, "commit_scopes") if "commit_scopes" in data else None
@@ -131,7 +149,15 @@ def parse_config(text: str) -> tuple[Config | None, tuple[Problem, ...]]:
         else:
             reader.problem("invalid-setting", 'Write the atlas settings as an "[atlas]" table.')
 
-    if reader.problems or wm_version is None or default_review is None or agent_tools is None:
+    if (
+        reader.problems
+        or wm_version is None
+        or record_format is None
+        or default_review is None
+        or agent_tools is None
+    ):
         return None, tuple(reader.problems)
-    config = Config(wm_version, default_review, commit_scopes, agent_tools, atlas_name, repos)
+    config = Config(
+        wm_version, record_format, default_review, commit_scopes, agent_tools, atlas_name, repos
+    )
     return config, ()

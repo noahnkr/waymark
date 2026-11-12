@@ -1,6 +1,7 @@
 """Settings in config.toml."""
 
 from tests.support import ATLAS_CONFIG, CONFIG
+from waymark import __version__
 from waymark.record.config import CodeRepo, parse_config
 from waymark.record.terms import Layout, ReviewLevel
 
@@ -15,7 +16,8 @@ def test_config_holds_the_pinned_version_default_review_and_agent_tools() -> Non
     config, problems = parse_config(CONFIG)
     assert problems == ()
     assert config is not None
-    assert config.wm_version == "0.1.0"
+    assert config.wm_version == __version__
+    assert config.record_format == 1
     assert config.default_review is ReviewLevel.SELF
     assert config.agent_tools == ("some-tool",)
 
@@ -61,7 +63,12 @@ def test_unknown_review_level_is_a_problem() -> None:
 
 
 def test_missing_pinned_version_is_a_problem() -> None:
-    assert codes(CONFIG.replace('wm_version = "0.1.0"\n', "")) == ["invalid-setting"]
+    assert codes(CONFIG.replace(f'wm_version = "{__version__}"\n', "")) == ["invalid-setting"]
+
+
+def test_record_format_number_is_required() -> None:
+    assert codes(CONFIG.replace("record_format = 1\n", "")) == ["invalid-setting"]
+    assert codes(CONFIG.replace("record_format = 1", "record_format = 0")) == ["invalid-setting"]
 
 
 def test_invalid_toml_is_a_problem() -> None:

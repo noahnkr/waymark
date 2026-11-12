@@ -1,0 +1,19 @@
+# Waymark settings. wm reads this file; edit the values and keep the keys.
+
+# The exact wm version this project uses. Any version can read the record;
+# only this one may write it.
+wm_version = "{{wm_version}}"
+
+# The record's format. "wm update" advances it; don't edit it by hand.
+record_format = {{record_format}}
+
+# How a task item is reviewed unless it says otherwise:
+# "self", "independent" or "none".
+default_review = "self"
+
+# The agent tools this project uses.
+agent_tools = []
+
+# Optional: the scopes commit messages may use. Without a list, any scope is
+# accepted.
+# commit_scopes = ["api", "docs"]

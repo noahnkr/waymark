@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from waymark.record.changes import DESIGN_FILE, PROPOSAL_FILE, SPECS_DIR, TASKS_FILE, Change
-from waymark.record.deltas import delta_mismatches
+from waymark.record.deltas import delta_is_merged, delta_mismatches
 from waymark.record.explorations import Exploration
 from waymark.record.fingerprint import change_fingerprint
 from waymark.record.links import resolve
@@ -180,18 +180,28 @@ class RecordState:
 
 
 def item_state(item: Item, default: ReviewLevel) -> ItemState:
-    """Derive one item's state from its tick and its review records."""
-    last = item.records[-1] if item.records else None
-    changes = sum(1 for record in item.records if record.verdict is Verdict.CHANGES)
-    level = ReviewLevel.INDEPENDENT if changes else item.level(default)
+    """Derive one item's state from its tick, its spec gap and its review records.
+
+    A ``(resolved)`` record closes whatever came before it: verdicts are counted
+    from the last one on.
+    """
+    records = item.records
+    last = records[-1] if records else None
+    resolved = [index for index, record in enumerate(records) if record.kind is RecordKind.RESOLVED]
+    recent = records[resolved[-1] + 1 :] if resolved else records
+    changes = sum(1 for record in recent if record.verdict is Verdict.CHANGES)
+    ever_changes = any(record.verdict is Verdict.CHANGES for record in records)
+    level = ReviewLevel.INDEPENDENT if ever_changes else item.level(default)
 
     escalated: str | None = None
     redo = False
-    if last is not None and last.verdict is Verdict.SPEC_GAP:
-        escalated = "the reviewer found a spec gap"
+    if item.spec_gap is not None:
+        escalated = f"the implementer found a spec gap: {item.spec_gap}"
+    elif last is not None and last.verdict is Verdict.SPEC_GAP:
+        escalated = f"the reviewer found a spec gap: {last.text}"
     elif last is not None and last.verdict is Verdict.CHANGES:
         if changes >= ESCALATE_AFTER_CHANGES:
-            escalated = "a second review asked for changes"
+            escalated = f"a second review asked for changes: {last.text}"
         else:
             redo = True
 
@@ -224,15 +234,30 @@ def acceptance_state(record: Record, change: Change) -> AcceptanceState:
 
 
 def mismatches(record: Record, change: Change) -> tuple[Conflict, ...]:
-    """The change's deltas that don't apply to their specs as they now stand."""
+    """The change's deltas that don't apply to their specs as they now stand.
+
+    Once a change is synced, its deltas are already in the specs; a mismatch is
+    then a spec that has moved on since.
+    """
+    synced = change.proposal is not None and change.proposal.synced is not None
     found: list[Conflict] = []
     for domain in sorted(change.deltas):
         delta = change.deltas[domain]
+        spec = record.specs.get(domain)
         if delta.problems:
+            continue
+        if synced:
+            if not delta_is_merged(spec, delta):
+                message = (
+                    f'The change was synced, but the spec "{domain}" no longer matches its '
+                    "delta. Revise the delta to match the spec, or remove the "
+                    '"Synced:" line from the proposal and sync again.'
+                )
+                found.append(Conflict(ConflictKind.MISMATCH, domain, None, (change.name,), message))
             continue
         found.extend(
             Conflict(ConflictKind.MISMATCH, domain, None, (change.name,), problem.message)
-            for problem in delta_mismatches(record.specs.get(domain), delta)
+            for problem in delta_mismatches(spec, delta)
         )
     return tuple(found)
 

@@ -1,0 +1,8 @@
+
+[atlas]
+# The atlas's name. Each machine finds the atlas by it.
+name = "{{atlas_name}}"
+
+# One table per code repo, with an optional relative-path hint:
+# [atlas.repos.backend]
+# path = "../backend"
