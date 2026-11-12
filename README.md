@@ -4,9 +4,9 @@ Waymark is spec-driven development for developers who want to stay in charge of
 their project while agents write the code. Its model of living specs plus change
 deltas follows [OpenSpec](https://github.com/Fission-AI/OpenSpec).
 
-> **Status: pre-release.** This repository holds the project skeleton only. The
-> `wm` command installs and runs, but it has no commands yet. Nothing is
-> published on PyPI.
+> **Status: pre-release.** The record model and the lifecycle commands work
+> (`wm --help` lists them). The views, the agent tool integration and the docs
+> are still to come. Nothing is published on PyPI.
 
 ## Development
 
