@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The newest Python release. Bump this, and the test matrix, when a new one ships.
+  PYTHON_NEWEST: "3.15"
+
+jobs:
+  test:
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.15"]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked --python ${{ matrix.python }}
+      - name: Test
+        run: uv run --no-sync pytest
+
+  lint:
+    name: Lint and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked --python "$PYTHON_NEWEST"
+      - name: Lint
+        run: uv run --no-sync ruff check --output-format=github .
+      - name: Format check
+        run: uv run --no-sync ruff format --check .
+
+  spelling:
+    name: Spelling (American English)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked --python "$PYTHON_NEWEST"
+      - name: Check files
+        run: uv run --no-sync codespell
+      - name: Check commit messages
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: git log --format=%B "$BASE_SHA..$HEAD_SHA" | uv run --no-sync codespell -
+      - name: Check the pull request title and description
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          { echo "$PR_TITLE"; echo; echo "$PR_BODY"; } | uv run --no-sync codespell -
+
+  typecheck:
+    name: Type check (strict)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked --python "$PYTHON_NEWEST"
+      - name: Type check
+        run: uv run --no-sync mypy
+
+  package:
+    name: Package builds and installs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - name: Build
+        run: uv build --python "$PYTHON_NEWEST"
+      - name: Run wm from the built wheel
+        run: uv tool run --python 3.11 --from dist/*.whl wm --version
