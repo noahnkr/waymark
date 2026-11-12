@@ -47,16 +47,17 @@ def _can_encode(stream: TextIO) -> bool:
 
 def _enable_windows_colors() -> bool:
     """Turn on escape-sequence handling in a Windows console; False when it can't be."""
-    if sys.platform != "win32":
-        return True
-    import ctypes  # noqa: PLC0415 - only needed, and only importable, on Windows
+    enabled = True
+    if sys.platform == "win32":
+        import ctypes  # noqa: PLC0415 - only needed, and only importable, on Windows
 
-    kernel = ctypes.windll.kernel32
-    handle = kernel.GetStdHandle(-11)
-    mode = ctypes.c_uint32()
-    if not kernel.GetConsoleMode(handle, ctypes.byref(mode)):
-        return False
-    return bool(kernel.SetConsoleMode(handle, mode.value | 0x0004))
+        kernel = ctypes.windll.kernel32
+        handle = kernel.GetStdHandle(-11)
+        mode = ctypes.c_uint32()
+        enabled = bool(kernel.GetConsoleMode(handle, ctypes.byref(mode))) and bool(
+            kernel.SetConsoleMode(handle, mode.value | 0x0004)
+        )
+    return enabled
 
 
 @dataclass(frozen=True)
