@@ -42,3 +42,7 @@ newest Python release, plus the lint, format, strict type and spelling checks.
 Commits follow the [Conventional Commits](https://www.conventionalcommits.org/)
 format, scoped by component, for example `feat(cli): ...`. Everything is written
 in American English, commit messages and pull requests included.
+
+## License
+
+[MIT](LICENSE)
