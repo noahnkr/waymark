@@ -38,9 +38,13 @@ def parse_facts(
     """
     facts: dict[str, Fact] = {}
     start, end = doc.preamble
+    in_comment = False
     for index in range(start, end):
         line = doc.lines[index]
-        if line.is_blank or line.text.lstrip().startswith("<!--"):
+        if in_comment or line.text.lstrip().startswith("<!--"):
+            in_comment = "-->" not in line.text
+            continue
+        if line.is_blank:
             continue
         match = _FACT.match(line.text)
         if match and match.group(1) in keys:
