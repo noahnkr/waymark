@@ -100,7 +100,7 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["PLR2004"]  # tests compare against literal values
+"tests/**" = ["PLR2004", "PLR0913"]  # literal values; builders with many options
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

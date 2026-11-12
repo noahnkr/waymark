@@ -105,3 +105,33 @@ def test_repository_contains_no_symlinks() -> None:
         for name in [*subdirectories, *files]:
             path = Path(directory) / name
             assert not path.is_symlink(), f"{path} is a symlink"
+
+
+def test_core_knows_no_agent_tool() -> None:
+    """Only adapters may name an agent tool, its file paths or its events."""
+    adapters = SOURCE_ROOT / "adapters"
+    for path in sorted(SOURCE_ROOT.rglob("*.py")):
+        if adapters in path.parents:
+            continue
+        text = path.read_text(encoding="utf-8").casefold()
+        assert "claude" not in text, f"{path} names an agent tool"
+
+
+def test_only_the_record_model_touches_the_file_system() -> None:
+    """Code outside the record model reads and writes the record through it."""
+    record = SOURCE_ROOT / "record"
+    file_calls = {
+        "read_text",
+        "read_bytes",
+        "write_text",
+        "write_bytes",
+        "open",
+        "unlink",
+        "rename",
+    }
+    for path, tree in source_trees():
+        if record in path.parents:
+            continue
+        for node in ast.walk(tree):
+            name = node.attr if isinstance(node, ast.Attribute) else getattr(node, "id", None)
+            assert name not in file_calls, f"{path}:{getattr(node, 'lineno', 0)} uses {name}"
