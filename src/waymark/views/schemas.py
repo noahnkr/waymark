@@ -264,3 +264,95 @@ SCHEMAS: dict[str, Schema] = {
     ),
 }
 """Every payload's schema, by the name after ``wm.`` in its ``schema`` field."""
+
+_STEPS = [*(kind.value for kind in StepKind), "explore"]
+
+_PACK_ITEM = _object(
+    {
+        "number": STRING,
+        "title": STRING,
+        "criteria": TEXT_OR_NULL,
+        "verify": TEXT_OR_NULL,
+        "repo": TEXT_OR_NULL,
+        "review_level": _enum(ReviewLevel),
+        "notes": NAMES,
+        "reviews": _array(
+            _object({"date": DATE, "verdict": _enum(Verdict, nullable=True), "text": STRING})
+        ),
+        "resolutions": NAMES,
+    }
+)
+
+
+def _delegated(role: str) -> Schema:
+    return _payload(
+        f"context.{role}",
+        {
+            "for": {"const": role},
+            "change": STRING,
+            "item": _PACK_ITEM,
+            "context": STRING,
+            "rules": STRING,
+            "proposal": _nullable(SECTIONS),
+            "deltas": _array(_object({"spec": STRING, "text": STRING})),
+            "requirements": _array(_object({"spec": STRING, "name": STRING, "text": STRING})),
+            "design": TEXT_OR_NULL,
+            "ends_with": STRING,
+        },
+    )
+
+
+SCHEMAS.update(
+    {
+        "instructions": _payload(
+            "instructions",
+            {
+                "change": TEXT_OR_NULL,
+                "step": {"enum": _STEPS},
+                "item": TEXT_OR_NULL,
+                "ready": BOOLEAN,
+                "reason": STRING,
+                "outputs": _array(
+                    _object({"path": STRING, "exists": BOOLEAN, "template": TEXT_OR_NULL})
+                ),
+                "rules": STRING,
+                "context": STRING,
+                "read": NAMES,
+                "guidance": NAMES,
+                "commands": NAMES,
+                "unlocks": STRING,
+            },
+        ),
+        "context.explore": _payload(
+            "context.explore",
+            {
+                "for": {"const": "explore"},
+                "charter": SECTIONS,
+                "rules": STRING,
+                "specs": _array(
+                    _object(
+                        {"name": STRING, "title": STRING, "purpose": STRING, "requirements": NAMES}
+                    )
+                ),
+                "changes": _array(
+                    _object({"name": STRING, "title": STRING, "phase": _enum(Phase)})
+                ),
+                "milestones": _array(
+                    _object({"name": STRING, "archived": INTEGER, "total": INTEGER})
+                ),
+                "explorations": _array(
+                    _object(
+                        {
+                            "name": STRING,
+                            "title": STRING,
+                            "status": _enum(ExplorationStatus),
+                            "detail": TEXT_OR_NULL,
+                        }
+                    )
+                ),
+            },
+        ),
+        "context.implement": _delegated("implement"),
+        "context.review": _delegated("review"),
+    }
+)

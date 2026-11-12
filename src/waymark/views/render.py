@@ -291,6 +291,119 @@ def show_exploration(payload: Payload, style: Style) -> str:
     return "\n".join(lines)
 
 
+def _fenced(text: str) -> list[str]:
+    """Record text quoted whole, so its own headings don't mix with the pack's."""
+    return ["````markdown", *text.split("\n"), "````"]
+
+
+def instructions(payload: Payload, style: Style) -> str:
+    """Instructions for one step, as text an agent or a person can follow."""
+    subject = f" for {payload['change']}" if payload["change"] else ""
+    item = f" {payload['item']}" if payload["item"] else ""
+    lines = [style.rule(f"Step: {payload['step']}{item}{subject}")]
+    if not payload["ready"]:
+        lines.append(
+            style.paint(f"  {style.symbol('warning')} Not yet: {payload['reason']}", YELLOW)
+        )
+    elif payload["reason"]:
+        lines.append(f"  {payload['reason']}")
+    if payload["guidance"]:
+        lines += ["", style.paint("What to do", BOLD)]
+        lines += [f"  {style.symbol('bullet')} {text}" for text in payload["guidance"]]
+    if payload["commands"]:
+        lines += ["", style.paint("Commands", BOLD)]
+        lines += [style.paint(f"  {command}", CYAN) for command in payload["commands"]]
+    lines += _titled("Rules for this step", payload["rules"], style)
+    lines += _titled("Project context", payload["context"], style)
+    if payload["read"]:
+        lines += ["", style.paint("Read first", BOLD)]
+        lines += [f"  {path}" for path in payload["read"]]
+    for output in payload["outputs"]:
+        state = "exists; revise it" if output["exists"] else "to write"
+        lines += ["", style.paint(f"Write: {output['path']}", BOLD) + f"  ({state})"]
+        if output["template"]:
+            lines += ["  Template:", *_indent(output["template"].rstrip("\n"), "  | ")]
+    lines += ["", f"{style.paint('Unlocks', BOLD)}: {payload['unlocks']}"]
+    return "\n".join(lines)
+
+
+def _pack_item(item: Payload) -> list[str]:
+    lines = [f"**{item['number']} {item['title']}**", ""]
+    for label, key in (("Criteria", "criteria"), ("Verify", "verify"), ("Repo", "repo")):
+        if item[key]:
+            lines.append(f"- {label}: {item[key]}")
+    lines.append(f"- Review level: {item['review_level']}")
+    lines += [f"- Decided by the human: {text}" for text in item["resolutions"]]
+    for review in item["reviews"]:
+        lines.append(f"- Earlier review ({review['date']}, {review['verdict']}): {review['text']}")
+    lines += [f"- Note from earlier work: {note}" for note in item["notes"]]
+    return lines
+
+
+def context_delegated(payload: Payload, _: Style) -> str:
+    """An implementer's or reviewer's context pack, as markdown."""
+    role = payload["for"]
+    item = payload["item"]
+    lines = [f"# Context pack: {role} {payload['change']} {item['number']}", ""]
+    lines += ["## Your item", "", *_pack_item(item)]
+    if payload["context"]:
+        lines += ["", "## Project context", "", payload["context"]]
+    if payload["rules"]:
+        lines += ["", "## Rules for this step", "", payload["rules"]]
+    if payload["proposal"]:
+        lines += ["", "## Proposal"]
+        for title, text in payload["proposal"].items():
+            lines += ["", f"### {title}", "", text]
+    if payload["deltas"]:
+        lines += ["", "## Deltas"]
+        for delta in payload["deltas"]:
+            lines += ["", f"### Spec: {delta['spec']}", "", *_fenced(delta["text"])]
+    if payload["requirements"]:
+        lines += ["", "## Requirements as they stand today"]
+        for requirement in payload["requirements"]:
+            title = f"### {requirement['spec']}: {requirement['name']}"
+            lines += ["", title, "", *_fenced(requirement["text"])]
+    if payload["design"]:
+        lines += ["", "## Design", "", *_fenced(payload["design"])]
+    lines += ["", "## How to finish", "", payload["ends_with"]]
+    return "\n".join(lines)
+
+
+def context_explore(payload: Payload, _: Style) -> str:
+    """The explore context pack, as markdown."""
+    lines = ["# Context pack: explore"]
+    for title, text in payload["charter"].items():
+        if text:
+            lines += ["", f"## {title}", "", text]
+    if payload["rules"]:
+        lines += ["", "## Rules for this step", "", payload["rules"]]
+    lines += ["", "## Specs", ""]
+    for spec in payload["specs"]:
+        names = ", ".join(spec["requirements"]) or "no requirements"
+        lines.append(f"- {spec['name']}: {spec['purpose']} ({names})")
+    if not payload["specs"]:
+        lines.append("None yet.")
+    lines += ["", "## Changes in flight", ""]
+    lines += [
+        f"- {change['name']} ({change['phase']}): {change['title']}"
+        for change in payload["changes"]
+    ] or ["None."]
+    if payload["milestones"]:
+        lines += ["", "## Open milestones", ""]
+        lines += [
+            f"- {m['name']}: {m['archived']}/{m['total']} changes archived"
+            for m in payload["milestones"]
+        ]
+    if payload["explorations"]:
+        lines += ["", "## Explorations", ""]
+        for exploration in payload["explorations"]:
+            detail = f": {exploration['detail']}" if exploration["detail"] else ""
+            lines.append(
+                f"- {exploration['name']} ({exploration['status']}{detail}): {exploration['title']}"
+            )
+    return "\n".join(lines)
+
+
 _RENDERERS: dict[str, Callable[[Payload, Style], str]] = {
     "wm.status": status,
     "wm.inbox": inbox,
@@ -300,6 +413,10 @@ _RENDERERS: dict[str, Callable[[Payload, Style], str]] = {
     "wm.show.spec": show_spec,
     "wm.show.milestone": show_milestone,
     "wm.show.exploration": show_exploration,
+    "wm.instructions": instructions,
+    "wm.context.explore": context_explore,
+    "wm.context.implement": context_delegated,
+    "wm.context.review": context_delegated,
 }
 
 

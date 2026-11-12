@@ -37,6 +37,8 @@ from waymark.record.tasks import Item
 from waymark.record.terms import Verdict
 from waymark.services.check import Finding, Severity, check_record
 from waymark.services.common import Refusal
+from waymark.services.context import CONTEXT_VERSION
+from waymark.services.instructions import INSTRUCTIONS_VERSION
 
 Payload = dict[str, Any]
 
@@ -49,6 +51,10 @@ VERSIONS = {
     "show.spec": 1,
     "show.milestone": 1,
     "show.exploration": 1,
+    "instructions": INSTRUCTIONS_VERSION,
+    "context.explore": CONTEXT_VERSION,
+    "context.implement": CONTEXT_VERSION,
+    "context.review": CONTEXT_VERSION,
 }
 """The schema version of each payload. A breaking change to a payload bumps its number."""
 

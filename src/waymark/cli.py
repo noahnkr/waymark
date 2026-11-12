@@ -12,7 +12,9 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from waymark import __version__
-from waymark.record.terms import Verdict
+from waymark.record.terms import Step, Verdict
+from waymark.services import context as context_service
+from waymark.services import instructions as instructions_service
 from waymark.services import lifecycle, setup
 from waymark.services.common import Done, Refusal, open_record
 from waymark.views import payloads, render
@@ -136,6 +138,18 @@ def _show(args: argparse.Namespace) -> int:
 def _ls(args: argparse.Namespace) -> int:
     kind = args.kind.removesuffix("s")
     _show_payload(payloads.ls(open_record(_here()), kind, archived=args.archived), args)
+    return EXIT_OK
+
+
+def _instructions(args: argparse.Namespace) -> int:
+    payload = instructions_service.instructions(open_record(_here()), args.step, args.change)
+    _show_payload(payload, args)
+    return EXIT_OK
+
+
+def _context(args: argparse.Namespace) -> int:
+    payload = context_service.context_pack(open_record(_here()), args.role, args.change, args.item)
+    _show_payload(payload, args)
     return EXIT_OK
 
 
@@ -273,6 +287,34 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     ls.add_argument("kind", choices=[f"{kind}s" for kind in payloads.KINDS])
     ls.add_argument(
         "--archived", action="store_true", help="include archived changes or milestones"
+    )
+    instructions = _view_command(
+        commands,
+        "instructions",
+        _instructions,
+        "Say what to do at a step of a change: the file, its template, the rules, the commands.",
+    )
+    instructions.add_argument(
+        "step",
+        nargs="?",
+        choices=[step.value for step in Step],
+        help="the step (default: the change's next step)",
+    )
+    instructions.add_argument("--change", metavar="NAME", help="the change (default: the only one)")
+    context = _view_command(
+        commands,
+        "context",
+        _context,
+        "Print the context pack for exploring, or for implementing or reviewing one item.",
+    )
+    context.add_argument("change", nargs="?", help="the change's name")
+    context.add_argument("item", nargs="?", help="the item's number, for example 1.2")
+    context.add_argument(
+        "--for",
+        dest="role",
+        required=True,
+        choices=list(context_service.ROLES),
+        help="the job the pack is for",
     )
     _view_command(
         commands, "check", _check, "Check the record's health: format, links, conflicts, evidence."
