@@ -6,15 +6,18 @@ prints why and what to do next, and exits with ``EXIT_REFUSED``.
 
 import argparse
 import datetime
+import os
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from waymark import __version__
 from waymark.record.terms import Verdict
-from waymark.services import check as check_service
 from waymark.services import lifecycle, setup
-from waymark.services.common import Done, Refusal
+from waymark.services.common import Done, Refusal, open_record
+from waymark.views import payloads, render
+from waymark.views.payloads import Payload
+from waymark.views.style import Style
 
 EXIT_OK = 0
 """The command succeeded."""
@@ -103,19 +106,58 @@ def _archive(args: argparse.Namespace) -> int:
     return _report(done)
 
 
-def _check(_: argparse.Namespace) -> int:
-    now = datetime.datetime.now(datetime.UTC)
-    findings = check_service.check(_here(), now)
-    for finding in findings:
-        where = finding.path + (f":{finding.line}" if finding.line else "")
-        print(f"{finding.severity.value}: {where}: {finding.code}: {finding.message}")
-    errors = sum(1 for f in findings if f.severity is check_service.Severity.ERROR)
-    warnings = len(findings) - errors
-    if not findings:
-        print("The record is healthy.")
+def _close(args: argparse.Namespace) -> int:
+    return _report(lifecycle.close_milestone(_here(), args.milestone, _today()))
+
+
+def _show_payload(payload: Payload, args: argparse.Namespace) -> None:
+    """Print a view: as JSON when asked, otherwise as text styled for this terminal."""
+    if args.json:
+        print(render.to_json(payload))
     else:
-        print(f"{errors} error(s), {warnings} warning(s).")
-    return EXIT_REFUSED if errors else EXIT_OK
+        print(render.to_text(payload, Style.detect(sys.stdout, os.environ)))
+
+
+def _status(args: argparse.Namespace) -> int:
+    _show_payload(payloads.status(open_record(_here())), args)
+    return EXIT_OK
+
+
+def _inbox(args: argparse.Namespace) -> int:
+    _show_payload(payloads.inbox(open_record(_here())), args)
+    return EXIT_OK
+
+
+def _show(args: argparse.Namespace) -> int:
+    _show_payload(payloads.show(open_record(_here()), args.name, args.kind), args)
+    return EXIT_OK
+
+
+def _ls(args: argparse.Namespace) -> int:
+    kind = args.kind.removesuffix("s")
+    _show_payload(payloads.ls(open_record(_here()), kind, archived=args.archived), args)
+    return EXIT_OK
+
+
+def _check(args: argparse.Namespace) -> int:
+    now = datetime.datetime.now(datetime.UTC)
+    payload = payloads.check(open_record(_here()), now)
+    _show_payload(payload, args)
+    return EXIT_REFUSED if payload["errors"] else EXIT_OK
+
+
+def _view_command(
+    commands: "argparse._SubParsersAction[argparse.ArgumentParser]",
+    name: str,
+    handler: Handler,
+    summary: str,
+) -> argparse.ArgumentParser:
+    parser = commands.add_parser(name, help=summary, description=summary)
+    parser.add_argument(
+        "--json", action="store_true", help="print the view as JSON, with its schema version"
+    )
+    parser.set_defaults(handler=handler)
+    return parser
 
 
 def _item_command(
@@ -131,7 +173,7 @@ def _item_command(
     return parser
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list of commands
     """Build the argument parser for ``wm``."""
     parser = argparse.ArgumentParser(
         prog=PROG,
@@ -211,9 +253,30 @@ def build_parser() -> argparse.ArgumentParser:
     )
     archive.set_defaults(handler=_archive)
 
-    summary = "Check the record's health: format, links, conflicts and evidence."
-    check = commands.add_parser("check", help=summary, description=summary)
-    check.set_defaults(handler=_check)
+    summary = "Close a milestone whose changes are all archived."
+    close = commands.add_parser("close", help=summary, description=summary)
+    close.add_argument("milestone", help="the milestone's name")
+    close.set_defaults(handler=_close)
+
+    _view_command(
+        commands, "status", _status, "Show where things stand: changes, milestones, what needs you."
+    )
+    _view_command(commands, "inbox", _inbox, "Show what only the human can resolve.")
+    show = _view_command(
+        commands, "show", _show, "Show everything about one change, spec, milestone or exploration."
+    )
+    show.add_argument("name", help="its name; an archived change also by its dated folder name")
+    show.add_argument(
+        "--kind", choices=list(payloads.KINDS), help="which kind, if the name is shared"
+    )
+    ls = _view_command(commands, "ls", _ls, "List changes, specs, milestones or explorations.")
+    ls.add_argument("kind", choices=[f"{kind}s" for kind in payloads.KINDS])
+    ls.add_argument(
+        "--archived", action="store_true", help="include archived changes or milestones"
+    )
+    _view_command(
+        commands, "check", _check, "Check the record's health: format, links, conflicts, evidence."
+    )
     return parser
 
 
@@ -222,6 +285,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     A usage error exits through ``argparse`` with ``EXIT_USAGE``.
     """
+    for stream in (sys.stdout, sys.stderr):
+        # A console that can't show a character gets a stand-in instead of an error.
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="replace")
     parser = build_parser()
     args = parser.parse_args(argv)
     handler: Handler | None = getattr(args, "handler", None)
