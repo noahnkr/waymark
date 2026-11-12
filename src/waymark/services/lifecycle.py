@@ -23,9 +23,17 @@ from waymark.record.proposal import (
     format_synced,
     parse_proposal,
 )
-from waymark.record.record import ARCHIVE, CHANGES, SPECS, Record
+from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, SPECS, Record
 from waymark.record.specs import Spec, parse_spec
-from waymark.record.state import AcceptanceState, ChangeState, ConflictKind, ItemState, StepKind
+from waymark.record.state import (
+    AcceptanceState,
+    ChangeState,
+    ConflictKind,
+    ItemState,
+    RoadmapStatus,
+    StepKind,
+    milestone_state,
+)
 from waymark.record.store import Transaction
 from waymark.record.tasks import BLOCKED, SPEC_GAP, Tasks
 from waymark.record.terms import ReviewLevel, Verdict
@@ -388,3 +396,47 @@ def archive(
     transaction.move(source, target)
     paths = commit(transaction)
     return Done(f'Archived "{name}" as {target}. Its deltas are now part of the specs.', paths)
+
+
+def close_milestone(start: Path, name: str, today: datetime.date) -> Done:
+    """Close a milestone: move it to the dated archive and rewrite the links to it.
+
+    Refused while a change its roadmap links to is still active or can't be
+    found. Lines for changes that were never proposed don't block.
+    """
+    record = open_record(start, writing=True)
+    milestone = record.milestones.get(name)
+    if milestone is None:
+        known = ", ".join(sorted(record.milestones)) or "none"
+        raise Refusal(f'There is no open milestone "{name}". Open milestones: {known}.')
+    lines = milestone_state(record, milestone).lines
+    active = [line.change for line in lines if line.status is RoadmapStatus.ACTIVE]
+    missing = [line.change for line in lines if line.status is RoadmapStatus.MISSING]
+    if active:
+        raise Refusal(
+            f'The milestone "{name}" stays open: {", ".join(filter(None, active))} '
+            "is still active. Archive it first, or take its line off the roadmap."
+        )
+    if missing:
+        raise Refusal(
+            f'The milestone "{name}" stays open: its roadmap links to '
+            f"{', '.join(filter(None, missing))}, which can't be found. Fix the link, or "
+            "take the line off the roadmap."
+        )
+    source = milestone.path
+    target = f"{MILESTONES}/{ARCHIVE}/{ArchiveName(today, name).folder}"
+    if record.files.entries(target):
+        raise Refusal(
+            f'A milestone named "{name}" was already closed today ({target}). '
+            "Close this one tomorrow, or rename it."
+        )
+    transaction = Transaction(record.files)
+    for doc in record.documents():
+        text = rewrite_links(doc, source, target)
+        if text != doc.text:
+            transaction.write(doc.path, text)
+    transaction.move(source, target)
+    paths = commit(transaction)
+    dropped = [line.text for line in lines if line.status is RoadmapStatus.PLANNED]
+    note = f" Never proposed: {'; '.join(dropped)}." if dropped else ""
+    return Done(f'Closed the milestone "{name}" as {target}.{note}', paths)

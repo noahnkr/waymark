@@ -103,6 +103,10 @@ def _archive(args: argparse.Namespace) -> int:
     return _report(done)
 
 
+def _close(args: argparse.Namespace) -> int:
+    return _report(lifecycle.close_milestone(_here(), args.milestone, _today()))
+
+
 def _check(_: argparse.Namespace) -> int:
     now = datetime.datetime.now(datetime.UTC)
     findings = check_service.check(_here(), now)
@@ -210,6 +214,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="archive although review records are missing; the reason is recorded",
     )
     archive.set_defaults(handler=_archive)
+
+    summary = "Close a milestone whose changes are all archived."
+    close = commands.add_parser("close", help=summary, description=summary)
+    close.add_argument("milestone", help="the milestone's name")
+    close.set_defaults(handler=_close)
 
     summary = "Check the record's health: format, links, conflicts and evidence."
     check = commands.add_parser("check", help=summary, description=summary)
