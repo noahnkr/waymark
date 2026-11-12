@@ -41,6 +41,14 @@ def repository_root(folder: Path) -> Path | None:
         return None
 
 
+def user_name(folder: Path) -> str | None:
+    """The name git signs commits with here; None when it isn't set."""
+    try:
+        return _run(folder, "config", "user.name").strip() or None
+    except GitError:
+        return None
+
+
 def current_branch(folder: Path) -> str | None:
     """The checked-out branch; None when HEAD is detached or this is not a repository."""
     try:

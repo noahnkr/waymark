@@ -12,6 +12,7 @@ from waymark.record.text import Document
 OWNER = "Owner"
 ACCEPTED = "Accepted"
 PATH = "Path"
+SYNCED = "Synced"
 SHORT = "short"
 FULL = "full"
 
@@ -46,6 +47,7 @@ class Proposal:
     owner: str | None
     short_path: bool
     acceptance: Acceptance | None
+    synced: datetime.date | None
     sections: Mapping[str, str]
     no_spec_changes: bool
     outcome: str | None
@@ -54,9 +56,8 @@ class Proposal:
     def accepted_text(self) -> str:
         """The text acceptance covers: everything but the acceptance line and the outcome."""
         skipped: set[int] = set()
-        facts = parse_facts(self.doc, {ACCEPTED}, [], prose=True)
-        if ACCEPTED in facts:
-            skipped.add(facts[ACCEPTED].index)
+        facts = parse_facts(self.doc, {ACCEPTED, SYNCED}, [], prose=True)
+        skipped.update(fact.index for fact in facts.values())
         for section in self.doc.sections(2):
             if section.title.casefold() == OUTCOME.casefold():
                 skipped.update(range(section.start, section.end))
@@ -65,6 +66,11 @@ class Proposal:
         while kept and not kept[-1].strip():
             kept.pop()
         return "\n".join(kept)
+
+
+def format_synced(date: datetime.date) -> str:
+    """The synced line as wm writes it."""
+    return f"{SYNCED}: {date.isoformat()}"
 
 
 def format_acceptance(date: datetime.date, who: str, fingerprint: str) -> str:
@@ -100,7 +106,7 @@ def parse_proposal(doc: Document) -> Proposal:
     """Read a proposal."""
     problems: list[Problem] = []
     title = require_title(doc, problems)
-    facts = parse_facts(doc, {OWNER, ACCEPTED, PATH}, problems, prose=True)
+    facts = parse_facts(doc, {OWNER, ACCEPTED, PATH, SYNCED}, problems, prose=True)
 
     owner = facts[OWNER].value if OWNER in facts else ""
     if not owner:
@@ -133,6 +139,21 @@ def parse_proposal(doc: Document) -> Proposal:
         fact = facts[ACCEPTED]
         acceptance = _parse_acceptance(doc, fact.value, fact.index, problems)
 
+    synced: datetime.date | None = None
+    if SYNCED in facts:
+        try:
+            synced = datetime.date.fromisoformat(facts[SYNCED].value)
+        except ValueError:
+            problems.append(
+                Problem(
+                    doc.path,
+                    facts[SYNCED].index + 1,
+                    "malformed-evidence",
+                    f'The "{SYNCED}:" line holds a date, YYYY-MM-DD. It is written by wm; '
+                    "remove the line and sync the change again.",
+                )
+            )
+
     found = collect_sections(doc, REQUIRED_SECTIONS, problems, optional=(OUTCOME,))
     sections = {name: content(doc, found, name, problems) for name in REQUIRED_SECTIONS}
     outcome = doc.body(found[OUTCOME]) if OUTCOME in found else None
@@ -142,6 +163,7 @@ def parse_proposal(doc: Document) -> Proposal:
         owner=owner or None,
         short_path=short_path,
         acceptance=acceptance,
+        synced=synced,
         sections=sections,
         no_spec_changes=NO_SPEC_CHANGES.casefold() in sections[IMPACT].casefold(),
         outcome=outcome or None,

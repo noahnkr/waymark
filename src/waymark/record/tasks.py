@@ -1,11 +1,13 @@
 """Task lists: numbered sections of checkbox items, with the evidence under each item.
 
 An item's definition is its number, title, review level, criteria, verification
-and repo. Its evidence is its tick, its blocker and its review records.
+and repo. Its evidence is its tick, its blocker, its spec gap and its review
+records.
 """
 
 import datetime
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
@@ -13,20 +15,25 @@ from waymark.record.problems import Problem
 from waymark.record.terms import ReviewLevel, Verdict
 from waymark.record.text import Document, Section
 
+BLOCKED = "Blocked"
+SPEC_GAP = "Spec gap"
+
 _SECTION = re.compile(r"^(\d+)\.\s+(\S.*)$")
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
 _LEVEL_TAG = re.compile(r"\s+`review:\s*([A-Za-z-]+)`$")
 _LIST_LINE = re.compile(r"^(?:[-*+]|\d+[.)])(?:\s|$)")
 _FIELD = re.compile(r"^  [-*] (\S.*)$")
-_LABELED = re.compile(r"^(Criteria|Verify|Repo|Blocked|Note):(?:\s+(.*))?$")
-_EVIDENCE = re.compile(r"^\((review|self-review|reopened)\)")
+_LABELED = re.compile(r"^(Criteria|Verify|Repo|Blocked|Spec gap|Note):(?:\s+(.*))?$")
+_EVIDENCE = re.compile(r"^\((review|self-review|reopened|resolved)\)")
 _REVIEW = re.compile(r"^\(review\) (\d{4}-\d{2}-\d{2}) (pass|changes|spec-gap): (\S.*)$")
 _SELF_REVIEW = re.compile(r"^\(self-review\) (\d{4}-\d{2}-\d{2}): (\S.*)$")
 _REOPENED = re.compile(r"^\(reopened\) (\d{4}-\d{2}-\d{2})$")
+_RESOLVED = re.compile(r"^\(resolved\) (\d{4}-\d{2}-\d{2}): (\S.*)$")
 
 _FORMATS = (
     '"(review) YYYY-MM-DD pass|changes|spec-gap: <reasons>", '
-    '"(self-review) YYYY-MM-DD: <summary>" or "(reopened) YYYY-MM-DD"'
+    '"(self-review) YYYY-MM-DD: <summary>", "(reopened) YYYY-MM-DD" or '
+    '"(resolved) YYYY-MM-DD: <what was decided>"'
 )
 
 
@@ -36,11 +43,12 @@ class RecordKind(StrEnum):
     REVIEW = "review"
     SELF_REVIEW = "self-review"
     REOPENED = "reopened"
+    RESOLVED = "resolved"
 
 
 @dataclass(frozen=True)
 class ReviewRecord:
-    """One review record: a reviewer's verdict, a self-review, or a reopening."""
+    """One record: a reviewer's verdict, a self-review, a reopening or a resolution."""
 
     kind: RecordKind
     date: datetime.date
@@ -51,7 +59,11 @@ class ReviewRecord:
 
 @dataclass(frozen=True)
 class Item:
-    """One task item, with what is written under it."""
+    """One task item, with what is written under it.
+
+    ``end`` is the index after the item's last line. ``spans`` gives the line
+    range of each labeled line under the item.
+    """
 
     number: str
     section: int
@@ -62,9 +74,12 @@ class Item:
     verify: str | None
     repo: str | None
     blocked: str | None
+    spec_gap: str | None
     notes: tuple[str, ...]
     records: tuple[ReviewRecord, ...]
     index: int
+    end: int
+    spans: Mapping[str, tuple[int, int]]
 
     def level(self, default: ReviewLevel) -> ReviewLevel:
         """The item's review level: its tag, or the project default."""
@@ -103,10 +118,21 @@ class _Draft:
     ticked: bool
     level_tag: ReviewLevel | None
     index: int
+    end: int
     fields: dict[str, list[str]] = field(default_factory=dict)
+    spans: dict[str, tuple[int, int]] = field(default_factory=dict)
     notes: list[list[str]] = field(default_factory=list)
     records: list[ReviewRecord] = field(default_factory=list)
     open_text: list[str] | None = None
+    open_label: str | None = None
+
+    def extend(self, index: int, text: str) -> None:
+        """Add a continuation line to the field that is still open."""
+        assert self.open_text is not None
+        self.open_text.append(text)
+        self.end = index + 1
+        if self.open_label is not None:
+            self.spans[self.open_label] = (self.spans[self.open_label][0], index + 1)
 
     def finish(self) -> Item:
         def single(label: str) -> str | None:
@@ -121,10 +147,13 @@ class _Draft:
             criteria=single("Criteria"),
             verify=single("Verify"),
             repo=single("Repo"),
-            blocked=single("Blocked"),
+            blocked=single(BLOCKED),
+            spec_gap=single(SPEC_GAP),
             notes=tuple("\n".join(note).strip() for note in self.notes),
             records=tuple(self.records),
             index=self.index,
+            end=self.end,
+            spans=dict(self.spans),
         )
 
 
@@ -158,8 +187,8 @@ class _Parser:
         assert draft is not None
         review = _REVIEW.match(text)
         self_review = _SELF_REVIEW.match(text)
-        reopened = _REOPENED.match(text)
-        match = review or self_review or reopened
+        resolved = _RESOLVED.match(text)
+        match = review or self_review or resolved or _REOPENED.match(text)
         if match is None:
             self.problem(
                 index,
@@ -178,6 +207,8 @@ class _Parser:
             record = ReviewRecord(
                 RecordKind.SELF_REVIEW, date, None, self_review.group(2).strip(), index
             )
+        elif resolved:
+            record = ReviewRecord(RecordKind.RESOLVED, date, None, resolved.group(2).strip(), index)
         else:
             record = ReviewRecord(RecordKind.REOPENED, date, None, "", index)
         draft.records.append(record)
@@ -194,12 +225,16 @@ class _Parser:
             )
         else:
             draft.fields[label] = [value]
+            draft.spans[label] = (index, index + 1)
             draft.open_text = draft.fields[label]
+            draft.open_label = label
 
     def field_line(self, index: int, text: str) -> None:
         draft = self.draft
         assert draft is not None
         draft.open_text = None
+        draft.open_label = None
+        draft.end = index + 1
         labeled = _LABELED.match(text)
         if labeled:
             self.labeled(index, labeled.group(1), (labeled.group(2) or "").strip())
@@ -209,8 +244,9 @@ class _Parser:
             self.problem(
                 index,
                 "unrecognized-item-line",
-                'A line under an item starts with "Criteria:", "Verify:", "Repo:", "Blocked:" '
-                'or "Note:", or is a review record. Label this line, or make it a "Note:".',
+                'A line under an item starts with "Criteria:", "Verify:", "Repo:", "Blocked:", '
+                '"Spec gap:" or "Note:", or is a review record. Label this line, or make it '
+                'a "Note:".',
             )
 
     def item_line(self, index: int, section: TaskSection | None, text: str) -> bool:
@@ -253,6 +289,7 @@ class _Parser:
             ticked=match.group(1) != " ",
             level_tag=level_tag,
             index=index,
+            end=index + 1,
         )
         return True
 
@@ -262,7 +299,7 @@ class _Parser:
         draft = self.draft
         if line.in_fence or line.is_blank:
             if draft is not None and draft.open_text is not None and line.in_fence:
-                draft.open_text.append(text.strip())
+                draft.extend(index, text.strip())
             return
         if not text.startswith(" "):
             if self.item_line(index, section, text):
@@ -282,7 +319,7 @@ class _Parser:
         if field_match:
             self.field_line(index, field_match.group(1).strip())
         elif draft.open_text is not None:
-            draft.open_text.append(text.strip())
+            draft.extend(index, text.strip())
         else:
             self.problem(
                 index,
@@ -329,13 +366,14 @@ class _Parser:
 
     def check_fields(self) -> None:
         for item in self.items:
-            values = {"Repo": item.repo, "Blocked": item.blocked}
+            values = {
+                "Criteria": item.criteria,
+                "Verify": item.verify,
+                "Repo": item.repo,
+                BLOCKED: item.blocked,
+                SPEC_GAP: item.spec_gap,
+            }
             for label, value in values.items():
-                if value is not None and not value:
-                    self.problem(
-                        item.index, "empty-field", f'"{label}:" under item {item.number} is empty.'
-                    )
-            for label, value in (("Criteria", item.criteria), ("Verify", item.verify)):
                 if value is not None and not value:
                     self.problem(
                         item.index,
@@ -367,20 +405,11 @@ def parse_tasks(doc: Document) -> Tasks:
 
 
 def is_evidence_line(text: str) -> bool:
-    """Whether a line under an item is gate evidence: a blocker or a review record."""
+    """Whether a line under an item is gate evidence: a blocker, a spec gap or a record."""
     match = _FIELD.match(text)
     if match is None:
         return False
     content = match.group(1)
-    return content.startswith("Blocked:") or _EVIDENCE.match(content) is not None
-
-
-__all__ = [
-    "Item",
-    "RecordKind",
-    "ReviewRecord",
-    "TaskSection",
-    "Tasks",
-    "is_evidence_line",
-    "parse_tasks",
-]
+    return (
+        content.startswith((f"{BLOCKED}:", f"{SPEC_GAP}:")) or _EVIDENCE.match(content) is not None
+    )
