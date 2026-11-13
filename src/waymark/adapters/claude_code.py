@@ -9,7 +9,7 @@ It decides nothing itself.
 
 import datetime
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +20,8 @@ from waymark.hooks.events import Decision, Event, EventKind, Replacement, Role
 
 NAME = "claude-code"
 SETTINGS = ".claude/settings.json"
+LOCAL_SETTINGS = ".claude/settings.local.json"
+"""Per-machine settings, never committed; the code repos of an atlas are attached here."""
 HOOK_COMMAND = f"wm hook {NAME}"
 HOOK_TIMEOUT = 60
 
@@ -92,6 +94,27 @@ def merge_settings(existing: str | None) -> str:
             ours = {"matcher": matcher, **ours}
         merged.setdefault(event, []).append(ours)
     return json.dumps({**settings, "hooks": merged}, indent=2, ensure_ascii=False) + "\n"
+
+
+def merge_local_settings(existing: str | None, folders: Sequence[Path]) -> str:
+    """The per-machine settings with the code repo folders attached, everything else kept.
+
+    Folders are added to ``permissions.additionalDirectories`` when missing.
+    Nothing is removed: the file can't tell wm's entries from the person's own.
+    """
+    settings = json.loads(existing) if existing and existing.strip() else {}
+    if not isinstance(settings, dict):
+        raise ValueError("the top level is not an object")
+    permissions = settings.get("permissions", {})
+    if not isinstance(permissions, dict):
+        raise ValueError('"permissions" is not an object')
+    listed = permissions.get("additionalDirectories", [])
+    if not isinstance(listed, list):
+        raise ValueError('"permissions.additionalDirectories" is not a list')
+    seen = {Path(entry) for entry in listed if isinstance(entry, str)}
+    added = [str(folder) for folder in folders if folder not in seen]
+    permissions = {**permissions, "additionalDirectories": [*listed, *added]}
+    return json.dumps({**settings, "permissions": permissions}, indent=2, ensure_ascii=False) + "\n"
 
 
 def _role(payload: Mapping[str, Any]) -> Role:
@@ -187,6 +210,14 @@ class ClaudeCodeAdapter(Adapter):
     title = "Claude Code"
     capabilities = Capabilities(skills=True, subagents=True, hooks=True)
     reads = (SETTINGS,)
+    local_reads = (LOCAL_SETTINGS,)
+
+    def local_files(
+        self, existing: Mapping[str, str | None], folders: Sequence[Path]
+    ) -> dict[str, str]:
+        if not folders:
+            return {}
+        return {LOCAL_SETTINGS: merge_local_settings(existing.get(LOCAL_SETTINGS), folders)}
 
     def files(self, existing: Mapping[str, str | None]) -> dict[str, str]:
         rendered = {

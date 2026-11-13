@@ -7,7 +7,7 @@ made by the core, so it is the same in every tool.
 
 import datetime
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -43,10 +43,22 @@ class Adapter(ABC):
     title: str
     capabilities: Capabilities
     reads: tuple[str, ...] = ()
+    local_reads: tuple[str, ...] = ()
+    """Per-machine files the adapter merges into; never committed."""
 
     @abstractmethod
     def files(self, existing: Mapping[str, str | None]) -> dict[str, str]:
         """The files Waymark owns for this tool, with their full text."""
+
+    def local_files(
+        self, existing: Mapping[str, str | None], folders: Sequence[Path]
+    ) -> dict[str, str]:
+        """Per-machine files that attach an atlas's code repo folders to the tool's sessions.
+
+        A tool that can't attach folders through a file writes nothing.
+        """
+        del existing, folders
+        return {}
 
     def hook(
         self, event: str, payload: Mapping[str, Any], cwd: Path, today: datetime.date
