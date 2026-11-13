@@ -18,6 +18,7 @@ from waymark.record.atlas import Location
 from waymark.record.changes import Change
 from waymark.record.config import RECORD_FORMAT
 from waymark.record.explorations import QUESTIONS, Exploration
+from waymark.record.githooks import hooks_status
 from waymark.record.milestones import Milestone
 from waymark.record.record import (
     ArchiveEntry,
@@ -49,6 +50,7 @@ from waymark.services.context import CONTEXT_VERSION
 if TYPE_CHECKING:  # the doctor's checks reach the views through the CLI; no import cycle
     from waymark.services.doctor import Report
 from waymark.services.instructions import INSTRUCTIONS_VERSION
+from waymark.services.pr import PR_VERSION
 
 Payload = dict[str, Any]
 
@@ -66,6 +68,7 @@ VERSIONS = {
     "context.implement": CONTEXT_VERSION,
     "context.review": CONTEXT_VERSION,
     "doctor": 1,
+    "pr": PR_VERSION,
 }
 """The schema version of each payload. A breaking change to a payload bumps its number."""
 
@@ -269,6 +272,7 @@ def status(record: Record) -> Payload:
             {"name": entry.name, "date": entry.date.isoformat()} for entry in recent
         ],
         "problems": len(record.problems),
+        "git_hooks": hooks_status(record.project.root).state.value,
     }
 
 
