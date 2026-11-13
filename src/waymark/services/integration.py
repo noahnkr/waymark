@@ -6,15 +6,25 @@ Waymark owns are written; nothing else in a tool's folder is touched.
 """
 
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
 from waymark import adapters, assets
+from waymark.record import git
 from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR
+from waymark.record.record import Record
 from waymark.record.store import Transaction
 from waymark.services import migrations
-from waymark.services.common import Done, Refusal, commit, open_record, require_pinned
+from waymark.services.common import (
+    Done,
+    Refusal,
+    commit,
+    open_record,
+    repo_locations,
+    require_pinned,
+)
 
 SHARED_SKILLS = ".agents/skills"
 """Where the skills are rendered once, for every tool that reads the shared folder."""
@@ -73,6 +83,60 @@ def stage(transaction: Transaction, files: RecordFiles, tools: tuple[str, ...]) 
     return changes
 
 
+def local_files(
+    files: RecordFiles, tools: tuple[str, ...], folders: Sequence[Path]
+) -> dict[str, str]:
+    """The per-machine files that attach an atlas's code repos to each tool's sessions."""
+    require_tools(tools)
+    rendered: dict[str, str] = {}
+    for tool in tools:
+        adapter = adapters.get(tool)
+        existing = {
+            path: files.read(path, []) if files.is_file(path) else None
+            for path in adapter.local_reads
+        }
+        try:
+            rendered.update(adapter.local_files(existing, folders))
+        except (ValueError, json.JSONDecodeError) as error:
+            raise Refusal(
+                f"{adapter.local_reads[0]} can't be read as settings ({error}), so wm can't "
+                "attach the code repos without risking yours. Fix the file, then run this "
+                "command again."
+            ) from error
+    return rendered
+
+
+def stage_local(
+    transaction: Transaction, files: RecordFiles, tools: tuple[str, ...], folders: Sequence[Path]
+) -> list[FileChange]:
+    """Stage the per-machine files, and say which are new, changed or already current."""
+    changes: list[FileChange] = []
+    for path, text in sorted(local_files(files, tools, folders).items()):
+        current = files.read(path, []) if files.is_file(path) else None
+        if current == text:
+            changes.append(FileChange(path, "unchanged"))
+        else:
+            transaction.write(path, text)
+            changes.append(FileChange(path, "created" if current is None else "updated"))
+    return changes
+
+
+def keep_local(root: Path, changes: Sequence[FileChange]) -> None:
+    """Keep per-machine files out of the project's commits, through the clone's exclude file."""
+    for change in changes:
+        if not git.is_ignored(root, change.path):
+            git.exclude(root, change.path)
+
+
+def located_folders(record: Record) -> list[Path]:
+    """The folders of the atlas's code repos found on this machine, in settings order."""
+    return [
+        location.folder
+        for location in repo_locations(record).values()
+        if location.folder is not None
+    ]
+
+
 def update(start: Path) -> Done:
     """Migrate the record to this version's format and regenerate the files Waymark owns."""
     record = open_record(start)
@@ -83,7 +147,12 @@ def update(start: Path) -> Done:
     project_files = RecordFiles(record.project.root)
     transaction = Transaction(project_files)
     changes = stage(transaction, project_files, record.config.agent_tools)
+    local = stage_local(
+        transaction, project_files, record.config.agent_tools, located_folders(record)
+    )
     commit(transaction)
+    keep_local(record.project.root, local)
+    changes += local
     lines = [f"Migrated the record: {step}." for step in migrated]
     lines += [
         f"{change.status}: {change.path}" for change in changes if change.status != "unchanged"

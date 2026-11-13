@@ -4,10 +4,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waymark import __version__
+from waymark.record.atlas import Found, Location, locate_repo
 from waymark.record.changes import Change
 from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.project import RECORD_DIR, ProjectNotFoundError, find_project
 from waymark.record.record import Record, load_record
+from waymark.record.registry import Registry, load_registry
 from waymark.record.state import ChangeState, change_state, overlaps
 from waymark.record.store import StoreError, Transaction
 from waymark.record.tasks import Item
@@ -23,6 +25,22 @@ class Done:
 
     message: str
     paths: tuple[str, ...] = ()
+
+
+_NOTICES: list[str] = []
+
+
+def notice(text: str) -> None:
+    """Something to tell the person running the command, beside its output."""
+    if text not in _NOTICES:
+        _NOTICES.append(text)
+
+
+def take_notices() -> tuple[str, ...]:
+    """The notices gathered so far; the list starts again empty."""
+    found = tuple(_NOTICES)
+    _NOTICES.clear()
+    return found
 
 
 def install_hint(version: str) -> str:
@@ -66,10 +84,32 @@ def open_record(start: Path, *, writing: bool = False) -> Record:
         project = find_project(start)
     except ProjectNotFoundError as error:
         raise Refusal(str(error)) from error
+    for note in project.notes:
+        notice(note)
     record = load_record(project)
     if writing:
         require_writable(record)
     return record
+
+
+def repo_locations(record: Record, registry: Registry | None = None) -> dict[str, Location]:
+    """Where each of the atlas's code repos is on this machine; empty outside an atlas.
+
+    A repo found only through its path hint is used, with a notice that says
+    how to register it.
+    """
+    config = record.config
+    if config is None or config.atlas_name is None:
+        return {}
+    known = load_registry() if registry is None else registry
+    found = {
+        repo.name: locate_repo(config.atlas_name, record.project.root, repo, known)
+        for repo in config.repos
+    }
+    for location in found.values():
+        if location.found is Found.HINT:
+            notice(location.detail)
+    return found
 
 
 def find_change(record: Record, name: str) -> Change:
