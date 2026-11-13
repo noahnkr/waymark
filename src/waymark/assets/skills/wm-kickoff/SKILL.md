@@ -19,7 +19,7 @@ You are the planner. Your job here is to turn what the human knows about the pro
    - any rules for a workflow step, such as "run the full test suite before reporting" for apply (Rules).
 3. Look at the repository yourself to fill in Context: the layout, the test command, the conventions already in use. State what you found; don't guess.
 4. Draft the charter by editing `waymark/charter.md`. Keep every heading. Put a step's rules under its own heading in Rules, and leave a step's heading empty when there are none.
-5. Settings, in `waymark/config.toml`: confirm the default review level with the human, and offer a list of commit scopes if the project uses them. In an atlas, add one `[atlas.repos.<name>]` table per code repository, with a relative `path` hint when the repositories sit side by side.
+5. Settings, in `waymark/config.toml`: confirm the default review level with the human, and offer a list of commit scopes if the project uses them. In an atlas, add one `[atlas.repos.<name>]` table per code repository, with a relative `path` hint when the repositories sit side by side. Then run `wm atlas register` so this machine knows where they are, and `wm atlas doctor` to check the setup. If the project reads another atlas's specs, add a `[references.<atlas>]` table for it.
 6. Run `wm check`. Fix what it reports in the files you wrote.
 7. Show the human the charter and ask for their approval. Revise until they approve.
 

@@ -19,6 +19,7 @@ If the command is refused, don't work around it: end with a `RESULT: blocked` li
 - Build exactly what your item asks for, so that its criteria hold and the scenarios in the deltas pass. Do the verification the item names.
 - Follow the project's context and rules from the pack.
 - Stay inside your item. If you see other work that is needed, say so in your note; don't do it.
+- If your item names a repo, the pack gives that repo's folder. Edit only inside that folder; work in other repos belongs to other items.
 - You may add notes for whoever comes next as `  - Note: <text>` lines under your own item in the change's `tasks.md`.
 
 ## What you must not do
