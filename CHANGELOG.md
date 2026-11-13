@@ -3,7 +3,7 @@
 All notable changes to Waymark, one entry per release. A release that changes
 the record's format says what `wm update` migrates.
 
-## [0.1.0] - unreleased
+## [0.1.0] - 2026-11-13
 
 The first release: the foundation.
 
@@ -32,3 +32,5 @@ The first release: the foundation.
   request text from a change (`wm pr`).
 - Runs on Windows, macOS and Linux, on Python 3.11 and newer, with no
   dependencies beyond the standard library.
+
+Smoke test: passed on 2026-11-13 with Claude Code 2.1.325 on Windows.

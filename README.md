@@ -277,7 +277,7 @@ independent reviewer is always an agent.
 - **[Architecture](docs/architecture.md)**: for contributors, including how to add an agent tool
 - **[Changelog](CHANGELOG.md)**
 
-Works with Claude Code. Version last verified: **pending the 0.1.0 smoke test**.
+Works with Claude Code. Version last verified: **2.1.325**, on Windows.
 
 ## License
 
