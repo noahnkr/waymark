@@ -15,10 +15,13 @@ from pathlib import Path
 from waymark import __version__, adapters
 from waymark.record.terms import Step, Verdict
 from waymark.services import atlas as atlas_service
+from waymark.services import ci as ci_service
 from waymark.services import context as context_service
 from waymark.services import doctor as doctor_service
+from waymark.services import githooks as githooks_service
 from waymark.services import instructions as instructions_service
 from waymark.services import integration, lifecycle, references, setup
+from waymark.services import pr as pr_service
 from waymark.services.common import Done, Refusal, open_record, take_notices
 from waymark.views import payloads, render
 from waymark.views.payloads import Payload
@@ -39,7 +42,8 @@ Handler = Callable[[argparse.Namespace], int]
 
 
 def _report(done: Done) -> int:
-    print(done.message)
+    if done.message:
+        print(done.message)
     return EXIT_OK
 
 
@@ -68,6 +72,28 @@ def _atlas_register(args: argparse.Namespace) -> int:
 
 def _atlas_point(args: argparse.Namespace) -> int:
     return _report(atlas_service.point(_here(), args.atlas, args.path))
+
+
+def _git_hooks(_: argparse.Namespace) -> int:
+    return _report(githooks_service.git_hooks(_here()))
+
+
+def _run_hook(args: argparse.Namespace) -> int:
+    if args.name == "commit-msg":
+        if not args.file:
+            raise Refusal("The commit-msg hook needs the commit message file git passes it.")
+        return _report(githooks_service.check_commit_message(_here(), args.file))
+    now = datetime.datetime.now(datetime.UTC)
+    return _report(githooks_service.check_staged_record(_here(), now))
+
+
+def _ci(_: argparse.Namespace) -> int:
+    return _report(ci_service.add_workflow(_here()))
+
+
+def _pr(args: argparse.Namespace) -> int:
+    _show_payload(pr_service.describe(open_record(_here()), args.change, args.repo), args)
+    return EXIT_OK
 
 
 def _doctor_report(report: doctor_service.Report, args: argparse.Namespace) -> int:
@@ -300,6 +326,23 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     _view_command(
         commands, "doctor", _doctor, "Check wm, git and this project's setup; changes nothing."
     )
+
+    summary = "Put the committed git hooks in this repository and point this clone's git at them."
+    commands.add_parser("git-hooks", help=summary, description=summary).set_defaults(
+        handler=_git_hooks
+    )
+    summary = "Run one of the git hooks' checks; the hooks call this."
+    run_hook = commands.add_parser("run-hook", help=summary, description=summary)
+    run_hook.add_argument("name", choices=list(githooks_service.HOOK_NAMES))
+    run_hook.add_argument("file", nargs="?", help="the commit message file (commit-msg only)")
+    run_hook.set_defaults(handler=_run_hook)
+    summary = "Add a GitHub Actions workflow that installs the pinned wm and runs wm check."
+    commands.add_parser("ci", help=summary, description=summary).set_defaults(handler=_ci)
+    pr = _view_command(
+        commands, "pr", _pr, "Describe a pull request from a change: its title and description."
+    )
+    pr.add_argument("change", help="the change's name")
+    pr.add_argument("--repo", metavar="NAME", help="in an atlas, the code repo it is for")
 
     summary = "Register atlases on this machine, point code repos at them, check their setup."
     atlas = commands.add_parser("atlas", help=summary, description=summary)
