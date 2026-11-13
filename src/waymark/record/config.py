@@ -9,16 +9,27 @@ from waymark.record.problems import WHOLE_FILE, Problem
 from waymark.record.terms import Layout, ReviewLevel
 
 CONFIG_FILE = "config.toml"
+RECORD_DIR = "waymark"
+"""The record's folder, at the top of a repository or an atlas."""
 
 _REPO_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 RECORD_FORMAT = 1
 """The record format this version of wm reads and writes."""
 
 _TOP_KEYS = frozenset(
-    {"wm_version", "record_format", "default_review", "commit_scopes", "agent_tools", "atlas"}
+    {
+        "wm_version",
+        "record_format",
+        "default_review",
+        "commit_scopes",
+        "agent_tools",
+        "atlas",
+        "references",
+    }
 )
 _ATLAS_KEYS = frozenset({"name", "repos"})
 _REPO_KEYS = frozenset({"path"})
+_REFERENCE_KEYS = frozenset({"path"})
 
 
 @dataclass(frozen=True)
@@ -26,6 +37,14 @@ class CodeRepo:
     """A code repository an atlas covers, with an optional relative-path hint."""
 
     name: str
+    path_hint: str | None
+
+
+@dataclass(frozen=True)
+class Reference:
+    """Another atlas whose specs this project reads, with an optional relative-path hint."""
+
+    atlas: str
     path_hint: str | None
 
 
@@ -40,6 +59,7 @@ class Config:
     agent_tools: tuple[str, ...]
     atlas_name: str | None
     repos: tuple[CodeRepo, ...]
+    references: tuple[Reference, ...] = ()
 
     @property
     def layout(self) -> Layout:
@@ -121,6 +141,28 @@ class _Reader:
             repos.append(CodeRepo(name, hint))
         return tuple(repos)
 
+    def references(self, tables: object) -> tuple[Reference, ...]:
+        if not isinstance(tables, dict):
+            self.problem(
+                "invalid-setting",
+                'Name each referenced atlas with its own "[references.<atlas>]" table.',
+            )
+            return ()
+        references: list[Reference] = []
+        for name, table in tables.items():
+            where = f' in "[references.{name}]"'
+            if not _REPO_NAME.fullmatch(name) or not isinstance(table, dict):
+                self.problem(
+                    "invalid-setting",
+                    f'"{name}" is not a usable reference. Use "[references.<atlas>]" with the '
+                    "other atlas's name.",
+                )
+                continue
+            self.unknown_keys(table, _REFERENCE_KEYS, where)
+            hint = self.string(table, "path", where) if "path" in table else None
+            references.append(Reference(name, hint))
+        return tuple(references)
+
 
 def parse_config(text: str) -> tuple[Config | None, tuple[Problem, ...]]:
     """Read the settings. Returns no config when any setting is unusable."""
@@ -148,6 +190,9 @@ def parse_config(text: str) -> tuple[Config | None, tuple[Problem, ...]]:
             repos = reader.repos(atlas)
         else:
             reader.problem("invalid-setting", 'Write the atlas settings as an "[atlas]" table.')
+    references = reader.references(data["references"]) if "references" in data else ()
+    if atlas_name is not None and atlas_name in {reference.atlas for reference in references}:
+        reader.problem("invalid-setting", "An atlas can't reference itself. Remove the reference.")
 
     if (
         reader.problems
@@ -158,6 +203,13 @@ def parse_config(text: str) -> tuple[Config | None, tuple[Problem, ...]]:
     ):
         return None, tuple(reader.problems)
     config = Config(
-        wm_version, record_format, default_review, commit_scopes, agent_tools, atlas_name, repos
+        wm_version,
+        record_format,
+        default_review,
+        commit_scopes,
+        agent_tools,
+        atlas_name,
+        repos,
+        references,
     )
     return config, ()
