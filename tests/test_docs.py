@@ -45,7 +45,8 @@ REQUIRED = (
     "docs/json.md",
     "docs/architecture.md",
     "docs/smoke-test.md",
-    "docs/assets/banner.svg",
+    "docs/assets/banner-dark.svg",
+    "docs/assets/banner-light.svg",
 )
 
 

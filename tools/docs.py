@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from waymark import __version__, cli
+from waymark.record.terms import Verdict
 from waymark.services import lifecycle, setup
 from waymark.views import payloads, render
 from waymark.views.schemas import SCHEMAS
@@ -183,19 +184,19 @@ def json_reference() -> str:
 PROPOSAL = """# Add a result limit
 
 Owner: {owner}
-Path: short
 
 ## Why
 
-Searches that match thousands of documents return all of them, and the page slows down.
+Searches that match thousands of documents return all of them,
+and the results page slows to a crawl.
 
 ## What changes
 
-A search returns at most fifty results.
+A search returns at most fifty results, best matches first.
 
 ## Non-goals
 
-Paging through more results.
+Paging through the rest.
 
 ## Impact
 
@@ -216,19 +217,46 @@ A search SHALL return at most fifty results.
 #### Scenario: Many matches
 - GIVEN an index where a query matches more than fifty documents
 - WHEN the search runs
-- THEN fifty results come back
+- THEN the fifty best matches come back
+"""
+
+DESIGN = """# Design
+
+## Context
+
+Results are sorted by relevance before they are returned.
+
+## Approach
+
+Cut the sorted list at fifty, in the search service.
+
+## Decisions
+
+### Decision: Where to cut
+
+- Options: in the database query, or after sorting
+- Choice: after sorting
+- Why: the order has to be final before the cut
+
+## Risks and trade-offs
+
+Sorting every match still costs memory on very large result sets.
 """
 
 TASKS = """# Tasks
 
 ## 1. Limit
 
-- [ ] 1.1 Cap the result count
-  - Criteria: at most fifty results come back
+- [ ] 1.1 Cap the result count   `review: independent`
+  - Criteria: at most fifty results come back, best first
   - Verify: a test searches an index with fifty-one matches
-- [ ] 1.2 Mention the limit in the help text   `review: none`
-  - Criteria: the search help names the limit
+- [ ] 1.2 Name the limit in the help text   `review: none`
+  - Criteria: the search help says fifty
 """
+
+IMPLEMENTER_NOTE = "capped after sorting; the fifty-one-match test passes"
+REVIEWER_REASONS = "cap and order hold; the scenario is covered by the test"
+OUTCOME = "Searches return the fifty best matches."
 
 
 @contextmanager
@@ -255,65 +283,106 @@ def _write(root: Path, relative: str, text: str) -> None:
     path.write_bytes(text.encode("utf-8"))
 
 
-def _tree(root: Path, folder: str) -> list[str]:
-    base = root / "waymark" / folder
-    return sorted(path.relative_to(root).as_posix() for path in base.rglob("*") if path.is_file())
+def _read(root: Path, relative: str) -> str:
+    return (root / "waymark" / relative).read_bytes().decode("utf-8").rstrip("\n")
+
+
+def _status(root: Path) -> str:
+    from waymark.record.project import find_project  # noqa: PLC0415
+    from waymark.record.record import load_record  # noqa: PLC0415
+
+    return render.to_text(payloads.status(load_record(find_project(root))), Style(unicode=True))
+
+
+def _file(summary: str, language: str, text: str) -> list[str]:
+    return [
+        "<details>",
+        f"<summary>{summary}</summary>",
+        "",
+        f"```{language}",
+        text,
+        "```",
+        "",
+        "</details>",
+    ]
 
 
 def evidence() -> str:
-    """Real wm output for a small generic change, with fixed dates."""
-    style = Style(unicode=True)
+    """A real change taken through wm from start to archive, with fixed dates."""
+    folder = f"changes/{CHANGE}"
     with _scratch() as root:
         setup.init_project(root, None, ("claude-code",))
-        setup.create_change(root, CHANGE, short=True, owner=OWNER)
-        folder = f"changes/{CHANGE}"
+        created = setup.create_change(root, CHANGE, owner=OWNER).message
         _write(root, f"{folder}/proposal.md", PROPOSAL.format(owner=OWNER))
         _write(root, f"{folder}/specs/search.md", DELTA)
+        _write(root, f"{folder}/design.md", DESIGN)
         _write(root, f"{folder}/tasks.md", TASKS)
-        lifecycle.accept(root, CHANGE, DAY)
+        drafted = _status(root)
+        accepted = lifecycle.accept(root, CHANGE, DAY).message
         lifecycle.tick(root, CHANGE, "1.1")
-        lifecycle.self_review(
-            root, CHANGE, "1.1", "the cap holds at fifty; the fifty-one-match test passes", DAY
-        )
-        from waymark.record.project import find_project  # noqa: PLC0415
-        from waymark.record.record import load_record  # noqa: PLC0415
-
-        record = load_record(find_project(root))
-        status = render.to_text(payloads.status(record), style)
-        files = _tree(root, folder)
-        tasks = (root / "waymark" / folder / "tasks.md").read_text(encoding="utf-8")
-        proposal_head = (root / "waymark" / folder / "proposal.md").read_text(encoding="utf-8")
-    accepted = next(line for line in proposal_head.splitlines() if line.startswith("Accepted:"))
+        lifecycle.verdict(root, CHANGE, "1.1", Verdict.PASS, REVIEWER_REASONS, DAY)
+        lifecycle.tick(root, CHANGE, "1.2")
+        built = _status(root)
+        files = {
+            "proposal": _read(root, f"{folder}/proposal.md"),
+            "delta": _read(root, f"{folder}/specs/search.md"),
+            "design": _read(root, f"{folder}/design.md"),
+            "tasks": _read(root, f"{folder}/tasks.md"),
+        }
+        archived = lifecycle.archive(root, CHANGE, DAY, outcome=OUTCOME).message
+        spec = _read(root, "specs/search.md")
+    session = [
+        "# /wm-explore (optional): think the idea through with the agent",
+        "",
+        f"$ wm new change {CHANGE}",
+        created,
+        "",
+        "# /wm-propose: the agent drafts the proposal, a spec delta, the design",
+        "# and the task list, with a review level for each task",
+        "",
+        "$ wm status",
+        drafted,
+        "",
+        f"$ wm accept {CHANGE}",
+        accepted,
+        "",
+        "# /wm-apply: a fresh agent builds 1.1 from the change alone and ends with",
+        f"#   RESULT: done: {IMPLEMENTER_NOTE}",
+        "# A reviewer agent that never saw the build checks it and ends with",
+        f"#   VERDICT: pass: {REVIEWER_REASONS}",
+        "# wm writes both under 1.1. Then 1.2 is built; it needs no review.",
+        "",
+        "$ wm status",
+        built,
+        "",
+        f'$ wm archive {CHANGE} --outcome "{OUTCOME}"',
+        archived,
+    ]
     lines = [
         EVIDENCE_START,
         "",
-        "A small change, accepted, with its first item built and reviewed:",
-        "",
-        "```console",
-        "$ wm status",
-        status,
+        "```text",
+        *session,
         "```",
         "",
-        "Its task list. The tick and the review line under 1.1 were written by `wm`, "
-        "not by an agent:",
+        "The files behind it, all plain markdown in `waymark/`:",
         "",
-        "```markdown",
-        tasks.rstrip("\n"),
-        "```",
-        "",
-        "<details>",
-        "<summary>The rest of the change</summary>",
-        "",
-        "```",
-        *files,
-        "```",
-        "",
-        f"Your approval, written into the proposal by `wm accept`: `{accepted}`",
-        "",
-        "</details>",
+        *_file(f"<code>changes/{CHANGE}/proposal.md</code>", "markdown", files["proposal"]),
+        *_file(
+            f"<code>changes/{CHANGE}/specs/search.md</code>, the spec delta",
+            "markdown",
+            files["delta"],
+        ),
+        *_file(f"<code>changes/{CHANGE}/design.md</code>", "markdown", files["design"]),
+        *_file(
+            f"<code>changes/{CHANGE}/tasks.md</code>, with what wm recorded",
+            "markdown",
+            files["tasks"],
+        ),
+        *_file("<code>specs/search.md</code>, the living spec after archive", "markdown", spec),
         "",
         "<sub>Real output of this version of <code>wm</code> on a generic change, generated by "
-        "<code>tools/docs.py</code>. From 0.1.1 it comes from Waymark's own record.</sub>",
+        "<code>tools/docs.py</code>. The comments mark where an agent works.</sub>",
         "",
         EVIDENCE_END,
     ]
