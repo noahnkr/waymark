@@ -41,8 +41,8 @@ RULES = CHARTER + "\n### tasks\n\nKeep items small.\n\n### explore\n\nAsk before
 
 def valid(payload: dict[str, Any]) -> dict[str, Any]:
     name = payload["schema"].removeprefix("wm.")
-    assert errors(payload, SCHEMAS[name]) == []
-    assert json.loads(render.to_json(payload)) == payload
+    assert errors(render.public(payload), SCHEMAS[name]) == []
+    assert json.loads(render.to_json(payload)) == render.public(payload)
     assert render.to_text(payload, PLAIN)
     return payload
 
@@ -365,16 +365,36 @@ def test_delegation_gate_passes_for_a_healthy_accepted_item(project: Workspace) 
     assert delegation_problems(record, change, change.tasks.items[0], "implement") == []
 
 
-def test_pack_in_an_atlas_names_the_items_repo(tmp_path: Any) -> None:
+def test_pack_in_an_atlas_resolves_the_items_repo_to_its_folder_in_text_only(
+    tmp_path: Any,
+) -> None:
+    from tests.conftest import git_init  # noqa: PLC0415 - only this test needs it
+
+    atlas = Workspace(tmp_path / "atlas", ATLAS_CONFIG)
+    git_init(atlas.root)
+    git_init(tmp_path / "suite-api")
+    atlas.change(tasks=HEAD + "- [ ] 1.1 Add the endpoint\n  - Criteria: fifty\n  - Repo: api\n")
+    lifecycle.accept(atlas.root, NAME, DAY)
+    built = valid(context_pack(atlas.record(), "implement", NAME, "1.1"))
+    assert built["item"]["repo"] == "api"
+    assert built["item"]["repo_found"] is True
+    folder = str((tmp_path / "suite-api").resolve())
+    assert f"- Repo: api (its folder on this machine is {folder})" in render.to_text(built, PLAIN)
+    assert folder not in render.to_json(built)
+    assert '"repo_found": true' in render.to_json(built)
+
+
+def test_delegation_gate_refuses_an_item_whose_repo_is_not_on_this_machine(
+    tmp_path: Any,
+) -> None:
     from tests.conftest import git_init  # noqa: PLC0415 - only this test needs it
 
     atlas = Workspace(tmp_path / "atlas", ATLAS_CONFIG)
     git_init(atlas.root)
     atlas.change(tasks=HEAD + "- [ ] 1.1 Add the endpoint\n  - Criteria: fifty\n  - Repo: api\n")
     lifecycle.accept(atlas.root, NAME, DAY)
-    built = valid(context_pack(atlas.record(), "implement", NAME, "1.1"))
-    assert built["item"]["repo"] == "api"
-    assert "- Repo: api" in render.to_text(built, PLAIN)
+    with pytest.raises(Refusal, match=r'works in a repo that isn.t here.*"api"'):
+        context_pack(atlas.record(), "implement", NAME, "1.1")
 
 
 def test_explore_pack_holds_the_charter_and_an_index_of_the_record(project: Workspace) -> None:

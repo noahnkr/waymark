@@ -11,14 +11,16 @@ from pathlib import Path
 from waymark import assets
 from waymark.hooks import commands
 from waymark.hooks.events import ALLOW, Decision, Event, EventKind, Role
+from waymark.record.atlas import contains
 from waymark.record.changes import TASKS_FILE
 from waymark.record.evidence import evidence_changes, only_adds_notes
 from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
-from waymark.record.record import ARCHIVE, CHANGES, SPECS, load_record
-from waymark.record.terms import Verdict
+from waymark.record.record import ARCHIVE, CHANGES, SPECS, Record, load_record
+from waymark.record.state import AcceptanceState, StepKind, derive_state
+from waymark.record.terms import Layout, Verdict
 from waymark.services import lifecycle
-from waymark.services.common import Done, Refusal, find_change, find_item
+from waymark.services.common import Done, Refusal, find_change, find_item, repo_locations
 from waymark.services.context import (
     IMPLEMENT,
     RESULT_LINE,
@@ -102,6 +104,68 @@ def _new_text(files: RecordFiles, relative: str, event: Event) -> tuple[str, str
     return before, after
 
 
+def working_repos(record: Record) -> dict[str, list[str]]:
+    """The code repos implementers may edit now, each with the items that name it.
+
+    The hook can't see which item an implementer was started on, so the record
+    answers: in each accepted change, the next item to apply is the one being
+    built, and its repo is the one an implementer may edit.
+    """
+    repos: dict[str, list[str]] = {}
+    for name, state in sorted(derive_state(record).changes.items()):
+        step = state.next_step
+        if state.acceptance is not AcceptanceState.VALID or step.kind is not StepKind.APPLY:
+            continue
+        tasks = record.changes[name].tasks
+        item = tasks.item(step.item) if tasks and step.item else None
+        if item is not None and item.repo:
+            repos.setdefault(item.repo, []).append(f"{name} {item.number}")
+    return repos
+
+
+def _outside_record(project: Project, event: Event) -> Decision:
+    """Edit limits across an atlas's code repos; elsewhere every role but the reviewer may edit."""
+    record = load_record(project)
+    if event.path is None or record.layout is not Layout.ATLAS:
+        return ALLOW
+    locations = repo_locations(record)
+    inside = next(
+        (
+            name
+            for name, location in locations.items()
+            if location.folder is not None and contains(location.folder, event.path)
+        ),
+        None,
+    )
+    if event.role is Role.PLANNER:
+        if inside is None:
+            return ALLOW
+        return _refuse(
+            f'The planner edits only the record, and this file is in the code repo "{inside}". '
+            'Code is built by an implementer: start the wm-implementer agent with "<change> '
+            '<item>".'
+        )
+    allowed = working_repos(record)
+    if inside is not None and inside in allowed:
+        return ALLOW
+    if not allowed:
+        return _refuse(
+            "No accepted change has an item to apply right now, so there is no repo an "
+            "implementer may edit. Check the item with wm show <change>."
+        )
+    places = []
+    for repo, items in sorted(allowed.items()):
+        location = locations.get(repo)
+        folder = location.folder if location else None
+        where = str(folder) if folder else "not found on this machine; register it with wm atlas"
+        places.append(f'"{repo}" ({where}) for {", ".join(items)}')
+    return _refuse(
+        "An implementer edits only inside the code repo its item names: "
+        f"{'; '.join(places)}. This file is outside it. If the item needs changes elsewhere, "
+        "end with RESULT: spec-gap and say what is missing."
+    )
+
+
 def _edit(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one return per rule
     if event.role is Role.REVIEWER:
         return _refuse(
@@ -110,7 +174,7 @@ def _edit(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one re
         )
     relative = _relative(project, event.path) if event.path else None
     if relative is None:
-        return ALLOW
+        return _outside_record(project, event)
     parts = relative.split("/")
     if parts[0] == SPECS:
         return _refuse(

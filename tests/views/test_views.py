@@ -29,8 +29,8 @@ FANCY = Style(color=True, unicode=True)
 def valid(payload: dict[str, Any]) -> dict[str, Any]:
     """Check a payload against its schema, in both renderings, and hand it back."""
     name = payload["schema"].removeprefix("wm.")
-    assert errors(payload, SCHEMAS[name]) == []
-    assert json.loads(render.to_json(payload)) == payload
+    assert errors(render.public(payload), SCHEMAS[name]) == []
+    assert json.loads(render.to_json(payload)) == render.public(payload)
     for style in (PLAIN, FANCY):
         assert render.to_text(payload, style)
     render.to_text(payload, PLAIN).encode("ascii")
@@ -94,7 +94,9 @@ def test_every_payload_names_its_schema_and_version(project: Workspace) -> None:
         payloads.show(record, "faster-search"),
         payloads.show(record, "caching"),
     ]
-    views = {name for name in VERSIONS if not name.startswith(("instructions", "context"))}
+    views = {
+        name for name in VERSIONS if not name.startswith(("instructions", "context", "doctor"))
+    }
     assert {payload["schema"].removeprefix("wm.") for payload in built} == views
     assert set(SCHEMAS) == set(VERSIONS)
     for payload in built:

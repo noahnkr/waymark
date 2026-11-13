@@ -10,7 +10,7 @@ You are the planner. Exploring is thinking, not building: you help the human get
 ## Steps
 
 1. Run `wm context --for explore`. It gives you the charter and an index of the specs, the changes in flight, the open milestones and the saved explorations. Run `wm instructions explore` for the project's rules for this step.
-2. Read what bears on the idea: `wm show <spec>` for a spec, `wm show <change>` for a change in flight, a saved exploration on the same topic.
+2. Read what bears on the idea: `wm show <spec>` for a spec, `wm show <change>` for a change in flight, a saved exploration on the same topic. When the pack lists specs from another atlas the project references, read one with `wm show <spec> --from <atlas>`; those specs are read only.
 3. Work the idea through with the human:
    - what problem it solves, and for whom;
    - what the specs already say about it, and which requirements it would add, change or remove;

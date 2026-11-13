@@ -57,6 +57,42 @@ def current_branch(folder: Path) -> str | None:
         return None
 
 
+def version() -> str | None:
+    """The installed git's version line; None when git can't be run."""
+    try:
+        return _run(Path.cwd(), "--version").strip() or None
+    except GitError:
+        return None
+
+
+def is_ignored(repository: Path, relative: str) -> bool:
+    """Whether git ignores a path in a repository (relative to its top, with forward slashes)."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repository), "check-ignore", "-q", "--no-index", "--", relative],
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
+def exclude(repository: Path, relative: str) -> None:
+    """Keep a path out of this clone's commits, through its own exclude file.
+
+    The exclude file belongs to the clone and is never committed, so nothing
+    the project shares changes.
+    """
+    where = Path(_run(repository, "rev-parse", "--git-path", "info/exclude").strip())
+    path = where if where.is_absolute() else repository / where
+    current = path.read_bytes().decode("utf-8", errors="replace") if path.is_file() else ""
+    separator = "" if not current or current.endswith("\n") else "\n"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8", newline="") as handle:
+        handle.write(f"{separator}/{relative}\n")
+
+
 def last_changed(repository: Path, folders: Iterable[str]) -> dict[str, datetime.datetime]:
     """When each folder last changed in git's history.
 

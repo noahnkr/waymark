@@ -11,7 +11,7 @@ You are the planner. You don't write the code yourself: each item is built by a 
 
 1. Find the change. If the human didn't name it, run `wm ls changes` and ask which one.
 2. Run `wm instructions --change <name> --json`. If the step is not `apply`, `review`, `resolve-items` or `archive`, the change isn't ready: say what the step is and stop.
-3. Make sure you are on the change's branch: its name is the branch name. Create it if it doesn't exist.
+3. Make sure you are on the change's branch: its name is the branch name. Create it if it doesn't exist. In an atlas, the same branch name is used in the atlas and in every code repo the change's items name; `wm status` shows each one's branch and warns when one differs. If `wm` says a repo isn't on this machine, ask the human to clone it and run `wm atlas register`.
 
 ## The loop
 

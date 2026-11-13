@@ -133,20 +133,34 @@ def test_change_runs_from_init_to_archive_with_the_record_in_the_repo(session: S
 
 
 def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
-    session: Session,
+    session: Session, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     name = "add-limit"
-    session.run("init", "--atlas", "suite")
+    assert 'Registered the atlas "suite"' in session.run("init", "--atlas", "suite")
     config = session.read("config.toml")
     session.write(
         "config.toml",
         config + '\n[atlas.repos.api]\npath = "../suite-api"\n\n[atlas.repos.web]\n',
     )
-    for repo in ("suite-api", "suite-web"):
-        git_init(session.root.parent / repo)
+    api, web = session.root.parent / "suite-api", session.root.parent / "suite-web"
+    for repo in (api, web):
+        git_init(repo)
     record = load_record(find_project(session.root))
     assert record.layout is Layout.ATLAS
     assert record.problems == ()
+
+    registered = session.run("atlas", "register")
+    assert 'Registered the code repo "api"' in registered
+    assert "wm atlas register web <folder>" in registered
+    session.run("atlas", "register", "web", "../suite-web")
+    assert "0 error(s), 0 warning(s)" in session.run("atlas", "doctor")
+    settings = (session.root / ".claude" / "settings.local.json").read_text(encoding="utf-8")
+    assert "additionalDirectories" in settings
+
+    monkeypatch.chdir(api)
+    assert "Wrote .waymark/atlas.toml" in session.run("atlas", "point", "suite")
+    assert "Changes in flight" in session.run("status")
+    monkeypatch.chdir(session.root)
 
     session.run("new", "change", name, "--owner", "Robin Roe")
     session.fill_proposal(name, "Specs: search. Repos: api, web.")
@@ -168,6 +182,11 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
         "- [ ] 1.2 Show the capped list\n  - Criteria: the page shows fifty rows\n  - Repo: web\n",
     )
     session.run("accept", name)
+    status = session.run("status")
+    assert "branches: suite" in status
+    assert "api is on" in status
+    pack = session.run("context", name, "1.1", "--for", "implement")
+    assert f"- Repo: api (its folder on this machine is {api.resolve()})" in pack
     for number in ("1.1", "1.2"):
         session.run("tick", name, number)
         session.run("review", name, number, "--self", "matches the criteria")
@@ -177,8 +196,9 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     assert record.problems == ()
     assert record.changes == {}
     assert record.specs["search"].repos == ("api", "web")
-    assert not (session.root.parent / "suite-api" / "waymark").exists()
-    assert not (session.root.parent / "suite-web" / "waymark").exists()
+    assert not (api / "waymark").exists()
+    assert not (web / "waymark").exists()
+    assert not (web / ".waymark").exists()
 
 
 def test_small_change_takes_the_short_path_with_two_approvals(session: Session) -> None:

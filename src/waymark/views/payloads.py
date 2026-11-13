@@ -1,13 +1,20 @@
 """The data behind every view: plain payloads built from the record and its state.
 
-A payload holds only JSON types. It carries its schema's name and version, and
-nothing that differs between machines on the same commit.
+A payload holds only JSON types. It carries its schema's name and version.
+What it reads from this machine rather than the record (wm's own version,
+the branches checked out in an atlas's repos, what the doctors find) is
+named for what it is. Values that would put an absolute path in the JSON,
+such as a repo's folder, sit under keys starting with an underscore: the
+text views show them, and the JSON leaves them out.
 """
 
 import datetime
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from waymark import __version__
+from waymark.record import git
+from waymark.record.atlas import Location
 from waymark.record.changes import Change
 from waymark.record.config import RECORD_FORMAT
 from waymark.record.explorations import QUESTIONS, Exploration
@@ -34,10 +41,13 @@ from waymark.record.state import (
     overlaps,
 )
 from waymark.record.tasks import Item
-from waymark.record.terms import Verdict
+from waymark.record.terms import Layout, Verdict
 from waymark.services.check import Finding, Severity, check_record
-from waymark.services.common import Refusal
+from waymark.services.common import Refusal, repo_locations
 from waymark.services.context import CONTEXT_VERSION
+
+if TYPE_CHECKING:  # the doctor's checks reach the views through the CLI; no import cycle
+    from waymark.services.doctor import Report
 from waymark.services.instructions import INSTRUCTIONS_VERSION
 
 Payload = dict[str, Any]
@@ -55,6 +65,7 @@ VERSIONS = {
     "context.explore": CONTEXT_VERSION,
     "context.implement": CONTEXT_VERSION,
     "context.review": CONTEXT_VERSION,
+    "doctor": 1,
 }
 """The schema version of each payload. A breaking change to a payload bumps its number."""
 
@@ -76,7 +87,54 @@ def _conflict(conflict: Conflict) -> Payload:
     }
 
 
-def _change_summary(state: ChangeState) -> Payload:
+class _Branches:
+    """The branch checked out in each repo of an atlas, read once per view."""
+
+    def __init__(self, record: Record) -> None:
+        self.record = record
+        config = record.config
+        atlas = record.layout is Layout.ATLAS and config is not None
+        self.atlas = config.atlas_name if atlas and config else None
+        self.locations: dict[str, Location] = repo_locations(record) if self.atlas else {}
+        self._seen: dict[Path, str | None] = {}
+
+    def _branch(self, folder: Path) -> str | None:
+        if folder not in self._seen:
+            self._seen[folder] = git.current_branch(folder)
+        return self._seen[folder]
+
+    def of(self, change: Change, state: ChangeState) -> list[Payload]:
+        """Each repo a change touches, with its branch; a mismatch warns while it is applied."""
+        if self.atlas is None:
+            return []
+        touched = sorted(
+            {item.repo for item in change.tasks.items if item.repo} if change.tasks else ()
+        )
+        building = state.acceptance is AcceptanceState.VALID and not state.applied
+        places: list[tuple[str, str, Path | None]] = [
+            ("atlas", self.atlas, self.record.project.root)
+        ]
+        for repo in touched:
+            location = self.locations.get(repo)
+            places.append(("code", repo, location.folder if location else None))
+        entries = []
+        for kind, name, folder in places:
+            branch = self._branch(folder) if folder is not None else None
+            matches = branch == change.name
+            entries.append(
+                {
+                    "name": name,
+                    "kind": kind,
+                    "found": folder is not None,
+                    "branch": branch,
+                    "matches": matches,
+                    "warn": building and folder is not None and not matches,
+                }
+            )
+        return entries
+
+
+def _change_summary(state: ChangeState, repos: list[Payload] | None = None) -> Payload:
     step = state.next_step
     return {
         "name": state.name,
@@ -93,6 +151,7 @@ def _change_summary(state: ChangeState) -> Payload:
             "reason": step.reason,
         },
         "conflicts": [_conflict(conflict) for conflict in state.conflicts],
+        "repos": repos or [],
     }
 
 
@@ -190,6 +249,7 @@ def status(record: Record) -> Payload:
             }
         )
     recent = sorted(record.archived_changes, reverse=True)[:RECENT]
+    branches = _Branches(record)
     return {
         **_header("status"),
         "layout": record.layout.value,
@@ -197,7 +257,12 @@ def status(record: Record) -> Payload:
         "wm_version": __version__,
         "pinned_version": config.wm_version if config else None,
         "writable": _writable(record),
-        "changes": [_change_summary(state.changes[name]) for name in sorted(state.changes)],
+        "changes": [
+            _change_summary(
+                state.changes[name], branches.of(record.changes[name], state.changes[name])
+            )
+            for name in sorted(state.changes)
+        ],
         "milestones": milestones,
         "needs_human": len(inbox_entries(record, state)),
         "recently_archived": [
@@ -260,8 +325,11 @@ def _ls_specs(record: Record) -> list[Payload]:
     return entries
 
 
-def ls(record: Record, kind: str, *, archived: bool = False) -> Payload:
-    """One entry per change, spec, milestone or exploration, with its state."""
+def ls(record: Record, kind: str, *, archived: bool = False, source: str | None = None) -> Payload:
+    """One entry per change, spec, milestone or exploration, with its state.
+
+    ``source`` names the referenced atlas the record was read from, if any.
+    """
     state = derive_state(record)
     entries: list[Payload]
     if kind == "change":
@@ -287,7 +355,7 @@ def ls(record: Record, kind: str, *, archived: bool = False) -> Payload:
             {"name": name, "state": exploration.status.value, "detail": exploration.detail or ""}
             for name, exploration in sorted(state.explorations.items())
         ]
-    return {**_header("ls"), "kind": kind, "entries": entries}
+    return {**_header("ls"), "kind": kind, "from": source, "entries": entries}
 
 
 def _item(item: Item, state: ChangeState | None) -> Payload:
@@ -328,7 +396,7 @@ def show_change(record: Record, change: Change) -> Payload:
         "path": change.path,
         "archived_on": change.archived_on.isoformat() if change.archived_on else None,
         "title": proposal.title if proposal else None,
-        "state": _change_summary(state) if state else None,
+        "state": _change_summary(state, _Branches(record).of(change, state)) if state else None,
         "owner": proposal.owner if proposal else None,
         "accepted": (
             {"date": proposal.acceptance.date.isoformat(), "by": proposal.acceptance.who}
@@ -360,8 +428,11 @@ def show_change(record: Record, change: Change) -> Payload:
     }
 
 
-def show_spec(record: Record, spec: Spec) -> Payload:
-    """A spec, the deltas waiting for it, and its history from the archive."""
+def show_spec(record: Record, spec: Spec, source: str | None = None) -> Payload:
+    """A spec, the deltas waiting for it, and its history from the archive.
+
+    ``source`` names the referenced atlas the spec was read from, if any.
+    """
     pending = []
     for name in sorted(record.changes):
         delta = record.changes[name].deltas.get(spec.domain)
@@ -376,6 +447,7 @@ def show_spec(record: Record, spec: Spec) -> Payload:
             )
     return {
         **_header("show.spec"),
+        "from": source,
         "name": spec.domain,
         "title": spec.title,
         "purpose": spec.purpose,
@@ -472,3 +544,21 @@ def show(record: Record, name: str, kind: str | None = None) -> Payload:
             f"wm show {name} --kind {next(iter(found))}"
         )
     return next(iter(found.values()))
+
+
+def doctor(report: "Report") -> Payload:
+    """What a doctor found on this machine. Each check's folder is shown in text only."""
+    return {
+        **_header("doctor"),
+        "scope": report.scope,
+        "ok": not report.failed,
+        "checks": [
+            {
+                "name": check.name,
+                "status": check.status.value,
+                "message": check.message,
+                "_folder": str(check.folder) if check.folder is not None else None,
+            }
+            for check in report.checks
+        ],
+    }

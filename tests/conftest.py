@@ -16,6 +16,16 @@ def isolated_git(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
 
 
+@pytest.fixture(autouse=True)
+def isolated_registry(
+    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+) -> Path:
+    """Give every test its own empty registry, never the machine's own."""
+    path = tmp_path_factory.mktemp("machine") / "registry.toml"
+    monkeypatch.setenv("WAYMARK_REGISTRY", str(path))
+    return path
+
+
 def git_init(root: Path, name: str | None = "Sam Doe") -> None:
     """Make a folder a git repository, with a name to sign with unless told otherwise."""
     root.mkdir(parents=True, exist_ok=True)

@@ -14,10 +14,12 @@ from pathlib import Path
 
 from waymark import __version__, adapters
 from waymark.record.terms import Step, Verdict
+from waymark.services import atlas as atlas_service
 from waymark.services import context as context_service
+from waymark.services import doctor as doctor_service
 from waymark.services import instructions as instructions_service
-from waymark.services import integration, lifecycle, setup
-from waymark.services.common import Done, Refusal, open_record
+from waymark.services import integration, lifecycle, references, setup
+from waymark.services.common import Done, Refusal, open_record, take_notices
 from waymark.views import payloads, render
 from waymark.views.payloads import Payload
 from waymark.views.style import Style
@@ -56,6 +58,29 @@ def _init(args: argparse.Namespace) -> int:
 
 def _update(_: argparse.Namespace) -> int:
     return _report(integration.update(_here()))
+
+
+def _atlas_register(args: argparse.Namespace) -> int:
+    if (args.repo is None) != (args.folder is None):
+        raise Refusal("Give both the code repo's name and its folder, or neither.")
+    return _report(atlas_service.register(_here(), args.repo, args.folder))
+
+
+def _atlas_point(args: argparse.Namespace) -> int:
+    return _report(atlas_service.point(_here(), args.atlas, args.path))
+
+
+def _doctor_report(report: doctor_service.Report, args: argparse.Namespace) -> int:
+    _show_payload(payloads.doctor(report), args)
+    return EXIT_REFUSED if report.failed else EXIT_OK
+
+
+def _doctor(args: argparse.Namespace) -> int:
+    return _doctor_report(doctor_service.doctor(_here()), args)
+
+
+def _atlas_doctor(args: argparse.Namespace) -> int:
+    return _doctor_report(doctor_service.atlas_doctor(_here()), args)
 
 
 def _hook(args: argparse.Namespace) -> int:
@@ -162,13 +187,30 @@ def _inbox(args: argparse.Namespace) -> int:
 
 
 def _show(args: argparse.Namespace) -> int:
-    _show_payload(payloads.show(open_record(_here()), args.name, args.kind), args)
+    record = open_record(_here())
+    if args.source is None:
+        _show_payload(payloads.show(record, args.name, args.kind), args)
+        return EXIT_OK
+    if args.kind not in (None, "spec"):
+        raise Refusal("--from reads another atlas's specs only.")
+    other = references.reference_record(record, args.source)
+    spec = other.specs.get(args.name)
+    if spec is None:
+        listed = ", ".join(sorted(other.specs)) or "none"
+        raise Refusal(f'The atlas "{args.source}" has no spec "{args.name}" (specs: {listed}).')
+    _show_payload(payloads.show_spec(other, spec, args.source), args)
     return EXIT_OK
 
 
 def _ls(args: argparse.Namespace) -> int:
     kind = args.kind.removesuffix("s")
-    _show_payload(payloads.ls(open_record(_here()), kind, archived=args.archived), args)
+    record = open_record(_here())
+    if args.source is not None:
+        if kind != "spec":
+            raise Refusal("--from lists another atlas's specs only: wm ls specs --from <atlas>")
+        record = references.reference_record(record, args.source)
+    payload = payloads.ls(record, kind, archived=args.archived, source=args.source)
+    _show_payload(payload, args)
     return EXIT_OK
 
 
@@ -189,6 +231,11 @@ def _check(args: argparse.Namespace) -> int:
     payload = payloads.check(open_record(_here()), now)
     _show_payload(payload, args)
     return EXIT_REFUSED if payload["errors"] else EXIT_OK
+
+
+def _usage(parser: argparse.ArgumentParser) -> int:
+    parser.print_help()
+    return EXIT_OK
 
 
 def _view_command(
@@ -249,6 +296,36 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     summary = "Migrate the record to this version and regenerate the files Waymark owns."
     update = commands.add_parser("update", help=summary, description=summary)
     update.set_defaults(handler=_update)
+
+    _view_command(
+        commands, "doctor", _doctor, "Check wm, git and this project's setup; changes nothing."
+    )
+
+    summary = "Register atlases on this machine, point code repos at them, check their setup."
+    atlas = commands.add_parser("atlas", help=summary, description=summary)
+    atlas_commands = atlas.add_subparsers(title="atlas commands", metavar="<command>")
+    atlas.set_defaults(handler=lambda _: _usage(atlas))
+    summary = (
+        "Register this atlas on this machine, with its code repos found through their path "
+        "hints, or one code repo at a folder."
+    )
+    register = atlas_commands.add_parser("register", help=summary, description=summary)
+    register.add_argument("repo", nargs="?", help="a code repo's name, from the atlas's settings")
+    register.add_argument("folder", nargs="?", help="that code repo's folder")
+    register.set_defaults(handler=_atlas_register)
+    summary = "Write the pointer file that tells this code repo which atlas holds its record."
+    point = atlas_commands.add_parser("point", help=summary, description=summary)
+    point.add_argument("atlas", help="the atlas's name")
+    point.add_argument(
+        "--path", metavar="FOLDER", help="the atlas's folder, relative to this repository's top"
+    )
+    point.set_defaults(handler=_atlas_point)
+    _view_command(
+        atlas_commands,
+        "doctor",
+        _atlas_doctor,
+        "Check this atlas's registry entries, code repos, branches and pins; changes nothing.",
+    )
 
     summary = "Answer an agent tool's hook event, read as JSON from standard input."
     hook = commands.add_parser("hook", help=summary, description=summary)
@@ -330,10 +407,22 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     show.add_argument(
         "--kind", choices=list(payloads.KINDS), help="which kind, if the name is shared"
     )
+    show.add_argument(
+        "--from",
+        dest="source",
+        metavar="ATLAS",
+        help="read a spec from an atlas this project references",
+    )
     ls = _view_command(commands, "ls", _ls, "List changes, specs, milestones or explorations.")
     ls.add_argument("kind", choices=[f"{kind}s" for kind in payloads.KINDS])
     ls.add_argument(
         "--archived", action="store_true", help="include archived changes or milestones"
+    )
+    ls.add_argument(
+        "--from",
+        dest="source",
+        metavar="ATLAS",
+        help="list the specs of an atlas this project references",
     )
     instructions = _view_command(
         commands,
@@ -385,6 +474,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if handler is None:
         parser.print_help()
         return EXIT_OK
+    take_notices()
     try:
         return handler(args)
     except Refusal as refusal:
@@ -396,3 +486,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         # A hook that breaks must not stop the agent's work: report it and step aside.
         print(f"{PROG}: the hook failed ({type(error).__name__}: {error})", file=sys.stderr)
         return EXIT_REFUSED
+    finally:
+        # A hook's reply is the tool's protocol; notices go only to a person at a terminal.
+        notices = take_notices()
+        if handler is not _hook:
+            for note in notices:
+                print(f"{PROG}: note: {note}", file=sys.stderr)

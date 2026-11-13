@@ -13,6 +13,7 @@ record around it has no problems.
 
 from typing import Any
 
+from waymark.record.atlas import Location
 from waymark.record.changes import Change
 from waymark.record.links import LinkChecker
 from waymark.record.record import Record
@@ -25,9 +26,10 @@ from waymark.record.state import (
     derive_state,
 )
 from waymark.record.tasks import Item, RecordKind
-from waymark.record.terms import ReviewLevel, Step
+from waymark.record.terms import Layout, ReviewLevel, Step
 from waymark.record.text import Document
-from waymark.services.common import Refusal, find_change, find_item, state_of
+from waymark.services.common import Refusal, find_change, find_item, repo_locations, state_of
+from waymark.services.references import reference_record
 
 CONTEXT_VERSION = 1
 EXPLORE = "explore"
@@ -116,6 +118,13 @@ def _item_problem(  # noqa: PLR0911 - one return per reason an item can't be del
     return None
 
 
+def item_location(record: Record, item: Item) -> Location | None:
+    """Where the code repo an item names is on this machine; None when it names none."""
+    if record.layout is not Layout.ATLAS or not item.repo:
+        return None
+    return repo_locations(record).get(item.repo)
+
+
 def delegation_problems(record: Record, change: Change, item: Item, role: str) -> list[str]:
     """Why an implementer or reviewer may not be started on an item; empty when it may."""
     state = state_of(record, change)
@@ -123,10 +132,16 @@ def delegation_problems(record: Record, change: Change, item: Item, role: str) -
     first = _acceptance_problem(state) or _item_problem(change.name, item, item_state, role)
     if first:
         return [first]
-    return record_warnings(record, change, state)
+    warnings = record_warnings(record, change, state)
+    location = item_location(record, item)
+    if location is not None and location.folder is None:
+        warnings.append(f"Item {item.number} works in a repo that isn't here. {location.detail}")
+    return warnings
 
 
-def _item(item: Item, item_state: ItemState, role: str) -> dict[str, Any]:
+def _item(
+    item: Item, item_state: ItemState, role: str, location: Location | None
+) -> dict[str, Any]:
     reviews = [
         {
             "date": r.date.isoformat(),
@@ -143,6 +158,8 @@ def _item(item: Item, item_state: ItemState, role: str) -> dict[str, Any]:
         "criteria": item.criteria,
         "verify": item.verify,
         "repo": item.repo,
+        "repo_found": None if location is None else location.folder is not None,
+        "_local": {"repo_folder": str(location.folder) if location and location.folder else None},
         "review_level": item_state.level.value,
         "notes": list(item.notes) if role == IMPLEMENT else [],
         "reviews": reviews,
@@ -190,7 +207,7 @@ def _delegated_pack(record: Record, role: str, change_name: str, number: str) ->
         "version": CONTEXT_VERSION,
         "for": role,
         "change": change.name,
-        "item": _item(item, item_state, role),
+        "item": _item(item, item_state, role, item_location(record, item)),
         "context": charter.context if charter else "",
         "rules": charter.rules.get(step, "") if charter else "",
         "proposal": dict(proposal.sections) if proposal and implementing else None,
@@ -199,6 +216,23 @@ def _delegated_pack(record: Record, role: str, change_name: str, number: str) ->
         "design": _text(change.design.doc) if change.design and implementing else None,
         "ends_with": _ENDINGS[role],
     }
+
+
+def _references(record: Record) -> list[dict[str, Any]]:
+    """An index of every referenced atlas's specs. Their text is fetched on request."""
+    index: list[dict[str, Any]] = []
+    for reference in record.config.references if record.config else ():
+        try:
+            other = reference_record(record, reference.atlas)
+        except Refusal:
+            index.append({"atlas": reference.atlas, "found": False, "specs": []})
+            continue
+        specs = [
+            {"name": name, "title": spec.title, "purpose": spec.purpose}
+            for name, spec in sorted(other.specs.items())
+        ]
+        index.append({"atlas": reference.atlas, "found": True, "specs": specs})
+    return index
 
 
 def _explore_pack(record: Record) -> dict[str, Any]:
@@ -242,6 +276,7 @@ def _explore_pack(record: Record) -> dict[str, Any]:
             }
             for name, exploration in sorted(state.explorations.items())
         ],
+        "references": _references(record),
     }
 
 

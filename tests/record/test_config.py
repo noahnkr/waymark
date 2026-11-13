@@ -1,8 +1,10 @@
 """Settings in config.toml."""
 
+import pytest
+
 from tests.support import ATLAS_CONFIG, CONFIG
 from waymark import __version__
-from waymark.record.config import CodeRepo, parse_config
+from waymark.record.config import CodeRepo, Reference, parse_config
 from waymark.record.terms import Layout, ReviewLevel
 
 
@@ -36,6 +38,28 @@ def test_record_without_an_atlas_table_lives_in_the_repo() -> None:
     assert config is not None
     assert config.layout is Layout.REPO
     assert config.repos == ()
+
+
+def test_references_name_other_atlases_with_optional_path_hints() -> None:
+    text = CONFIG + '\n[references.billing]\npath = "../billing"\n\n[references.auth]\n'
+    config, problems = parse_config(text)
+    assert problems == ()
+    assert config is not None
+    assert config.references == (Reference("billing", "../billing"), Reference("auth", None))
+
+
+@pytest.mark.parametrize(
+    ("text", "problem"),
+    [
+        ('\n[references.billing]\nbranch = "main"\n', '"branch" is not a setting'),
+        ('\nreferences = ["billing"]\n', '"[references.<atlas>]" table'),
+        ('\n[atlas]\nname = "suite"\n\n[references.suite]\n', "can't reference itself"),
+    ],
+)
+def test_reference_that_cant_be_read_is_a_problem(text: str, problem: str) -> None:
+    config, problems = parse_config(CONFIG + text)
+    assert config is None
+    assert any(problem in found.message for found in problems)
 
 
 def test_atlas_names_its_code_repos_with_optional_path_hints() -> None:

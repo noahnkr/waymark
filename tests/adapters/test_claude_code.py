@@ -16,7 +16,13 @@ import pytest
 
 from tests.support import Workspace
 from waymark import adapters, assets
-from waymark.adapters.claude_code import NAME, SETTINGS, merge_settings
+from waymark.adapters.claude_code import (
+    LOCAL_SETTINGS,
+    NAME,
+    SETTINGS,
+    merge_local_settings,
+    merge_settings,
+)
 from waymark.cli import EXIT_OK, EXIT_REFUSED, main
 from waymark.services import lifecycle
 
@@ -360,3 +366,35 @@ def test_hook_with_bad_input_or_an_unknown_tool_exits_1_without_blocking(
     monkeypatch.setattr("sys.stdin", io.StringIO('{"tool_name": "Edit", "tool_input": "oops"}'))
     assert main(["hook", NAME, "PreToolUse"]) == EXIT_REFUSED
     assert "the hook failed" in capsys.readouterr().err
+
+
+def test_code_repos_are_attached_through_the_per_machine_settings(tmp_path: Path) -> None:
+    api, web = tmp_path / "api", tmp_path / "web"
+    existing = json.dumps(
+        {"model": "x", "permissions": {"allow": ["Bash(ls)"], "additionalDirectories": [str(api)]}}
+    )
+    merged = json.loads(merge_local_settings(existing, [api, web]))
+    assert merged["model"] == "x"
+    assert merged["permissions"]["allow"] == ["Bash(ls)"]
+    assert merged["permissions"]["additionalDirectories"] == [str(api), str(web)]
+
+
+def test_attached_folders_are_never_removed_from_the_per_machine_settings(tmp_path: Path) -> None:
+    mine = str(tmp_path / "mine")
+    existing = json.dumps({"permissions": {"additionalDirectories": [mine]}})
+    merged = json.loads(merge_local_settings(existing, [tmp_path / "api"]))
+    assert mine in merged["permissions"]["additionalDirectories"]
+
+
+@pytest.mark.parametrize(
+    "existing", ["[]", '{"permissions": []}', '{"permissions": {"additionalDirectories": "x"}}']
+)
+def test_per_machine_settings_of_the_wrong_shape_are_refused(existing: str) -> None:
+    with pytest.raises(ValueError, match="not"):
+        merge_local_settings(existing, [Path("api")])
+
+
+def test_adapter_writes_no_per_machine_file_without_folders() -> None:
+    adapter = adapters.get(NAME)
+    assert adapter.local_reads == (LOCAL_SETTINGS,)
+    assert adapter.local_files({LOCAL_SETTINGS: None}, []) == {}

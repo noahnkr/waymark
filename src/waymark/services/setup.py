@@ -16,6 +16,7 @@ from waymark.record.proposal import OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
 from waymark.record.store import Transaction
 from waymark.services import integration
+from waymark.services.atlas import register_new_atlas
 from waymark.services.common import Done, Refusal, commit, open_record
 
 _ATLAS_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
@@ -64,9 +65,10 @@ def init_project(
     paths = commit(transaction)
     kind = f'the atlas "{atlas}"' if atlas is not None else "a project"
     titles = ", ".join(adapters.get(tool).title for tool in chosen) or "no agent tool"
+    registered = f" {register_new_atlas(root, atlas)}" if atlas is not None else ""
     return Done(
-        f"Initialized {kind} in {RECORD_DIR}/, with skills, agents and hooks for {titles}. "
-        "Next: run the wm-kickoff skill in your agent tool to draft the charter.",
+        f"Initialized {kind} in {RECORD_DIR}/, with skills, agents and hooks for {titles}."
+        f"{registered} Next: run the wm-kickoff skill in your agent tool to draft the charter.",
         paths,
     )
 
