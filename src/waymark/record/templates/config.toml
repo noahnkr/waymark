@@ -12,7 +12,7 @@ record_format = {{record_format}}
 default_review = "self"
 
 # The agent tools this project uses.
-agent_tools = []
+agent_tools = [{{agent_tools}}]
 
 # Optional: the scopes commit messages may use. Without a list, any scope is
 # accepted.

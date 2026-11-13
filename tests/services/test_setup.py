@@ -28,8 +28,8 @@ def test_init_refuses_outside_a_git_repository(tmp_path: Path) -> None:
 def test_init_creates_the_settings_and_a_charter_skeleton(tmp_path: Path) -> None:
     git_init(tmp_path)
     done = setup.init_project(tmp_path)
-    assert done.paths == ("charter.md", "config.toml")
-    assert "kickoff" in done.message
+    assert {"waymark/charter.md", "waymark/config.toml"} <= set(done.paths)
+    assert "wm-kickoff" in done.message
     record = load_record(find_project(tmp_path))
     assert record.problems == ()
     assert record.config is not None

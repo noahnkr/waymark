@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-from waymark import __version__
+from waymark import __version__, adapters
 from waymark.record import git, templates
 from waymark.record.changes import PROPOSAL_FILE
 from waymark.record.charter import CHARTER_FILE
@@ -15,20 +15,27 @@ from waymark.record.project import RECORD_DIR
 from waymark.record.proposal import OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
 from waymark.record.store import Transaction
+from waymark.services import integration
 from waymark.services.common import Done, Refusal, commit, open_record
 
 _ATLAS_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
 
-def init_project(start: Path, atlas: str | None = None) -> Done:
-    """Create the record at the top of the git repository around a folder."""
+def init_project(
+    start: Path, atlas: str | None = None, tools: tuple[str, ...] | None = None
+) -> Done:
+    """Create the record at the top of the git repository around a folder.
+
+    Also installs the skills, agent definitions and hooks for the project's
+    agent tools: every tool wm knows, unless ``tools`` names them.
+    """
     root = git.repository_root(start)
     if root is None:
         raise Refusal(
             'wm needs a git repository, and this folder is not in one. Run "git init" first.'
         )
-    files = RecordFiles(root / RECORD_DIR)
-    if files.is_file(CONFIG_FILE):
+    files = RecordFiles(root)
+    if files.is_file(f"{RECORD_DIR}/{CONFIG_FILE}"):
         raise Refusal(
             f"This repository already has a record ({RECORD_DIR}/{CONFIG_FILE}). "
             'Run "wm check" to see how it stands.'
@@ -38,19 +45,28 @@ def init_project(start: Path, atlas: str | None = None) -> Done:
             f'"{atlas}" can\'t be an atlas name. Use letters, digits, dots, hyphens or '
             "underscores, starting with a letter or digit."
         )
+    chosen = adapters.names() if tools is None else tools
+    integration.require_tools(chosen)
     config = templates.render(
-        templates.CONFIG, wm_version=__version__, record_format=str(RECORD_FORMAT)
+        templates.CONFIG,
+        wm_version=__version__,
+        record_format=str(RECORD_FORMAT),
+        agent_tools=", ".join(f'"{tool}"' for tool in chosen),
     )
     if atlas is not None:
         config += templates.render(templates.ATLAS_CONFIG, atlas_name=atlas)
     transaction = Transaction(files)
-    transaction.write(CONFIG_FILE, config)
-    transaction.write(CHARTER_FILE, templates.render(templates.CHARTER, title=root.name))
+    transaction.write(f"{RECORD_DIR}/{CONFIG_FILE}", config)
+    transaction.write(
+        f"{RECORD_DIR}/{CHARTER_FILE}", templates.render(templates.CHARTER, title=root.name)
+    )
+    integration.stage(transaction, files, chosen)
     paths = commit(transaction)
     kind = f'the atlas "{atlas}"' if atlas is not None else "a project"
+    titles = ", ".join(adapters.get(tool).title for tool in chosen) or "no agent tool"
     return Done(
-        f"Initialized {kind} in {RECORD_DIR}/. Next: run the kickoff skill in your agent tool "
-        "to draft the charter.",
+        f"Initialized {kind} in {RECORD_DIR}/, with skills, agents and hooks for {titles}. "
+        "Next: run the wm-kickoff skill in your agent tool to draft the charter.",
         paths,
     )
 

@@ -33,8 +33,8 @@ def install_hint(version: str) -> str:
     )
 
 
-def require_writable(record: Record) -> None:
-    """Refuse to write unless this wm is the pinned one and the record is in its format."""
+def require_pinned(record: Record) -> None:
+    """Refuse to write unless the settings are readable and this wm is the pinned version."""
     config = record.config
     if config is None:
         problems = [p for p in record.problems if p.path == CONFIG_FILE]
@@ -46,6 +46,13 @@ def require_writable(record: Record) -> None:
             "Reading works with any version, but only the pinned one may write the record. "
             f"Install it with: {install_hint(config.wm_version)}"
         )
+
+
+def require_writable(record: Record) -> None:
+    """Refuse to write unless this wm is the pinned one and the record is in its format."""
+    require_pinned(record)
+    config = record.config
+    assert config is not None
     if config.record_format != RECORD_FORMAT:
         raise Refusal(
             f"The record is in format {config.record_format}, and this wm writes format "
