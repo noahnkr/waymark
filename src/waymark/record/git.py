@@ -93,6 +93,52 @@ def exclude(repository: Path, relative: str) -> None:
         handle.write(f"{separator}/{relative}\n")
 
 
+def config_value(repository: Path, key: str) -> str | None:
+    """A setting from this clone's own git config; None when it isn't set there."""
+    try:
+        return _run(repository, "config", "--local", "--get", key).strip() or None
+    except GitError:
+        return None
+
+
+def set_config(repository: Path, key: str, value: str) -> None:
+    """Set a setting in this clone's own git config. Nothing shared changes."""
+    _run(repository, "config", "--local", key, value)
+
+
+def default_hooks_folder(repository: Path) -> Path:
+    """The folder git reads hooks from when ``core.hooksPath`` is not set."""
+    common = Path(_run(repository, "rev-parse", "--git-common-dir").strip())
+    return (common if common.is_absolute() else repository / common) / "hooks"
+
+
+def staged_paths(repository: Path) -> tuple[str, ...]:
+    """The paths the next commit changes, relative to the repository's top."""
+    try:
+        listing = _run(repository, "diff", "--cached", "--name-only", "-z")
+    except GitError:
+        return ()
+    return tuple(path for path in listing.split("\0") if path)
+
+
+def stage(repository: Path, paths: Iterable[str]) -> None:
+    """Stage files for the next commit."""
+    _run(repository, "add", "--", *paths)
+
+
+def stage_executable(repository: Path, paths: Iterable[str]) -> None:
+    """Stage files with their executable bit, which a checkout on Windows can't set itself."""
+    _run(repository, "add", "--chmod=+x", "--", *paths)
+
+
+def remote_url(repository: Path, remote: str = "origin") -> str | None:
+    """A remote's URL as this clone's config has it; nothing is fetched."""
+    try:
+        return _run(repository, "remote", "get-url", remote).strip() or None
+    except GitError:
+        return None
+
+
 def last_changed(repository: Path, folders: Iterable[str]) -> dict[str, datetime.datetime]:
     """When each folder last changed in git's history.
 

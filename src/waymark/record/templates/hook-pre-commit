@@ -1,0 +1,8 @@
+#!/bin/sh
+# Written by wm (Waymark): runs "wm check" when a commit changes the record.
+# Regenerate it with "wm git-hooks". It warns, and lets the commit through, without wm.
+if command -v wm >/dev/null 2>&1; then
+  exec wm run-hook pre-commit
+fi
+echo "Waymark: wm is not on PATH, so the record was not checked. Install it: pipx install waymark-cli" >&2
+exit 0

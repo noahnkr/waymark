@@ -12,6 +12,7 @@ EXPLORATION = "exploration.md"
 DELTA = "delta.md"
 DESIGN = "design.md"
 TASKS = "tasks.md"
+CI_WORKFLOW = "ci-workflow.yml"
 
 
 def render(name: str, **values: str) -> str:
