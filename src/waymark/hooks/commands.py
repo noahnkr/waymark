@@ -10,9 +10,23 @@ import shlex
 from dataclasses import dataclass
 
 READ_COMMANDS = frozenset(
-    {"status", "inbox", "show", "ls", "check", "instructions", "context", "hook"}
+    {"status", "inbox", "show", "ls", "check", "instructions", "context", "hook", "doctor", "pr"}
 )
 """The wm commands that never write."""
+
+READ_GROUP_COMMANDS = {"atlas": frozenset({"doctor"})}
+"""Commands in a group that never write, such as "wm atlas doctor"."""
+
+
+def _reads(call: "Invocation") -> bool:
+    if call.subcommand in READ_COMMANDS:
+        return True
+    reading = READ_GROUP_COMMANDS.get(call.subcommand or "")
+    if reading is None:
+        return False
+    rest = [arg for arg in call.arguments if not arg.startswith("-")]
+    return rest[1:2] != [] and rest[1] in reading
+
 
 _SEPARATOR = re.compile(r"\|\||&&|[;\n|&]")
 _WRAPPERS = frozenset({"sudo", "env", "command", "time", "nohup", "exec", "call", "start"})
@@ -147,7 +161,7 @@ def wm_calls(command: str) -> tuple[Invocation, ...]:
 def writing_wm_call(command: str) -> Invocation | None:
     """The first wm command in a command line that writes, if any."""
     for call in wm_calls(command):
-        if call.subcommand is not None and call.subcommand not in READ_COMMANDS:
+        if call.subcommand is not None and not _reads(call):
             return call
     return None
 

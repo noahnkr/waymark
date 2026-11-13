@@ -1,8 +1,12 @@
 """Reading shell commands for the guard rails."""
 
+import argparse
+
 import pytest
 
+from waymark.cli import build_parser
 from waymark.hooks.commands import (
+    READ_COMMANDS,
     commits_or_pushes,
     invocations,
     state_change,
@@ -117,3 +121,59 @@ def test_read_only_commands_change_no_state(command: str) -> None:
 )
 def test_state_changing_commands_are_named(command: str) -> None:
     assert state_change(command) is not None
+
+
+@pytest.mark.parametrize(
+    "command",
+    ["wm doctor", "wm atlas doctor --json", "wm pr add-limit --repo api", "wm ls specs --from x"],
+)
+def test_reading_commands_added_later_are_not_mistaken_for_writes(command: str) -> None:
+    assert writing_wm_call(command) is None
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "wm atlas register",
+        "wm atlas point suite",
+        "wm git-hooks",
+        "wm ci",
+        "wm run-hook pre-commit",
+        "wm atlas",
+    ],
+)
+def test_writing_commands_added_later_are_found(command: str) -> None:
+    assert writing_wm_call(command) is not None
+
+
+WRITES = frozenset(
+    {
+        "init",
+        "update",
+        "new",
+        "accept",
+        "tick",
+        "block",
+        "gap",
+        "review",
+        "verdict",
+        "reopen",
+        "resolve",
+        "sync",
+        "archive",
+        "close",
+        "atlas",
+        "git-hooks",
+        "run-hook",
+        "ci",
+    }
+)
+
+
+def test_every_command_is_known_to_read_or_to_write() -> None:
+    """A new command must be sorted into one or the other, or delegated agents misjudge it."""
+    parser = build_parser()
+    action = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction))
+    names = set(action.choices)
+    assert names == READ_COMMANDS | WRITES
+    assert not READ_COMMANDS & WRITES
