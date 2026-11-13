@@ -114,7 +114,8 @@ def status(payload: Payload, style: Style) -> str:
     needs = payload["needs_human"]
     if needs:
         text = (
-            f"{style.symbol('human')} {needs} thing{'s' if needs != 1 else ''} need you: wm inbox"
+            f"{style.symbol('human')} {needs} "
+            f"{'thing needs' if needs == 1 else 'things need'} you: wm inbox"
         )
         lines.append(style.paint(text, YELLOW))
     else:

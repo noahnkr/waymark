@@ -10,11 +10,12 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
+authors = [{ name = "Noah Roberts" }]
 # Standard library only at runtime: this list stays empty.
 dependencies = []
 keywords = ["spec-driven-development", "coding-agents", "cli"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Operating System :: MacOS",
@@ -35,6 +36,9 @@ wm = "waymark.cli:main"
 
 [project.urls]
 Repository = "https://github.com/noahnkr/waymark"
+Documentation = "https://github.com/noahnkr/waymark/tree/main/docs"
+Issues = "https://github.com/noahnkr/waymark/issues"
+Changelog = "https://github.com/noahnkr/waymark/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
@@ -51,7 +55,7 @@ path = "src/waymark/__init__.py"
 packages = ["src/waymark"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/README.md", "/pyproject.toml"]
+include = ["/src", "/tests", "/tools", "/docs", "/README.md", "/CHANGELOG.md", "/LICENSE", "/pyproject.toml"]
 
 [tool.pytest.ini_options]
 minversion = "9.0"
@@ -70,7 +74,7 @@ skip = ".git,.venv,dist,uv.lock,.mypy_cache,.pytest_cache,.ruff_cache,__pycache_
 [tool.mypy]
 strict = true
 python_version = "3.11"
-files = ["src", "tests"]
+files = ["src", "tests", "tools"]
 warn_unreachable = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 
@@ -101,6 +105,9 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004", "PLR0913"]  # literal values; builders with many options
+
+[tool.ruff.lint.isort]
+known-first-party = ["waymark", "tests", "tools"]
 
 [tool.ruff.lint.pylint]
 max-args = 6

@@ -142,6 +142,12 @@ def test_status_shows_milestones_archived_changes_and_what_needs_the_human(
     assert "* archive (you)" in text
 
 
+def test_status_says_one_thing_needs_you_in_the_singular(project: Workspace) -> None:
+    project.change()
+    text = render.to_text(payloads.status(project.record()), PLAIN)
+    assert "1 thing needs you: wm inbox" in text
+
+
 def test_status_of_an_empty_record_says_how_to_start(project: Workspace) -> None:
     payload = valid(payloads.status(project.record()))
     assert payload["changes"] == []
