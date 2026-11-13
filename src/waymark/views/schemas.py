@@ -89,6 +89,18 @@ CHANGE_STATE = _object(
             {"kind": _enum(StepKind), "item": TEXT_OR_NULL, "human": BOOLEAN, "reason": STRING}
         ),
         "conflicts": _array(CONFLICT),
+        "repos": _array(
+            _object(
+                {
+                    "name": STRING,
+                    "kind": {"enum": ["atlas", "code"]},
+                    "found": BOOLEAN,
+                    "branch": TEXT_OR_NULL,
+                    "matches": BOOLEAN,
+                    "warn": BOOLEAN,
+                }
+            )
+        ),
     }
 )
 
@@ -170,6 +182,7 @@ SCHEMAS: dict[str, Schema] = {
         "ls",
         {
             "kind": {"enum": list(KINDS)},
+            "from": TEXT_OR_NULL,
             "entries": _array(_object({"name": STRING, "state": STRING, "detail": STRING})),
         },
     ),
@@ -215,6 +228,7 @@ SCHEMAS: dict[str, Schema] = {
     "show.spec": _payload(
         "show.spec",
         {
+            "from": TEXT_OR_NULL,
             "name": STRING,
             "title": STRING,
             "purpose": STRING,
@@ -274,6 +288,7 @@ _PACK_ITEM = _object(
         "criteria": TEXT_OR_NULL,
         "verify": TEXT_OR_NULL,
         "repo": TEXT_OR_NULL,
+        "repo_found": {"type": ["boolean", "null"]},
         "review_level": _enum(ReviewLevel),
         "notes": NAMES,
         "reviews": _array(
@@ -350,9 +365,36 @@ SCHEMAS.update(
                         }
                     )
                 ),
+                "references": _array(
+                    _object(
+                        {
+                            "atlas": STRING,
+                            "found": BOOLEAN,
+                            "specs": _array(
+                                _object({"name": STRING, "title": STRING, "purpose": STRING})
+                            ),
+                        }
+                    )
+                ),
             },
         ),
         "context.implement": _delegated("implement"),
         "context.review": _delegated("review"),
+        "doctor": _payload(
+            "doctor",
+            {
+                "scope": {"enum": ["project", "atlas"]},
+                "ok": BOOLEAN,
+                "checks": _array(
+                    _object(
+                        {
+                            "name": STRING,
+                            "status": {"enum": ["ok", "warning", "error"]},
+                            "message": STRING,
+                        }
+                    )
+                ),
+            },
+        ),
     }
 )

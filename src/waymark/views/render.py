@@ -1,11 +1,14 @@
 """Rendering payloads: as JSON, and as styled text.
 
 Both read the same payload. JSON is never styled, and it is written with
-ASCII escapes so that any console can carry it unharmed.
+ASCII escapes so that any console can carry it unharmed. Keys starting with
+an underscore hold values local to this machine, such as a folder; the text
+shows them and the JSON leaves them out.
 """
 
 import json
 from collections.abc import Callable
+from typing import Any
 
 from waymark.views.payloads import Payload
 from waymark.views.style import BOLD, CYAN, DIM, GREEN, RED, YELLOW, Style
@@ -23,9 +26,18 @@ _INBOX_TITLES = {
 }
 
 
+def public(value: Any) -> Any:
+    """A payload without its machine-local values: what its JSON holds."""
+    if isinstance(value, dict):
+        return {key: public(item) for key, item in value.items() if not key.startswith("_")}
+    if isinstance(value, list):
+        return [public(item) for item in value]
+    return value
+
+
 def to_json(payload: Payload) -> str:
-    """A payload as JSON text."""
-    return json.dumps(payload, indent=2, ensure_ascii=True)
+    """A payload as JSON text, without its machine-local values."""
+    return json.dumps(public(payload), indent=2, ensure_ascii=True)
 
 
 def _indent(text: str, prefix: str = "    ") -> list[str]:
@@ -48,6 +60,27 @@ def _change_line(change: Payload, style: Style) -> str:
     return f"  {name} {phase} {bar} {progress:<6} {_next_step(change, style)}"
 
 
+def _branch_lines(change: Payload, style: Style) -> list[str]:
+    """Each repo's branch under an atlas change, and a warning for each one that differs."""
+    if not change["repos"]:
+        return []
+    shown = ", ".join(
+        f"{repo['name']} {repo['branch'] or 'no branch'}"
+        if repo["found"]
+        else f"{repo['name']} (not here)"
+        for repo in change["repos"]
+    )
+    lines = [style.paint(f"      branches: {shown}", DIM)]
+    for repo in change["repos"]:
+        if repo["warn"]:
+            text = (
+                f"      {style.symbol('warning')} {repo['name']} is on "
+                f"{repo['branch'] or 'no branch'}, not on {change['name']}"
+            )
+            lines.append(style.paint(text, YELLOW))
+    return lines
+
+
 def status(payload: Payload, style: Style) -> str:
     """The status view as text."""
     lines: list[str] = []
@@ -61,6 +94,7 @@ def status(payload: Payload, style: Style) -> str:
     if payload["changes"]:
         for change in payload["changes"]:
             lines.append(_change_line(change, style))
+            lines += _branch_lines(change, style)
             lines += [
                 style.paint(f"      {style.symbol('warning')} {conflict['message']}", YELLOW)
                 for conflict in change["conflicts"]
@@ -140,8 +174,9 @@ def check(payload: Payload, style: Style) -> str:
 
 def ls(payload: Payload, style: Style) -> str:
     """One line per entry."""
+    source = f" in the atlas {payload['from']}" if payload["from"] else ""
     if not payload["entries"]:
-        return f"No {payload['kind']}s."
+        return f"No {payload['kind']}s{source}."
     width = max(len(entry["name"]) for entry in payload["entries"])
     states = max(len(entry["state"]) for entry in payload["entries"])
     lines: list[str] = []
@@ -202,6 +237,7 @@ def show_change(payload: Payload, style: Style) -> str:  # noqa: PLR0912 - one p
         lines.append(f"  Archived on {payload['archived_on']}")
     if state:
         lines.append(_change_line(state, style))
+        lines += _branch_lines(state, style)
     facts = [f"Owner: {payload['owner'] or 'none'}"]
     if state and state["short_path"]:
         facts.append("short path")
@@ -240,7 +276,8 @@ def show_change(payload: Payload, style: Style) -> str:  # noqa: PLR0912 - one p
 
 def show_spec(payload: Payload, style: Style) -> str:
     """A spec with its pending deltas and its history, as text."""
-    lines = [style.rule(f"Spec: {payload['name']}"), f"  {payload['title']}"]
+    source = f" (from the atlas {payload['from']}, read only)" if payload["from"] else ""
+    lines = [style.rule(f"Spec: {payload['name']}{source}"), f"  {payload['title']}"]
     if payload["repos"]:
         lines.append(f"  Repos: {', '.join(payload['repos'])}")
     lines += _titled("Purpose", payload["purpose"], style)
@@ -329,9 +366,13 @@ def instructions(payload: Payload, style: Style) -> str:
 
 def _pack_item(item: Payload) -> list[str]:
     lines = [f"**{item['number']} {item['title']}**", ""]
-    for label, key in (("Criteria", "criteria"), ("Verify", "verify"), ("Repo", "repo")):
+    for label, key in (("Criteria", "criteria"), ("Verify", "verify")):
         if item[key]:
             lines.append(f"- {label}: {item[key]}")
+    if item["repo"]:
+        folder = item["_local"]["repo_folder"]
+        where = f"its folder on this machine is {folder}" if folder else "not found on this machine"
+        lines.append(f"- Repo: {item['repo']} ({where})")
     lines.append(f"- Review level: {item['review_level']}")
     lines += [f"- Decided by the human: {text}" for text in item["resolutions"]]
     for review in item["reviews"]:
@@ -394,6 +435,14 @@ def context_explore(payload: Payload, _: Style) -> str:
             f"- {m['name']}: {m['archived']}/{m['total']} changes archived"
             for m in payload["milestones"]
         ]
+    for reference in payload["references"]:
+        lines += ["", f"## Specs in the atlas {reference['atlas']} (read only)", ""]
+        if not reference["found"]:
+            lines.append("Not found on this machine; wm doctor says why.")
+        for spec in reference["specs"]:
+            lines.append(f"- {spec['name']}: {spec['purpose']}")
+        if reference["found"]:
+            lines += ["", f"Read one with: wm show <spec> --from {reference['atlas']}"]
     if payload["explorations"]:
         lines += ["", "## Explorations", ""]
         for exploration in payload["explorations"]:
@@ -401,6 +450,22 @@ def context_explore(payload: Payload, _: Style) -> str:
             lines.append(
                 f"- {exploration['name']} ({exploration['status']}{detail}): {exploration['title']}"
             )
+    return "\n".join(lines)
+
+
+def doctor(payload: Payload, style: Style) -> str:
+    """What a doctor found: one line per check, then the verdict."""
+    marks = {"ok": ("done", GREEN), "warning": ("warning", YELLOW), "error": ("error", RED)}
+    lines: list[str] = []
+    for check in payload["checks"]:
+        symbol, color = marks[check["status"]]
+        head = style.paint(f"{style.symbol(symbol)} {check['name']}", color)
+        lines.append(f"{head}: {check['message']}")
+        if check["_folder"]:
+            lines.append(style.paint(f"    {check['_folder']}", DIM))
+    errors = sum(1 for check in payload["checks"] if check["status"] == "error")
+    warnings = sum(1 for check in payload["checks"] if check["status"] == "warning")
+    lines.append(f"{errors} error(s), {warnings} warning(s). Nothing was changed.")
     return "\n".join(lines)
 
 
@@ -417,6 +482,7 @@ _RENDERERS: dict[str, Callable[[Payload, Style], str]] = {
     "wm.context.explore": context_explore,
     "wm.context.implement": context_delegated,
     "wm.context.review": context_delegated,
+    "wm.doctor": doctor,
 }
 
 
