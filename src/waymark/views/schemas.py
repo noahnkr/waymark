@@ -6,6 +6,7 @@ version; removing or changing one bumps it.
 
 from typing import Any
 
+from waymark.record.githooks import HooksState
 from waymark.record.state import (
     AcceptanceState,
     ConflictKind,
@@ -149,6 +150,7 @@ SCHEMAS: dict[str, Schema] = {
             "needs_human": INTEGER,
             "recently_archived": _array(_object({"name": STRING, "date": DATE})),
             "problems": INTEGER,
+            "git_hooks": _enum(HooksState),
         },
     ),
     "inbox": _payload(
@@ -380,6 +382,17 @@ SCHEMAS.update(
         ),
         "context.implement": _delegated("implement"),
         "context.review": _delegated("review"),
+        "pr": _payload(
+            "pr",
+            {
+                "change": STRING,
+                "repo": TEXT_OR_NULL,
+                "branch": STRING,
+                "title": STRING,
+                "body": STRING,
+                "links": _array(_object({"name": STRING, "url": STRING})),
+            },
+        ),
         "doctor": _payload(
             "doctor",
             {

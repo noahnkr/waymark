@@ -1,0 +1,8 @@
+#!/bin/sh
+# Written by wm (Waymark): checks that the commit message is a conventional commit.
+# Regenerate it with "wm git-hooks". It warns, and lets the commit through, without wm.
+if command -v wm >/dev/null 2>&1; then
+  exec wm run-hook commit-msg "$1"
+fi
+echo "Waymark: wm is not on PATH, so this commit message was not checked. Install it: pipx install waymark-cli" >&2
+exit 0

@@ -40,7 +40,7 @@ Repeat until `wm instructions --change <name> --json` says the step is `archive`
 
 ### After a review passes
 
-Commit the item's work, in the repository it belongs to, with a conventional commit message. At review level `none`, commit once the item is ticked. Don't push and don't open a pull request unless the human asks.
+Commit the item's work, in the repository it belongs to, with a conventional commit message such as `feat(api): add the result limit`. If the project lists commit scopes, use one of them or none. When a git hook stops the commit, fix what it says; don't skip the hooks. At review level `none`, commit once the item is ticked. Don't push and don't open a pull request unless the human asks.
 
 ### Step `resolve-items`
 

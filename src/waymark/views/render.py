@@ -119,6 +119,12 @@ def status(payload: Payload, style: Style) -> str:
         lines.append(style.paint(text, YELLOW))
     else:
         lines.append(style.paint(f"{style.symbol('done')} Nothing needs you.", GREEN))
+    if payload["git_hooks"] == "not-set":
+        text = (
+            f"{style.symbol('warning')} This clone doesn't run the committed git hooks: "
+            "wm git-hooks"
+        )
+        lines.append(style.paint(text, YELLOW))
     if payload["problems"]:
         count = payload["problems"]
         plural = "s" if count != 1 else ""
@@ -469,6 +475,13 @@ def doctor(payload: Payload, style: Style) -> str:
     return "\n".join(lines)
 
 
+def pr(payload: Payload, style: Style) -> str:
+    """A pull request's title and description, ready to paste or hand to the host's tool."""
+    where = f" in {payload['repo']}" if payload["repo"] else ""
+    head = style.rule(f"Pull request for {payload['change']}{where}, from {payload['branch']}")
+    return "\n".join([head, "", f"Title: {payload['title']}", "", payload["body"].rstrip("\n")])
+
+
 _RENDERERS: dict[str, Callable[[Payload, Style], str]] = {
     "wm.status": status,
     "wm.inbox": inbox,
@@ -483,6 +496,7 @@ _RENDERERS: dict[str, Callable[[Payload, Style], str]] = {
     "wm.context.implement": context_delegated,
     "wm.context.review": context_delegated,
     "wm.doctor": doctor,
+    "wm.pr": pr,
 }
 
 

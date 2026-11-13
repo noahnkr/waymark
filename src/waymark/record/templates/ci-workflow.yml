@@ -1,0 +1,29 @@
+# Written by wm (Waymark): checks the record on every push and pull request.
+# "wm update" keeps it current. It installs the wm version pinned in
+# waymark/config.toml, so bumping the pin needs no change here.
+name: Waymark
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: wm check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+      - name: Install the pinned wm
+        run: |
+          version=$(python -c "import tomllib; print(tomllib.load(open('waymark/config.toml', 'rb'))['wm_version'])")
+          python -m pip install "waymark-cli==$version"
+      - name: Check the record
+        run: wm check

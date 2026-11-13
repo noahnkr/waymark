@@ -5,9 +5,9 @@ their project while agents write the code. Its model of living specs plus change
 deltas follows [OpenSpec](https://github.com/Fission-AI/OpenSpec).
 
 > **Status: pre-release.** The record model, the commands, the Claude Code
-> integration (skills, agents and hooks) and multi-repo atlases are in place;
-> `wm --help` lists the commands. Git hooks, CI setup and the docs are still to
-> come.
+> integration (skills, agents and hooks), multi-repo atlases, git hooks, the CI
+> workflow and pull request text are in place; `wm --help` lists the commands.
+> The docs are still to come.
 > Nothing is published on PyPI.
 
 ## Development
