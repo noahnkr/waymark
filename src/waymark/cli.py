@@ -6,16 +6,17 @@ prints why and what to do next, and exits with ``EXIT_REFUSED``.
 
 import argparse
 import datetime
+import json
 import os
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from waymark import __version__
+from waymark import __version__, adapters
 from waymark.record.terms import Step, Verdict
 from waymark.services import context as context_service
 from waymark.services import instructions as instructions_service
-from waymark.services import lifecycle, setup
+from waymark.services import integration, lifecycle, setup
 from waymark.services.common import Done, Refusal, open_record
 from waymark.views import payloads, render
 from waymark.views.payloads import Payload
@@ -49,7 +50,37 @@ def _today() -> datetime.date:
 
 
 def _init(args: argparse.Namespace) -> int:
-    return _report(setup.init_project(_here(), args.atlas))
+    tools = tuple(args.tool) if args.tool else None
+    return _report(setup.init_project(_here(), args.atlas, tools))
+
+
+def _update(_: argparse.Namespace) -> int:
+    return _report(integration.update(_here()))
+
+
+def _hook(args: argparse.Namespace) -> int:
+    """Answer an agent tool's hook. A fault here never blocks the agent: it exits 1."""
+    try:
+        adapter = adapters.get(args.tool)
+    except adapters.UnknownToolError:
+        known = ", ".join(adapters.names())
+        raise Refusal(
+            f'"{args.tool}" is not an agent tool wm knows. Known tools: {known}.'
+        ) from None
+    raw = getattr(sys.stdin, "buffer", None)
+    text = raw.read().decode("utf-8", errors="replace") if raw is not None else sys.stdin.read()
+    try:
+        payload = json.loads(text) if text.strip() else {}
+    except json.JSONDecodeError as error:
+        raise Refusal(f"The hook's input is not JSON ({error}).") from error
+    if not isinstance(payload, dict):
+        raise Refusal("The hook's input is not a JSON object.")
+    reply = adapter.hook(args.event, payload, _here(), _today())
+    if reply.stdout:
+        print(reply.stdout)
+    if reply.stderr:
+        print(reply.stderr, file=sys.stderr)
+    return reply.code
 
 
 def _new(args: argparse.Namespace) -> int:
@@ -207,7 +238,23 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         metavar="NAME",
         help="make this repository an atlas: a record that several code repos share",
     )
+    init.add_argument(
+        "--tool",
+        action="append",
+        metavar="NAME",
+        help=f"an agent tool to set up; repeatable (default: {', '.join(adapters.names())})",
+    )
     init.set_defaults(handler=_init)
+
+    summary = "Migrate the record to this version and regenerate the files Waymark owns."
+    update = commands.add_parser("update", help=summary, description=summary)
+    update.set_defaults(handler=_update)
+
+    summary = "Answer an agent tool's hook event, read as JSON from standard input."
+    hook = commands.add_parser("hook", help=summary, description=summary)
+    hook.add_argument("tool", help="the agent tool whose hook this is")
+    hook.add_argument("event", help="the tool's name for the event")
+    hook.set_defaults(handler=_hook)
 
     summary = "Create a change, milestone or exploration from the built-in template."
     new = commands.add_parser("new", help=summary, description=summary)
@@ -342,4 +389,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return handler(args)
     except Refusal as refusal:
         print(f"{PROG}: {refusal}", file=sys.stderr)
+        return EXIT_REFUSED
+    except Exception as error:
+        if handler is not _hook:
+            raise
+        # A hook that breaks must not stop the agent's work: report it and step aside.
+        print(f"{PROG}: the hook failed ({type(error).__name__}: {error})", file=sys.stderr)
         return EXIT_REFUSED

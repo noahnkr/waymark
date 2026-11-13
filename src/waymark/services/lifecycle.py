@@ -172,6 +172,18 @@ def report_gap(start: Path, name: str, number: str, note: str) -> Done:
     return _add_stopper(start, name, number, SPEC_GAP, note)
 
 
+def add_note(start: Path, name: str, number: str, note: str) -> Done:
+    """Write a note under an item that is still to be finished, such as a partial result."""
+    record, change, state = _open(start, name)
+    _require_accepted(state)
+    item = find_item(change, number)
+    text = one_line(note, "a note")
+    if item.ticked:
+        raise Refusal(f"Item {number} is already ticked, so there is nothing left to note.")
+    paths = _write_tasks(record, change, edit_item(_tasks(change), number, add=[f"Note: {text}"]))
+    return Done(f'Wrote "Note: {text}" under item {number} of {name}. It is still to apply.', paths)
+
+
 def self_review(start: Path, name: str, number: str, summary: str, today: datetime.date) -> Done:
     """Record the planner's own review of an item."""
     record, change, state = _open(start, name)

@@ -129,8 +129,9 @@ def test_only_the_record_model_touches_the_file_system() -> None:
         "unlink",
         "rename",
     }
+    package_data = SOURCE_ROOT / "assets"
     for path, tree in source_trees():
-        if record in path.parents:
+        if record in path.parents or package_data in path.parents:
             continue
         for node in ast.walk(tree):
             name = node.attr if isinstance(node, ast.Attribute) else getattr(node, "id", None)
