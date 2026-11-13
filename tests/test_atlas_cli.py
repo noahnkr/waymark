@@ -60,7 +60,7 @@ def test_doctor_prints_a_versioned_payload_without_folders(
     code, out, _ = run(capsys, "doctor", "--json")
     payload = json.loads(out)
     assert errors(payload, SCHEMAS["doctor"]) == []
-    assert str(tmp_path) not in out
+    assert json.dumps(str(tmp_path))[1:-1] not in out
     assert code == (EXIT_OK if payload["ok"] else EXIT_REFUSED)
 
 

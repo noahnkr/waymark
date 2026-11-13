@@ -143,8 +143,11 @@ def load_registry(path: Path | None = None) -> Registry:
         text = where.read_bytes().decode("utf-8")
     except FileNotFoundError:
         return Registry(where)
-    except (OSError, UnicodeDecodeError) as error:
-        return Registry(where, problems=(f"The registry can't be read ({error}).",))
+    except UnicodeDecodeError:
+        return Registry(where, problems=("The registry is not valid UTF-8.",))
+    except OSError as error:
+        reason = error.strerror or type(error).__name__
+        return Registry(where, problems=(f"The registry can't be read ({reason}).",))
     return parse_registry(where, text)
 
 

@@ -160,4 +160,30 @@ def test_doctor_payload_keeps_folders_out_of_its_json(suite: Workspace) -> None:
     text = render.to_text(payload, Style())
     assert str(suite.root) in text
     assert "Nothing was changed." in text
-    assert str(suite.root) not in render.to_json(payload)
+    assert json.dumps(str(suite.root))[1:-1] not in render.to_json(payload)
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_json_names_no_folder_whatever_it_finds(
+    tmp_path: Path, isolated_registry: Path
+) -> None:
+    """Hints, stale entries, missing repos and missing projects all report without a path."""
+    atlas = Workspace(tmp_path / "atlas", TOOL_ATLAS + '\n[references.billing]\npath = "../b"\n')
+    git_init(atlas.root)
+    git_init(tmp_path / "suite-api")
+    billing = Workspace(tmp_path / "b", CONFIG + '\n[atlas]\nname = "billing"\n')
+    git_init(billing.root)
+    gone = json.dumps(str(tmp_path / "gone"))
+    isolated_registry.write_text(
+        f'[atlases."suite"]\npath = {gone}\n\n[atlases."suite".repos."web"]\npath = {gone}\n',
+        encoding="utf-8",
+    )
+    escaped = json.dumps(str(tmp_path))[1:-1]
+    for report in (
+        doctor(atlas.root),
+        atlas_doctor(atlas.root),
+        doctor(tmp_path),
+        atlas_doctor(tmp_path),
+    ):
+        text = render.to_json(payloads.doctor(report))
+        assert escaped not in text, text

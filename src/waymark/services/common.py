@@ -108,7 +108,7 @@ def repo_locations(record: Record, registry: Registry | None = None) -> dict[str
     }
     for location in found.values():
         if location.found is Found.HINT:
-            notice(location.detail)
+            notice(f"{location.detail} ({location.folder})")
     return found
 
 

@@ -78,7 +78,7 @@ def register(start: Path, repo: str | None = None, folder: str | None = None) ->
         target = (start / (folder or ".")).resolve()
         problem = repo_problem(target, atlas)
         if problem is not None:
-            raise Refusal(f'"{repo}" can\'t be registered there: {problem}.')
+            raise Refusal(f'"{repo}" can\'t be registered at {target}: {problem}.')
         updated = updated.with_repo(atlas, repo, target)
         lines.append(f'Registered the code repo "{repo}" at {target}.')
     else:

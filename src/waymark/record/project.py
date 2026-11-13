@@ -21,15 +21,14 @@ class ProjectNotFoundError(Exception):
     """No record was found at or above the starting folder, nor through a code repo."""
 
     def __init__(self, start: Path, reason: str | None = None) -> None:
-        super().__init__(
-            reason
-            or (
-                f'No Waymark project found at or above "{start}". '
-                f'A project has a "{RECORD_DIR}/{CONFIG_FILE}" file at its top. '
-                "Change to the project's folder, or initialize one."
-            )
+        advice = (
+            f'A project has a "{RECORD_DIR}/{CONFIG_FILE}" file at its top. '
+            "Change to the project's folder, or initialize one."
         )
+        super().__init__(reason or f'No Waymark project found at or above "{start}". {advice}')
         self.start = start
+        self.plain = reason or f"No Waymark project found here or above. {advice}"
+        """The same message without the starting folder, for output that holds no paths."""
 
 
 @dataclass(frozen=True)
@@ -61,17 +60,18 @@ def _through_pointer(start: Path, folder: Path, registry: Registry) -> Project:
     try:
         text = (folder / POINTER_FILE).read_bytes().decode("utf-8")
     except (OSError, UnicodeDecodeError) as error:
-        reason = f"{folder / POINTER_FILE} can't be read ({error})."
+        detail = getattr(error, "strerror", None) or "not valid UTF-8"
+        reason = f"This code repo's {POINTER_FILE} can't be read ({detail})."
         raise ProjectNotFoundError(start, reason) from error
     pointer, problem = parse_pointer(text)
     if pointer is None:
-        raise ProjectNotFoundError(start, f"{folder / POINTER_FILE}: {problem}")
+        raise ProjectNotFoundError(start, f"This code repo's pointer: {problem}")
     location = locate_atlas(pointer.atlas, registry, folder, pointer.path_hint)
     if location.folder is None:
         raise ProjectNotFoundError(
             start, f'This code repo points to the atlas "{pointer.atlas}". {location.detail}'
         )
-    notes = (location.detail,) if location.found is Found.HINT else ()
+    notes = (f"{location.detail} ({location.folder})",) if location.found is Found.HINT else ()
     return Project(location.folder, folder, notes)
 
 

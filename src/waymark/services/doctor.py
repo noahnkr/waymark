@@ -165,7 +165,7 @@ def doctor(start: Path) -> Report:
     try:
         project = find_project(start, registry)
     except ProjectNotFoundError as error:
-        checks.append(Check("project", Status.ERROR, str(error)))
+        checks.append(Check("project", Status.ERROR, error.plain, start))
         return Report("project", tuple(checks))
     checks.append(_project_check(project))
     record = load_record(project)
@@ -197,9 +197,9 @@ def _registry_checks(atlas: str, root: Path, registry: Registry) -> list[Check]:
             Check(
                 "atlas registered",
                 Status.WARNING,
-                f'The registry has the atlas "{atlas}" at another folder ({entry.path}). Run '
+                f'The registry has the atlas "{atlas}" at another folder, shown below. Run '
                 '"wm atlas register" here if this is the one to use.',
-                root,
+                entry.path,
             )
         )
     else:
@@ -293,7 +293,7 @@ def atlas_doctor(start: Path) -> Report:
     try:
         project = find_project(start, registry)
     except ProjectNotFoundError as error:
-        return Report("atlas", (Check("project", Status.ERROR, str(error)),))
+        return Report("atlas", (Check("project", Status.ERROR, error.plain, start),))
     record = load_record(project)
     config = record.config
     if config is None or config.atlas_name is None:

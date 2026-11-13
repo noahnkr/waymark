@@ -23,5 +23,5 @@ def reference_record(record: Record, atlas: str) -> Record:
     if location.folder is None:
         raise Refusal(location.detail)
     if location.found is Found.HINT:
-        notice(location.detail)
+        notice(f"{location.detail} ({location.folder})")
     return load_record(Project(location.folder))

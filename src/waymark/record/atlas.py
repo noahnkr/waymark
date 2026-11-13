@@ -31,7 +31,7 @@ class Location:
     """Where an atlas or code repo is on this machine, if anywhere.
 
     ``detail`` says why it is missing, or, when only its hint found it, how to
-    register it.
+    register it. It names no folder, so it can go into JSON as it is.
     """
 
     name: str
@@ -77,14 +77,14 @@ def is_repo_top(folder: Path) -> bool:
 
 
 def repo_problem(folder: Path, atlas: str) -> str | None:
-    """Why a folder can't be the code repo of an atlas; None when it can."""
+    """Why a folder can't be the code repo of an atlas; None when it can. Names no folder."""
     if not folder.is_dir():
-        return f"{folder} doesn't exist"
+        return "the folder doesn't exist"
     if not is_repo_top(folder):
-        return f"{folder} is not the top folder of a git repository"
+        return "the folder is not the top folder of a git repository"
     named, _ = pointer_atlas(folder)
     if named is not None and named != atlas:
-        return f'{folder} points to the atlas "{named}", not "{atlas}"'
+        return f'its pointer names the atlas "{named}", not "{atlas}"'
     return None
 
 
@@ -103,11 +103,11 @@ def locate_atlas(
     if entry is not None and entry.path is not None:
         if atlas_name_at(entry.path) == name:
             return Location(name, entry.path, Found.REGISTRY)
-        stale = f" The registry says {entry.path}, which holds no atlas of that name."
+        stale = " The registry's entry points to a folder that holds no atlas of that name."
     folder = _hinted(base, hint) if base is not None else None
     if folder is not None and atlas_name_at(folder) == name:
         detail = (
-            f'Found the atlas "{name}" through its path hint, at {folder}. '
+            f'Found the atlas "{name}" through its path hint. '
             f'To register it on this machine, run "{REGISTER}" there.'
         )
         return Location(name, folder, Found.HINT, detail)
@@ -133,7 +133,7 @@ def locate_repo(atlas: str, atlas_root: Path, repo: CodeRepo, registry: Registry
     folder = _hinted(atlas_root, repo.path_hint)
     if folder is not None and repo_problem(folder, atlas) is None:
         detail = (
-            f'Found the code repo "{repo.name}" through its path hint, at {folder}. '
+            f'Found the code repo "{repo.name}" through its path hint. '
             f'To register it on this machine, run "{REGISTER}" in the atlas.'
         )
         return Location(repo.name, folder, Found.HINT, detail)
