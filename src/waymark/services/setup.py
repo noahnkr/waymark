@@ -15,7 +15,7 @@ from waymark.record.project import RECORD_DIR
 from waymark.record.proposal import OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
 from waymark.record.store import Transaction
-from waymark.services import integration
+from waymark.services import githooks, integration
 from waymark.services.atlas import register_new_atlas
 from waymark.services.common import Done, Refusal, commit, open_record
 
@@ -66,9 +66,12 @@ def init_project(
     kind = f'the atlas "{atlas}"' if atlas is not None else "a project"
     titles = ", ".join(adapters.get(tool).title for tool in chosen) or "no agent tool"
     registered = f" {register_new_atlas(root, atlas)}" if atlas is not None else ""
+    hooks = "\n".join(githooks.install(root))
     return Done(
         f"Initialized {kind} in {RECORD_DIR}/, with skills, agents and hooks for {titles}."
-        f"{registered} Next: run the wm-kickoff skill in your agent tool to draft the charter.",
+        f"{registered}\n{hooks}\n"
+        'To run "wm check" in GitHub Actions too, run "wm ci".\n'
+        "Next: run the wm-kickoff skill in your agent tool to draft the charter.",
         paths,
     )
 

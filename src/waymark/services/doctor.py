@@ -15,6 +15,7 @@ from waymark.record import git
 from waymark.record.atlas import Found, locate_atlas, locate_repo, read_pointer
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT
 from waymark.record.files import RecordFiles
+from waymark.record.githooks import HOOKS_DIR, HooksState, hooks_status
 from waymark.record.pointer import POINTER_FILE
 from waymark.record.project import Project, ProjectNotFoundError, find_project
 from waymark.record.record import Record, load_record
@@ -84,6 +85,38 @@ def _project_check(project: Project) -> Check:
             project.root,
         )
     return Check("project", Status.OK, "Found the record.", project.root)
+
+
+def _hooks_check(root: Path, *, optional: bool) -> Check:
+    """Whether this clone runs the committed git hooks. In a code repo they are optional."""
+    name = "git hooks" if not optional else "code repo git hooks"
+    status = hooks_status(root)
+    if status.state is HooksState.SET:
+        return Check(name, Status.OK, f"Git runs the hooks in {HOOKS_DIR}/.", root)
+    if status.state is HooksState.MANAGED:
+        return Check(
+            name,
+            Status.OK,
+            f"wm left the hooks to another setup, because {status.manager}. Make sure it runs "
+            '"wm run-hook commit-msg" and "wm run-hook pre-commit".',
+            root,
+        )
+    if status.state is HooksState.NOT_SET:
+        return Check(
+            name,
+            Status.WARNING,
+            f'This clone doesn\'t run the hooks in {HOOKS_DIR}/. Run "wm git-hooks" to point '
+            "git at them.",
+            root,
+        )
+    if optional:
+        return Check(name, Status.OK, 'No Waymark hooks; "wm git-hooks" adds them.', root)
+    return Check(
+        name,
+        Status.WARNING,
+        f'The project has no hooks in {HOOKS_DIR}/. Run "wm git-hooks" to add them.',
+        root,
+    )
 
 
 def _pin_checks(record: Record) -> list[Check]:
@@ -168,6 +201,9 @@ def doctor(start: Path) -> Report:
         checks.append(Check("project", Status.ERROR, error.plain, start))
         return Report("project", tuple(checks))
     checks.append(_project_check(project))
+    checks.append(_hooks_check(project.root, optional=False))
+    if project.code_repo is not None:
+        checks.append(_hooks_check(project.code_repo, optional=True))
     record = load_record(project)
     checks += _pin_checks(record)
     checks += _reference_checks(record, registry)

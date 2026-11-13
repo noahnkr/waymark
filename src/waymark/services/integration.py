@@ -16,7 +16,7 @@ from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import Record
 from waymark.record.store import Transaction
-from waymark.services import migrations
+from waymark.services import ci, githooks, migrations
 from waymark.services.common import (
     Done,
     Refusal,
@@ -150,15 +150,20 @@ def update(start: Path) -> Done:
     local = stage_local(
         transaction, project_files, record.config.agent_tools, located_folders(record)
     )
+    workflow = ci.stage_workflow(transaction, project_files, only_if_present=True)
     commit(transaction)
     keep_local(record.project.root, local)
     changes += local
+    if workflow != "absent":
+        changes.append(FileChange(ci.WORKFLOW, workflow))
+    hooks = githooks.install(record.project.root)
     lines = [f"Migrated the record: {step}." for step in migrated]
     lines += [
         f"{change.status}: {change.path}" for change in changes if change.status != "unchanged"
     ]
+    lines += hooks
     untouched = sum(1 for change in changes if change.status == "unchanged")
-    if not migrated and untouched == len(changes):
+    if not migrated and not hooks and untouched == len(changes):
         lines.append("Everything is up to date.")
     else:
         lines.append(f"{untouched} file(s) already current. Review the changes and commit them.")
