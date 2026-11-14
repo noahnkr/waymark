@@ -9,6 +9,7 @@ SubagentStop.
 import datetime
 import io
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -123,6 +124,27 @@ def test_adapter_declares_its_tools_capabilities() -> None:
     assert (capabilities.skills, capabilities.subagents, capabilities.hooks) == (True, True, True)
     assert adapter.title == "Claude Code"
     assert adapters.names() == (NAME,)
+
+
+def test_adapters_ignore_nothing_unless_they_say_so() -> None:
+    class Bare(adapters.Adapter):
+        name = "bare"
+        title = "Bare"
+        capabilities = adapters.Capabilities(skills=False, subagents=False, hooks=False)
+
+        def files(self, existing: Mapping[str, str | None]) -> dict[str, str]:
+            del existing
+            return {}
+
+    assert Bare().ignored == ()
+
+
+def test_adapter_ignores_only_the_files_wm_writes() -> None:
+    assert adapters.get(NAME).ignored == (
+        "/.claude/skills/wm-*/",
+        "/.claude/agents/wm-*.md",
+        "/.claude/settings.json",
+    )
 
 
 def test_agent_definitions_keep_the_reviewer_read_only() -> None:

@@ -211,6 +211,7 @@ class ClaudeCodeAdapter(Adapter):
     capabilities = Capabilities(skills=True, subagents=True, hooks=True)
     reads = (SETTINGS,)
     local_reads = (LOCAL_SETTINGS,)
+    ignored = ("/.claude/skills/wm-*/", "/.claude/agents/wm-*.md", f"/{SETTINGS}")
 
     def local_files(
         self, existing: Mapping[str, str | None], folders: Sequence[Path]

@@ -13,6 +13,7 @@ from pathlib import Path
 from waymark import adapters, assets
 from waymark.record import git
 from waymark.record.files import RecordFiles
+from waymark.record.githooks import HOOKS_DIR
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import Record
 from waymark.record.store import Transaction
@@ -68,6 +69,22 @@ def integration_files(files: RecordFiles, tools: tuple[str, ...]) -> dict[str, s
                 "part without risking yours. Fix the file, then run this command again."
             ) from error
     return rendered
+
+
+def ignore_patterns(tools: tuple[str, ...], record: bool) -> list[str]:
+    """The ``.gitignore`` patterns for the files wm writes for this machine.
+
+    With a record: the shared skills, each tool's files, then the git hooks.
+    Without one, as in an atlas's code repo, only the git hooks.
+    """
+    patterns: list[str] = []
+    if record:
+        require_tools(tools)
+        patterns.append(f"/{SHARED_SKILLS}/wm-*/")
+        for tool in tools:
+            patterns += adapters.get(tool).ignored
+    patterns.append(f"/{HOOKS_DIR}/")
+    return patterns
 
 
 def stage(transaction: Transaction, files: RecordFiles, tools: tuple[str, ...]) -> list[FileChange]:

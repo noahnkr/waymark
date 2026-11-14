@@ -45,6 +45,8 @@ class Adapter(ABC):
     reads: tuple[str, ...] = ()
     local_reads: tuple[str, ...] = ()
     """Per-machine files the adapter merges into; never committed."""
+    ignored: tuple[str, ...] = ()
+    """``.gitignore`` patterns for every file ``files`` writes, and nothing the project owns."""
 
     @abstractmethod
     def files(self, existing: Mapping[str, str | None]) -> dict[str, str]:

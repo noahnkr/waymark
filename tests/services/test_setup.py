@@ -1,6 +1,7 @@
 """Setting up a project and creating artifacts from the built-in templates."""
 
 import datetime
+import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
@@ -8,12 +9,14 @@ import pytest
 
 from tests.conftest import git_init
 from tests.support import Workspace
-from waymark import __version__
+from waymark import __version__, adapters
+from waymark.record.files import RecordFiles
+from waymark.record.githooks import hook_files
 from waymark.record.project import find_project
 from waymark.record.record import load_record
 from waymark.record.state import ExplorationStatus, StepKind, derive_state
 from waymark.record.terms import Layout, Phase
-from waymark.services import check, lifecycle, setup
+from waymark.services import check, integration, lifecycle, setup
 from waymark.services.common import Refusal
 
 TODAY = datetime.date(2026, 1, 15)
@@ -78,6 +81,68 @@ def test_init_refuses_when_the_repository_already_has_a_record(tmp_path: Path) -
     with pytest.raises(Refusal, match="already has a record"):
         setup.init_project(tmp_path)
     assert (tmp_path / "waymark" / "charter.md").read_bytes() == before
+
+
+def test_ignore_patterns_list_the_shared_skills_each_tool_and_the_hooks() -> None:
+    tools = adapters.names()
+    expected = ["/.agents/skills/wm-*/"]
+    for tool in tools:
+        expected += adapters.get(tool).ignored
+    expected.append("/.waymark/hooks/")
+    assert integration.ignore_patterns(tools, record=True) == expected
+    assert integration.ignore_patterns((), record=True) == [
+        "/.agents/skills/wm-*/",
+        "/.waymark/hooks/",
+    ]
+
+
+def test_ignore_patterns_without_a_record_list_only_the_hooks() -> None:
+    assert integration.ignore_patterns(adapters.names(), record=False) == ["/.waymark/hooks/"]
+
+
+def test_ignore_patterns_refuse_a_tool_wm_does_not_know() -> None:
+    with pytest.raises(Refusal, match="not an agent tool"):
+        integration.ignore_patterns(("no-such-tool",), record=True)
+
+
+def ignored_by_git(root: Path, patterns: list[str], paths: list[str]) -> set[str]:
+    """The paths that git ignores in a fresh repository whose .gitignore holds the patterns."""
+    git_init(root)
+    (root / ".gitignore").write_text("".join(f"{line}\n" for line in patterns), encoding="utf-8")
+    result = subprocess.run(
+        ["git", "-C", str(root), "check-ignore", "--no-index", "--stdin"],
+        input="".join(f"{path}\n" for path in paths).encode("utf-8"),
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode in (0, 1), result.stderr
+    return set(result.stdout.decode("utf-8").splitlines())
+
+
+def test_every_file_wm_writes_for_a_machine_is_ignored(tmp_path: Path) -> None:
+    tools = adapters.names()
+    rendered = sorted(integration.integration_files(RecordFiles(tmp_path), tools))
+    hooks = sorted(hook_files())
+    assert rendered
+    assert hooks
+    paths = rendered + hooks
+    root = tmp_path / "repo"
+    ignored = ignored_by_git(root, integration.ignore_patterns(tools, record=True), paths)
+    assert ignored == set(paths)
+
+
+def test_the_patterns_leave_the_projects_own_files_alone(tmp_path: Path) -> None:
+    own = [
+        "waymark/config.toml",
+        ".waymark/atlas.toml",
+        ".gitignore",
+        ".claude/skills/team-skill/SKILL.md",
+        ".claude/agents/helper.md",
+        ".agents/skills/team-skill/SKILL.md",
+        "docs/.claude/settings.json",
+    ]
+    patterns = integration.ignore_patterns(adapters.names(), record=True)
+    assert ignored_by_git(tmp_path / "repo", patterns, own) == set()
 
 
 def test_new_change_writes_a_proposal_owned_by_the_git_user(project: Workspace) -> None:

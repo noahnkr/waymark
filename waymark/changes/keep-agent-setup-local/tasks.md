@@ -7,9 +7,10 @@
   - Verify: unit tests in `tests/record/test_ignore.py`, one per scenario of "Machine files ignored" that the function covers
   - Note: `render(patterns, newline="\n")` takes the line ending so the block matches a CRLF file; `PATH = ".gitignore"` is exported. When appending, one blank line separates the block from a non-blank last line. A BEGIN marker with no END is treated as a block running to the first blank line, so project lines after it survive.
   - (review) 2026-11-14 pass: merged() adds the block at the end, replaces it in place, returns current text unchanged, keeps lines outside the block byte for byte (CRLF, missing final newline, byte order mark) and handles None; there are tests for each scenario it covers, and the 12 item tests and the full suite of 733 pass, with ruff and mypy clean.
-- [ ] 1.2 Declare each adapter's ignore patterns, and work out the block for a repository
+- [x] 1.2 Declare each adapter's ignore patterns, and work out the block for a repository
   - Criteria: `Adapter.ignored` defaults to empty; the Claude Code adapter lists `/.claude/skills/wm-*/`, `/.claude/agents/wm-*.md` and `/.claude/settings.json`; `integration.ignore_patterns(tools, record=True)` gives `/.agents/skills/wm-*/`, each tool's patterns, then `/.waymark/hooks/`, and with `record=False` only `/.waymark/hooks/`; every path `integration_files` renders matches a pattern
   - Verify: tests in `tests/adapters/test_claude_code.py` and `tests/services/test_setup.py`, including one that matches each rendered path against the patterns with `git check-ignore` in a temporary repository
+  - (self-review) 2026-11-14: Adapter.ignored defaults to empty; Claude Code lists its three patterns; ignore_patterns gives shared skills, tool patterns, then hooks, or hooks only without a record; a git check-ignore test shows every rendered and hook path is ignored and the project's own files are not. Item tests, constraints, ruff and mypy pass.
 
 ## 2. Git hooks
 
