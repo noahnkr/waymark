@@ -23,9 +23,12 @@
 
 ## 3. Setting up a machine
 
-- [ ] 3.1 Add `integration.setup_machine`, and use it in `wm update`
+- [x] 3.1 Add `integration.setup_machine`, and use it in `wm update`
   - Criteria: `setup_machine` writes the agent tool files, the per-machine files and the ignore block in one transaction, runs `keep_local`, and installs the hooks; `wm update` calls it after migrating; its last line asks to review and commit only when the record, `.gitignore` or the CI workflow changed, naming them, and otherwise says this machine's files were updated, without a commit line
   - Verify: tests in `tests/services/test_setup.py` for "Block already current", "Block out of date" and "Update changes only machine files"
+  - Note: `setup_machine(record)` returns a `MachineSetup` (`changes: list[FileChange]`, `hooks: list[str]`, `paths`: the files its transaction wrote), since the design asks for the changes "plus the hook lines". The `.gitignore` change is the last entry of `changes`. `update` stages the CI workflow in its own transaction before calling it.
+  - Note: for 3.2: `wm init` doesn't write the block yet, so `tests/adapters/test_integration.py` runs `integration.update` once after `init_project` (the `initialized` fixture and the stub-adapter test) before expecting "Everything is up to date.". Once `init` writes the block, those calls can go.
+  - (self-review) 2026-11-14: setup_machine writes agent tool, per-machine and ignore-block files in one transaction, runs keep_local and installs the hooks; update calls it after migrating and asks to commit only when waymark/, .gitignore or the CI workflow changed, naming them, else says this machine's files were updated. The CI workflow is now committed in a transaction of its own; neither touches the record, so that is fine. Item tests, mypy and ruff pass.
 - [ ] 3.2 Let `wm init` set up this machine in a clone that has a record   `review: independent`
   - Criteria: with no record, `wm init` creates it as before and also writes the ignore block; with a record, it sets up this machine through `setup_machine` and changes nothing under `waymark/`; run again it changes nothing and says so; it is refused with the install command on another pinned version, and refused with a pointer to `wm update` when the record format is older; the `init` help text says it also sets up a clone
   - Verify: tests in `tests/services/test_setup.py` and `tests/test_cli.py` for every scenario of "Machine setup in a clone" and "New project", including one that commits the record, clones the repository, runs `wm init` in the clone and checks `git status --porcelain` is empty and a `wip` commit is refused

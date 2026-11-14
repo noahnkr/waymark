@@ -10,13 +10,14 @@ import pytest
 from tests.conftest import git_init
 from tests.support import Workspace
 from waymark import __version__, adapters
+from waymark.record import ignore
 from waymark.record.files import RecordFiles
 from waymark.record.githooks import hook_files
 from waymark.record.project import find_project
 from waymark.record.record import load_record
 from waymark.record.state import ExplorationStatus, StepKind, derive_state
 from waymark.record.terms import Layout, Phase
-from waymark.services import check, integration, lifecycle, setup
+from waymark.services import check, ci, integration, lifecycle, migrations, setup
 from waymark.services.common import Refusal
 
 TODAY = datetime.date(2026, 1, 15)
@@ -143,6 +144,112 @@ def test_the_patterns_leave_the_projects_own_files_alone(tmp_path: Path) -> None
     ]
     patterns = integration.ignore_patterns(adapters.names(), record=True)
     assert ignored_by_git(tmp_path / "repo", patterns, own) == set()
+
+
+def staged(root: Path) -> list[str]:
+    result = subprocess.run(
+        ["git", "-C", str(root), "diff", "--cached", "--name-only"],
+        capture_output=True,
+        check=True,
+    )
+    return result.stdout.decode("utf-8").splitlines()
+
+
+def test_setup_machine_writes_the_machine_files_and_the_block_and_installs_the_hooks(
+    tmp_path: Path,
+) -> None:
+    git_init(tmp_path)
+    setup.init_project(tmp_path)
+    (tmp_path / ".gitignore").unlink(missing_ok=True)
+    (tmp_path / ".claude/skills/wm-apply/SKILL.md").unlink()
+    for path in hook_files():
+        (tmp_path / path).unlink()
+    subprocess.run(["git", "-C", str(tmp_path), "config", "--unset", "core.hooksPath"], check=True)
+    record_before = {
+        path: path.read_bytes() for path in (tmp_path / "waymark").rglob("*") if path.is_file()
+    }
+
+    machine = integration.setup_machine(load_record(find_project(tmp_path)))
+
+    statuses = {change.path: change.status for change in machine.changes}
+    assert statuses[".claude/skills/wm-apply/SKILL.md"] == "created"
+    assert statuses[".gitignore"] == "created"
+    assert set(machine.paths) == {".claude/skills/wm-apply/SKILL.md", ".gitignore"}
+    patterns = integration.ignore_patterns(adapters.names()[:1], record=True)
+    assert (tmp_path / ".gitignore").read_text(encoding="utf-8") == ignore.render(patterns)
+    assert all((tmp_path / path).is_file() for path in hook_files())
+    assert any("core.hooksPath" in line for line in machine.hooks)
+    record_after = {
+        path: path.read_bytes() for path in (tmp_path / "waymark").rglob("*") if path.is_file()
+    }
+    assert record_after == record_before
+    assert staged(tmp_path) == []
+
+
+def initialized_with_block(root: Path) -> Path:
+    git_init(root)
+    setup.init_project(root)
+    integration.update(root)
+    return root
+
+
+def test_update_leaves_a_current_block_alone(tmp_path: Path) -> None:
+    """Scenario: Block already current."""
+    root = initialized_with_block(tmp_path)
+    gitignore = root / ".gitignore"
+    before = gitignore.read_bytes()
+    done = integration.update(root)
+    assert gitignore.read_bytes() == before
+    assert ".gitignore" not in done.message
+    assert done.message == "Everything is up to date."
+
+
+def test_update_replaces_an_out_of_date_block_in_place(tmp_path: Path) -> None:
+    """Scenario: Block out of date."""
+    root = initialized_with_block(tmp_path)
+    gitignore = root / ".gitignore"
+    crlf = "\r\n"
+    stale = ignore.render(["/.agents/skills/wm-*/", "/.old-tool/", "/.waymark/hooks/"], crlf)
+    around = ("# ours" + crlf + "build/" + crlf + crlf, crlf + "*.log" + crlf)
+    gitignore.write_bytes((around[0] + stale + around[1]).encode("utf-8"))
+
+    done = integration.update(root)
+
+    patterns = integration.ignore_patterns(adapters.names()[:1], record=True)
+    current = ignore.render(patterns, crlf)
+    assert gitignore.read_bytes() == (around[0] + current + around[1]).encode("utf-8")
+    assert "updated: .gitignore" in done.message
+    assert done.message.splitlines()[-1] == "Review the changes to .gitignore and commit them."
+    assert ".gitignore" in done.paths
+
+
+def test_update_that_changes_only_machine_files_asks_for_no_commit(tmp_path: Path) -> None:
+    """Scenario: Update changes only machine files."""
+    root = initialized_with_block(tmp_path)
+    (root / ".claude/skills/wm-apply/SKILL.md").write_text("edited by hand\n", encoding="utf-8")
+    (root / ".agents/skills/wm-pr/SKILL.md").unlink()
+
+    done = integration.update(root)
+
+    assert "updated: .claude/skills/wm-apply/SKILL.md" in done.message
+    assert "created: .agents/skills/wm-pr/SKILL.md" in done.message
+    assert done.message.splitlines()[-1] == "Updated this machine's files."
+    assert "commit" not in done.message.lower()
+    assert staged(root) == []
+
+
+def test_update_names_the_record_and_the_workflow_when_they_change(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = initialized_with_block(tmp_path)
+    workflow = root / ci.WORKFLOW
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text("old\n", encoding="utf-8")
+    monkeypatch.setattr(migrations, "migrate", lambda files: ("format 1 to 2: mark it",))
+    done = integration.update(root)
+    assert done.message.splitlines()[-1] == (
+        f"Review the changes to waymark/ and {ci.WORKFLOW} and commit them."
+    )
 
 
 def test_new_change_writes_a_proposal_owned_by_the_git_user(project: Workspace) -> None:

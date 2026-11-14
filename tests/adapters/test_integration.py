@@ -54,6 +54,7 @@ def files_under(root: Path) -> dict[str, bytes]:
 def initialized(tmp_path: Path) -> Path:
     git_init(tmp_path)
     setup.init_project(tmp_path)
+    integration.update(tmp_path)  # adds the .gitignore block, which "wm init" doesn't write yet
     return tmp_path
 
 
@@ -145,7 +146,8 @@ def test_update_regenerates_only_the_files_waymark_owns(initialized: Path) -> No
     }
     assert "created: .agents/skills/wm-pr/SKILL.md" in done.message
     assert "updated: .claude/skills/wm-apply/SKILL.md" in done.message
-    assert "Review the changes and commit them." in done.message
+    assert done.message.splitlines()[-1] == "Updated this machine's files."
+    assert "commit" not in done.message
     assert skill.read_text(encoding="utf-8") == assets.skill("wm-apply")
     assert mine.read_text(encoding="utf-8") == "mine\n"
     assert notes.read_text(encoding="utf-8") == "my own agent\n"
@@ -212,6 +214,7 @@ def test_stub_second_adapter_installs_the_skills_with_no_core_change(
     assert record.problems == ()
     assert record.config is not None
     assert record.config.agent_tools == ("stub-tool",)
+    integration.update(tmp_path)  # adds the .gitignore block, which "wm init" doesn't write yet
     assert integration.update(tmp_path).message == "Everything is up to date."
 
 
