@@ -37,9 +37,11 @@
 
 ## 4. Doctor
 
-- [ ] 4.1 Report machine files tracked in git, and point setup messages at `wm init`
+- [x] 4.1 Report machine files tracked in git, and point setup messages at `wm init`
   - Criteria: a new `git.tracked(root, paths)` in `record/git.py` lists the tracked paths among those given; `wm doctor` has a "machine files in git" check that warns with the count, the first path and one `git rm -r --cached` command grouped by top folder, and passes when nothing is tracked; the "agent tool files" warning says to run `wm init` and doesn't say to commit
   - Verify: tests in `tests/services/test_doctor.py` and `tests/record/test_git.py` for the scenarios of "Tracked machine files reported" and "Agent files out of date"; the doctor's JSON schema still validates (`tests/views/`)
+  - Note: `git.tracked` takes paths literally (`--literal-pathspecs`); a folder stands for the files under it. The doctor asks about the files `integration_files` renders plus `.waymark/hooks`, so a skill folder a newer wm no longer writes isn't reported. The command's arguments are the block's patterns that cover a tracked file (`".claude/skills/wm-*"` etc., quoted when they hold a glob), in the block's order; git's own pathspec globbing expands them. The check sits beside "agent tool files", so it runs only when the pin and record format are current. It looks at the project's repository only, not an atlas's code repo.
+  - (self-review) 2026-11-14: git.tracked lists tracked paths (folders included, literal pathspecs); doctor's machine files in git check warns with the count, first path and one git rm -r --cached command built from the block's patterns, and passes when nothing is tracked, as it does on this repository; the agent tool files warning says to run wm init without mentioning commit; doctor tests, git tests, view schemas and mypy pass.
 
 ## 5. Docs
 

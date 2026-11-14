@@ -5,7 +5,9 @@
 pins.
 """
 
+import fnmatch
 import shutil
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -150,6 +152,7 @@ def _pin_checks(record: Record) -> list[Check]:
         return checks
     checks.append(Check("record format", Status.OK, f"Format {config.record_format}."))
     checks.append(_tool_files(record))
+    checks.append(_machine_files_in_git(record))
     return checks
 
 
@@ -170,9 +173,59 @@ def _tool_files(record: Record) -> Check:
             "agent tool files",
             Status.WARNING,
             f"{len(stale)} file(s) Waymark owns are missing or out of date, starting with "
-            f'{stale[0]}. Run "wm update", then review and commit the changes.',
+            f'{stale[0]}. Run "wm init" to set them up.',
         )
     return Check("agent tool files", Status.OK, "The skills, agents and hooks are current.")
+
+
+def _matches(path: str, pattern: str) -> bool:
+    """Whether a ``.gitignore`` pattern of the block covers a path, part by part.
+
+    A pattern ending in a slash names a folder and covers everything under it.
+    """
+    folder = pattern.endswith("/")
+    wanted = pattern.strip("/").split("/")
+    parts = path.split("/")
+    if len(parts) < len(wanted) or (not folder and len(parts) != len(wanted)):
+        return False
+    if folder and len(parts) == len(wanted):
+        return False
+    return all(fnmatch.fnmatchcase(part, want) for part, want in zip(parts, wanted, strict=False))
+
+
+def _grouped(paths: Sequence[str], patterns: Sequence[str]) -> list[str]:
+    """The tracked paths gathered under the block's patterns, in its order, for one command."""
+    covered = [p.strip("/") for p in patterns if any(_matches(path, p) for path in paths)]
+    rest = [path for path in paths if not any(_matches(path, p) for p in patterns)]
+    return covered + rest
+
+
+def _quoted(path: str) -> str:
+    return f'"{path}"' if any(c in path for c in " *?[") else path
+
+
+def _machine_files_in_git(record: Record) -> Check:
+    """Whether files wm writes for each machine are still tracked, as a 0.1.0 project had them."""
+    assert record.config is not None
+    root = record.project.root
+    tools = record.config.agent_tools
+    try:
+        written = integration.integration_files(RecordFiles(root), tools)
+        patterns = integration.ignore_patterns(tools, record=True)
+    except Refusal as refusal:
+        return Check("machine files in git", Status.ERROR, str(refusal))
+    found = git.tracked(root, [*sorted(written), HOOKS_DIR])
+    if not found:
+        return Check(
+            "machine files in git", Status.OK, "No file wm writes for this machine is tracked."
+        )
+    command = " ".join(_quoted(group) for group in _grouped(found, patterns))
+    return Check(
+        "machine files in git",
+        Status.WARNING,
+        f"{len(found)} file(s) wm writes for each machine are tracked in git, starting with "
+        f"{found[0]}. Stop sharing them, keeping your copies: git rm -r --cached {command}",
+    )
 
 
 def _reference_checks(record: Record, registry: Registry) -> list[Check]:

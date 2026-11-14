@@ -121,6 +121,22 @@ def staged_paths(repository: Path) -> tuple[str, ...]:
     return tuple(path for path in listing.split("\0") if path)
 
 
+def tracked(repository: Path, paths: Iterable[str]) -> tuple[str, ...]:
+    """The tracked files among some paths, relative to the repository's top.
+
+    Paths are taken literally, with forward slashes; a folder stands for every
+    tracked file under it. Outside a repository nothing is tracked.
+    """
+    wanted = [path.strip("/") for path in paths if path.strip("/")]
+    if not wanted:
+        return ()
+    try:
+        listing = _run(repository, "--literal-pathspecs", "ls-files", "-z", "--", *wanted)
+    except GitError:
+        return ()
+    return tuple(path for path in listing.split("\0") if path)
+
+
 def remote_url(repository: Path, remote: str = "origin") -> str | None:
     """A remote's URL as this clone's config has it; nothing is fetched."""
     try:
