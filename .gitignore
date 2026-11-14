@@ -11,8 +11,17 @@ dist/
 .pytest_cache/
 .ruff_cache/
 
-# Per-machine agent tool settings
-.claude/settings.local.json
+# Agent tool setup: per machine, written by "wm init"
+/.claude/
+/CLAUDE.md
+/AGENTS.md
+/.codex/
+/.cursor/
+/.opencode/
+/.windsurf/
+/.gemini/
+/.agents/skills/wm-*/
+/.waymark/
 
 # Editors and operating systems
 .idea/

@@ -113,6 +113,27 @@ uv run --no-sync codespell                # spelling, American English
 uv run --no-sync python -m tools.docs     # regenerate the CLI and JSON references and the README's evidence
 ```
 
+**Waymark is developed with Waymark.** Its record is in `waymark/`: the charter,
+the specs, and every change since 0.1.0. Work starts as a change there, through
+the skills, like in any other project. After cloning:
+
+```
+uv tool install --editable . --force      # wm on PATH runs this checkout, so it matches the pin
+wm init                                   # this machine's agent tool files and git hooks
+```
+
+Agent tool files (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.codex/`, `.cursor/`
+and the like), wm's own skills in `.agents/skills/wm-*/` and `.waymark/` are per
+machine and kept out of git. The skills for working on Waymark itself are
+committed in `.agents/skills/`:
+
+| Skill | For |
+|---|---|
+| `waymark-draft-docs` | Planning and drafting a new or rewritten docs page with the maintainer |
+| `waymark-write-docs` | The house style and fact rules for any docs edit |
+| `waymark-check-docs` | Checking docs against the code, on request |
+| `waymark-release` | Cutting a release, from audit to tag |
+
 CI runs the tests on Windows, macOS and Linux, each on Python 3.11 and the newest
 release, plus lint, format, strict type and spelling checks, and builds the wheel.
 A test fails when a generated doc is out of date.
@@ -136,11 +157,13 @@ scoped by component (`record`, `services`, `views`, `hooks`, `adapter-claude`,
 
 ## Releasing
 
-The maintainer releases. Before each release, the [smoke-test checklist](smoke-test.md)
-is run by hand, and its result goes into the changelog's entry. Then:
+The maintainer releases, with the `waymark-release` skill. Before each release, the
+[smoke-test checklist](smoke-test.md) is run by hand, and its result goes into the
+changelog's entry. The skill:
 
-1. set the version in `src/waymark/__init__.py` and date the entry in `CHANGELOG.md`;
-2. merge, and push a tag `v<version>` on `main`.
+1. sets the version in `src/waymark/__init__.py` and the pin in `waymark/config.toml`,
+   and writes and dates the entry in `CHANGELOG.md`, on a release branch;
+2. opens the pull request; after it is merged, pushes a tag `v<version>` on `main`.
 
 The release workflow checks that the tag, the version, the changelog entry and the
 smoke-test record agree, runs the tests, builds, publishes to PyPI through trusted

@@ -50,6 +50,8 @@ jobs:
         run: uv run --no-sync ruff check --output-format=github .
       - name: Format check
         run: uv run --no-sync ruff format --check .
+      - name: Record check
+        run: uv run --no-sync wm check
 
   spelling:
     name: Spelling (American English)
