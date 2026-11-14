@@ -8,7 +8,7 @@ Exit codes: `0` success; `1` refused, or problems found; `2` usage error.
 
 ## wm init
 
-Create the record in this git repository.
+Create the record, or set up this machine in a clone that has one.
 
 ```
 wm init [--atlas NAME] [--tool NAME]

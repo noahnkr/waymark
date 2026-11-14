@@ -67,7 +67,7 @@ def test_the_hooks_warn_and_let_the_commit_through_when_wm_is_missing(repo: Path
 
 
 def test_a_clone_with_windows_line_endings_still_gets_working_hooks(
-    repo: Path, tmp_path: Path
+    repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     assert commit(repo, "chore: set up the record").returncode == 0
     clone = tmp_path / "clone"
@@ -76,14 +76,13 @@ def test_a_clone_with_windows_line_endings_still_gets_working_hooks(
         check=True,
         capture_output=True,
     )
-    for name in ("commit-msg", "pre-commit"):
-        assert b"\r" not in (clone / ".waymark" / "hooks" / name).read_bytes()
     subprocess.run(["git", "-C", str(clone), "config", "core.autocrlf", "true"], check=True)
     subprocess.run(["git", "-C", str(clone), "config", "user.name", "Sam Doe"], check=True)
     subprocess.run(["git", "-C", str(clone), "config", "user.email", "sam@example.com"], check=True)
-    subprocess.run(
-        ["git", "-C", str(clone), "config", "core.hooksPath", ".waymark/hooks"], check=True
-    )
+    monkeypatch.chdir(clone)
+    assert main(["init"]) == EXIT_OK
+    for name in ("commit-msg", "pre-commit"):
+        assert b"\r" not in (clone / ".waymark" / "hooks" / name).read_bytes()
     (clone / "notes.txt").write_text("x\n", encoding="utf-8")
     subprocess.run(["git", "-C", str(clone), "add", "notes.txt"], check=True)
     refused = commit(clone, "not conventional")

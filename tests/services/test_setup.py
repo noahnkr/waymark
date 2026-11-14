@@ -17,7 +17,7 @@ from waymark.record.project import find_project
 from waymark.record.record import load_record
 from waymark.record.state import ExplorationStatus, StepKind, derive_state
 from waymark.record.terms import Layout, Phase
-from waymark.services import check, ci, integration, lifecycle, migrations, setup
+from waymark.services import check, ci, common, integration, lifecycle, migrations, setup
 from waymark.services.common import Refusal
 
 TODAY = datetime.date(2026, 1, 15)
@@ -75,13 +75,150 @@ def test_init_puts_the_record_at_the_top_of_the_repository(tmp_path: Path) -> No
     assert not (nested / "waymark").exists()
 
 
-def test_init_refuses_when_the_repository_already_has_a_record(tmp_path: Path) -> None:
+def git(root: Path, *args: str) -> str:
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, check=True)
+    return result.stdout.decode("utf-8")
+
+
+def record_bytes(root: Path) -> dict[Path, bytes]:
+    return {
+        path.relative_to(root): path.read_bytes()
+        for path in (root / "waymark").rglob("*")
+        if path.is_file()
+    }
+
+
+def test_init_writes_the_block_and_leaves_only_the_record_and_gitignore_to_commit(
+    tmp_path: Path,
+) -> None:
+    """Scenario: New project."""
+    git_init(tmp_path)
+    done = setup.init_project(tmp_path)
+    patterns = integration.ignore_patterns(adapters.names(), record=True)
+    assert (tmp_path / ".gitignore").read_text(encoding="utf-8") == ignore.render(patterns)
+    assert ".gitignore" in done.paths
+    new = git(tmp_path, "status", "--porcelain", "--untracked-files=all").splitlines()
+    assert new
+    assert all(line.startswith("?? ") for line in new)
+    paths = {line[3:] for line in new}
+    assert ".gitignore" in paths
+    assert all(path == ".gitignore" or path.startswith("waymark/") for path in paths), paths
+    assert staged(tmp_path) == []
+
+
+def cloned_project(tmp_path: Path) -> Path:
+    """A project whose record and .gitignore are committed, cloned afresh."""
+    origin = tmp_path / "origin"
+    git_init(origin)
+    git(origin, "config", "user.email", "sam@example.com")
+    setup.init_project(origin)
+    git(origin, "add", "-A")
+    git(origin, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "chore: start")
+    clone = tmp_path / "clone"
+    subprocess.run(
+        ["git", "clone", "--quiet", str(origin), str(clone)], check=True, capture_output=True
+    )
+    return clone
+
+
+def test_init_in_a_fresh_clone_sets_up_this_machine_and_leaves_the_record_alone(
+    tmp_path: Path,
+) -> None:
+    """Scenario: Fresh clone."""
+    clone = cloned_project(tmp_path)
+    assert not (clone / ".claude").exists()
+    assert not (clone / ".waymark").exists()
+    record_before = record_bytes(clone)
+    gitignore_before = (clone / ".gitignore").read_bytes()
+
+    done = setup.init_project(clone)
+
+    assert "This machine is set up" in done.message
+    assert "commit them" not in done.message
+    assert all(
+        (clone / path).is_file()
+        for path in integration.integration_files(RecordFiles(clone), adapters.names())
+    )
+    assert all((clone / path).is_file() for path in hook_files())
+    assert git(clone, "config", "core.hooksPath").strip() == ".waymark/hooks"
+    assert (clone / ".gitignore").read_bytes() == gitignore_before
+    assert record_bytes(clone) == record_before
+    assert git(clone, "status", "--porcelain", "--untracked-files=all") == ""
+
+
+def test_init_in_a_clone_adds_the_block_when_gitignore_lacks_it(tmp_path: Path) -> None:
+    clone = cloned_project(tmp_path)
+    (clone / ".gitignore").unlink()
+    record_before = record_bytes(clone)
+    done = setup.init_project(clone)
+    assert "created: .gitignore" in done.message
+    assert ".gitignore" in done.paths
+    patterns = integration.ignore_patterns(adapters.names(), record=True)
+    assert (clone / ".gitignore").read_text(encoding="utf-8") == ignore.render(patterns)
+    assert record_bytes(clone) == record_before
+
+
+def test_init_run_again_changes_nothing_and_says_so(tmp_path: Path) -> None:
+    """Scenario: Run again."""
+    clone = cloned_project(tmp_path)
+    setup.init_project(clone)
+    before = {
+        path: path.read_bytes()
+        for path in clone.rglob("*")
+        if path.is_file() and ".git" not in path.parts
+    }
+    done = setup.init_project(clone)
+    after = {
+        path: path.read_bytes()
+        for path in clone.rglob("*")
+        if path.is_file() and ".git" not in path.parts
+    }
+    assert after == before
+    assert done.message == "This machine is already set up. Nothing changed."
+    assert done.paths == ()
+
+
+def test_init_in_a_clone_is_refused_on_another_pinned_version(tmp_path: Path) -> None:
+    """Scenario: Other version."""
+    clone = cloned_project(tmp_path)
+    config = clone / "waymark" / "config.toml"
+    config.write_text(
+        config.read_text(encoding="utf-8").replace(
+            f'wm_version = "{__version__}"', 'wm_version = "9.9.9"'
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(Refusal) as refusal:
+        setup.init_project(clone)
+    assert "pinned to wm 9.9.9" in str(refusal.value)
+    assert "waymark-cli==9.9.9" in str(refusal.value)
+    assert not (clone / ".claude").exists()
+    assert not (clone / ".agents").exists()
+    assert not (clone / ".waymark").exists()
+
+
+def test_init_in_a_clone_is_refused_when_the_record_needs_migrating(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Scenario: Record needs migrating."""
+    clone = cloned_project(tmp_path)
+    monkeypatch.setattr(common, "RECORD_FORMAT", 2)
+    with pytest.raises(Refusal, match='Run "wm update"'):
+        setup.init_project(clone)
+    assert not (clone / ".claude").exists()
+    assert not (clone / ".agents").exists()
+    assert not (clone / ".waymark").exists()
+
+
+def test_init_with_a_record_refuses_options_that_only_apply_to_a_new_one(tmp_path: Path) -> None:
     git_init(tmp_path)
     setup.init_project(tmp_path)
-    before = (tmp_path / "waymark" / "charter.md").read_bytes()
+    before = record_bytes(tmp_path)
     with pytest.raises(Refusal, match="already has a record"):
-        setup.init_project(tmp_path)
-    assert (tmp_path / "waymark" / "charter.md").read_bytes() == before
+        setup.init_project(tmp_path, tools=("claude-code",))
+    with pytest.raises(Refusal, match="already has a record"):
+        setup.init_project(tmp_path, atlas="suite")
+    assert record_bytes(tmp_path) == before
 
 
 def test_ignore_patterns_list_the_shared_skills_each_tool_and_the_hooks() -> None:
@@ -189,7 +326,6 @@ def test_setup_machine_writes_the_machine_files_and_the_block_and_installs_the_h
 def initialized_with_block(root: Path) -> Path:
     git_init(root)
     setup.init_project(root)
-    integration.update(root)
     return root
 
 

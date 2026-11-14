@@ -54,7 +54,6 @@ def files_under(root: Path) -> dict[str, bytes]:
 def initialized(tmp_path: Path) -> Path:
     git_init(tmp_path)
     setup.init_project(tmp_path)
-    integration.update(tmp_path)  # adds the .gitignore block, which "wm init" doesn't write yet
     return tmp_path
 
 
@@ -214,7 +213,6 @@ def test_stub_second_adapter_installs_the_skills_with_no_core_change(
     assert record.problems == ()
     assert record.config is not None
     assert record.config.agent_tools == ("stub-tool",)
-    integration.update(tmp_path)  # adds the .gitignore block, which "wm init" doesn't write yet
     assert integration.update(tmp_path).message == "Everything is up to date."
 
 

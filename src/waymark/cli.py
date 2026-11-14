@@ -304,7 +304,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     parser.add_argument("--version", action="version", version=f"{PROG} {__version__}")
     commands = parser.add_subparsers(title="commands", metavar="<command>")
 
-    summary = "Create the record in this git repository."
+    summary = "Create the record, or set up this machine in a clone that has one."
     init = commands.add_parser("init", help=summary, description=summary)
     init.add_argument(
         "--atlas",

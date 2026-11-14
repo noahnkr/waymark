@@ -264,7 +264,9 @@ def test_refused_command_exits_1_and_says_what_to_do(session: Session) -> None:
     assert refusal.startswith("wm: No Waymark project found")
     assert "initialize" in refusal
     session.run("init")
-    assert "already has a record" in session.run("init", expect=EXIT_REFUSED)
+    assert "already set up" in session.run("init")
+    refusal = session.run("init", "--tool", "claude-code", expect=EXIT_REFUSED)
+    assert "already has a record" in refusal
     assert "There is no active change" in session.run("accept", "add-limit", expect=EXIT_REFUSED)
 
 
