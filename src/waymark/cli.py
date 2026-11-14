@@ -75,7 +75,7 @@ def _atlas_point(args: argparse.Namespace) -> int:
 
 
 def _git_hooks(_: argparse.Namespace) -> int:
-    return _report(githooks_service.git_hooks(_here()))
+    return _report(integration.git_hooks(_here()))
 
 
 def _run_hook(args: argparse.Namespace) -> int:
@@ -327,7 +327,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         commands, "doctor", _doctor, "Check wm, git and this project's setup; changes nothing."
     )
 
-    summary = "Put the committed git hooks in this repository and point this clone's git at them."
+    summary = "Write the git hooks, keep them out of git, and point this clone's git at them."
     commands.add_parser("git-hooks", help=summary, description=summary).set_defaults(
         handler=_git_hooks
     )

@@ -14,9 +14,12 @@
 
 ## 2. Git hooks
 
-- [ ] 2.1 Install the git hooks without staging them, and add the ignore block   `review: independent`
+- [x] 2.1 Install the git hooks without staging them, and add the ignore block   `review: independent`
   - Criteria: `githooks.install` writes the hooks, makes them executable and sets `core.hooksPath`, stages nothing, and no longer says to commit them; `wm git-hooks` writes the hooks-only block in a repository without a record and the full block in one with a record; it works when `.waymark/` is already ignored; a repository with another hook manager is still left alone
   - Verify: tests in `tests/services/test_githooks.py` for the scenarios of "Git hooks not staged" and "Code repo with git hooks only", checking `git diff --cached --name-only` is empty
+  - Note: `githooks.install(root, *, record: bool)` writes the hooks-only block itself when `record` is False. The `wm git-hooks` command moved to `integration.git_hooks`, because it needs `ignore_patterns` and `integration` already imports `githooks`. `integration.stage_ignore(transaction, files, patterns) -> FileChange` is there for 3.1 and 3.2 to use. The hooks pattern is `record.githooks.HOOKS_IGNORED`. `git.stage` and `git.stage_executable` are gone, since nothing uses them now.
+  - Note: `init_project` and `update` call `install(..., record=True)` but don't write the block yet; that is 3.1 and 3.2. Once `wm init` ignores the hooks, `tests/test_git_cli.py::test_a_clone_with_windows_line_endings_still_gets_working_hooks` can't expect the hooks in a clone any more. Its fixture runs `git add -A` after init, so the clone will have to run `wm init` first.
+  - (review) 2026-11-14 pass: install writes, sets executable and sets core.hooksPath with nothing staged and no commit message; wm git-hooks writes the hooks-only block without a record and the full block with one; works when .waymark/ is already ignored; other hook managers left alone; tests check an empty cached diff and all pass
 
 ## 3. Setting up a machine
 

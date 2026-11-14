@@ -11,9 +11,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waymark import adapters, assets
-from waymark.record import git
+from waymark.record import git, ignore
+from waymark.record.config import CONFIG_FILE, parse_config
 from waymark.record.files import RecordFiles
-from waymark.record.githooks import HOOKS_DIR
+from waymark.record.githooks import HOOKS_IGNORED
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import Record
 from waymark.record.store import Transaction
@@ -83,8 +84,52 @@ def ignore_patterns(tools: tuple[str, ...], record: bool) -> list[str]:
         patterns.append(f"/{SHARED_SKILLS}/wm-*/")
         for tool in tools:
             patterns += adapters.get(tool).ignored
-    patterns.append(f"/{HOOKS_DIR}/")
+    patterns.append(HOOKS_IGNORED)
     return patterns
+
+
+def stage_ignore(
+    transaction: Transaction, files: RecordFiles, patterns: Sequence[str]
+) -> FileChange:
+    """Stage the ``.gitignore`` block for these patterns, only when it differs from the file's."""
+    current = files.read(ignore.PATH, []) if files.is_file(ignore.PATH) else None
+    text = ignore.merged(current, patterns)
+    if text == current:
+        return FileChange(ignore.PATH, "unchanged")
+    transaction.write(ignore.PATH, text)
+    return FileChange(ignore.PATH, "created" if current is None else "updated")
+
+
+def git_hooks(start: Path) -> Done:
+    """Install the git hooks in the repository around a folder, and keep them out of git.
+
+    In a repository with a record, the ``.gitignore`` block lists every file wm
+    writes for this machine, from the settings' agent tools, so this command
+    and "wm init" write the same block. Elsewhere ``githooks.install`` writes
+    the hooks-only block.
+    """
+    root = git.repository_root(start)
+    if root is None:
+        raise Refusal("Git hooks go in a git repository, and this folder is not in one.")
+    config_path = f"{RECORD_DIR}/{CONFIG_FILE}"
+    files = RecordFiles(root)
+    has_record = files.is_file(config_path)
+    lines: list[str] = []
+    if has_record:
+        text = files.read(config_path, [])
+        config = parse_config(text)[0] if text is not None else None
+        if config is None:
+            raise Refusal(
+                f"{config_path} can't be read, so wm doesn't know which agent tools' files to "
+                'keep out of git. Run "wm check" to see what to fix.'
+            )
+        transaction = Transaction(files)
+        change = stage_ignore(transaction, files, ignore_patterns(config.agent_tools, record=True))
+        commit(transaction)
+        if change.status != "unchanged":
+            lines.append(f"{change.status}: {change.path}")
+    lines += githooks.install(root, record=has_record)
+    return Done("\n".join(lines) or "The git hooks are installed and in use.")
 
 
 def stage(transaction: Transaction, files: RecordFiles, tools: tuple[str, ...]) -> list[FileChange]:
@@ -173,7 +218,7 @@ def update(start: Path) -> Done:
     changes += local
     if workflow != "absent":
         changes.append(FileChange(ci.WORKFLOW, workflow))
-    hooks = githooks.install(record.project.root)
+    hooks = githooks.install(record.project.root, record=True)
     lines = [f"Migrated the record: {step}." for step in migrated]
     lines += [
         f"{change.status}: {change.path}" for change in changes if change.status != "unchanged"

@@ -66,7 +66,7 @@ def init_project(
     kind = f'the atlas "{atlas}"' if atlas is not None else "a project"
     titles = ", ".join(adapters.get(tool).title for tool in chosen) or "no agent tool"
     registered = f" {register_new_atlas(root, atlas)}" if atlas is not None else ""
-    hooks = "\n".join(githooks.install(root))
+    hooks = "\n".join(githooks.install(root, record=True))
     return Done(
         f"Initialized {kind} in {RECORD_DIR}/, with skills, agents and hooks for {titles}."
         f"{registered}\n{hooks}\n"

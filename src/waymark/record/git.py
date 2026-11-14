@@ -121,16 +121,6 @@ def staged_paths(repository: Path) -> tuple[str, ...]:
     return tuple(path for path in listing.split("\0") if path)
 
 
-def stage(repository: Path, paths: Iterable[str]) -> None:
-    """Stage files for the next commit."""
-    _run(repository, "add", "--", *paths)
-
-
-def stage_executable(repository: Path, paths: Iterable[str]) -> None:
-    """Stage files with their executable bit, which a checkout on Windows can't set itself."""
-    _run(repository, "add", "--chmod=+x", "--", *paths)
-
-
 def remote_url(repository: Path, remote: str = "origin") -> str | None:
     """A remote's URL as this clone's config has it; nothing is fetched."""
     try:

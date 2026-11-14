@@ -37,7 +37,7 @@ wm doctor [--json]
 
 ## wm git-hooks
 
-Put the committed git hooks in this repository and point this clone's git at them.
+Write the git hooks, keep them out of git, and point this clone's git at them.
 
 ```
 wm git-hooks
