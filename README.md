@@ -243,8 +243,8 @@ organizations that need access control or approval chains.
 Agents write every artifact and all the code, on your own agent tool and plan;
 `wm` never calls a model. You approve each change twice, and settle what
 `wm inbox` lists: spec gaps, blocked items, reviews that failed twice. Time and
-token figures will come from using Waymark on itself, in 0.1.1. None are
-claimed before they're measured.
+token figures will come from using Waymark on itself; none are claimed before
+they're measured.
 
 </details>
 

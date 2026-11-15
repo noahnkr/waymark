@@ -3,6 +3,34 @@
 All notable changes to Waymark, one entry per release. A release that changes
 the record's format says what `wm update` migrates.
 
+## [0.1.1] - 2026-11-15
+
+Each machine sets itself up, and background agents' results are recorded.
+Waymark is now developed with its own record.
+
+- **Behavior change: the agent tool files and git hooks belong to each
+  machine.** `wm init`, `wm update` and `wm git-hooks` keep them out of git with
+  a marked block in `.gitignore`, and the git hooks are no longer staged. Commit
+  `waymark/` and `.gitignore`; after cloning, run `wm init`.
+- **`wm init` in a clone that has a record** sets up this machine instead of
+  refusing, and leaves the record alone. It needs the pinned `wm`, and says to
+  run `wm update` when the record needs migrating.
+- **`wm doctor`** warns when files `wm` writes for a machine are tracked in git,
+  with the `git rm -r --cached` command that stops sharing them. Its message for
+  missing agent files says to run `wm init`.
+- **`wm update`** asks you to commit only when the record, `.gitignore` or the
+  CI workflow changed.
+- **Fix: results from agents run in the background are recorded.** In Claude
+  Code, an implementer's or reviewer's report handed back through
+  `SubagentHandback` is read by the hooks, so ticks and verdicts are written
+  without the planner. The agents may now use that tool.
+- **Upgrading from 0.1.0:** change the pin to 0.1.1, install it, and run
+  `wm update`. It adds the `.gitignore` block. Then run `wm doctor` and the
+  `git rm -r --cached` command it gives, and commit. The record format is
+  unchanged (format 1); nothing is migrated.
+
+Smoke test: passed on 2026-11-15 with Claude Code 2.1.325 on Windows.
+
 ## [0.1.0] - 2026-11-13
 
 The first release: the foundation.
