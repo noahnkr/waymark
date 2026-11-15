@@ -4,21 +4,6 @@
 
 How `wm` sets up a repository on one machine: the agent tool files, which belong to the machine, and how they are kept out of git. The record itself is shared and committed.
 
-## Added requirements
-
-### Requirement: Old git hooks removed
-`wm init` and `wm update` SHALL remove the git hooks that `wm` 0.1.1 installed: when this clone's `core.hooksPath` is `.waymark/hooks`, they SHALL unset it and delete `.waymark/hooks/`. They SHALL leave any other `core.hooksPath` and any other hooks alone.
-
-#### Scenario: Clone set up by 0.1.1
-- GIVEN a clone whose `core.hooksPath` is `.waymark/hooks` and whose `.waymark/hooks/` holds the two hooks
-- WHEN `wm update` runs
-- THEN `core.hooksPath` is unset, `.waymark/hooks/` is gone, and the output says the git hooks were removed
-
-#### Scenario: Another hook setup
-- GIVEN a clone whose `core.hooksPath` is `.husky`
-- WHEN `wm init` runs
-- THEN `core.hooksPath` is still `.husky`, and nothing in `.husky/` has changed
-
 ## Modified requirements
 
 ### Requirement: Machine setup in a clone

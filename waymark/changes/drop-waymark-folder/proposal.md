@@ -1,7 +1,7 @@
 # Drop waymark folder
 
 Owner: Noah Roberts
-Accepted: 2026-11-15 by Noah Roberts (fingerprint: 58d8d8b963c17e03)
+Accepted: 2026-11-15 by Noah Roberts (fingerprint: 9dd80fac7b4f576c)
 
 ## Why
 
@@ -17,7 +17,7 @@ OpenSpec, a comparable tool, enforces commit messages with no git hooks at all. 
 ## What changes
 
 - **No git hooks.** `wm init` and `wm update` stop writing hooks.
-  - In a clone set up by 0.1.1, they unset `core.hooksPath` when it is `.waymark/hooks` and delete `.waymark/hooks/`.
+  - They don't clean up after 0.1.1. A clone it set up unsets `core.hooksPath` and deletes `.waymark/hooks/` by hand, and the changelog gives the two commands.
   - `wm git-hooks` and `wm run-hook` are removed.
   - The ignore block no longer lists the hooks.
   - `wm doctor` and `wm status` stop checking whether a clone runs them.
@@ -50,5 +50,4 @@ OpenSpec, a comparable tool, enforces commit messages with no git hooks at all. 
 - Code:
   - removed: `record/githooks.py` and `services/githooks.py`, plus the hook templates, the `git-hooks` and `run-hook` commands, and the hooks checks in `services/doctor.py` and `views/`;
   - changed: `hooks/decide.py` (commands), `record/pointer.py`, `record/project.py`, `services/atlas.py`, `services/integration.py` and `services/setup.py`;
-  - added: a migration step for 0.1.1 clones.
 - Docs: getting started, the multi-repo guide, concepts, the smoke test, architecture and the regenerated CLI reference.

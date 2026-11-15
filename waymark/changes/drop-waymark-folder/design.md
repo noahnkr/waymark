@@ -48,10 +48,7 @@
      - the `git-hooks` and `run-hook` commands, with their entries in `hooks/commands.py`'s reading-command list;
      - `HOOKS_IGNORED`;
      - the status payload's `git_hooks` field and its warning.
-   - `record/githooks.py` shrinks to what the cleanup needs, renamed to `record/oldhooks.py`:
-     - `HOOKS_DIR = ".waymark/hooks"`;
-     - `remove_old_hooks(root) -> bool`, which unsets `core.hooksPath` only when it equals `.waymark/hooks`, then deletes that folder and `.waymark/` if it is empty.
-   - `setup_machine` calls `remove_old_hooks`, and reports "Removed the git hooks wm 0.1.1 installed" when it did. `ignore_patterns` no longer lists the hooks.
+   - `record/githooks.py` goes too. Nothing cleans up the hooks 0.1.1 installed: the one clone it set up was cleaned by hand, and the changelog gives the commands (`git config --unset core.hooksPath`, then delete `.waymark/hooks/`). `ignore_patterns` no longer lists the hooks.
    - `wm doctor`:
      - drops `_hooks_check`;
      - its "machine files in git" check also looks for `.waymark/hooks`;
@@ -83,10 +80,10 @@
 - Choice: allow.
 - Why: Refusing an editor commit or a message built from a variable would block legitimate commands to enforce a convention. That would go against the charter's "guard rails, not security".
 
-### Decision: Clean up 0.1.1 hooks in `setup_machine`, not as a record migration
-- Options: a record format migration; a step in `setup_machine`, which `wm init` and `wm update` both run.
-- Choice: `setup_machine`.
-- Why: `core.hooksPath` and the hook files belong to each clone, not to the shared record. Every clone has to clean up its own, which `wm init` and `wm update` do.
+### Decision: No automatic cleanup of the 0.1.1 hooks
+- Options: a record format migration; a step in `setup_machine`, which `wm init` and `wm update` both run; no cleanup, with the commands in the changelog.
+- Choice: no cleanup.
+- Why: 0.1.1 set up one clone, Waymark's own, and it was cleaned by hand. Code that undoes a one-release setup would stay in `wm` for no user. The changelog tells anyone else what to run.
 
 ## Risks and trade-offs
 
