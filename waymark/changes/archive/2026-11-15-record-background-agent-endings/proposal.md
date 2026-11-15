@@ -28,3 +28,7 @@ So no result was recorded for any of the 11 agent runs of `keep-agent-setup-loca
 - Users see that ticks and verdicts are recorded again in Claude Code when agents run in the background, as they do by default. That's a fix, for the changelog.
 - Code: `adapters/claude_code.py` (hook events and the agent definitions), `hooks/events.py` and `hooks/decide.py`, and the settings that `wm update` and `wm init` render.
 - Docs: `docs/smoke-test.md`, and `docs/architecture.md` where it describes the agent stop.
+
+## Outcome
+
+Claude Code agents running in the background now have their results recorded. The adapter reads the report an agent hands back through SubagentHandback, the core records its ending exactly as from a final message, and a per-agent marker in the clone's git folder lets the following stop through without asking again. A stop after a single refused handback still asks for the ending, as the design says. A handback without an agent_id is refused every time; the smoke test checks that Claude Code sends one.
