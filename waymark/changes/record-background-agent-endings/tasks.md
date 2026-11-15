@@ -2,9 +2,11 @@
 
 ## 1. Agent markers
 
-- [ ] 1.1 Keep a marker per agent in the clone's git folder, in `record/agents.py`
+- [x] 1.1 Keep a marker per agent in the clone's git folder, in `record/agents.py`
   - Criteria: functions mark an agent's ending as recorded, count a refused attempt, read an agent's marker and remove it; markers live under `<git dir>/waymark/agents/<agent_id>`, found through a `git` helper that works in a worktree; an `agent_id` that isn't letters, digits, `-` or `_` is ignored; writing a marker removes markers older than a day; nothing is written outside the git folder
   - Verify: tests in `tests/record/test_agents.py`, including a worktree, an unsafe `agent_id`, and the sweep of an old marker
+  - Note: API for 2.1: `read_marker(where, agent_id) -> Marker | None` (`Marker.recorded`, `Marker.attempts`), `mark_recorded`, `count_attempt` (returns the new count; 0 for an unusable id or outside a repo) and `remove_marker`, each taking any folder in the repo; the folder comes from the new `git.git_path(folder, relative)`.
+  - (self-review) 2026-11-15: record/agents.py keeps one marker per agent under the git folder found through git.git_path (worktree-aware); read, mark recorded, count attempts and remove work; unsafe ids and folders outside a repo do nothing; writing sweeps markers older than a day. Its 20 tests and the boundary tests pass.
 
 ## 2. Recording handbacks
 
