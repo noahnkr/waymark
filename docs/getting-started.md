@@ -15,8 +15,8 @@ pipx install waymark-cli
 uv tool install waymark-cli
 ```
 
-Check it: `wm --version`. The agent tool's hooks and the git hooks call `wm`
-from PATH, so it must be on PATH in the shell Claude Code uses.
+Check it: `wm --version`. The agent tool's hooks call `wm` from PATH, so it
+must be on PATH in the shell Claude Code uses.
 
 ## 2. Set up your repository
 
@@ -34,12 +34,10 @@ This writes:
 - the skills in `.agents/skills/`, with copies in `.claude/skills/`, the two
   agent definitions in `.claude/agents/`, and the hooks in
   `.claude/settings.json` (merged into any settings you already have);
-- the git hooks in `.waymark/hooks/`, which check commit messages and run
-  `wm check` on commits that touch the record. `wm init` points this clone's git
-  at them. If the repository already uses a hook manager, nothing is installed
-  and `wm` prints the two lines to add to it;
-- a block in `.gitignore` that keeps the agent tool files and the git hooks out
-  of git. They belong to each machine, not to the project.
+- a block in `.gitignore` that keeps the agent tool files out of git. They
+  belong to each machine, not to the project.
+
+`wm init` installs no git hooks and changes no git setting.
 
 Commit `waymark/` and `.gitignore`. They are the only files `wm init` wrote
 that `git status` shows. Then run `wm doctor` to check that everything is in place; it
@@ -54,26 +52,27 @@ leaves the rest of `.gitignore` alone. With Claude Code, the block lists:
 | `/.claude/skills/wm-*/` | their copies for Claude Code |
 | `/.claude/agents/wm-*.md` | the agent definitions |
 | `/.claude/settings.json` | Claude Code's settings, with the hooks |
-| `/.waymark/hooks/` | the git hooks |
 
 Your own skills and agents, `CLAUDE.md` and `AGENTS.md` are not in the block.
 Commit or ignore them as you choose.
 
 Optional: `wm ci` adds a GitHub Actions workflow that installs the pinned `wm`
-and runs `wm check` on every push and pull request.
+and runs `wm check` on every push and pull request. Nothing runs `wm check`
+when you commit; CI is where it runs.
+
+Commit messages are checked in Claude Code, by its command hook. Commits you
+make by hand are not checked. See [the gates](concepts.md#the-gates).
 
 ### After cloning a project
 
 Install the `wm` version the project pins, then run `wm init` in the clone. It
-finds the record and sets up this machine: it writes the agent tool files,
-installs the git hooks, points this clone's git at them, and adds the
-`.gitignore` block if it is missing. It doesn't change anything in `waymark/`.
-Run it again and it says the machine is already set up.
+finds the record and sets up this machine: it writes the agent tool files and
+adds the `.gitignore` block if it is missing. It doesn't change anything in
+`waymark/`. Run it again and it says the machine is already set up.
 
 `wm init` is refused in a clone when the installed `wm` isn't the pinned
 version; the message gives the command that installs it. It is also refused
-when the record needs migrating; run `wm update` for that. Until a clone runs
-`wm init`, `wm doctor` and `wm status` warn that it doesn't run the git hooks.
+when the record needs migrating; run `wm update` for that.
 
 ## 3. Write the charter: the `wm-kickoff` skill
 
@@ -130,12 +129,20 @@ version installed, reading works and writing is refused, with the command that
 installs the pinned one. To upgrade a project: change the pin, install that
 version, and run `wm update`. When it changes the record, `.gitignore` or the CI
 workflow, it names them and asks you to review and commit the changes. It never
-asks you to commit the agent tool files or the git hooks.
+asks you to commit the agent tool files.
 
-A project set up with `wm` 0.1.0 committed the agent tool files and the git
+A project set up with `wm` 0.1.0 committed the agent tool files and its git
 hooks. `wm update` adds the `.gitignore` block, but git keeps tracking files it
 already tracks. `wm doctor` warns about them, and gives the `git rm -r --cached`
 command that stops tracking them and keeps your copies. Run it, then commit.
+
+`wm` no longer has git hooks, and `wm run-hook` is gone. A clone that `wm`
+0.1.0 or 0.1.1 set up still points git at the old hooks, which call
+`wm run-hook`, so its commits fail. In each such clone, run
+`git config --unset core.hooksPath`, then delete the hooks folder that setting
+named. `wm update` doesn't do this for you. If a hook manager such as husky,
+lefthook or pre-commit calls `wm run-hook`, remove those two lines from its
+settings.
 
 ## Next
 

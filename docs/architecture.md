@@ -32,7 +32,7 @@ adapter for another agent tool, and how to work on the code.
   |   views/     |   |   services/                |   |   hooks/           |
   |  payloads,   |   |  setup, lifecycle, check,  |   |  neutral events,   |
   |  schemas,    |   |  instructions, context     |   |  decisions         |
-  |  text + JSON |   |  packs, atlases, git hooks |   |                    |
+  |  text + JSON |   |  packs, atlases            |   |                    |
   +------+-------+   +-------------+--------------+   +---------+----------+
          |                         |                            |
          v                         v                            v
@@ -123,12 +123,12 @@ the skills, like in any other project. After cloning:
 
 ```
 uv tool install --editable . --force      # wm on PATH runs this checkout, so it matches the pin
-wm init                                   # this machine's agent tool files and git hooks
+wm init                                   # this machine's agent tool files
 ```
 
 Agent tool files (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.codex/`, `.cursor/`
-and the like), wm's own skills in `.agents/skills/wm-*/` and `.waymark/` are per
-machine and kept out of git. The skills for working on Waymark itself are
+and the like) and wm's own skills in `.agents/skills/wm-*/` are per machine
+and kept out of git. The skills for working on Waymark itself are
 committed in `.agents/skills/`:
 
 | Skill | For |

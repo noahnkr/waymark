@@ -255,8 +255,8 @@ they're measured.
 
 | Enforced by | What | Holds in |
 |---|---|---|
-| `wm`, the git hooks and CI | Nothing is built before acceptance; archive refuses unbuilt or unreviewed items; conflicting changes are caught; record health; commit-message format | Every agent tool |
-| Claude Code's hooks | Only you accept a change or override a missing review; implementers edit only code (in their item's repo) and their notes; reviewers edit nothing; delegated agents can't commit, push or write the record; results are recorded from the agents' own words | Claude Code |
+| `wm` and CI | Nothing is built before acceptance; archive refuses unbuilt or unreviewed items; conflicting changes are caught; record health (`wm check`, in CI) | Every agent tool |
+| Claude Code's hooks | Only you accept a change or override a missing review; implementers edit only code (in their item's repo) and their notes; reviewers edit nothing; delegated agents can't commit, push or write the record; commit messages are conventional commits; results are recorded from the agents' own words | Claude Code |
 
 These are guard rails against mistakes and shortcuts, not security against
 someone set on getting around them.

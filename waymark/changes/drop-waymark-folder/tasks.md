@@ -50,6 +50,8 @@
 
 ## 4. Docs
 
-- [ ] 4.1 Update the docs and the charter for no `.waymark/` folder   `review: none`
+- [x] 4.1 Update the docs and the charter for no `.waymark/` folder   `review: none`
   - Criteria: `docs/getting-started.md`, `docs/multi-repo.md`, `docs/concepts.md`, `docs/architecture.md`, the README's "What's enforced" table and `docs/smoke-test.md` no longer mention git hooks or `.waymark/` except the old pointer; they say commit messages are checked in Claude Code's command hook and `wm check` runs in CI; the multi-repo guide shows the pointer in `waymark/config.toml`; the smoke test checks that a planner's `git commit -m wip` is refused; the charter's constraint no longer names `.waymark/`; `docs/cli.md` and `docs/json.md` are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `python -m tools.docs --check`, `pytest tests/test_docs.py` and `codespell` pass; `grep -r "\.waymark" docs README.md` shows only the old pointer
+  - Note: git hooks are still named in two places on purpose: getting-started's "Upgrading" gives the cleanup for a clone 0.1.0 or 0.1.1 set up (`git config --unset core.hooksPath`, delete the hooks folder, drop `wm run-hook` lines from a hook manager), and the multi-repo guide links to it for code repos where `wm git-hooks` ran, as 3.1's note asked. Neither names `.waymark/`. The commit-message rule's home is the gates section of `docs/concepts.md`.
+  - Note: `CHANGELOG.md` has no entry for this change yet; the next release's entry needs the behavior changes listed in the proposal's Impact. `docs/cli.md` and `docs/json.md` were already current, so regenerating them changed nothing.

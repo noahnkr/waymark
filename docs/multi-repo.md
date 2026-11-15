@@ -20,9 +20,9 @@ This guide sets up an atlas for a backend (`notes-api`) and a frontend
 - **When the registry has no entry,** a path hint that leads to the right
   repository is used, and `wm` prints a note with the command that registers it.
   Fresh clones side by side work with no setup.
-- **A code repo needs no Waymark files.** It may carry a pointer file,
-  `.waymark/atlas.toml` (written by `wm atlas point`), and the git hooks (written
-  by `wm git-hooks`). With either a pointer or a registry entry, `wm` commands
+- **A code repo needs no Waymark files.** It may carry a pointer: a
+  `waymark/config.toml` that names its atlas and holds no record (written by
+  `wm atlas point`). With either a pointer or a registry entry, `wm` commands
   run inside the code repo act on its atlas.
 - **`wm` never clones, pulls or pushes.** Keeping the repositories present and up
   to date is yours to do.
@@ -46,9 +46,8 @@ git init
 wm init --atlas notes
 ```
 
-This writes the record, the agent tool files and the git hooks into the atlas,
-adds the `.gitignore` block that keeps the agent tool files and hooks out of git
-(see [Getting started](getting-started.md#2-set-up-your-repository)), and
+This writes the record and the agent tool files into the atlas, adds the
+`.gitignore` block that keeps the agent tool files out of git (see [Getting started](getting-started.md#2-set-up-your-repository)), and
 registers the atlas on this machine. Skills, agents and hooks live only in the
 atlas; the code repos never need them.
 
@@ -81,20 +80,38 @@ branch, and the pins; it changes nothing.
 Commit the atlas's `waymark/` and `.gitignore`, then start Claude Code in it and
 run `/wm-kickoff`.
 
-## 3. Optional: pointers and git hooks in the code repos
+## 3. Optional: a pointer in each code repo
 
 In each code repo you may run:
 
 ```
-wm atlas point notes   # writes .waymark/atlas.toml: the atlas's name, a path hint, the pin
-wm git-hooks           # adds the commit-message check, and points this clone at it
+wm atlas point notes
 ```
 
-`wm git-hooks` writes the hooks in `.waymark/hooks/` and adds a `.gitignore`
-block that lists only them. The hooks belong to each clone. Commit `.gitignore`,
-and `.waymark/atlas.toml` if the repo's other users should have the pointer; the
-block doesn't ignore the pointer. A repo you don't own, such as a client's, can
-stay untouched: the atlas works without both.
+It writes `waymark/config.toml` in the code repo. The file is a pointer, not a
+record: its only table is `[pointer]`, with the atlas's name, a path hint
+relative to the code repo, and the pin.
+
+```toml
+# A pointer, not a record: this repository's record lives in the Waymark atlas
+# named below. Written by wm atlas point.
+[pointer]
+atlas = "notes"
+path = "../notes-atlas"
+wm_version = "<the atlas's pin>"
+```
+
+Commit it if the repo's other users should have the pointer. `wm atlas point` is
+refused in a repository whose `waymark/config.toml` is a record. `wm init` is
+refused in a code repo with a pointer, and the message names the atlas to run it
+in. A repo you don't own, such as a client's, can stay untouched: the atlas
+works without a pointer.
+
+**A pointer written by `wm` 0.1.1 or earlier** is `.waymark/atlas.toml`. `wm`
+still reads it when the code repo has no `waymark/config.toml`, and `wm doctor`
+warns about it. Run `wm atlas point notes` to move it: the new pointer is
+written, and the old file is removed, with its folder when nothing else is in
+it.
 
 ## 4. A change that spans both repos
 
@@ -148,19 +165,24 @@ merge on the git host (it never uses the network), so that call is yours.
 ## CI
 
 Run `wm ci` in the atlas: its workflow runs `wm check` on the record. The code
-repos' CI runs nothing from `wm` and needs no access to the atlas; their commit
-messages are checked locally, by the git hooks.
+repos' CI runs nothing from `wm` and needs no access to the atlas. Commit
+messages are checked by Claude Code's command hook in the atlas's sessions, with
+the atlas's commit scopes, so the commits agents make in the code repos are
+checked too (see [the gates](concepts.md#the-gates)).
 
 ## Another machine, or a teammate
 
 Clone the atlas and the code repos, and install the `wm` version the atlas pins.
 Then run `wm init` in the atlas. It sets up this machine: the agent tool files
-and the git hooks. It doesn't change the record.
+and the `.gitignore` block. It doesn't change the record.
 
 Side by side, as the hints expect, the code repos are found at once; run
-`wm atlas register` to record them anyway. In other places, register each one with its folder. In a code repo
-that uses the git hooks, run `wm git-hooks` to install them in this clone.
-`wm atlas doctor` says what is missing.
+`wm atlas register` to record them anyway. In other places, register each one
+with its folder. `wm atlas doctor` says what is missing.
+
+A code repo where `wm` 0.1.1 ran `wm git-hooks` still points git at hooks that
+call `wm run-hook`, which is gone, so its commits fail. Clean it up as
+[Getting started](getting-started.md#upgrading) describes.
 
 ## Reading another atlas's specs
 
