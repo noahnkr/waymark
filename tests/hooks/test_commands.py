@@ -138,9 +138,7 @@ def test_reading_commands_added_later_are_not_mistaken_for_writes(command: str) 
     [
         "wm atlas register",
         "wm atlas point suite",
-        "wm git-hooks",
         "wm ci",
-        "wm run-hook pre-commit",
         "wm atlas",
     ],
 )
@@ -165,8 +163,6 @@ WRITES = frozenset(
         "archive",
         "close",
         "atlas",
-        "git-hooks",
-        "run-hook",
         "ci",
     }
 )

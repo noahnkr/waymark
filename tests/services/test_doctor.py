@@ -232,10 +232,18 @@ def git(root: Path, *args: str) -> str:
 
 
 def committed_project(root: Path, *forced: str) -> None:
-    """A project set up by wm init and committed, with some ignored paths added anyway."""
+    """A project set up by wm init and committed, with some ignored paths added anyway.
+
+    Forcing ``.waymark/hooks`` first writes the git hooks a wm 0.1.0 project committed.
+    """
     git_init(root)
     git(root, "config", "user.email", "sam@example.com")
     setup.init_project(root)
+    if ".waymark/hooks" in forced:
+        hooks = root / ".waymark" / "hooks"
+        hooks.mkdir(parents=True)
+        for name in ("commit-msg", "pre-commit"):
+            (hooks / name).write_text(f"#!/bin/sh\nwm run-hook {name}\n", encoding="utf-8")
     git(root, "add", "-A")
     if forced:
         git(root, "add", "--force", "--", *forced)
@@ -293,3 +301,11 @@ def test_doctor_payload_with_tracked_machine_files_validates(tmp_path: Path) -> 
     committed_project(tmp_path, ".claude")
     payload = payloads.doctor(doctor(tmp_path))
     assert errors(render.public(payload), SCHEMAS["doctor"]) == []
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_has_no_git_hooks_check(tmp_path: Path) -> None:
+    committed_project(tmp_path)
+    names = [check.name for check in doctor(tmp_path).checks]
+    assert not any("hooks" in name for name in names), names
+    assert all("git-hooks" not in check.message for check in doctor(tmp_path).checks)

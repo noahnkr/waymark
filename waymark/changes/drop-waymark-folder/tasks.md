@@ -35,9 +35,13 @@
 
 ## 3. No git hooks
 
-- [ ] 3.1 Remove the git hooks, and clean up the ones 0.1.1 installed   `review: independent`
+- [x] 3.1 Remove the git hooks, and clean up the ones 0.1.1 installed   `review: independent`
   - Criteria: the `git-hooks` and `run-hook` commands, `services/githooks.py`, the hook templates and the status payload's `git_hooks` field and warning are gone, with the status schema's version raised; `ignore_patterns` no longer lists the hooks; `record/oldhooks.py` `remove_old_hooks` unsets `core.hooksPath` only when it is `.waymark/hooks` and deletes that folder (and `.waymark/` when empty); `setup_machine` calls it and says when it removed them; `wm doctor` has no git hooks check and its tracked-files check includes `.waymark/hooks`; `wm init` writes no hooks and changes no git setting
   - Verify: tests in `tests/services/test_setup.py`, `tests/services/test_doctor.py`, `tests/views/` and `tests/test_cli.py` for every scenario of the `setup` delta; the full suite passes with the removed tests deleted
+  - Note: `integration.ignore_patterns(tools)` lost its `record` argument, and `MachineSetup.hooks` is now `notes`. The `.gitignore` block's opening marker still reads "agent tool files and git hooks": `ignore.py` finds the block by that exact line, so changing it would add a second block to every existing `.gitignore` instead of replacing the old one in place.
+  - Note: the cleanup runs only through `setup_machine`, so only in a repository with a record. A code repo where 0.1.1's `wm git-hooks` ran keeps its `core.hooksPath`, and since `wm run-hook` is gone, its commits will fail until the setting is unset by hand. 4.1's multi-repo guide should say so (`git config --unset core.hooksPath`, then delete `.waymark/hooks/`).
+  - Note: `docs/architecture.md` ("git hooks" in services) and `CHANGELOG.md` still mention the hooks, which is left to 4.1. This repository's own `.gitignore` block still lists `/.waymark/hooks/` until `wm update` runs with this version.
+  - (review) 2026-11-15 pass: hook commands, services/githooks, templates and the status git_hooks field are removed with status schema v2; ignore_patterns drops the hooks; remove_old_hooks only acts on core.hooksPath=.waymark/hooks and is called from setup_machine with a note; doctor has no hooks check but still reports a tracked .waymark/hooks; every setup scenario is tested and the suite, lint, format, mypy and codespell all pass
 
 ## 4. Docs
 

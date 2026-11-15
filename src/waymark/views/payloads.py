@@ -18,7 +18,6 @@ from waymark.record.atlas import Location
 from waymark.record.changes import Change
 from waymark.record.config import RECORD_FORMAT
 from waymark.record.explorations import QUESTIONS, Exploration
-from waymark.record.githooks import hooks_status
 from waymark.record.milestones import Milestone
 from waymark.record.record import (
     ArchiveEntry,
@@ -55,7 +54,7 @@ from waymark.services.pr import PR_VERSION
 Payload = dict[str, Any]
 
 VERSIONS = {
-    "status": 1,
+    "status": 2,
     "inbox": 1,
     "ls": 1,
     "check": 1,
@@ -272,7 +271,6 @@ def status(record: Record) -> Payload:
             {"name": entry.name, "date": entry.date.isoformat()} for entry in recent
         ],
         "problems": len(record.problems),
-        "git_hooks": hooks_status(record.project.root).state.value,
     }
 
 

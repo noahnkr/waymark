@@ -9,7 +9,6 @@ from waymark.record.changes import PROPOSAL_FILE
 from waymark.record.charter import CHARTER_FILE
 from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.files import RecordFiles
-from waymark.record.githooks import hook_manager
 from waymark.record.milestones import GOAL_FILE, ROADMAP_FILE
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE, is_pointer, parse_pointer
@@ -18,7 +17,7 @@ from waymark.record.project import RECORD_DIR
 from waymark.record.proposal import OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
 from waymark.record.store import Transaction
-from waymark.services import githooks, integration
+from waymark.services import integration
 from waymark.services.atlas import register_new_atlas
 from waymark.services.common import Done, Refusal, commit, open_record
 
@@ -66,15 +65,14 @@ def init_project(
         f"{RECORD_DIR}/{CHARTER_FILE}", templates.render(templates.CHARTER, title=root.name)
     )
     integration.stage(transaction, files, chosen)
-    integration.stage_ignore(transaction, files, integration.ignore_patterns(chosen, record=True))
+    integration.stage_ignore(transaction, files, integration.ignore_patterns(chosen))
     paths = commit(transaction)
     kind = f'the atlas "{atlas}"' if atlas is not None else "a project"
     titles = ", ".join(adapters.get(tool).title for tool in chosen) or "no agent tool"
     registered = f" {register_new_atlas(root, atlas)}" if atlas is not None else ""
-    hooks = "\n".join(githooks.install(root, record=True))
     return Done(
         f"Initialized {kind} in {RECORD_DIR}/, with skills, agents and hooks for {titles}."
-        f"{registered}\n{hooks}\n"
+        f"{registered}\n"
         'To run "wm check" in GitHub Actions too, run "wm ci".\n'
         "Next: run the wm-kickoff skill in your agent tool to draft the charter.",
         paths,
@@ -123,9 +121,8 @@ def _set_up_clone(root: Path, atlas: str | None, tools: tuple[str, ...] | None) 
     record = open_record(root, writing=True)
     machine = integration.setup_machine(record)
     changed = [change for change in machine.changes if change.status != "unchanged"]
-    installed = hook_manager(root) is None and bool(machine.hooks)
-    lines = [f"{change.status}: {change.path}" for change in changed] + machine.hooks
-    if changed or installed:
+    lines = [f"{change.status}: {change.path}" for change in changed] + machine.notes
+    if changed or machine.notes:
         assert record.config is not None
         tools_set = record.config.agent_tools
         titles = ", ".join(adapters.get(tool).title for tool in tools_set) or "no agent tool"

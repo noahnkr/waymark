@@ -111,24 +111,9 @@ def config_value(repository: Path, key: str) -> str | None:
         return None
 
 
-def set_config(repository: Path, key: str, value: str) -> None:
-    """Set a setting in this clone's own git config. Nothing shared changes."""
-    _run(repository, "config", "--local", key, value)
-
-
-def default_hooks_folder(repository: Path) -> Path:
-    """The folder git reads hooks from when ``core.hooksPath`` is not set."""
-    common = Path(_run(repository, "rev-parse", "--git-common-dir").strip())
-    return (common if common.is_absolute() else repository / common) / "hooks"
-
-
-def staged_paths(repository: Path) -> tuple[str, ...]:
-    """The paths the next commit changes, relative to the repository's top."""
-    try:
-        listing = _run(repository, "diff", "--cached", "--name-only", "-z")
-    except GitError:
-        return ()
-    return tuple(path for path in listing.split("\0") if path)
+def unset_config(repository: Path, key: str) -> None:
+    """Remove a setting from this clone's own git config. Nothing shared changes."""
+    _run(repository, "config", "--local", "--unset-all", key)
 
 
 def tracked(repository: Path, paths: Iterable[str]) -> tuple[str, ...]:

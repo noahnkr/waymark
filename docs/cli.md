@@ -35,25 +35,6 @@ wm doctor [--json]
 
 - `--json`: print the view as JSON, with its schema version
 
-## wm git-hooks
-
-Write the git hooks, keep them out of git, and point this clone's git at them.
-
-```
-wm git-hooks
-```
-
-## wm run-hook
-
-Run one of the git hooks' checks; the hooks call this.
-
-```
-wm run-hook <commit-msg|pre-commit> [file]
-```
-
-- `name`: one of `commit-msg`, `pre-commit`
-- `file`: the commit message file (commit-msg only)
-
 ## wm ci
 
 Add a GitHub Actions workflow that installs the pinned wm and runs wm check.

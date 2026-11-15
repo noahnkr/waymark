@@ -142,6 +142,16 @@ def test_status_shows_milestones_archived_changes_and_what_needs_the_human(
     assert "* archive (you)" in text
 
 
+def test_status_says_nothing_about_git_hooks(project: Workspace) -> None:
+    payload = valid(payloads.status(project.record()))
+    assert payload["version"] == 2
+    assert "git_hooks" not in payload
+    assert "git_hooks" not in SCHEMAS["status"]["properties"]
+    text = render.to_text(payload, PLAIN)
+    assert "git hooks" not in text
+    assert "wm git-hooks" not in text
+
+
 def test_status_says_one_thing_needs_you_in_the_singular(project: Workspace) -> None:
     project.change()
     text = render.to_text(payloads.status(project.record()), PLAIN)

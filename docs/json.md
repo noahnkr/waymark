@@ -6,7 +6,7 @@ Every read command takes `--json`. Each payload starts with `schema` (its name) 
 
 | Schema | Version | Printed by |
 |---|---|---|
-| [`wm.status`](#wmstatus) | 1 | `wm status` |
+| [`wm.status`](#wmstatus) | 2 | `wm status` |
 | [`wm.inbox`](#wminbox) | 1 | `wm inbox` |
 | [`wm.ls`](#wmls) | 1 | `wm ls` |
 | [`wm.check`](#wmcheck) | 1 | `wm check` |
@@ -35,7 +35,7 @@ Printed by `wm status`.
       "const": "wm.status"
     },
     "version": {
-      "const": 1
+      "const": 2
     },
     "layout": {
       "enum": [
@@ -289,14 +289,6 @@ Printed by `wm status`.
     },
     "problems": {
       "type": "integer"
-    },
-    "git_hooks": {
-      "enum": [
-        "set",
-        "not-set",
-        "absent",
-        "managed"
-      ]
     }
   },
   "required": [
@@ -311,8 +303,7 @@ Printed by `wm status`.
     "milestones",
     "needs_human",
     "recently_archived",
-    "problems",
-    "git_hooks"
+    "problems"
   ],
   "additionalProperties": false
 }

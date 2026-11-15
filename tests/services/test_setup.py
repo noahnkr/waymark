@@ -12,7 +12,7 @@ from tests.support import Workspace
 from waymark import __version__, adapters
 from waymark.record import ignore
 from waymark.record.files import RecordFiles
-from waymark.record.githooks import hook_files
+from waymark.record.oldhooks import HOOKS_DIR
 from waymark.record.project import find_project
 from waymark.record.record import load_record
 from waymark.record.state import ExplorationStatus, StepKind, derive_state
@@ -80,6 +80,20 @@ def git(root: Path, *args: str) -> str:
     return result.stdout.decode("utf-8")
 
 
+def git_settings(root: Path) -> str:
+    """This clone's own git settings, as git lists them."""
+    return git(root, "config", "--local", "--list")
+
+
+def hooks_path(root: Path) -> str | None:
+    result = subprocess.run(
+        ["git", "-C", str(root), "config", "--local", "core.hooksPath"],
+        capture_output=True,
+        check=False,
+    )
+    return result.stdout.decode("utf-8").strip() or None
+
+
 def record_bytes(root: Path) -> dict[Path, bytes]:
     return {
         path.relative_to(root): path.read_bytes()
@@ -93,8 +107,11 @@ def test_init_writes_the_block_and_leaves_only_the_record_and_gitignore_to_commi
 ) -> None:
     """Scenario: New project."""
     git_init(tmp_path)
+    settings = git_settings(tmp_path)
     done = setup.init_project(tmp_path)
-    patterns = integration.ignore_patterns(adapters.names(), record=True)
+    assert git_settings(tmp_path) == settings
+    assert not (tmp_path / ".waymark").exists()
+    patterns = integration.ignore_patterns(adapters.names())
     assert (tmp_path / ".gitignore").read_text(encoding="utf-8") == ignore.render(patterns)
     assert ".gitignore" in done.paths
     new = git(tmp_path, "status", "--porcelain", "--untracked-files=all").splitlines()
@@ -130,6 +147,7 @@ def test_init_in_a_fresh_clone_sets_up_this_machine_and_leaves_the_record_alone(
     assert not (clone / ".waymark").exists()
     record_before = record_bytes(clone)
     gitignore_before = (clone / ".gitignore").read_bytes()
+    settings = git_settings(clone)
 
     done = setup.init_project(clone)
 
@@ -139,8 +157,9 @@ def test_init_in_a_fresh_clone_sets_up_this_machine_and_leaves_the_record_alone(
         (clone / path).is_file()
         for path in integration.integration_files(RecordFiles(clone), adapters.names())
     )
-    assert all((clone / path).is_file() for path in hook_files())
-    assert git(clone, "config", "core.hooksPath").strip() == ".waymark/hooks"
+    assert git_settings(clone) == settings
+    assert not (clone / ".waymark").exists()
+    assert "git hooks" not in done.message
     assert (clone / ".gitignore").read_bytes() == gitignore_before
     assert record_bytes(clone) == record_before
     assert git(clone, "status", "--porcelain", "--untracked-files=all") == ""
@@ -153,7 +172,7 @@ def test_init_in_a_clone_adds_the_block_when_gitignore_lacks_it(tmp_path: Path) 
     done = setup.init_project(clone)
     assert "created: .gitignore" in done.message
     assert ".gitignore" in done.paths
-    patterns = integration.ignore_patterns(adapters.names(), record=True)
+    patterns = integration.ignore_patterns(adapters.names())
     assert (clone / ".gitignore").read_text(encoding="utf-8") == ignore.render(patterns)
     assert record_bytes(clone) == record_before
 
@@ -269,26 +288,19 @@ def test_init_in_a_code_repo_is_refused_and_writes_nothing(
     assert hooks_path.stdout == b""
 
 
-def test_ignore_patterns_list_the_shared_skills_each_tool_and_the_hooks() -> None:
+def test_ignore_patterns_list_the_shared_skills_and_each_tool_and_not_the_hooks() -> None:
     tools = adapters.names()
     expected = ["/.agents/skills/wm-*/"]
     for tool in tools:
         expected += adapters.get(tool).ignored
-    expected.append("/.waymark/hooks/")
-    assert integration.ignore_patterns(tools, record=True) == expected
-    assert integration.ignore_patterns((), record=True) == [
-        "/.agents/skills/wm-*/",
-        "/.waymark/hooks/",
-    ]
-
-
-def test_ignore_patterns_without_a_record_list_only_the_hooks() -> None:
-    assert integration.ignore_patterns(adapters.names(), record=False) == ["/.waymark/hooks/"]
+    assert integration.ignore_patterns(tools) == expected
+    assert integration.ignore_patterns(()) == ["/.agents/skills/wm-*/"]
+    assert not any(".waymark" in pattern for pattern in expected)
 
 
 def test_ignore_patterns_refuse_a_tool_wm_does_not_know() -> None:
     with pytest.raises(Refusal, match="not an agent tool"):
-        integration.ignore_patterns(("no-such-tool",), record=True)
+        integration.ignore_patterns(("no-such-tool",))
 
 
 def ignored_by_git(root: Path, patterns: list[str], paths: list[str]) -> set[str]:
@@ -307,13 +319,10 @@ def ignored_by_git(root: Path, patterns: list[str], paths: list[str]) -> set[str
 
 def test_every_file_wm_writes_for_a_machine_is_ignored(tmp_path: Path) -> None:
     tools = adapters.names()
-    rendered = sorted(integration.integration_files(RecordFiles(tmp_path), tools))
-    hooks = sorted(hook_files())
-    assert rendered
-    assert hooks
-    paths = rendered + hooks
+    paths = sorted(integration.integration_files(RecordFiles(tmp_path), tools))
+    assert paths
     root = tmp_path / "repo"
-    ignored = ignored_by_git(root, integration.ignore_patterns(tools, record=True), paths)
+    ignored = ignored_by_git(root, integration.ignore_patterns(tools), paths)
     assert ignored == set(paths)
 
 
@@ -327,7 +336,7 @@ def test_the_patterns_leave_the_projects_own_files_alone(tmp_path: Path) -> None
         ".agents/skills/team-skill/SKILL.md",
         "docs/.claude/settings.json",
     ]
-    patterns = integration.ignore_patterns(adapters.names(), record=True)
+    patterns = integration.ignore_patterns(adapters.names())
     assert ignored_by_git(tmp_path / "repo", patterns, own) == set()
 
 
@@ -340,16 +349,14 @@ def staged(root: Path) -> list[str]:
     return result.stdout.decode("utf-8").splitlines()
 
 
-def test_setup_machine_writes_the_machine_files_and_the_block_and_installs_the_hooks(
+def test_setup_machine_writes_the_machine_files_and_the_block_and_no_hooks(
     tmp_path: Path,
 ) -> None:
     git_init(tmp_path)
     setup.init_project(tmp_path)
     (tmp_path / ".gitignore").unlink(missing_ok=True)
     (tmp_path / ".claude/skills/wm-apply/SKILL.md").unlink()
-    for path in hook_files():
-        (tmp_path / path).unlink()
-    subprocess.run(["git", "-C", str(tmp_path), "config", "--unset", "core.hooksPath"], check=True)
+    settings = git_settings(tmp_path)
     record_before = {
         path: path.read_bytes() for path in (tmp_path / "waymark").rglob("*") if path.is_file()
     }
@@ -360,10 +367,11 @@ def test_setup_machine_writes_the_machine_files_and_the_block_and_installs_the_h
     assert statuses[".claude/skills/wm-apply/SKILL.md"] == "created"
     assert statuses[".gitignore"] == "created"
     assert set(machine.paths) == {".claude/skills/wm-apply/SKILL.md", ".gitignore"}
-    patterns = integration.ignore_patterns(adapters.names()[:1], record=True)
+    patterns = integration.ignore_patterns(adapters.names()[:1])
     assert (tmp_path / ".gitignore").read_text(encoding="utf-8") == ignore.render(patterns)
-    assert all((tmp_path / path).is_file() for path in hook_files())
-    assert any("core.hooksPath" in line for line in machine.hooks)
+    assert machine.notes == []
+    assert git_settings(tmp_path) == settings
+    assert not (tmp_path / ".waymark").exists()
     record_after = {
         path: path.read_bytes() for path in (tmp_path / "waymark").rglob("*") if path.is_file()
     }
@@ -399,7 +407,7 @@ def test_update_replaces_an_out_of_date_block_in_place(tmp_path: Path) -> None:
 
     done = integration.update(root)
 
-    patterns = integration.ignore_patterns(adapters.names()[:1], record=True)
+    patterns = integration.ignore_patterns(adapters.names()[:1])
     current = ignore.render(patterns, crlf)
     assert gitignore.read_bytes() == (around[0] + current + around[1]).encode("utf-8")
     assert "updated: .gitignore" in done.message
@@ -543,3 +551,84 @@ def test_writes_are_refused_when_the_settings_are_broken(project: Workspace) -> 
 def test_commands_outside_a_project_say_how_to_start(tmp_path: Path) -> None:
     with pytest.raises(Refusal, match="initialize"):
         setup.create_change(tmp_path, "add-limit")
+
+
+def install_old_hooks(root: Path) -> None:
+    """The git hooks as wm 0.1.1 left them in a clone: two scripts, and core.hooksPath."""
+    folder = root / HOOKS_DIR
+    folder.mkdir(parents=True)
+    for name in ("commit-msg", "pre-commit"):
+        (folder / name).write_text(f"#!/bin/sh\nwm run-hook {name}\n", encoding="utf-8")
+    (folder / ".gitattributes").write_text("* text eol=lf\n", encoding="utf-8")
+    git(root, "config", "core.hooksPath", HOOKS_DIR)
+
+
+def test_update_removes_the_git_hooks_wm_0_1_1_installed(tmp_path: Path) -> None:
+    """Scenario: Clone set up by 0.1.1."""
+    root = initialized_with_block(tmp_path)
+    install_old_hooks(root)
+
+    done = integration.update(root)
+
+    assert hooks_path(root) is None
+    assert not (root / ".waymark").exists()
+    assert integration.OLD_HOOKS_REMOVED in done.message.splitlines()
+    assert "Removed the git hooks" in integration.OLD_HOOKS_REMOVED
+    assert done.message.splitlines()[-1] == "Updated this machine's files."
+    assert integration.update(root).message == "Everything is up to date."
+
+
+def test_init_in_a_clone_removes_the_git_hooks_wm_0_1_1_installed(tmp_path: Path) -> None:
+    clone = cloned_project(tmp_path)
+    setup.init_project(clone)
+    install_old_hooks(clone)
+
+    done = setup.init_project(clone)
+
+    assert hooks_path(clone) is None
+    assert not (clone / ".waymark").exists()
+    assert integration.OLD_HOOKS_REMOVED in done.message.splitlines()
+    assert "This machine is set up" in done.message
+
+
+def test_removing_the_old_hooks_keeps_the_rest_of_the_waymark_folder(tmp_path: Path) -> None:
+    root = initialized_with_block(tmp_path)
+    install_old_hooks(root)
+    (root / ".waymark" / "notes.txt").write_text("mine\n", encoding="utf-8")
+
+    integration.update(root)
+
+    assert hooks_path(root) is None
+    assert not (root / HOOKS_DIR).exists()
+    assert (root / ".waymark" / "notes.txt").read_text(encoding="utf-8") == "mine\n"
+
+
+@pytest.mark.parametrize("value", [".husky", ".waymark/hooks-mine", ".githooks"])
+def test_init_leaves_another_hook_setup_alone(tmp_path: Path, value: str) -> None:
+    """Scenario: Another hook setup."""
+    clone = cloned_project(tmp_path)
+    setup.init_project(clone)
+    folder = clone / value
+    folder.mkdir(parents=True)
+    (folder / "pre-commit").write_text("#!/bin/sh\nnpx lint-staged\n", encoding="utf-8")
+    git(clone, "config", "core.hooksPath", value)
+    before = (folder / "pre-commit").read_bytes()
+
+    done = setup.init_project(clone)
+
+    assert hooks_path(clone) == value
+    assert (folder / "pre-commit").read_bytes() == before
+    assert sorted(path.name for path in folder.iterdir()) == ["pre-commit"]
+    assert integration.OLD_HOOKS_REMOVED not in done.message
+    assert done.message == "This machine is already set up. Nothing changed."
+
+
+def test_old_hooks_folder_is_left_alone_when_git_does_not_run_it(tmp_path: Path) -> None:
+    root = initialized_with_block(tmp_path)
+    install_old_hooks(root)
+    git(root, "config", "--unset", "core.hooksPath")
+
+    done = integration.update(root)
+
+    assert (root / HOOKS_DIR / "commit-msg").is_file()
+    assert integration.OLD_HOOKS_REMOVED not in done.message
