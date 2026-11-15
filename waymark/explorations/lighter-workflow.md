@@ -35,6 +35,20 @@ Waymark is meant to be lightweight spec-driven development, but working on Wayma
 
 The article asks for workflows that scale with the size of the problem, a good experience for reviewing specs, and support for small iterative steps. Its closing question: "Are we making something worse in the attempt of making it better?"
 
+**How OpenSpec does it.** This is from its `openspec-apply-change` and `openspec-verify-change` skills, `docs/customization.md` and `docs/workflows.md`, read on 2026-11-15.
+
+| | OpenSpec | Waymark today |
+|---|---|---|
+| Who builds | The session agent, one task after another ("For each pending task… Keep going through tasks until done or blocked"), with no subagents. It stops when a task is unclear, when building it shows a design problem, when the work would go beyond the spec, or when something blocks it | A fresh implementer per item |
+| Tests | Not in the skill. Left to the project's guidance, for example "Run focused tests before the full suite" | Every agent runs the full suite |
+| Review | One optional verify per change, run by hand before archiving. It checks completeness (tasks done, each requirement implemented), correctness (each requirement and scenario covered) and coherence (the design is followed). Findings come back as CRITICAL, WARNING or SUGGESTION, with file and line. It is read-only and advisory, and doesn't block archiving | A self-review per item, or an independent reviewer agent per item |
+| Approval | Informal: the human reviews the drafts and decides when to apply. No accept command | `wm accept`, fingerprinted, and withdrawn by any edit to the change |
+| Evidence | The agent ticks its own boxes | Only `wm` writes ticks and verdicts, through the hooks |
+| Scaling | By how clear the scope is: `/opsx:ff` drafts every artifact at once when the scope is known, and `/opsx:continue` drafts them one at a time. Every change still gets a folder | The short path drops the design |
+| Project context | `openspec/config.yaml`: `context` (stack, conventions, constraints, injected into every artifact prompt), `rules.<artifact>` (only for that artifact), `operations.apply.guidance` and `operations.archive.guidance` (advisory), and `schema`. No vision, goals or glossary | A charter: vision, goals, non-goals, constraints, glossary, context, and rules per step |
+
+OpenSpec is light because it trusts the agent and enforces nothing. Waymark's differences are an explicit approval and evidence that only `wm` writes. Both are cheap now that the hooks record results. Most of the cost comes from what OpenSpec never does: a cold agent for each item.
+
 ## Questions
 
 - Should every item be built by a fresh agent from the record alone, or only large and risky ones? This decides between approaches A and B.
@@ -43,6 +57,9 @@ The article asks for workflows that scale with the size of the problem, a good e
 - What counts as lightweight, in numbers? For example, a typical small change in under 10 minutes and under 100k tokens, from proposal to merge.
 - Should specs hold only functional requirements, with files, settings and commands moved into the design?
 - Can the archive go into the same PR as the code? That means archiving on the branch before the merge, while the human still decides when.
+- Should the charter become a `context` and `[rules.<step>]` in `waymark/config.toml`, like OpenSpec's `config.yaml`? Vision, goals, non-goals and the glossary would then be dropped, or left to the README.
+- Should review happen once per change, against the deltas' scenarios, instead of once per item?
+- Should acceptance still be withdrawn when an item is only added, or only when what was accepted changes?
 
 ## Approaches
 
@@ -70,6 +87,14 @@ The article asks for workflows that scale with the size of the problem, a good e
 - For: this answers the article's "one workflow for all sizes" head-on, and it combines with B.
 - Against: more rules to learn, and the line between tiny and small has to be drawn clearly.
 
+**D. OpenSpec's model, plus approval and evidence.**
+- The planner builds items in the session, as in B. Tests are focused per item, and the full suite runs once before the PR.
+- Review happens once per change, against the deltas' scenarios and the design, and reports findings by severity. A fresh reviewer agent runs it only for risky changes. Self-review otherwise.
+- `wm accept` and evidence written only by `wm` stay.
+- The charter folds into `waymark/config.toml`: its Context and Constraints become `context`, and its per-step Rules become `[rules.<step>]`. Vision, goals, non-goals and the glossary are dropped or left to the README. That removes one artifact from every project and shortens kickoff.
+- For: a clear position, "OpenSpec plus recorded evidence and an approval gate". It cuts the per-item cost, and agents keep the same inputs.
+- Against: the largest change of the four. It touches the skills, the agent definitions, the hooks' delegation gate, `wm instructions`, the context packs, kickoff and every doc, and existing charters need a migration.
+
 **Alongside any of these: keep specs functional.** Requirements say what the system does. File names, settings and commands go in the design. Specs then churn less and are shorter to review.
 
 ## Conclusion
@@ -81,3 +106,4 @@ The article asks for workflows that scale with the size of the problem, a good e
 - `docs/concepts.md`: the workflow, the roles, the review levels and the gates
 - README, "What it costs", which promises time and token figures measured on Waymark itself
 - Birgitta Böckeler, "Understanding Spec-Driven-Development: Kiro, spec-kit, and Tessl", https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html
+- OpenSpec: `skills/openspec-apply-change/SKILL.md`, `skills/openspec-verify-change/SKILL.md`, `docs/customization.md`, `docs/workflows.md`, https://github.com/Fission-AI/OpenSpec
