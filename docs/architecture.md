@@ -65,16 +65,20 @@ access outside `record/` and `assets/`.
 
 Claude Code runs `wm hook claude-code <Event>` with its JSON on standard input.
 
-1. **The adapter translates** the payload into one of six neutral events:
+1. **The adapter translates** the payload into one of seven neutral events:
    session start, delegate (starting a subagent), edit (before an edit), edited
-   (after an edit), command (a shell command) and agent stop. It works out who
-   is acting from the agent type: the implementer, the reviewer, or anyone else,
-   who counts as the planner.
+   (after an edit), command (a shell command), handback (a subagent handing its
+   report back through a tool, as Claude Code's background agents do) and agent
+   stop. It works out who is acting from the agent type: the implementer, the
+   reviewer, or anyone else, who counts as the planner.
 2. **The core decides** (`hooks/decide.py`): allow, refuse with a reason that
    says what to do instead, add context for the agent, or record evidence. For
-   example, at an agent stop it reads the `ITEM:` and `RESULT:` or `VERDICT:`
-   lines and writes the tick, blocker, spec gap, note or review record through the
-   same lifecycle service the commands use.
+   example, at a handback or an agent stop it reads the `ITEM:` and `RESULT:` or
+   `VERDICT:` lines and writes the tick, blocker, spec gap, note or review record
+   through the same lifecycle service the commands use. An agent's ending is
+   recorded once: a per-agent marker in the clone's git folder
+   (`record/agents.py`) lets the stop after a recorded handback through without
+   asking for the ending again.
 3. **The adapter translates the decision back** into the tool's reply format.
 
 The adapter holds no rules, so a decision is the same in every tool. A hook that

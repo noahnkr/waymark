@@ -23,6 +23,6 @@
 
 ## 3. Docs
 
-- [ ] 3.1 Update the smoke test and the architecture notes   `review: none`
+- [x] 3.1 Update the smoke test and the architecture notes   `review: none`
   - Criteria: `docs/smoke-test.md` checks that the ending is recorded for an implementer in the background and for one in the foreground, saying how to ask for each; `docs/architecture.md` lists the handback among the neutral events; the docs follow the `waymark-write-docs` skill
   - Verify: `python -m tools.docs --check`, `pytest tests/test_docs.py` and `codespell` pass

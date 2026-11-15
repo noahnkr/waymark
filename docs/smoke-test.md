@@ -56,9 +56,18 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 - [ ] **Edits are read correctly (G46).** After an agent edits a record file, a
       deliberately malformed line is reported back right away (ask the planner to
       add a stray line under an item in `tasks.md`).
-- [ ] **The ending is in the final message (G46).** When the implementer stops,
-      its `ITEM:` and `RESULT:` lines are recorded: the item is ticked in
-      `tasks.md` without anyone running `wm tick`.
+- [ ] **The ending is recorded in the background (G46).** Claude Code runs
+      agents in the background by default, and they hand their report back
+      through `SubagentHandback`. Let the planner start an implementer as it
+      chooses. When the implementer hands back its report, its `ITEM:` and
+      `RESULT:` lines are recorded: the item is ticked in `tasks.md` without
+      anyone running `wm tick`. The agent then stops without being asked for
+      its ending again.
+- [ ] **The ending is recorded in the foreground (G46).** Ask the planner to run
+      the next implementer in the foreground and wait for it. When the
+      implementer stops, the `ITEM:` and `RESULT:` lines in its final message are
+      recorded: the item is ticked in `tasks.md` without anyone running
+      `wm tick`.
 - [ ] The independent item is reviewed by the `wm-reviewer` agent, and its
       verdict is written under the item as a `(review)` line in the reviewer's
       own words. The reviewer can't edit files (ask it to fix something; it is
