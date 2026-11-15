@@ -51,3 +51,7 @@ OpenSpec, a comparable tool, enforces commit messages with no git hooks at all. 
   - removed: `record/githooks.py` and `services/githooks.py`, plus the hook templates, the `git-hooks` and `run-hook` commands, and the hooks checks in `services/doctor.py` and `views/`;
   - changed: `hooks/decide.py` (commands), `record/pointer.py`, `record/project.py`, `services/atlas.py`, `services/integration.py` and `services/setup.py`;
 - Docs: getting started, the multi-repo guide, concepts, the smoke test, architecture and the regenerated CLI reference.
+
+## Outcome
+
+wm no longer creates a .waymark/ folder. The git hooks and the wm git-hooks and wm run-hook commands are gone; Claude Code's command hook refuses a git commit whose message isn't conventional, using the project's commit scopes, and allows a message it can't read. A code repo points at its atlas through a pointer-only waymark/config.toml with a [pointer] table, the old .waymark/atlas.toml is still read with a warning, and wm init is refused in a code repo. Two revisions after acceptance: wm init refuses in a code repo (item 1.3), and the automatic cleanup of the 0.1.1 hooks was built and then taken out (item 3.2), leaving it to the user.
