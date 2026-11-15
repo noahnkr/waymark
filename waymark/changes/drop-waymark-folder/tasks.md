@@ -12,6 +12,9 @@
 - [ ] 1.2 Write the new pointer with `wm atlas point`, and warn about the old one
   - Criteria: `wm atlas point <atlas>` writes the `[pointer]` settings in `waymark/config.toml`, removes `.waymark/atlas.toml` in the same transaction and `.waymark/` when it is then empty, and refuses where `waymark/config.toml` is a record; `wm doctor` warns when the project was found through the old pointer and gives the `wm atlas point <atlas>` command; `wm atlas doctor` reads pointers in either place
   - Verify: tests in `tests/services/test_atlas.py` and `tests/services/test_doctor.py` for "Point a code repo", "Move the pointer" and "Atlas set up with 0.1.1" (doctor part)
+- [ ] 1.3 Refuse `wm init` in a code repo that points at an atlas
+  - Criteria: `wm init` (with or without `--atlas`/`--tool`) in a repository whose `waymark/config.toml` is a pointer, or that has only `.waymark/atlas.toml`, is refused before anything is written, naming the atlas and saying to run `wm init` in the atlas; a repository with a record behaves as before
+  - Verify: tests in `tests/services/test_setup.py` for "Init in a code repo", with the new and the old pointer
 
 ## 2. Commit messages in the command hook
 
