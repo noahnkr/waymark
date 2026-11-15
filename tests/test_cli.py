@@ -141,10 +141,10 @@ def test_the_git_hook_commands_are_gone(command: str) -> None:
     assert "invalid choice" in result.stderr
 
 
-def test_wm_update_removes_the_git_hooks_wm_0_1_1_installed(
+def test_wm_update_leaves_the_git_hooks_wm_0_1_1_installed_alone(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Scenario: Clone set up by 0.1.1."""
+    """A clone set up by 0.1.1 keeps its core.hooksPath and .waymark/hooks/."""
     root = tmp_path / "project"
     root.mkdir()
     assert git(root, "init", "--quiet").returncode == 0
@@ -156,10 +156,11 @@ def test_wm_update_removes_the_git_hooks_wm_0_1_1_installed(
     for name in ("commit-msg", "pre-commit"):
         (hooks / name).write_text(f"#!/bin/sh\nwm run-hook {name}\n", encoding="utf-8")
     assert git(root, "config", "core.hooksPath", ".waymark/hooks").returncode == 0
+    before = {path.name: path.read_bytes() for path in hooks.iterdir()}
     capsys.readouterr()
 
     assert main(["update"]) == EXIT_OK
 
-    assert "Removed the git hooks wm 0.1.1 installed" in capsys.readouterr().out
-    assert git(root, "config", "--local", "core.hooksPath").stdout == ""
-    assert not (root / ".waymark").exists()
+    assert "Everything is up to date." in capsys.readouterr().out
+    assert git(root, "config", "--local", "core.hooksPath").stdout.strip() == ".waymark/hooks"
+    assert {path.name: path.read_bytes() for path in hooks.iterdir()} == before

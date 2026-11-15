@@ -17,13 +17,15 @@ from waymark.record import git
 from waymark.record.atlas import Found, locate_atlas, locate_repo, pointer_file, read_pointer
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT
 from waymark.record.files import RecordFiles
-from waymark.record.oldhooks import HOOKS_DIR
 from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE
 from waymark.record.project import Project, ProjectNotFoundError, find_project
 from waymark.record.record import Record, load_record
 from waymark.record.registry import Registry, load_registry
 from waymark.services import integration
 from waymark.services.common import Refusal, install_hint
+
+OLD_HOOKS_DIR = ".waymark/hooks"
+"""Where wm 0.1.0 committed the git hooks, relative to the repository's top."""
 
 
 class Status(StrEnum):
@@ -195,10 +197,10 @@ def _machine_files_in_git(record: Record) -> Check:
     tools = record.config.agent_tools
     try:
         written = integration.integration_files(RecordFiles(root), tools)
-        patterns = [*integration.ignore_patterns(tools), f"/{HOOKS_DIR}/"]
+        patterns = [*integration.ignore_patterns(tools), f"/{OLD_HOOKS_DIR}/"]
     except Refusal as refusal:
         return Check("machine files in git", Status.ERROR, str(refusal))
-    found = git.tracked(root, [*sorted(written), HOOKS_DIR])
+    found = git.tracked(root, [*sorted(written), OLD_HOOKS_DIR])
     if not found:
         return Check(
             "machine files in git", Status.OK, "No file wm writes for this machine is tracked."

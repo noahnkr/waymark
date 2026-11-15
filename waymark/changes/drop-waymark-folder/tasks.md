@@ -42,9 +42,11 @@
   - Note: the cleanup runs only through `setup_machine`, so only in a repository with a record. A code repo where 0.1.1's `wm git-hooks` ran keeps its `core.hooksPath`, and since `wm run-hook` is gone, its commits will fail until the setting is unset by hand. 4.1's multi-repo guide should say so (`git config --unset core.hooksPath`, then delete `.waymark/hooks/`).
   - Note: `docs/architecture.md` ("git hooks" in services) and `CHANGELOG.md` still mention the hooks, which is left to 4.1. This repository's own `.gitignore` block still lists `/.waymark/hooks/` until `wm update` runs with this version.
   - (review) 2026-11-15 pass: hook commands, services/githooks, templates and the status git_hooks field are removed with status schema v2; ignore_patterns drops the hooks; remove_old_hooks only acts on core.hooksPath=.waymark/hooks and is called from setup_machine with a note; doctor has no hooks check but still reports a tracked .waymark/hooks; every setup scenario is tested and the suite, lint, format, mypy and codespell all pass
-- [ ] 3.2 Take out the cleanup of the 0.1.1 hooks
+- [x] 3.2 Take out the cleanup of the 0.1.1 hooks
   - Criteria: `record/oldhooks.py`, `remove_old_hooks`, `git.unset_config` (when nothing else uses it) and the `OLD_HOOKS_REMOVED` note in `setup_machine` are gone, with their tests; `wm init` and `wm update` change no git setting and delete nothing under `.waymark/`; `wm doctor`'s tracked-files check still includes `.waymark/hooks`
   - Verify: the full suite passes; a test shows `wm update` in a clone whose `core.hooksPath` is `.waymark/hooks` leaves the setting and the folder as they are
+  - Note: `git.config_value` went too, since only `remove_old_hooks` read it, and `MachineSetup` lost its `notes` field, which nothing filled any more. The `.waymark/hooks` path `wm doctor` still checks for tracked files is now `OLD_HOOKS_DIR` in `services/doctor.py`.
+  - (self-review) 2026-11-15: oldhooks.py, remove_old_hooks, git.unset_config and the now-unused git.config_value and MachineSetup.notes are gone with their tests, with no references left in src or tests; wm init and wm update leave an old core.hooksPath and .waymark/hooks byte for byte; doctor still reports a tracked .waymark/hooks. Services and CLI tests (214) and mypy pass.
 
 ## 4. Docs
 

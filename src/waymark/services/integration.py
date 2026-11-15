@@ -13,7 +13,6 @@ from pathlib import Path
 from waymark import adapters, assets
 from waymark.record import git, ignore
 from waymark.record.files import RecordFiles
-from waymark.record.oldhooks import remove_old_hooks
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import Record
 from waymark.record.store import Transaction
@@ -162,17 +161,11 @@ def located_folders(record: Record) -> list[Path]:
     ]
 
 
-OLD_HOOKS_REMOVED = (
-    "Removed the git hooks wm 0.1.1 installed: this clone's core.hooksPath and .waymark/hooks/."
-)
-
-
 @dataclass(frozen=True)
 class MachineSetup:
-    """What setting up this machine did: the files it wrote, and anything else it did, in lines."""
+    """What setting up this machine did: the files it wrote."""
 
     changes: list[FileChange]
-    notes: list[str]
     paths: tuple[str, ...]
 
 
@@ -181,8 +174,7 @@ def setup_machine(record: Record) -> MachineSetup:
 
     The agent tool files, the per-machine files and the ``.gitignore`` block are
     written in one transaction; the per-machine files are then excluded in this
-    clone, and the git hooks wm 0.1.1 installed are removed. The record itself is
-    not touched, and no git setting is changed except to remove those hooks.
+    clone. The record itself is not touched, and no git setting is changed.
     """
     assert record.config is not None
     root = record.project.root
@@ -194,8 +186,7 @@ def setup_machine(record: Record) -> MachineSetup:
     gitignore = stage_ignore(transaction, files, ignore_patterns(tools))
     paths = commit(transaction)
     keep_local(root, local)
-    notes = [OLD_HOOKS_REMOVED] if remove_old_hooks(root) else []
-    return MachineSetup([*changes, *local, gitignore], notes, paths)
+    return MachineSetup([*changes, *local, gitignore], paths)
 
 
 def _listed(items: Sequence[str]) -> str:
@@ -226,12 +217,11 @@ def update(start: Path) -> Done:
     changed = [change for change in changes if change.status != "unchanged"]
     lines = [f"Migrated the record: {step}." for step in migrated]
     lines += [f"{change.status}: {change.path}" for change in changed]
-    lines += machine.notes
     shared = [f"{RECORD_DIR}/"] if migrated else []
     shared += [change.path for change in changed if change.path in (ignore.PATH, ci.WORKFLOW)]
     if shared:
         lines.append(f"Review the changes to {_listed(shared)} and commit them.")
-    elif changed or machine.notes:
+    elif changed:
         lines.append("Updated this machine's files.")
     else:
         lines.append("Everything is up to date.")

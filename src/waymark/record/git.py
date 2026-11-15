@@ -103,19 +103,6 @@ def git_path(folder: Path, relative: str) -> Path:
     return where if where.is_absolute() else folder / where
 
 
-def config_value(repository: Path, key: str) -> str | None:
-    """A setting from this clone's own git config; None when it isn't set there."""
-    try:
-        return _run(repository, "config", "--local", "--get", key).strip() or None
-    except GitError:
-        return None
-
-
-def unset_config(repository: Path, key: str) -> None:
-    """Remove a setting from this clone's own git config. Nothing shared changes."""
-    _run(repository, "config", "--local", "--unset-all", key)
-
-
 def tracked(repository: Path, paths: Iterable[str]) -> tuple[str, ...]:
     """The tracked files among some paths, relative to the repository's top.
 

@@ -12,7 +12,6 @@ from tests.support import Workspace
 from waymark import __version__, adapters
 from waymark.record import ignore
 from waymark.record.files import RecordFiles
-from waymark.record.oldhooks import HOOKS_DIR
 from waymark.record.project import find_project
 from waymark.record.record import load_record
 from waymark.record.state import ExplorationStatus, StepKind, derive_state
@@ -369,7 +368,6 @@ def test_setup_machine_writes_the_machine_files_and_the_block_and_no_hooks(
     assert set(machine.paths) == {".claude/skills/wm-apply/SKILL.md", ".gitignore"}
     patterns = integration.ignore_patterns(adapters.names()[:1])
     assert (tmp_path / ".gitignore").read_text(encoding="utf-8") == ignore.render(patterns)
-    assert machine.notes == []
     assert git_settings(tmp_path) == settings
     assert not (tmp_path / ".waymark").exists()
     record_after = {
@@ -553,59 +551,60 @@ def test_commands_outside_a_project_say_how_to_start(tmp_path: Path) -> None:
         setup.create_change(tmp_path, "add-limit")
 
 
+OLD_HOOKS_DIR = ".waymark/hooks"
+
+
 def install_old_hooks(root: Path) -> None:
     """The git hooks as wm 0.1.1 left them in a clone: two scripts, and core.hooksPath."""
-    folder = root / HOOKS_DIR
+    folder = root / OLD_HOOKS_DIR
     folder.mkdir(parents=True)
     for name in ("commit-msg", "pre-commit"):
         (folder / name).write_text(f"#!/bin/sh\nwm run-hook {name}\n", encoding="utf-8")
     (folder / ".gitattributes").write_text("* text eol=lf\n", encoding="utf-8")
-    git(root, "config", "core.hooksPath", HOOKS_DIR)
+    git(root, "config", "core.hooksPath", OLD_HOOKS_DIR)
 
 
-def test_update_removes_the_git_hooks_wm_0_1_1_installed(tmp_path: Path) -> None:
-    """Scenario: Clone set up by 0.1.1."""
+def waymark_folder(root: Path) -> dict[Path, bytes]:
+    return {
+        path.relative_to(root): path.read_bytes()
+        for path in (root / ".waymark").rglob("*")
+        if path.is_file()
+    }
+
+
+def test_update_leaves_the_git_hooks_wm_0_1_1_installed_alone(tmp_path: Path) -> None:
+    """Nothing cleans up 0.1.1's hooks: the clone's owner removes them by hand."""
     root = initialized_with_block(tmp_path)
     install_old_hooks(root)
+    settings = git_settings(root)
+    before = waymark_folder(root)
 
     done = integration.update(root)
 
-    assert hooks_path(root) is None
-    assert not (root / ".waymark").exists()
-    assert integration.OLD_HOOKS_REMOVED in done.message.splitlines()
-    assert "Removed the git hooks" in integration.OLD_HOOKS_REMOVED
-    assert done.message.splitlines()[-1] == "Updated this machine's files."
-    assert integration.update(root).message == "Everything is up to date."
+    assert git_settings(root) == settings
+    assert hooks_path(root) == OLD_HOOKS_DIR
+    assert waymark_folder(root) == before
+    assert "hooks" not in done.message
+    assert done.message == "Everything is up to date."
 
 
-def test_init_in_a_clone_removes_the_git_hooks_wm_0_1_1_installed(tmp_path: Path) -> None:
+def test_init_in_a_clone_leaves_the_git_hooks_wm_0_1_1_installed_alone(tmp_path: Path) -> None:
     clone = cloned_project(tmp_path)
     setup.init_project(clone)
     install_old_hooks(clone)
+    settings = git_settings(clone)
+    before = waymark_folder(clone)
 
     done = setup.init_project(clone)
 
-    assert hooks_path(clone) is None
-    assert not (clone / ".waymark").exists()
-    assert integration.OLD_HOOKS_REMOVED in done.message.splitlines()
-    assert "This machine is set up" in done.message
-
-
-def test_removing_the_old_hooks_keeps_the_rest_of_the_waymark_folder(tmp_path: Path) -> None:
-    root = initialized_with_block(tmp_path)
-    install_old_hooks(root)
-    (root / ".waymark" / "notes.txt").write_text("mine\n", encoding="utf-8")
-
-    integration.update(root)
-
-    assert hooks_path(root) is None
-    assert not (root / HOOKS_DIR).exists()
-    assert (root / ".waymark" / "notes.txt").read_text(encoding="utf-8") == "mine\n"
+    assert git_settings(clone) == settings
+    assert waymark_folder(clone) == before
+    assert done.message == "This machine is already set up. Nothing changed."
 
 
 @pytest.mark.parametrize("value", [".husky", ".waymark/hooks-mine", ".githooks"])
 def test_init_leaves_another_hook_setup_alone(tmp_path: Path, value: str) -> None:
-    """Scenario: Another hook setup."""
+    """A clone's own hook setup is never touched."""
     clone = cloned_project(tmp_path)
     setup.init_project(clone)
     folder = clone / value
@@ -619,16 +618,4 @@ def test_init_leaves_another_hook_setup_alone(tmp_path: Path, value: str) -> Non
     assert hooks_path(clone) == value
     assert (folder / "pre-commit").read_bytes() == before
     assert sorted(path.name for path in folder.iterdir()) == ["pre-commit"]
-    assert integration.OLD_HOOKS_REMOVED not in done.message
     assert done.message == "This machine is already set up. Nothing changed."
-
-
-def test_old_hooks_folder_is_left_alone_when_git_does_not_run_it(tmp_path: Path) -> None:
-    root = initialized_with_block(tmp_path)
-    install_old_hooks(root)
-    git(root, "config", "--unset", "core.hooksPath")
-
-    done = integration.update(root)
-
-    assert (root / HOOKS_DIR / "commit-msg").is_file()
-    assert integration.OLD_HOOKS_REMOVED not in done.message

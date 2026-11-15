@@ -121,8 +121,8 @@ def _set_up_clone(root: Path, atlas: str | None, tools: tuple[str, ...] | None) 
     record = open_record(root, writing=True)
     machine = integration.setup_machine(record)
     changed = [change for change in machine.changes if change.status != "unchanged"]
-    lines = [f"{change.status}: {change.path}" for change in changed] + machine.notes
-    if changed or machine.notes:
+    lines = [f"{change.status}: {change.path}" for change in changed]
+    if changed:
         assert record.config is not None
         tools_set = record.config.agent_tools
         titles = ", ".join(adapters.get(tool).title for tool in tools_set) or "no agent tool"
