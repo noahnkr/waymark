@@ -108,12 +108,12 @@ def test_archive_is_refused_while_items_are_unticked_even_with_an_override(
     assert "can't be overridden" in refused(project, outcome="Done.", override="no time")
 
 
-def test_archive_is_refused_while_a_review_record_is_missing(project: Workspace) -> None:
+def test_not_reviewed(project: Workspace) -> None:
     project.change(tasks=ONE_ITEM)
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
     message = refused(project, outcome="Done.")
-    assert "item 1.1 is missing the review record" in message
+    assert "missing the self review of the change" in message
     assert "--override" in message
 
 

@@ -166,12 +166,23 @@ def _item_entries(name: str, change: Change, state: ChangeState) -> list[Payload
     entries: list[Payload] = []
     items = {item.number: item for item in (change.tasks.items if change.tasks else ())}
     command = f'wm resolve {name} {{}} "<what was decided>"'
+    if state.review.escalated:
+        records = change.tasks.review_records if change.tasks else ()
+        last = records[-1] if records else None
+        gap = last is not None and last.verdict is Verdict.SPEC_GAP
+        entries.append(
+            _entry(
+                "spec-gap" if gap else "verdict",
+                state.review.escalated,
+                change=name,
+                command=command.format("review"),
+            )
+        )
     for item_state in state.items:
         item = items[item_state.number]
-        last = item.records[-1] if item.records else None
         number = item.number
         if item_state.escalated:
-            gap = item.spec_gap is not None or (last and last.verdict is Verdict.SPEC_GAP)
+            gap = item.spec_gap is not None
             entries.append(
                 _entry(
                     "spec-gap" if gap else "verdict",

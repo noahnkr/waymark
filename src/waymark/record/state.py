@@ -17,11 +17,11 @@ from waymark.record.links import resolve
 from waymark.record.milestones import Milestone
 from waymark.record.names import parse_archive_name
 from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, Record
-from waymark.record.tasks import Item, RecordKind
+from waymark.record.tasks import Item, RecordKind, ReviewRecord
 from waymark.record.terms import Phase, ReviewLevel, Verdict
 
 ESCALATE_AFTER_CHANGES = 2
-"""How many "changes" verdicts on one item send it to the human."""
+"""How many "changes" verdicts on one change send it to the human."""
 
 
 class AcceptanceState(StrEnum):
@@ -106,18 +106,32 @@ class NextStep:
 class ItemState:
     """Where one task item stands.
 
-    ``level`` is the review the item now needs: its own level, or independent
-    once a reviewer has asked for changes. ``escalated`` says why the item has
-    gone to the human, if it has.
+    ``redo`` marks an item a review named to rebuild that hasn't been reopened
+    yet. ``escalated`` says why the item has gone to the human, if it has.
     """
 
     number: str
     title: str
-    level: ReviewLevel
     ticked: bool
-    reviewed: bool
     blocked: str | None
     redo: bool
+    escalated: str | None
+
+
+@dataclass(frozen=True)
+class ReviewState:
+    """Where the change's review stands.
+
+    ``level`` is the review the change now needs: its own level, or independent
+    once a review has asked for changes. ``reviewed`` is true once every item is
+    ticked and the review the level asks for is recorded. ``reopen`` lists the
+    items the last request for changes named that still wait to be reopened.
+    ``escalated`` says why the review has gone to the human, if it has.
+    """
+
+    level: ReviewLevel
+    reviewed: bool
+    reopen: tuple[str, ...]
     escalated: str | None
 
 
@@ -133,6 +147,7 @@ class ChangeState:
     ticked: int
     total: int
     items: tuple[ItemState, ...]
+    review: ReviewState
     conflicts: tuple[Conflict, ...]
     next_step: NextStep
 
@@ -179,47 +194,78 @@ class RecordState:
     explorations: Mapping[str, ExplorationState]
 
 
-def item_state(item: Item, default: ReviewLevel) -> ItemState:
-    """Derive one item's state from its tick, its spec gap and its review records.
+def _times_named(records: tuple[ReviewRecord, ...], number: str) -> int:
+    """How many requests for changes named an item to rebuild.
 
-    A ``(resolved)`` record closes whatever came before it: verdicts are counted
-    from the last one on.
+    A request the human resolved right after it is closed: what it named is not
+    rebuilt unless a later review asks again.
     """
-    records = item.records
+    count = 0
+    for position, record in enumerate(records):
+        following = records[position + 1] if position + 1 < len(records) else None
+        closed = following is not None and following.kind is RecordKind.RESOLVED
+        if record.verdict is Verdict.CHANGES and number in record.items and not closed:
+            count += 1
+    return count
+
+
+def item_state(item: Item, review_records: tuple[ReviewRecord, ...] = ()) -> ItemState:
+    """Derive one item's state from its tick, its blocker, its spec gap and its reopenings.
+
+    An item is to be rebuilt while more requests for changes have named it than
+    it has been reopened.
+    """
+    reopened = sum(1 for record in item.records if record.kind is RecordKind.REOPENED)
+    escalated = (
+        f"the builder found a spec gap: {item.spec_gap}" if item.spec_gap is not None else None
+    )
+    return ItemState(
+        number=item.number,
+        title=item.title,
+        ticked=item.ticked,
+        blocked=item.blocked,
+        redo=escalated is None and _times_named(review_records, item.number) > reopened,
+        escalated=escalated,
+    )
+
+
+def review_state(change: Change, default: ReviewLevel) -> ReviewState:
+    """Derive the change's review from the records in its Review section.
+
+    A ``(resolved)`` record closes whatever came before it: requests for changes
+    are counted from the last one on.
+    """
+    tasks = change.tasks
+    records = tasks.review_records if tasks else ()
+    items = tasks.items if tasks else ()
     last = records[-1] if records else None
     resolved = [index for index, record in enumerate(records) if record.kind is RecordKind.RESOLVED]
     recent = records[resolved[-1] + 1 :] if resolved else records
     changes = sum(1 for record in recent if record.verdict is Verdict.CHANGES)
     ever_changes = any(record.verdict is Verdict.CHANGES for record in records)
-    level = ReviewLevel.INDEPENDENT if ever_changes else item.level(default)
+    level = ReviewLevel.INDEPENDENT if ever_changes else change.review_level(default)
 
     escalated: str | None = None
-    redo = False
-    if item.spec_gap is not None:
-        escalated = f"the implementer found a spec gap: {item.spec_gap}"
-    elif last is not None and last.verdict is Verdict.SPEC_GAP:
+    if last is not None and last.verdict is Verdict.SPEC_GAP:
         escalated = f"the reviewer found a spec gap: {last.text}"
-    elif last is not None and last.verdict is Verdict.CHANGES:
-        if changes >= ESCALATE_AFTER_CHANGES:
-            escalated = f"a second review asked for changes: {last.text}"
-        else:
-            redo = True
+    elif last is not None and last.verdict is Verdict.CHANGES and changes >= ESCALATE_AFTER_CHANGES:
+        escalated = f"a second review asked for changes: {last.text}"
 
+    reopen = tuple(
+        item.number for item in items if escalated is None and item_state(item, records).redo
+    )
     passed = last is not None and last.verdict is Verdict.PASS
     if level is ReviewLevel.NONE:
-        reviewed = True
+        recorded = True
     elif level is ReviewLevel.SELF:
-        reviewed = passed or (last is not None and last.kind is RecordKind.SELF_REVIEW)
+        recorded = passed or (last is not None and last.kind is RecordKind.SELF_REVIEW)
     else:
-        reviewed = passed
-    return ItemState(
-        number=item.number,
-        title=item.title,
+        recorded = passed
+    every_item = bool(items) and all(item.ticked for item in items)
+    return ReviewState(
         level=level,
-        ticked=item.ticked,
-        reviewed=item.ticked and reviewed,
-        blocked=item.blocked,
-        redo=redo,
+        reviewed=every_item and recorded,
+        reopen=reopen,
         escalated=escalated,
     )
 
@@ -313,27 +359,27 @@ def _artifact_step(change: Change) -> tuple[Phase, NextStep] | None:
     return None
 
 
-def _item_step(items: tuple[ItemState, ...]) -> NextStep:
-    """The next item to apply or review, or what waits on the human."""
-    waiting: list[ItemState] = []
+def _item_step(items: tuple[ItemState, ...], review: ReviewState) -> NextStep:
+    """The next item to apply, the change's review, or what waits on the human."""
+    if review.escalated:
+        return NextStep(StepKind.RESOLVE_ITEMS, human=True, reason=review.escalated)
     for item in items:
-        if item.escalated:
-            waiting.append(item)
-        elif item.redo:
+        if item.redo and item.number in review.reopen:
             return NextStep(
                 StepKind.APPLY, item.number, reason="Reopen the item: the review asked for changes."
             )
+    waiting: list[ItemState] = []
+    for item in items:
+        if item.escalated or (item.blocked and not item.ticked):
+            waiting.append(item)
         elif not item.ticked:
-            if item.blocked:
-                waiting.append(item)
-            else:
-                return NextStep(StepKind.APPLY, item.number)
-        elif not item.reviewed:
-            return NextStep(StepKind.REVIEW, item.number, reason=f"Review level: {item.level}.")
+            return NextStep(StepKind.APPLY, item.number)
     if waiting:
         first = waiting[0]
         why = first.escalated or f"blocked: {first.blocked}"
         return NextStep(StepKind.RESOLVE_ITEMS, first.number, human=True, reason=why)
+    if not review.reviewed:
+        return NextStep(StepKind.REVIEW, reason=f"Review level: {review.level}.")
     return NextStep(StepKind.ARCHIVE, human=True)
 
 
@@ -341,10 +387,11 @@ def change_state(
     record: Record, change: Change, record_overlaps: tuple[Conflict, ...] = ()
 ) -> ChangeState:
     """Derive one active change's state."""
-    default = record.default_review
+    review_records = change.tasks.review_records if change.tasks else ()
     items = tuple(
-        item_state(item, default) for item in (change.tasks.items if change.tasks else ())
+        item_state(item, review_records) for item in (change.tasks.items if change.tasks else ())
     )
+    review = review_state(change, record.default_review)
     blocking = mismatches(record, change)
     conflicts = (*blocking, *(c for c in record_overlaps if change.name in c.changes))
     acceptance = acceptance_state(record, change)
@@ -362,7 +409,7 @@ def change_state(
         )
         next_step = NextStep(StepKind.ACCEPT, human=True, reason=why)
     else:
-        next_step = _item_step(items)
+        next_step = _item_step(items, review)
         if next_step.kind is StepKind.ARCHIVE and not blocking:
             phase = Phase.APPLIED
         else:
@@ -379,6 +426,7 @@ def change_state(
         ticked=sum(1 for item in items if item.ticked),
         total=len(items),
         items=items,
+        review=review,
         conflicts=tuple(conflicts),
         next_step=next_step,
     )

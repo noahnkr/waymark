@@ -12,6 +12,7 @@ from waymark.record.problems import WHOLE_FILE
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import Record, link_problems
 from waymark.record.state import ConflictKind, ExplorationStatus, RecordState, derive_state
+from waymark.record.terms import ReviewLevel
 from waymark.services.common import install_hint, open_record
 
 STALE_AFTER_DAYS = 30
@@ -51,6 +52,7 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
                 f'the human archives it with "wm archive {name}".'
             )
             found.append(Finding(Severity.WARNING, path, WHOLE_FILE, "not-archived", message))
+        found.extend(_review_level_findings(record, name))
     found.extend(
         Finding(Severity.WARNING, "changes", WHOLE_FILE, "overlap", conflict.message)
         for conflict in state.overlaps
@@ -68,6 +70,23 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
                 )
             )
     return found
+
+
+def _review_level_findings(record: Record, name: str) -> list[Finding]:
+    """A change that modifies or removes a requirement should be reviewed independently."""
+    change = record.changes[name]
+    level = change.review_level(record.default_review)
+    risky = any(delta.modified or delta.removed for delta in change.deltas.values())
+    if not risky or level is ReviewLevel.INDEPENDENT or change.proposal is None:
+        return []
+    message = (
+        f'The change "{name}" modifies or removes a requirement, and its review level is '
+        f'{level}. A change like this should be reviewed independently: add a "Review: '
+        'independent" line to its proposal.'
+    )
+    return [
+        Finding(Severity.WARNING, change.proposal.doc.path, WHOLE_FILE, "review-level", message)
+    ]
 
 
 def _stale_findings(record: Record, now: datetime.datetime) -> list[Finding]:

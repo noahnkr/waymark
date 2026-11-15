@@ -17,23 +17,31 @@ FOLDER = "changes/add-limit"
 TASKS_FILE = f"{FOLDER}/tasks.md"
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
-SELF_REVIEW = "  - (self-review) 2026-01-16: matches the criteria\n"
+REVIEW = "\n## Review\n\n"
+SELF_REVIEW = REVIEW + "- (self-review) 2026-01-16: matches the criteria\n"
+
+
+def reviewed_at(level: str, *, short: bool = False) -> str:
+    """A proposal with a Review line."""
+    facts = "Owner: Sam Doe\n" + ("Path: short\n" if short else "")
+    return proposal(short=short).replace(facts, facts + f"Review: {level}\n")
 
 
 def step(state: ChangeState) -> tuple[Phase, StepKind, str | None, bool]:
     return state.phase, state.next_step.kind, state.next_step.item, state.next_step.human
 
 
-def with_tasks(workspace: Workspace, tasks: str, *, short: bool = False) -> ChangeState:
+def with_tasks(
+    workspace: Workspace, tasks: str, *, short: bool = False, level: str | None = None
+) -> ChangeState:
     """An accepted change with the given task list; evidence is added after acceptance."""
     bare = "\n".join(
         line.replace("- [x]", "- [ ]")
         for line in tasks.split("\n")
-        if not line.strip().startswith(("- (", "- Blocked:"))
+        if not line.strip().startswith(("- (", "- Blocked:", "- critical", "- warning"))
     )
-    workspace.change(
-        proposal_text=proposal(short=short), design=None if short else DESIGN, tasks=bare
-    )
+    text = reviewed_at(level, short=short) if level else proposal(short=short)
+    workspace.change(proposal_text=text, design=None if short else DESIGN, tasks=bare)
     workspace.accept()
     workspace.write(TASKS_FILE, tasks)
     state = workspace.change_state()
@@ -67,12 +75,12 @@ def test_next_step_is_right_at_every_stop_on_the_full_path(workspace: Workspace)
     assert step(workspace.change_state()) == (Phase.ACCEPTED, StepKind.APPLY, "1.1", False)
 
     workspace.replace(TASKS_FILE, "- [ ] 1.1", "- [x] 1.1")
-    assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.REVIEW, "1.1", False)
-
-    workspace.replace(TASKS_FILE, "fifty-one matches\n", "fifty-one matches\n" + SELF_REVIEW)
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
 
     workspace.replace(TASKS_FILE, "- [ ] 1.2", "- [x] 1.2")
+    assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.REVIEW, None, False)
+
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + SELF_REVIEW)
     state = workspace.change_state()
     assert step(state) == (Phase.APPLIED, StepKind.ARCHIVE, None, True)
     assert state.applied
@@ -186,93 +194,119 @@ def test_progress_is_ticked_items_out_of_all_items(workspace: Workspace) -> None
     assert (state.ticked, state.total) == (2, 3)
 
 
-def test_item_at_level_none_needs_no_review_record(workspace: Workspace) -> None:
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Rename a file   `review: none`\n")
-    assert state.items[0].reviewed
+def test_change_at_level_none_needs_no_review(workspace: Workspace) -> None:
+    state = with_tasks(workspace, HEAD + "- [x] 1.1 Rename a file\n", level="none")
+    assert state.review.reviewed
     assert step(state) == (Phase.APPLIED, StepKind.ARCHIVE, None, True)
 
 
-def test_item_at_level_self_needs_a_self_review_record(workspace: Workspace) -> None:
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n")
-    assert not state.items[0].reviewed
-    assert step(state) == (Phase.APPLYING, StepKind.REVIEW, "1.1", False)
+def test_all_items_ticked(workspace: Workspace) -> None:
+    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n- [x] 1.2 Tidy up\n")
+    assert state.review.level is ReviewLevel.SELF
+    assert not state.review.reviewed
+    assert step(state) == (Phase.APPLYING, StepKind.REVIEW, None, False)
+    assert state.next_step.reason == "Review level: self."
     shutil.rmtree(workspace.path(FOLDER))
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n" + SELF_REVIEW)
-    assert state.items[0].reviewed
+    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n- [x] 1.2 Tidy up\n" + SELF_REVIEW)
+    assert state.review.reviewed
     assert state.applied
 
 
-def test_item_at_level_independent_needs_a_passing_review(workspace: Workspace) -> None:
-    item = "- [x] 1.1 Cap it   `review: independent`\n"
-    state = with_tasks(workspace, HEAD + item + SELF_REVIEW)
-    assert state.items[0].level is ReviewLevel.INDEPENDENT
-    assert not state.items[0].reviewed
-    assert step(state) == (Phase.APPLYING, StepKind.REVIEW, "1.1", False)
+def test_an_item_still_to_build(workspace: Workspace) -> None:
+    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n- [ ] 1.2 Tidy up\n")
+    assert step(state) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
+    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n- [ ] 1.2 Tidy up\n" + SELF_REVIEW)
+    assert not state.review.reviewed
+
+
+def test_independent_change_needs_a_passing_review(workspace: Workspace) -> None:
+    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n" + SELF_REVIEW, level="independent")
+    assert state.review.level is ReviewLevel.INDEPENDENT
+    assert not state.review.reviewed
+    assert step(state) == (Phase.APPLYING, StepKind.REVIEW, None, False)
     shutil.rmtree(workspace.path(FOLDER))
-    state = with_tasks(workspace, HEAD + item + "  - (review) 2026-01-16 pass: boundary covered\n")
-    assert state.items[0].reviewed
-    assert state.applied
-
-
-def test_unticked_item_is_never_reviewed(workspace: Workspace) -> None:
-    state = with_tasks(workspace, HEAD + "- [ ] 1.1 Cap it\n" + SELF_REVIEW)
-    assert not state.items[0].reviewed
-    assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.1", False)
-
-
-def test_changes_verdict_sends_the_item_back_to_apply(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
-        HEAD + "- [x] 1.1 Cap it   `review: independent`\n"
-        "  - (review) 2026-01-16 changes: off by one\n- [ ] 1.2 Next\n",
+        HEAD + "- [x] 1.1 Cap it\n" + REVIEW + "- (review) 2026-01-16 pass: boundary covered\n",
+        level="independent",
     )
-    assert state.items[0].redo
-    assert not state.items[0].reviewed
-    assert step(state) == (Phase.APPLYING, StepKind.APPLY, "1.1", False)
+    assert state.review.reviewed
+    assert state.applied
+
+
+def test_two_items_named(workspace: Workspace) -> None:
+    items = HEAD + "- [x] 1.1 Cap it\n- [x] 1.2 Page it\n\n## 2. Docs\n\n- [x] 2.1 Explain\n"
+    verdict = REVIEW + "- (review) 2026-01-16 changes 1.2 2.1: off by one\n"
+    state = with_tasks(workspace, items + verdict)
+    assert state.review.reopen == ("1.2", "2.1")
+    assert [item.redo for item in state.items] == [False, True, True]
+    assert step(state) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
     assert "Reopen" in state.next_step.reason
 
-
-def test_reopened_item_is_applied_again_then_reviewed_independently(workspace: Workspace) -> None:
-    records = "  - (review) 2026-01-16 changes: off by one\n  - (reopened) 2026-01-17\n"
-    state = with_tasks(workspace, HEAD + "- [ ] 1.1 Cap it\n" + records)
-    assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.1", False)
-    assert not state.items[0].redo
-
-    workspace.replace(TASKS_FILE, "- [ ] 1.1", "- [x] 1.1")
+    workspace.replace(
+        TASKS_FILE, "- [x] 1.2 Page it\n", "- [ ] 1.2 Page it\n  - (reopened) 2026-01-17\n"
+    )
     state = workspace.change_state()
-    assert state.items[0].level is ReviewLevel.INDEPENDENT
-    assert step(state) == (Phase.APPLYING, StepKind.REVIEW, "1.1", False)
+    assert state.review.reopen == ("2.1",)
+    assert step(state) == (Phase.APPLYING, StepKind.APPLY, "2.1", False)
 
-    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + SELF_REVIEW)
-    assert not workspace.change_state().items[0].reviewed
+    workspace.replace(
+        TASKS_FILE, "- [x] 2.1 Explain\n", "- [ ] 2.1 Explain\n  - (reopened) 2026-01-17\n"
+    )
+    assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
 
-    workspace.replace(TASKS_FILE, SELF_REVIEW, "  - (review) 2026-01-18 pass: fixed\n")
+    workspace.replace(TASKS_FILE, "- [ ] 1.2", "- [x] 1.2")
+    workspace.replace(TASKS_FILE, "- [ ] 2.1", "- [x] 2.1")
+    state = workspace.change_state()
+    assert state.review.level is ReviewLevel.INDEPENDENT
+    assert step(state) == (Phase.APPLYING, StepKind.REVIEW, None, False)
+
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- (self-review) 2026-01-18: fixed\n")
+    assert not workspace.change_state().review.reviewed
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- (review) 2026-01-18 pass: fixed\n")
     assert workspace.change_state().applied
 
 
-def test_second_changes_verdict_goes_to_the_human(workspace: Workspace) -> None:
+def test_second_request_for_changes(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
-        HEAD + "- [x] 1.1 Cap it\n"
-        "  - (review) 2026-01-16 changes: off by one\n"
-        "  - (reopened) 2026-01-17\n"
-        "  - (review) 2026-01-18 changes: still off by one\n",
+        HEAD
+        + "- [x] 1.1 Cap it\n  - (reopened) 2026-01-17\n"
+        + REVIEW
+        + "- (review) 2026-01-16 changes 1.1: off by one\n"
+        + "- (review) 2026-01-18 changes 1.1: still off by one\n",
     )
-    assert state.items[0].escalated == "a second review asked for changes: still off by one"
-    assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)
+    assert state.review.escalated == "a second review asked for changes: still off by one"
+    assert state.review.reopen == ()
+    assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, None, True)
+
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- (resolved) 2026-01-19: keep it\n")
+    state = workspace.change_state()
+    assert state.review.escalated is None
+    assert state.review.reopen == ()
+    assert step(state) == (Phase.APPLYING, StepKind.REVIEW, None, False)
+    assert state.review.level is ReviewLevel.INDEPENDENT
 
 
 def test_spec_gap_verdict_goes_to_the_human(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
-        HEAD + "- [x] 1.1 Cap it\n  - (review) 2026-01-16 spec-gap: no scenario for zero results\n"
-        "- [ ] 1.2 Next\n",
+        HEAD
+        + "- [x] 1.1 Cap it\n"
+        + REVIEW
+        + "- (review) 2026-01-16 spec-gap: no scenario for zero results\n",
     )
-    assert state.items[0].escalated == (
-        "the reviewer found a spec gap: no scenario for zero results"
+    assert state.review.escalated == "the reviewer found a spec gap: no scenario for zero results"
+    assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, None, True)
+
+
+def test_spec_gap_from_the_builder_goes_to_the_human(workspace: Workspace) -> None:
+    state = with_tasks(
+        workspace, HEAD + "- [ ] 1.1 Cap it\n  - Spec gap: no limit given\n- [ ] 1.2 Next\n"
     )
-    assert step(state) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
-    workspace.replace(TASKS_FILE, "- [ ] 1.2 Next\n", "- [x] 1.2 Next\n" + SELF_REVIEW)
+    assert state.items[0].escalated == "the builder found a spec gap: no limit given"
+    assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)
+    workspace.replace(TASKS_FILE, "- [ ] 1.2 Next\n", "- [x] 1.2 Next\n")
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)
 
 
@@ -282,7 +316,7 @@ def test_blocked_item_is_skipped_until_only_blocked_items_remain(workspace: Work
     )
     assert state.items[0].blocked == "waiting for wording"
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)
-    workspace.replace(TASKS_FILE, "- [ ] 1.2 Next\n", "- [x] 1.2 Next\n" + SELF_REVIEW)
+    workspace.replace(TASKS_FILE, "- [ ] 1.2 Next\n", "- [x] 1.2 Next\n")
     state = workspace.change_state()
     assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)
     assert state.next_step.reason == "blocked: waiting for wording"
@@ -306,8 +340,13 @@ def test_delta_that_no_longer_matches_its_spec_is_a_conflict(workspace: Workspac
 
 def test_change_with_a_mismatch_is_not_applied(workspace: Workspace) -> None:
     workspace.write("specs/search.md", spec())
-    tasks = HEAD + "- [ ] 1.1 Cap it   `review: none`\n"
-    workspace.change("fix-limit", deltas={"search": delta(modified=(CHANGED,))}, tasks=tasks)
+    tasks = HEAD + "- [ ] 1.1 Cap it\n"
+    workspace.change(
+        "fix-limit",
+        proposal_text=reviewed_at("none"),
+        deltas={"search": delta(modified=(CHANGED,))},
+        tasks=tasks,
+    )
     workspace.accept("fix-limit")
     workspace.replace("changes/fix-limit/tasks.md", "- [ ]", "- [x]")
     assert workspace.change_state("fix-limit").applied
@@ -345,10 +384,15 @@ def test_two_changes_touching_the_same_requirement_overlap(workspace: Workspace)
 
 def test_overlap_blocks_neither_change(workspace: Workspace) -> None:
     workspace.write("specs/search.md", spec())
-    tasks = HEAD + "- [x] 1.1 Cap it   `review: none`\n"
+    tasks = HEAD + "- [x] 1.1 Cap it\n"
     for name, limit in (("fix-limit", "twenty"), ("cut-limit", "ten")):
         changed = requirement(statement=f"A search SHALL return at most {limit} results.")
-        workspace.change(name, deltas={"search": delta(modified=(changed,))}, tasks=tasks)
+        workspace.change(
+            name,
+            proposal_text=reviewed_at("none"),
+            deltas={"search": delta(modified=(changed,))},
+            tasks=tasks,
+        )
         workspace.accept(name)
     state = workspace.state()
     assert len(state.overlaps) == 1

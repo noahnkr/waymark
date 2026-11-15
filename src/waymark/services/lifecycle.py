@@ -333,16 +333,16 @@ def _archive_gate(state: ChangeState, override: str | None) -> None:
             f'"{name}" can\'t be archived: {_listed(unticked)} not ticked. '
             "This can't be overridden; apply the items first."
         )
-    unreviewed = [item.number for item in state.items if not item.reviewed]
+    unreviewed = not state.review.reviewed
     if unreviewed and override is None:
         raise Refusal(
-            f'"{name}" can\'t be archived: {_listed(unreviewed)} missing the review record '
-            "its level requires. Review the items, or the human can archive anyway with "
+            f'"{name}" can\'t be archived: it is missing the {state.review.level} review of the '
+            "change. Review the change, or the human can archive anyway with "
             f'"wm archive {name} --override "<reason>"".'
         )
     if override is not None and not unreviewed:
         raise Refusal(
-            f'"{name}" has every review record it needs, so there is nothing to override. '
+            f'"{name}" has the review it needs, so there is nothing to override. '
             "Archive it without --override."
         )
 
