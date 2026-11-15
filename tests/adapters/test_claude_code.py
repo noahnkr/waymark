@@ -2,8 +2,9 @@
 
 The payloads follow the shapes in the Claude Code hooks reference: the common
 fields, ``tool_name`` and ``tool_input`` on tool events, ``agent_type`` when
-the hook fires inside a subagent, and ``last_assistant_message`` on
-SubagentStop.
+the hook fires inside a subagent, ``last_assistant_message`` on
+SubagentStop, and the report in ``tool_input.message`` when an agent run in
+the background hands it back through ``SubagentHandback``.
 """
 
 import datetime
@@ -71,6 +72,9 @@ class Hooks:
         if agent:
             fields |= {"agent_id": "agent-1", "agent_type": agent}
         return self.fire("PreToolUse", **fields)
+
+    def handback(self, agent: str, message: str) -> dict[str, Any]:
+        return self.tool("SubagentHandback", {"message": message}, agent)
 
     def stop(self, agent: str, message: str, active: bool = False) -> dict[str, Any]:
         return self.fire(
@@ -150,13 +154,24 @@ def test_adapter_ignores_only_the_files_wm_writes() -> None:
 def test_agent_definitions_keep_the_reviewer_read_only() -> None:
     files = generated()
     reviewer = files[".claude/agents/wm-reviewer.md"]
-    assert "disallowedTools: Edit, Write, MultiEdit, NotebookEdit, Agent, SubagentHandback" in (
-        reviewer
-    )
+    assert "disallowedTools: Edit, Write, MultiEdit, NotebookEdit, Agent\n" in reviewer
     implementer = files[".claude/agents/wm-implementer.md"]
-    assert "disallowedTools: Agent, SubagentHandback\n" in implementer
-    for text in (reviewer, files[".claude/agents/wm-implementer.md"]):
+    assert "disallowedTools: Agent\n" in implementer
+    for text in (reviewer, implementer):
         assert text.startswith("---\nname: wm-")
+
+
+def test_agent_definitions_let_the_agents_hand_their_report_back() -> None:
+    files = generated()
+    for name in assets.AGENTS:
+        header = files[f".claude/agents/{name}.md"].split("\n---\n", 1)[0]
+        assert "SubagentHandback" not in header
+
+
+def test_settings_send_handbacks_to_the_tool_hook() -> None:
+    settings = json.loads(merge_settings(None))
+    matcher = settings["hooks"]["PreToolUse"][0]["matcher"]
+    assert "SubagentHandback" in matcher.split("|")
 
 
 def test_settings_merge_keeps_everything_that_is_not_wms() -> None:
@@ -353,6 +368,42 @@ def test_agent_already_asked_once_is_released_with_a_notice(hooks: Hooks) -> Non
     reply = hooks.stop("wm-implementer", "Still no ending.", active=True)
     assert "decision" not in reply
     assert "recorded nothing for the implementer" in reply["systemMessage"]
+
+
+def test_implementers_handed_back_report_ticks_its_item(hooks: Hooks) -> None:
+    report = "Built the cap.\n\nITEM: add-limit 1.1\nRESULT: done: tests pass"
+    reply = hooks.handback("wm-implementer", report)
+    assert reply == {"systemMessage": "Waymark: Ticked item 1.1 of add-limit."}
+    assert "- [x] 1.1 Cap the result count" in hooks.project.read(TASKS_FILE)
+
+
+def test_reviewers_handed_back_verdict_is_written_as_the_review_record(hooks: Hooks) -> None:
+    today = datetime.date.today().isoformat()
+    lifecycle.tick(hooks.project.root, CHANGE, "1.1")
+    reply = hooks.handback("wm-reviewer", "ITEM: add-limit 1.1\nVERDICT: pass: caps at fifty")
+    assert "Recorded the verdict pass" in reply["systemMessage"]
+    assert f"  - (review) {today} pass: caps at fifty" in hooks.project.read(TASKS_FILE)
+
+
+def test_handed_back_report_without_its_ending_is_denied(hooks: Hooks) -> None:
+    reason = denied(hooks.handback("wm-implementer", "I finished the work and the tests pass."))
+    assert "ITEM: <change> <item>" in reason
+    assert "RESULT: done | partial | spec-gap | blocked" in reason
+    assert "- [ ] 1.1" in hooks.project.read(TASKS_FILE)
+    again = hooks.handback("wm-implementer", "Still no ending.")
+    assert "hookSpecificOutput" not in again
+    assert "recorded nothing for the implementer" in again["systemMessage"]
+
+
+def test_stop_after_a_recorded_handback_is_allowed_without_its_ending(hooks: Hooks) -> None:
+    hooks.handback("wm-implementer", "ITEM: add-limit 1.1\nRESULT: done: tests pass")
+    assert hooks.stop("wm-implementer", "Report handed back.") == {}
+    assert "- [x] 1.1" in hooks.project.read(TASKS_FILE)
+    assert hooks.stop("wm-implementer", "A later stop, no ending.")["decision"] == "block"
+
+
+def test_planners_handback_is_ignored(hooks: Hooks) -> None:
+    assert hooks.tool("SubagentHandback", {"message": "no ending here"}) == {}
 
 
 def test_other_subagents_stopping_is_ignored(hooks: Hooks) -> None:

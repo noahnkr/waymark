@@ -13,7 +13,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Agent|Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell",
+        "matcher": "Agent|Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell|SubagentHandback",
         "hooks": [
           {
             "type": "command",

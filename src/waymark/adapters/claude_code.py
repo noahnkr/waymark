@@ -27,18 +27,20 @@ HOOK_TIMEOUT = 60
 
 _EDIT_TOOLS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
 _SHELL_TOOLS = ("Bash", "PowerShell")
+_HANDBACK_TOOL = "SubagentHandback"
+"""The tool an agent run in the background hands its report back through."""
 _ROLES = {assets.IMPLEMENTER: Role.IMPLEMENTER, assets.REVIEWER: Role.REVIEWER}
 _AGENT_TOOLS = {
-    assets.IMPLEMENTER: "Agent, SubagentHandback",
-    assets.REVIEWER: "Edit, Write, MultiEdit, NotebookEdit, Agent, SubagentHandback",
+    assets.IMPLEMENTER: "Agent",
+    assets.REVIEWER: "Edit, Write, MultiEdit, NotebookEdit, Agent",
 }
-"""The tools each agent goes without. Neither may start agents of its own, and
-neither hands its report back through a tool: the report must be its final
-message, where the stop hook reads its ending."""
+"""The tools each agent goes without. Neither may start agents of its own. Both
+may hand their report back through a tool when run in the background: the
+PreToolUse hook reads the ending there, as the stop hook does from a final message."""
 
 _HOOKS: dict[str, str | None] = {
     "SessionStart": None,
-    "PreToolUse": "|".join(("Agent", *_EDIT_TOOLS, *_SHELL_TOOLS)),
+    "PreToolUse": "|".join(("Agent", *_EDIT_TOOLS, *_SHELL_TOOLS, _HANDBACK_TOOL)),
     "PostToolUse": "Edit|Write|MultiEdit",
     "SubagentStop": "|".join(assets.AGENTS),
 }
@@ -166,6 +168,15 @@ def _event(  # noqa: PLR0911 - one return per hook event
             role,
             message=str(payload.get("last_assistant_message") or ""),
             retried=bool(payload.get("stop_hook_active")),
+            agent_id=str(payload.get("agent_id") or ""),
+        )
+    if name == "PreToolUse" and tool == _HANDBACK_TOOL:
+        return Event(
+            EventKind.HANDBACK,
+            cwd,
+            role,
+            message=str(tool_input.get("message") or ""),
+            agent_id=str(payload.get("agent_id") or ""),
         )
     if name == "PreToolUse" and tool == "Agent":
         return Event(
