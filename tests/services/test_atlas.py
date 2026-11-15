@@ -9,6 +9,7 @@ import pytest
 from tests.conftest import git_init
 from tests.support import ATLAS_CONFIG, CONFIG, Workspace, spec
 from waymark import __version__
+from waymark.record.pointer import is_pointer
 from waymark.record.registry import load_registry
 from waymark.services import integration, setup
 from waymark.services.atlas import point, register
@@ -139,13 +140,72 @@ def test_init_of_an_atlas_registers_it(tmp_path: Path, isolated_registry: Path) 
 def test_point_writes_the_pointer_with_a_relative_hint_and_the_atlas_pin(
     suite: Workspace, tmp_path: Path
 ) -> None:
+    """Scenario: Point a code repo."""
     register(suite.root)
-    done = point(tmp_path / "suite-api", "suite")
-    assert "Wrote .waymark/atlas.toml" in done.message
-    text = (tmp_path / "suite-api" / ".waymark" / "atlas.toml").read_text(encoding="utf-8")
-    assert 'atlas = "suite"\npath = "../atlas"\n' in text
+    code = tmp_path / "suite-api"
+    done = point(code, "suite")
+    assert "Wrote waymark/config.toml" in done.message
+    text = (code / "waymark" / "config.toml").read_text(encoding="utf-8")
+    assert '[pointer]\natlas = "suite"\npath = "../atlas"\n' in text
     assert f'wm_version = "{__version__}"' in text
-    assert "Updated" in point(tmp_path / "suite-api", "suite", "../atlas").message
+    assert is_pointer(text)
+    assert sorted(p.name for p in (code / "waymark").iterdir()) == ["config.toml"]
+    assert not (code / ".waymark").exists()
+    again = point(code, "suite", "../atlas")
+    assert "Updated waymark/config.toml" in again.message
+    assert "Removed" not in again.message
+
+
+def write_old_pointer(code: Path) -> None:
+    (code / ".waymark").mkdir()
+    (code / ".waymark" / "atlas.toml").write_text(
+        'atlas = "suite"\npath = "../atlas"\n', encoding="utf-8"
+    )
+
+
+def test_point_moves_the_old_pointer_and_removes_its_folder(
+    suite: Workspace, tmp_path: Path
+) -> None:
+    """Scenario: Move the pointer."""
+    code = tmp_path / "suite-api"
+    write_old_pointer(code)
+    done = point(code, "suite", "../atlas")
+    assert "Removed .waymark/atlas.toml" in done.message
+    assert is_pointer((code / "waymark" / "config.toml").read_text(encoding="utf-8"))
+    assert not (code / ".waymark").exists()
+
+
+def test_point_keeps_the_old_folder_when_something_else_is_in_it(
+    suite: Workspace, tmp_path: Path
+) -> None:
+    code = tmp_path / "suite-api"
+    write_old_pointer(code)
+    (code / ".waymark" / "hooks").mkdir()
+    (code / ".waymark" / "hooks" / "commit-msg").write_text("#!/bin/sh\n", encoding="utf-8")
+    point(code, "suite", "../atlas")
+    assert not (code / ".waymark" / "atlas.toml").exists()
+    assert (code / ".waymark" / "hooks" / "commit-msg").is_file()
+
+
+def test_point_that_fails_leaves_the_old_pointer_in_place(
+    suite: Workspace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    code = tmp_path / "suite-api"
+    write_old_pointer(code)
+
+    unlink = Path.unlink
+
+    def refuse(self: Path, missing_ok: bool = False) -> None:
+        if self.name == "atlas.toml":
+            raise PermissionError("denied")
+        unlink(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", refuse)
+    with pytest.raises(Refusal, match="Nothing was changed"):
+        point(code, "suite", "../atlas")
+    monkeypatch.undo()
+    assert (code / ".waymark" / "atlas.toml").is_file()
+    assert not (code / "waymark" / "config.toml").exists()
 
 
 def test_point_is_refused_where_it_cant_lead_anywhere(
@@ -155,8 +215,10 @@ def test_point_is_refused_where_it_cant_lead_anywhere(
         point(tmp_path / "suite-api", "suite")
     with pytest.raises(Refusal, match='not the top folder of the atlas "suite"'):
         point(tmp_path / "suite-api", "suite", "../elsewhere")
+    before = (project.root / "waymark" / "config.toml").read_bytes()
     with pytest.raises(Refusal, match="holds a Waymark record itself"):
         point(project.root, "suite", "../atlas")
+    assert (project.root / "waymark" / "config.toml").read_bytes() == before
     with pytest.raises(Refusal, match="not in a git repository"):
         point(tmp_path, "suite", "atlas")
 

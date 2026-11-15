@@ -16,7 +16,7 @@ from waymark.record.githooks import HOOKS_DIR, HOOKS_IGNORED, HooksState, hooks_
 from waymark.record.project import find_project
 from waymark.record.record import load_record
 from waymark.services import githooks, integration, setup
-from waymark.services.atlas import point, register
+from waymark.services.atlas import register
 from waymark.services.common import Refusal
 from waymark.services.doctor import Status, doctor
 from waymark.views import payloads, render
@@ -134,8 +134,8 @@ def test_git_hooks_in_a_code_repo_lists_only_the_hooks(tmp_path: Path) -> None:
     code = tmp_path / "suite-api"
     git_init(code)
     register(atlas.root)
-    point(code, "suite")
-    assert (code / ".waymark" / "atlas.toml").is_file()
+    (code / ".waymark").mkdir()
+    (code / ".waymark" / "atlas.toml").write_text('atlas = "suite"\n', encoding="utf-8")
     integration.git_hooks(code)
     assert block(code) == [HOOKS_IGNORED]
     assert not is_ignored(code, ".waymark/atlas.toml")

@@ -18,6 +18,7 @@ from waymark.record.atlas import Found, locate_atlas, locate_repo, pointer_file,
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT
 from waymark.record.files import RecordFiles
 from waymark.record.githooks import HOOKS_DIR, HooksState, hooks_status
+from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE
 from waymark.record.project import Project, ProjectNotFoundError, find_project
 from waymark.record.record import Record, load_record
 from waymark.record.registry import Registry, load_registry
@@ -86,6 +87,19 @@ def _project_check(project: Project) -> Check:
             project.root,
         )
     return Check("project", Status.OK, "Found the record.", project.root)
+
+
+def _old_pointer_check(code_repo: Path) -> Check:
+    """A warning for a code repo whose pointer is still in its old place."""
+    pointer, _ = read_pointer(code_repo)
+    command = f"wm atlas point {pointer.atlas}" if pointer else "wm atlas point <atlas>"
+    return Check(
+        "pointer",
+        Status.WARNING,
+        f"This code repo's pointer is in {OLD_POINTER_FILE}, its old place. Run "
+        f'"{command}" in it to move the pointer to {POINTER_FILE}.',
+        code_repo,
+    )
 
 
 def _hooks_check(root: Path, *, optional: bool) -> Check:
@@ -253,6 +267,8 @@ def doctor(start: Path) -> Report:
         checks.append(Check("project", Status.ERROR, error.plain, start))
         return Report("project", tuple(checks))
     checks.append(_project_check(project))
+    if project.old_pointer and project.code_repo is not None:
+        checks.append(_old_pointer_check(project.code_repo))
     checks.append(_hooks_check(project.root, optional=False))
     if project.code_repo is not None:
         checks.append(_hooks_check(project.code_repo, optional=True))

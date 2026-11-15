@@ -120,13 +120,46 @@ def test_atlas_doctor_warns_about_a_pointer_with_another_pin(
     register(suite.root)
     point(tmp_path / "suite-api", "suite")
     assert outcome(atlas_doctor(suite.root))["pointer api"] is Status.OK
-    pointer = tmp_path / "suite-api" / ".waymark" / "atlas.toml"
+    pointer = tmp_path / "suite-api" / "waymark" / "config.toml"
     pointer.write_text(
         pointer.read_text(encoding="utf-8").replace(__version__, "0.0.1"), encoding="utf-8"
     )
     report = atlas_doctor(suite.root)
     assert outcome(report)["pointer api"] is Status.WARNING
     assert "wm atlas point suite" in message(report, "pointer api")
+
+
+def test_atlas_doctor_reads_an_old_pointer_and_names_its_file(
+    suite: Workspace, tmp_path: Path
+) -> None:
+    register(suite.root)
+    old = tmp_path / "suite-api" / ".waymark"
+    old.mkdir()
+    (old / "atlas.toml").write_text('atlas = "suite"\nwm_version = "0.0.1"\n', encoding="utf-8")
+    report = atlas_doctor(suite.root)
+    assert outcome(report)["pointer api"] is Status.WARNING
+    assert ".waymark/atlas.toml pins wm 0.0.1" in message(report, "pointer api")
+    (old / "atlas.toml").write_text('atlas = "suite"\n', encoding="utf-8")
+    report = atlas_doctor(suite.root)
+    assert outcome(report)["pointer api"] is Status.OK
+    assert '.waymark/atlas.toml names "suite"' in message(report, "pointer api")
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_warns_about_a_pointer_in_its_old_place(suite: Workspace, tmp_path: Path) -> None:
+    """Scenario: Atlas set up with 0.1.1 (the doctor part)."""
+    code = tmp_path / "suite-api"
+    (code / ".waymark").mkdir()
+    (code / ".waymark" / "atlas.toml").write_text(
+        'atlas = "suite"\npath = "../atlas"\n', encoding="utf-8"
+    )
+    report = doctor(code)
+    assert outcome(report)["project"] is Status.OK
+    assert outcome(report)["pointer"] is Status.WARNING
+    assert ".waymark/atlas.toml" in message(report, "pointer")
+    assert '"wm atlas point suite"' in message(report, "pointer")
+    point(code, "suite", "../atlas")
+    assert "pointer" not in outcome(doctor(code))
 
 
 def test_atlas_doctor_warns_about_registry_entries_the_settings_dont_list(
