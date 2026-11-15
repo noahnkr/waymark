@@ -104,7 +104,7 @@ def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace)
     lifecycle.accept(project.root, NAME, DAY)
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
-    assert step["commands"] == [f"wm context {NAME} 1.1 --for implement"]
+    assert step["commands"][0] == f"wm context {NAME} 1.1 --for implement"
 
     lifecycle.tick(project.root, NAME, "1.1")
     step = at(project)
@@ -198,13 +198,48 @@ def test_review_instructions_follow_the_items_review_level(project: Workspace) -
     assert any("reviewer" in line for line in step["guidance"])
 
 
-def test_apply_instructions_reopen_an_item_after_a_changes_verdict(project: Workspace) -> None:
+def mentions_an_implementer(step: dict[str, Any]) -> bool:
+    text = render.to_text(step, PLAIN) + render.to_json(step)
+    return "implementer" in text.lower()
+
+
+def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Workspace) -> None:
     accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    step = at(project)
+    assert (step["step"], step["item"]) == ("apply", "1.1")
+    assert step["commands"] == [
+        f"wm context {NAME} 1.1 --for implement",
+        f"wm tick {NAME} 1.1",
+        f'wm block {NAME} 1.1 "<reason>"',
+        f'wm gap {NAME} 1.1 "<what is missing>"',
+    ]
+    assert any("yourself" in line for line in step["guidance"])
+    assert any("checks the item touches" in line for line in step["guidance"])
+    assert not mentions_an_implementer(step)
+
+
+def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
+    accepted(project, HEAD + "- [ ] 1.1 Cap it   `build: delegate`\n  - Criteria: fifty\n")
+    step = at(project)
+    assert (step["step"], step["item"]) == ("apply", "1.1")
+    assert step["commands"] == [f"wm context {NAME} 1.1 --for implement"]
+    assert step["guidance"][0] == (
+        "Start an implementer for item 1.1 with the change and item and nothing else."
+    )
+
+
+@pytest.mark.parametrize("tag", ["", "   `build: delegate`"])
+def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
+    project: Workspace, tag: str
+) -> None:
+    accepted(project, HEAD + f"- [ ] 1.1 Cap it{tag}\n  - Criteria: fifty\n")
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(project.root, NAME, "1.1", Verdict.CHANGES, "off by one", DAY)
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"][0] == f"wm reopen {NAME} 1.1"
+    assert step["commands"][1] == f"wm context {NAME} 1.1 --for implement"
+    assert mentions_an_implementer(step) == bool(tag)
 
 
 def test_instructions_for_items_waiting_on_the_human_point_to_resolve(project: Workspace) -> None:

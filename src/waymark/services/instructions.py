@@ -158,12 +158,28 @@ def _working(  # noqa: PLR0911 - one return per step
     item = state.next_step.item if state.next_step.kind is step else None
     number = item or "<item>"
     if step is StepKind.APPLY:
-        guidance = [
-            f"Start an implementer for item {number} with the change and item and nothing else.",
-            "The implementer begins from its context pack and ends with a RESULT line.",
-            "If the tool has no isolated agents, build the item yourself from the same pack.",
-        ]
-        commands = [f"wm context {name} {number} --for implement"]
+        built = change.tasks.item(item) if change.tasks and item else None
+        if built is not None and built.delegate:
+            guidance = [
+                f"Start an implementer for item {number} with the change and item and nothing "
+                "else.",
+                "The implementer begins from its context pack and ends with a RESULT line.",
+                "If the tool has no isolated agents, build the item yourself from the same pack.",
+            ]
+            commands = [f"wm context {name} {number} --for implement"]
+        else:
+            guidance = [
+                f"Build item {number} yourself, from its context pack.",
+                "Run the checks the item touches.",
+                "Then record the result: tick the item when its criteria hold, or record "
+                "what blocks it, or the spec gap if the record isn't enough to build it.",
+            ]
+            commands = [
+                f"wm context {name} {number} --for implement",
+                f"wm tick {name} {number}",
+                f'wm block {name} {number} "<reason>"',
+                f'wm gap {name} {number} "<what is missing>"',
+            ]
         if state.next_step.reason:
             commands.insert(0, f"wm reopen {name} {number}")
         return guidance, commands
