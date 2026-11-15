@@ -330,6 +330,14 @@ def test_subagents_writing_commands_commits_and_pushes_are_denied(hooks: Hooks) 
     assert hooks.tool("Bash", {"command": 'git commit -am "feat: x"'}) == {}
 
 
+def test_planners_commit_that_is_not_conventional_is_denied(hooks: Hooks) -> None:
+    reply = hooks.tool("Bash", {"command": 'git commit -m "wip"', "description": "Commit"})
+    assert denied(reply).startswith('The commit was stopped: "wip" is not a conventional')
+    good = {"command": 'git commit -m "fix: accept an empty search query"'}
+    assert hooks.tool("PowerShell", good) == {}
+    assert hooks.tool("Bash", {"command": "git commit"}) == {}
+
+
 def test_reviewers_state_changing_command_is_denied(hooks: Hooks) -> None:
     reply = hooks.tool("Bash", {"command": "rm -rf build && pytest"}, "wm-reviewer")
     assert "A reviewer runs read-only commands" in denied(reply)
