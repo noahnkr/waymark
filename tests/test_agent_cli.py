@@ -85,8 +85,8 @@ def test_context_pack_that_fails_the_delegation_gate_exits_1(terminal: Terminal)
     refusal = terminal.run("context", NAME, "1.1", "--for", "implement", expect=EXIT_REFUSED)
     assert refusal.startswith("wm: No implement context pack for add-limit 1.1:")
     assert "is not accepted" in refusal
-    refusal = terminal.run("context", NAME, "--for", "review", expect=EXIT_REFUSED)
-    assert "exactly one change and one item" in refusal
+    refusal = terminal.run("context", NAME, "1.1", "--for", "review", expect=EXIT_REFUSED)
+    assert "exactly one change and no item" in refusal
 
 
 def test_context_needs_to_know_what_it_is_for(terminal: Terminal) -> None:

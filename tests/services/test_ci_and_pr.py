@@ -24,7 +24,7 @@ TOOL_CONFIG = CONFIG.replace('"some-tool"', '"claude-code"')
 ATLAS_TASKS = (
     "# Tasks\n\n## 1. Limit\n\n"
     "- [ ] 1.1 Add the endpoint\n  - Criteria: fifty at most\n  - Repo: api\n"
-    "- [ ] 1.2 Show the list   `review: none`\n  - Criteria: fifty rows\n  - Repo: web\n"
+    "- [ ] 1.2 Show the list\n  - Criteria: fifty rows\n  - Repo: web\n"
 )
 
 
@@ -85,7 +85,6 @@ def test_pr_text_is_drawn_from_the_change(project: Workspace) -> None:
     remote(project.root, "git@github.com:someone/shop.git")
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
     payload = describe(project.record(), NAME)
     assert errors(payload, SCHEMAS["pr"]) == []
     assert (payload["title"], payload["branch"], payload["repo"]) == (
@@ -97,8 +96,9 @@ def test_pr_text_is_drawn_from_the_change(project: Workspace) -> None:
     assert body.startswith("Long result lists are slow.")
     assert "## What changes\n\nSearch returns a capped list." in body
     assert "- search: adds Result limit" in body
-    assert "- [x] 1.1 Cap the result count (self-reviewed)" in body
-    assert "- [ ] 1.2 Document the limit (not built yet)" in body
+    assert "- [x] 1.1 Cap the result count\n" in body
+    assert "- [ ] 1.2 Document the limit\n" in body
+    assert "## Review\n\nNot reviewed yet (level self)." in body
     url = f"https://github.com/someone/shop/blob/{NAME}/waymark/changes/{NAME}/proposal.md"
     assert payload["links"] == [{"name": "change", "url": url}]
     assert f"- The change: [waymark/changes/{NAME}/proposal.md]({url})" in body
@@ -145,8 +145,8 @@ def test_pr_in_a_code_repo_lists_its_items_and_links_the_other_repos(suite: Work
 
 def test_pr_for_the_atlas_lists_every_item_and_links_each_code_repo(suite: Workspace) -> None:
     payload = describe(suite.record(), NAME)
-    assert "1.1 Add the endpoint (not built yet, in api)" in payload["body"]
-    assert "1.2 Show the list (not built yet, in web)" in payload["body"]
+    assert "- [ ] 1.1 Add the endpoint (in api)" in payload["body"]
+    assert "- [ ] 1.2 Show the list (in web)" in payload["body"]
     assert [link["name"] for link in payload["links"]] == ["change", "api"]
     assert render.to_json(payload)
 
@@ -161,3 +161,15 @@ def test_pr_refuses_a_repo_the_change_doesnt_touch(suite: Workspace, project: Wo
         describe(project.record(), NAME, "api")
     with pytest.raises(Refusal, match="no active change"):
         describe(project.record(), "other")
+
+
+def test_pr_text_gives_the_changes_review_and_its_findings(project: Workspace) -> None:
+    project.change()
+    lifecycle.accept(project.root, NAME, DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.self_review(
+        project.root, NAME, "fine", DAY, findings=["warning: src/a.py:3: the name is vague"]
+    )
+    body = describe(project.record(), NAME)["body"]
+    assert "## Review\n\nSelf-reviewed: fine\n- warning: src/a.py:3: the name is vague" in body

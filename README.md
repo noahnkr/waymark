@@ -32,7 +32,7 @@ $ wm new change add-result-limit
 Created the change "add-result-limit" with a proposal to draft.
 
 # /wm-propose: the agent drafts the proposal, a spec delta, the design
-# and the task list, with a review level for each task
+# and the task list; the proposal sets the change's review level
 
 $ wm status
 ── Changes in flight ───────────────────────────────────────────────────
@@ -43,11 +43,12 @@ $ wm status
 $ wm accept add-result-limit
 Accepted "add-result-limit". Its items can now be applied.
 
-# /wm-apply: the agent builds 1.1 from the change, runs the
-# fifty-one-match test, and runs wm tick add-result-limit 1.1
-# A reviewer agent that never saw the build checks it and ends with
+# /wm-apply: the agent builds 1.1 and 1.2 from the change, runs the
+# fifty-one-match test, and ticks each with wm tick add-result-limit <item>
+# A reviewer agent that never saw the build checks the whole change and
+# ends with CHANGE: add-result-limit, then
 #   VERDICT: pass: cap and order hold; the scenario is covered by the test
-# wm writes the verdict under 1.1. Then 1.2 is built; it needs no review.
+# wm writes the verdict in the task list's Review section.
 
 $ wm status
 ── Changes in flight ───────────────────────────────────────────────────
@@ -68,7 +69,8 @@ The files behind it, all plain markdown in `waymark/`:
 # Add a result limit
 
 Owner: Alex Example
-Accepted: 2026-01-15 by Alex Example (fingerprint: 6cec39a287bf99f2)
+Review: independent
+Accepted: 2026-01-15 by Alex Example (fingerprint: e87258930fc50aef)
 
 ## Why
 
@@ -147,12 +149,15 @@ Sorting every match still costs memory on very large result sets.
 
 ## 1. Limit
 
-- [x] 1.1 Cap the result count   `review: independent`
+- [x] 1.1 Cap the result count
   - Criteria: at most fifty results come back, best first
   - Verify: a test searches an index with fifty-one matches
-  - (review) 2026-01-15 pass: cap and order hold; the scenario is covered by the test
-- [x] 1.2 Name the limit in the help text   `review: none`
+- [x] 1.2 Name the limit in the help text
   - Criteria: the search help says fifty
+
+## Review
+
+- (review) 2026-01-15 pass: cap and order hold; the scenario is covered by the test
 ```
 
 </details>

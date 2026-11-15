@@ -48,23 +48,33 @@ def busy(project: Workspace) -> Workspace:
         "add-order",
         deltas={"search": delta(added=(requirement("Result order"),))},
         tasks=HEAD
-        + "- [ ] 1.1 Sort it   `review: independent`\n  - Criteria: newest first\n"
+        + "- [ ] 1.1 Sort it\n  - Criteria: newest first\n"
         + "- [ ] 1.2 Explain it\n  - Criteria: documented\n"
         + "- [ ] 1.3 Announce it\n  - Criteria: posted\n"
         + "- [ ] 1.4 Translate it   `build: delegate`\n  - Criteria: two languages\n",
     )
     lifecycle.accept(project.root, "add-order", DAY)
     lifecycle.tick(project.root, "add-order", "1.1")
-    lifecycle.verdict(project.root, "add-order", "1.1", Verdict.SPEC_GAP, "ties?", DAY)
     lifecycle.block(project.root, "add-order", "1.2", "waiting for the wording")
     lifecycle.report_gap(project.root, "add-order", "1.3", "which channel?")
     project.change(
         "fix-limit",
+        proposal_text=proposal().replace(
+            "Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n"
+        ),
         deltas={"search": delta(modified=(requirement(scenario="Edge"),))},
-        tasks=HEAD + "- [ ] 1.1 Fix it   `review: none`\n",
+        tasks=HEAD + "- [ ] 1.1 Fix it\n",
     )
     lifecycle.accept(project.root, "fix-limit", DAY)
     lifecycle.tick(project.root, "fix-limit", "1.1")
+    lifecycle.verdict(
+        project.root,
+        "fix-limit",
+        Verdict.PASS,
+        "edge covered",
+        DAY,
+        findings=["suggestion: docs/search.md: name the edge"],
+    )
     project.change("add-paging", deltas={"search": delta(added=(requirement("Paging"),))})
     project.change("cut-noise", deltas={"search": delta(modified=(requirement("Gone"),))})
     project.write("milestones/faster-search/goal.md", GOAL)
@@ -134,9 +144,9 @@ def test_status_shows_milestones_archived_changes_and_what_needs_the_human(
         {"name": "faster-search", "archived": 1, "total": 2, "planned": 1}
     ]
     assert payload["recently_archived"] == [{"name": "add-index", "date": "2026-01-20"}]
-    assert payload["needs_human"] == len(payloads.inbox(project.record())["entries"]) == 7
+    assert payload["needs_human"] == len(payloads.inbox(project.record())["entries"]) == 6
     text = render.to_text(payload, PLAIN)
-    assert "7 things need you: wm inbox" in text
+    assert "6 things need you: wm inbox" in text
     assert "add-order" in text
     assert "[##........] 1/4" in text
     assert "* archive (you)" in text
@@ -178,7 +188,6 @@ def test_inbox_lists_everything_only_the_human_can_resolve(project: Workspace) -
     found = [(e["kind"], e["change"] or e["exploration"], e["item"]) for e in payload["entries"]]
     assert found == [
         ("accept", "add-paging", None),
-        ("spec-gap", "add-order", "1.1"),
         ("spec-gap", "add-order", "1.3"),
         ("blocked", "add-order", "1.2"),
         ("conflict", "cut-noise", None),
@@ -200,14 +209,24 @@ def test_inbox_lists_a_verdict_that_came_back_to_the_human(project: Workspace) -
     project.change(tasks=HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n")
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
-    lifecycle.verdict(project.root, "add-limit", "1.1", Verdict.CHANGES, "one", DAY)
+    lifecycle.verdict(project.root, "add-limit", Verdict.CHANGES, "one", DAY, items=["1.1"])
     assert payloads.inbox(project.record())["entries"] == []
     lifecycle.reopen(project.root, "add-limit", "1.1", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
-    lifecycle.verdict(project.root, "add-limit", "1.1", Verdict.CHANGES, "two", DAY)
+    lifecycle.verdict(project.root, "add-limit", Verdict.CHANGES, "two", DAY, items=["1.1"])
     (entry,) = valid(payloads.inbox(project.record()))["entries"]
-    assert (entry["kind"], entry["item"]) == ("verdict", "1.1")
+    assert (entry["kind"], entry["change"], entry["item"]) == ("verdict", "add-limit", None)
     assert entry["summary"] == "a second review asked for changes: two"
+    assert entry["command"] == 'wm resolve add-limit review "<what was decided>"'
+
+
+def test_inbox_lists_a_reviewers_spec_gap(project: Workspace) -> None:
+    project.change(tasks=HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n")
+    lifecycle.accept(project.root, "add-limit", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.verdict(project.root, "add-limit", Verdict.SPEC_GAP, "ties?", DAY)
+    (entry,) = valid(payloads.inbox(project.record()))["entries"]
+    assert (entry["kind"], entry["change"], entry["item"]) == ("spec-gap", "add-limit", None)
 
 
 def test_inbox_asks_to_accept_again_after_acceptance_was_withdrawn(project: Workspace) -> None:
@@ -237,15 +256,20 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
     ]
     assert payload["design"] == {"decisions": ["Where to cut"]}
     items = {item["number"]: item for item in payload["items"]}
-    assert items["1.1"]["level"] == "independent"
+    assert "level" not in items["1.1"]
     assert items["1.1"]["delegate"] is False
     assert (items["1.4"]["title"], items["1.4"]["delegate"]) == ("Translate it", True)
-    assert items["1.1"]["records"] == [
-        {"kind": "review", "date": "2026-01-15", "verdict": "spec-gap", "text": "ties?"}
-    ]
+    assert items["1.1"]["records"] == []
     assert items["1.2"]["blocked"] == "waiting for the wording"
     assert items["1.3"]["spec_gap"] == "which channel?"
-    assert items["1.3"]["needs_human"] == "the implementer found a spec gap: which channel?"
+    assert items["1.3"]["needs_human"] == "the builder found a spec gap: which channel?"
+    assert payload["review"] == {
+        "level": "self",
+        "reviewed": False,
+        "reopen": [],
+        "needs_human": None,
+        "records": [],
+    }
     text = render.to_text(payload, PLAIN)
     for expected in ("Change: add-order", "Owner: Sam Doe", "Blocked: waiting for the wording"):
         assert expected in text
@@ -258,8 +282,35 @@ def test_show_finds_an_archived_change_by_name_or_folder(project: Workspace) -> 
     assert by_name == by_folder
     assert by_name["archived_on"] == "2026-01-20"
     assert by_name["state"] is None
+    assert by_name["review"]["reviewed"] is None
     assert by_name["outcome"] == "Indexed."
     assert "Archived on 2026-01-20" in render.to_text(by_name, PLAIN)
+
+
+def test_show_change_gives_the_changes_review_and_its_findings(project: Workspace) -> None:
+    payload = valid(payloads.show(busy(project).record(), "fix-limit"))
+    assert payload["review"] == {
+        "level": "independent",
+        "reviewed": True,
+        "reopen": [],
+        "needs_human": None,
+        "records": [
+            {
+                "kind": "review",
+                "date": "2026-01-15",
+                "verdict": "pass",
+                "text": "edge covered",
+                "items": [],
+                "findings": [
+                    {"severity": "suggestion", "place": "docs/search.md", "text": "name the edge"}
+                ],
+            }
+        ],
+    }
+    text = render.to_text(payload, PLAIN)
+    assert "Level: independent; reviewed" in text
+    assert "(review) 2026-01-15 pass: edge covered" in text
+    assert "suggestion: docs/search.md: name the edge" in text
 
 
 def test_show_spec_includes_pending_deltas_and_history(project: Workspace) -> None:
@@ -345,10 +396,14 @@ def test_ls_of_nothing_says_so(project: Workspace) -> None:
 
 def test_check_payload_counts_errors_and_warnings(project: Workspace) -> None:
     payload = valid(payloads.check(busy(project).record(), NOW))
-    assert (payload["errors"], payload["warnings"]) == (1, 1)
-    assert [finding["code"] for finding in payload["findings"]] == ["conflict", "not-archived"]
+    assert (payload["errors"], payload["warnings"]) == (1, 2)
+    assert [finding["code"] for finding in payload["findings"]] == [
+        "conflict",
+        "review-level",
+        "not-archived",
+    ]
     text = render.to_text(payload, PLAIN)
-    assert text.endswith("1 error(s), 1 warning(s).")
+    assert text.endswith("1 error(s), 2 warning(s).")
     assert "error: changes/cut-noise: conflict:" in text
 
 
@@ -388,7 +443,7 @@ def test_views_answer_in_about_a_second_on_a_large_record(workspace: Workspace) 
         folder = f"changes/archive/2025-{index % 12 + 1:02d}-15-add-{name}"
         workspace.write(f"{folder}/proposal.md", proposal(outcome="Done."))
         workspace.write(f"{folder}/specs/area-{name}.md", delta(added=(requirement(),)))
-        workspace.write(f"{folder}/tasks.md", HEAD + "- [x] 1.1 Do it   `review: none`\n")
+        workspace.write(f"{folder}/tasks.md", HEAD + "- [x] 1.1 Do it\n")
         if index < 20:
             workspace.change(
                 f"fix-{name}",

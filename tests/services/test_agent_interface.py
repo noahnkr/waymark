@@ -425,9 +425,9 @@ def test_context_pack_names_exactly_one_change_and_item(project: Workspace) -> N
             context_pack(record, "implement", *arguments)
     with pytest.raises(Refusal, match=r"no item 9\.9"):
         context_pack(record, "implement", NAME, "9.9")
-    for arguments in ((None, None), (NAME, "1.1")):
+    for review_arguments in ((None, None), (NAME, "1.1")):
         with pytest.raises(Refusal, match="exactly one change and no item"):
-            context_pack(record, "review", *arguments)
+            context_pack(record, "review", *review_arguments)
     with pytest.raises(Refusal, match="no active change"):
         context_pack(record, "review", "add-order")
     with pytest.raises(Refusal, match="takes no change or item"):

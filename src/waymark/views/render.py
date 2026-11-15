@@ -196,9 +196,7 @@ def _titled(title: str, text: str | None, style: Style) -> list[str]:
 
 def _item_lines(item: Payload, style: Style) -> list[str]:
     mark = style.symbol("done") if item["ticked"] else style.symbol("todo")
-    tags = [f"review: {item['level']}"] if item["level"] else []
-    if item["reviewed"]:
-        tags.append("reviewed")
+    tags = ["build: delegate"] if item["delegate"] else []
     if item["repo"]:
         tags.append(f"repo: {item['repo']}")
     head = f"  {mark} {style.paint(item['number'], BOLD)} {item['title']}"
@@ -215,9 +213,32 @@ def _item_lines(item: Payload, style: Style) -> list[str]:
             lines.append(style.paint(f"      {label}: {item[key]}", color))
     lines += [f"      Note: {note}" for note in item["notes"]]
     for record in item["records"]:
-        verdict = f" {record['verdict']}" if record["verdict"] else ""
-        text = f": {record['text']}" if record["text"] else ""
-        lines.append(style.paint(f"      ({record['kind']}) {record['date']}{verdict}{text}", DIM))
+        lines += _record_lines(record, "      ", style)
+    return lines
+
+
+def _record_lines(record: Payload, indent: str, style: Style) -> list[str]:
+    verdict = f" {record['verdict']}" if record["verdict"] else ""
+    named = f" {' '.join(record['items'])}" if record["items"] else ""
+    text = f": {record['text']}" if record["text"] else ""
+    lines = [style.paint(f"{indent}({record['kind']}) {record['date']}{verdict}{named}{text}", DIM)]
+    for finding in record["findings"]:
+        color = RED if finding["severity"] == "critical" else YELLOW
+        line = f"{indent}  {finding['severity']}: {finding['place']}: {finding['text']}"
+        lines.append(style.paint(line, color))
+    return lines
+
+
+def _review_section(review: Payload, style: Style) -> list[str]:
+    status = {True: "reviewed", False: "not reviewed yet", None: ""}[review["reviewed"]]
+    head = f"  Level: {review['level']}" + (f"; {status}" if status else "")
+    lines = ["", style.paint("Review", BOLD), head]
+    if review["reopen"]:
+        lines.append(style.paint(f"  To rebuild: {', '.join(review['reopen'])}", YELLOW))
+    if review["needs_human"]:
+        lines.append(style.paint(f"  Needs you: {review['needs_human']}", YELLOW))
+    for record in review["records"]:
+        lines += _record_lines(record, "  ", style)
     return lines
 
 
@@ -266,6 +287,7 @@ def show_change(payload: Payload, style: Style) -> str:  # noqa: PLR0912 - one p
         lines += ["", style.paint("Tasks", BOLD)]
         for item in payload["items"]:
             lines += _item_lines(item, style)
+        lines += _review_section(payload["review"], style)
     if payload["problems"]:
         lines += ["", style.paint("Problems", BOLD)]
         lines += [

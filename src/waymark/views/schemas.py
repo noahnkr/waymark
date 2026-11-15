@@ -106,14 +106,25 @@ CHANGE_STATE = _object(
 
 DELTA_NAMES = {"added": NAMES, "modified": NAMES, "removed": NAMES}
 
+RECORD = _object(
+    {
+        "kind": _enum(RecordKind),
+        "date": DATE,
+        "verdict": _enum(Verdict, nullable=True),
+        "text": STRING,
+        "items": NAMES,
+        "findings": _array(
+            _object({"severity": _enum(ReviewSeverity), "place": STRING, "text": STRING})
+        ),
+    }
+)
+
 ITEM = _object(
     {
         "number": STRING,
         "title": STRING,
         "ticked": BOOLEAN,
-        "level": _enum(ReviewLevel, nullable=True),
         "delegate": BOOLEAN,
-        "reviewed": {"type": ["boolean", "null"]},
         "needs_human": TEXT_OR_NULL,
         "criteria": TEXT_OR_NULL,
         "verify": TEXT_OR_NULL,
@@ -121,16 +132,17 @@ ITEM = _object(
         "blocked": TEXT_OR_NULL,
         "spec_gap": TEXT_OR_NULL,
         "notes": NAMES,
-        "records": _array(
-            _object(
-                {
-                    "kind": _enum(RecordKind),
-                    "date": DATE,
-                    "verdict": _enum(Verdict, nullable=True),
-                    "text": STRING,
-                }
-            )
-        ),
+        "records": _array(RECORD),
+    }
+)
+
+CHANGE_REVIEW = _object(
+    {
+        "level": _enum(ReviewLevel),
+        "reviewed": {"type": ["boolean", "null"]},
+        "reopen": NAMES,
+        "needs_human": TEXT_OR_NULL,
+        "records": _array(RECORD),
     }
 )
 
@@ -221,6 +233,7 @@ SCHEMAS: dict[str, Schema] = {
             "deltas": _array(_object({"spec": STRING, **DELTA_NAMES})),
             "design": _nullable(_object({"decisions": NAMES})),
             "items": _array(ITEM),
+            "review": CHANGE_REVIEW,
             "problems": _array(
                 _object({"path": STRING, "line": INTEGER, "code": STRING, "message": STRING})
             ),

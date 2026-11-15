@@ -15,7 +15,7 @@
 - [x] 1.4 Start the reviewer on a change and record its ending
   - Criteria: `wm context <change> --for review` gives every item with its criteria and verification but not its notes, the deltas with their scenarios, the design and the project's context and review rules; the delegation gate takes a prompt of the change's name alone and refuses unless the change is accepted, every item is ticked and it needs an independent review it lacks; the hook records a reviewer's ending `CHANGE: <change>` then `VERDICT: …`, with `changes <items>` and `FINDING:` lines, from a final message or a handed-back report; an unparsable `FINDING:` line is refused with the reason; the implementer's prompt and ending are unchanged
   - Verify: tests in `tests/services/test_agent_interface.py`, `tests/hooks/test_decide.py` and `tests/adapters/test_claude_code.py` for the `agent-results` scenario "Reviewer in the background" and the gate's refusals
-- [ ] 1.5 Show the change's review in `wm show` and `wm pr`
+- [x] 1.5 Show the change's review in `wm show` and `wm pr`
   - Criteria: `wm show <change>` (text and `--json`) gives the change's review level, its review records and their findings, and items no longer carry a review level or review; the JSON schema's version is raised and `docs/json.md` regenerated; `wm pr` lists items without a review each and adds a line for the change's review
   - Verify: tests in `tests/views/` and `tests/services/test_ci_and_pr.py`, and `uv run --no-sync python -m tools.docs --check`
 

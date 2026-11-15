@@ -166,32 +166,33 @@ wm gap <change> <item> <note>
 
 ## wm review
 
-Record a self-review of an item.
+Record a self-review of a change, once every item is ticked.
 
 ```
-wm review <change> <item> --self SUMMARY
+wm review <change> --self SUMMARY [--finding FINDING]
 ```
 
 - `change`: the change's name
-- `item`: the item's number, for example 1.2
 - `--self`: what the review checked and found (required)
+- `--finding`: a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable
 
 ## wm verdict
 
-Record a reviewer's verdict on an item.
+Record a reviewer's verdict on a change.
 
 ```
-wm verdict <change> <item> <pass|changes|spec-gap> <reasons>
+wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding FINDING]
 ```
 
 - `change`: the change's name
-- `item`: the item's number, for example 1.2
 - `verdict`: one of `pass`, `changes`, `spec-gap`
 - `reasons`: the reviewer's reasons
+- `--items`: the items to rebuild; a "changes" verdict names at least one
+- `--finding`: a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable
 
 ## wm reopen
 
-Reopen an item after a review asked for changes.
+Reopen an item that a review of its change named to rebuild.
 
 ```
 wm reopen <change> <item>
@@ -202,14 +203,14 @@ wm reopen <change> <item>
 
 ## wm resolve
 
-Record what was decided about an item that went to the human, and free it.
+Record what was decided about an item or a change's review that went to the human, and free it.
 
 ```
 wm resolve <change> <item> <decision>
 ```
 
 - `change`: the change's name
-- `item`: the item's number, for example 1.2
+- `item`: the item's number, or "review" for the change's review
 - `decision`: what was decided
 
 ## wm sync
@@ -304,7 +305,7 @@ wm instructions [--json] [explore|propose|specs|design|tasks|apply|review|archiv
 
 ## wm context
 
-Print the context pack for exploring, or for implementing or reviewing one item.
+Print the context pack for exploring, implementing one item, or reviewing one change.
 
 ```
 wm context [--json] [change] [item] --for ROLE
@@ -312,7 +313,7 @@ wm context [--json] [change] [item] --for ROLE
 
 - `--json`: print the view as JSON, with its schema version
 - `change`: the change's name
-- `item`: the item's number, for example 1.2
+- `item`: the item's number, for example 1.2; none for a review
 - `--for`: the job the pack is for; one of `explore`, `implement`, `review` (required)
 
 ## wm check
