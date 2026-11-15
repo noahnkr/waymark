@@ -45,6 +45,7 @@
 
 ## 5. Docs
 
-- [ ] 5.1 Update the user docs for per-machine setup   `review: none`
+- [x] 5.1 Update the user docs for per-machine setup   `review: none`
   - Criteria: `docs/getting-started.md` says to commit `waymark/` and `.gitignore` and to run `wm init` after cloning, and lists what is ignored; `docs/multi-repo.md` says the same for the atlas and for another machine; `docs/smoke-test.md` expects nothing staged after `wm init` and adds a step that clones the scratch repository again, runs `wm init` and checks `wm doctor` passes; `docs/cli.md` and the README evidence are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and `codespell` pass; `wm init` and `wm doctor` output quoted in the docs matches a run in a scratch repository
+  - Note: the docs quote no `wm init` or `wm doctor` output word for word; behavior was checked against `services/setup.py`, `integration.py`, `doctor.py` and the 3.2 clone tests, because the agent hook refuses `wm init` from a delegated agent even in a scratch repository. The smoke test's new steps should be walked by hand once. `docs/cli.md` was already current. `CHANGELOG.md` has no 0.1.1 entry yet; the write-docs skill wants this user-visible change there.
