@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from tests.conftest import git_init
 from tests.support import ATLAS_CONFIG, CONFIG, Workspace
 from tests.views.validator import errors
 from waymark import __version__
+from waymark.services import setup
 from waymark.services.atlas import point, register
 from waymark.services.doctor import Report, Status, atlas_doctor, doctor
 from waymark.views import payloads, render
@@ -79,9 +81,11 @@ def test_doctor_reports_a_different_version_pin_as_an_error(project: Workspace) 
 
 @pytest.mark.usefixtures("on_path")
 def test_doctor_warns_when_the_agent_tool_files_are_out_of_date(suite: Workspace) -> None:
+    """Scenario: Agent files out of date."""
     report = doctor(suite.root)
     assert outcome(report)["agent tool files"] is Status.WARNING
-    assert "wm update" in message(report, "agent tool files")
+    assert 'Run "wm init"' in message(report, "agent tool files")
+    assert "commit" not in message(report, "agent tool files")
     assert outcome(report)["atlas"] is Status.OK
     assert not report.failed
 
@@ -187,3 +191,72 @@ def test_doctor_json_names_no_folder_whatever_it_finds(
     ):
         text = render.to_json(payloads.doctor(report))
         assert escaped not in text, text
+
+
+def git(root: Path, *args: str) -> str:
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, check=True)
+    return result.stdout.decode("utf-8")
+
+
+def committed_project(root: Path, *forced: str) -> None:
+    """A project set up by wm init and committed, with some ignored paths added anyway."""
+    git_init(root)
+    git(root, "config", "user.email", "sam@example.com")
+    setup.init_project(root)
+    git(root, "add", "-A")
+    if forced:
+        git(root, "add", "--force", "--", *forced)
+    git(root, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "chore: start")
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_names_machine_files_tracked_in_git_and_how_to_stop(tmp_path: Path) -> None:
+    """Scenario: Project set up with 0.1.0."""
+    committed_project(tmp_path, ".claude", ".waymark/hooks", ".agents")
+    tracked = git(tmp_path, "ls-files", "--", ".claude", ".waymark/hooks", ".agents").split()
+    report = doctor(tmp_path)
+    assert outcome(report)["machine files in git"] is Status.WARNING
+    text = message(report, "machine files in git")
+    assert text.startswith(f"{len(tracked)} file(s) wm writes for each machine are tracked")
+    assert f"starting with {sorted(tracked)[0]}." in text
+    assert text.count("git rm -r --cached") == 1
+    command = text.split("git rm -r --cached ", 1)[1]
+    assert command == (
+        '".agents/skills/wm-*" ".claude/skills/wm-*" ".claude/agents/wm-*.md" '
+        ".claude/settings.json .waymark/hooks"
+    )
+    assert not report.failed
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_command_stops_tracking_every_machine_file_and_keeps_them(tmp_path: Path) -> None:
+    committed_project(tmp_path, ".claude", ".waymark/hooks")
+    text = message(doctor(tmp_path), "machine files in git")
+    arguments = [part.strip('"') for part in text.split("git rm -r --cached ", 1)[1].split()]
+    assert arguments == [
+        ".claude/skills/wm-*",
+        ".claude/agents/wm-*.md",
+        ".claude/settings.json",
+        ".waymark/hooks",
+    ]
+    git(tmp_path, "rm", "-r", "--cached", "--quiet", "--", *arguments)
+    assert (tmp_path / ".claude" / "settings.json").is_file()
+    assert (tmp_path / ".waymark" / "hooks" / "commit-msg").is_file()
+    git(tmp_path, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "chore: untrack")
+    assert outcome(doctor(tmp_path))["machine files in git"] is Status.OK
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_passes_when_no_machine_file_is_tracked(tmp_path: Path) -> None:
+    """Scenario: Nothing tracked."""
+    committed_project(tmp_path)
+    report = doctor(tmp_path)
+    assert outcome(report)["machine files in git"] is Status.OK
+    assert outcome(report)["agent tool files"] is Status.OK
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_payload_with_tracked_machine_files_validates(tmp_path: Path) -> None:
+    committed_project(tmp_path, ".claude")
+    payload = payloads.doctor(doctor(tmp_path))
+    assert errors(render.public(payload), SCHEMAS["doctor"]) == []

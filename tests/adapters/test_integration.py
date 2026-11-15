@@ -145,7 +145,8 @@ def test_update_regenerates_only_the_files_waymark_owns(initialized: Path) -> No
     }
     assert "created: .agents/skills/wm-pr/SKILL.md" in done.message
     assert "updated: .claude/skills/wm-apply/SKILL.md" in done.message
-    assert "Review the changes and commit them." in done.message
+    assert done.message.splitlines()[-1] == "Updated this machine's files."
+    assert "commit" not in done.message
     assert skill.read_text(encoding="utf-8") == assets.skill("wm-apply")
     assert mine.read_text(encoding="utf-8") == "mine\n"
     assert notes.read_text(encoding="utf-8") == "my own agent\n"

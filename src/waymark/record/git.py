@@ -121,14 +121,20 @@ def staged_paths(repository: Path) -> tuple[str, ...]:
     return tuple(path for path in listing.split("\0") if path)
 
 
-def stage(repository: Path, paths: Iterable[str]) -> None:
-    """Stage files for the next commit."""
-    _run(repository, "add", "--", *paths)
+def tracked(repository: Path, paths: Iterable[str]) -> tuple[str, ...]:
+    """The tracked files among some paths, relative to the repository's top.
 
-
-def stage_executable(repository: Path, paths: Iterable[str]) -> None:
-    """Stage files with their executable bit, which a checkout on Windows can't set itself."""
-    _run(repository, "add", "--chmod=+x", "--", *paths)
+    Paths are taken literally, with forward slashes; a folder stands for every
+    tracked file under it. Outside a repository nothing is tracked.
+    """
+    wanted = [path.strip("/") for path in paths if path.strip("/")]
+    if not wanted:
+        return ()
+    try:
+        listing = _run(repository, "--literal-pathspecs", "ls-files", "-z", "--", *wanted)
+    except GitError:
+        return ()
+    return tuple(path for path in listing.split("\0") if path)
 
 
 def remote_url(repository: Path, remote: str = "origin") -> str | None:

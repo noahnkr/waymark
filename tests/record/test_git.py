@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from waymark.record.git import current_branch, last_changed, repository_root
+from waymark.record.git import current_branch, last_changed, repository_root, tracked
 
 
 def git(folder: Path, *arguments: str, date: str | None = None) -> None:
@@ -87,3 +87,28 @@ def test_last_changed_gives_each_folders_newest_commit(repository: Path) -> None
 def test_last_changed_outside_a_repository_is_empty(tmp_path: Path) -> None:
     assert last_changed(tmp_path / "missing", ["waymark/changes/add-limit"]) == {}
     assert last_changed(tmp_path, []) == {}
+
+
+def test_tracked_lists_the_tracked_files_among_the_paths_given(repository: Path) -> None:
+    commit(repository, ".claude/settings.json", "2026-01-01T00:00:00+00:00")
+    commit(repository, ".waymark/hooks/commit-msg", "2026-01-02T00:00:00+00:00")
+    commit(repository, "src/app.py", "2026-01-03T00:00:00+00:00")
+    (repository / ".claude" / "skills").mkdir()
+    (repository / ".claude" / "skills" / "untracked.md").write_text("x", encoding="utf-8")
+    found = tracked(
+        repository,
+        [".claude/settings.json", ".claude/skills/untracked.md", ".waymark/hooks", "missing"],
+    )
+    assert found == (".claude/settings.json", ".waymark/hooks/commit-msg")
+
+
+def test_tracked_takes_paths_literally(repository: Path) -> None:
+    commit(repository, "wm-a/file.md", "2026-01-01T00:00:00+00:00")
+    assert tracked(repository, ["wm-*"]) == ()
+
+
+def test_tracked_with_nothing_given_or_outside_a_repository_is_empty(
+    repository: Path, tmp_path: Path
+) -> None:
+    assert tracked(repository, []) == ()
+    assert tracked(tmp_path / "elsewhere", ["a"]) == ()

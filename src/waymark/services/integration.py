@@ -11,8 +11,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waymark import adapters, assets
-from waymark.record import git
+from waymark.record import git, ignore
+from waymark.record.config import CONFIG_FILE, parse_config
 from waymark.record.files import RecordFiles
+from waymark.record.githooks import HOOKS_IGNORED
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import Record
 from waymark.record.store import Transaction
@@ -68,6 +70,66 @@ def integration_files(files: RecordFiles, tools: tuple[str, ...]) -> dict[str, s
                 "part without risking yours. Fix the file, then run this command again."
             ) from error
     return rendered
+
+
+def ignore_patterns(tools: tuple[str, ...], record: bool) -> list[str]:
+    """The ``.gitignore`` patterns for the files wm writes for this machine.
+
+    With a record: the shared skills, each tool's files, then the git hooks.
+    Without one, as in an atlas's code repo, only the git hooks.
+    """
+    patterns: list[str] = []
+    if record:
+        require_tools(tools)
+        patterns.append(f"/{SHARED_SKILLS}/wm-*/")
+        for tool in tools:
+            patterns += adapters.get(tool).ignored
+    patterns.append(HOOKS_IGNORED)
+    return patterns
+
+
+def stage_ignore(
+    transaction: Transaction, files: RecordFiles, patterns: Sequence[str]
+) -> FileChange:
+    """Stage the ``.gitignore`` block for these patterns, only when it differs from the file's."""
+    current = files.read(ignore.PATH, []) if files.is_file(ignore.PATH) else None
+    text = ignore.merged(current, patterns)
+    if text == current:
+        return FileChange(ignore.PATH, "unchanged")
+    transaction.write(ignore.PATH, text)
+    return FileChange(ignore.PATH, "created" if current is None else "updated")
+
+
+def git_hooks(start: Path) -> Done:
+    """Install the git hooks in the repository around a folder, and keep them out of git.
+
+    In a repository with a record, the ``.gitignore`` block lists every file wm
+    writes for this machine, from the settings' agent tools, so this command
+    and "wm init" write the same block. Elsewhere ``githooks.install`` writes
+    the hooks-only block.
+    """
+    root = git.repository_root(start)
+    if root is None:
+        raise Refusal("Git hooks go in a git repository, and this folder is not in one.")
+    config_path = f"{RECORD_DIR}/{CONFIG_FILE}"
+    files = RecordFiles(root)
+    has_record = files.is_file(config_path)
+    lines: list[str] = []
+    if has_record:
+        text = files.read(config_path, [])
+        config = parse_config(text)[0] if text is not None else None
+        if config is None:
+            raise Refusal(
+                f"{config_path} can't be read, so wm doesn't know which agent tools' files to "
+                'keep out of git. Run "wm check" to see what to fix.'
+            )
+        transaction = Transaction(files)
+        change = stage_ignore(transaction, files, ignore_patterns(config.agent_tools, record=True))
+        commit(transaction)
+        if change.status != "unchanged":
+            lines.append(f"{change.status}: {change.path}")
+    lines += githooks.install(root, record=has_record)
+    return Done("\n".join(lines) or "The git hooks are installed and in use.")
 
 
 def stage(transaction: Transaction, files: RecordFiles, tools: tuple[str, ...]) -> list[FileChange]:
@@ -137,34 +199,71 @@ def located_folders(record: Record) -> list[Path]:
     ]
 
 
+@dataclass(frozen=True)
+class MachineSetup:
+    """What setting up this machine did: the files it wrote and what the hooks reported."""
+
+    changes: list[FileChange]
+    hooks: list[str]
+    paths: tuple[str, ...]
+
+
+def setup_machine(record: Record) -> MachineSetup:
+    """Write the files wm keeps for this machine, keep them out of git, and install the hooks.
+
+    The agent tool files, the per-machine files and the ``.gitignore`` block are
+    written in one transaction; the per-machine files are then excluded in this
+    clone, and the git hooks installed. The record itself is not touched.
+    """
+    assert record.config is not None
+    root = record.project.root
+    tools = record.config.agent_tools
+    files = RecordFiles(root)
+    transaction = Transaction(files)
+    changes = stage(transaction, files, tools)
+    local = stage_local(transaction, files, tools, located_folders(record))
+    gitignore = stage_ignore(transaction, files, ignore_patterns(tools, record=True))
+    paths = commit(transaction)
+    keep_local(root, local)
+    hooks = githooks.install(root, record=True)
+    return MachineSetup([*changes, *local, gitignore], hooks, paths)
+
+
+def _listed(items: Sequence[str]) -> str:
+    """Items joined for a sentence: "a", "a and b", "a, b and c"."""
+    *rest, last = items
+    return f"{', '.join(rest)} and {last}" if rest else last
+
+
 def update(start: Path) -> Done:
-    """Migrate the record to this version's format and regenerate the files Waymark owns."""
+    """Migrate the record to this version's format and regenerate the files Waymark owns.
+
+    The last line asks for a review and a commit only when something shared
+    changed: the record, ``.gitignore`` or the CI workflow. The files that
+    belong to this machine are never to be committed.
+    """
     record = open_record(start)
     require_pinned(record)
     migrated = migrations.migrate(record.files)
     record = open_record(start, writing=True)
-    assert record.config is not None
     project_files = RecordFiles(record.project.root)
     transaction = Transaction(project_files)
-    changes = stage(transaction, project_files, record.config.agent_tools)
-    local = stage_local(
-        transaction, project_files, record.config.agent_tools, located_folders(record)
-    )
     workflow = ci.stage_workflow(transaction, project_files, only_if_present=True)
-    commit(transaction)
-    keep_local(record.project.root, local)
-    changes += local
+    paths = commit(transaction)
+    machine = setup_machine(record)
+    changes = list(machine.changes)
     if workflow != "absent":
         changes.append(FileChange(ci.WORKFLOW, workflow))
-    hooks = githooks.install(record.project.root)
+    changed = [change for change in changes if change.status != "unchanged"]
     lines = [f"Migrated the record: {step}." for step in migrated]
-    lines += [
-        f"{change.status}: {change.path}" for change in changes if change.status != "unchanged"
-    ]
-    lines += hooks
-    untouched = sum(1 for change in changes if change.status == "unchanged")
-    if not migrated and not hooks and untouched == len(changes):
-        lines.append("Everything is up to date.")
+    lines += [f"{change.status}: {change.path}" for change in changed]
+    lines += machine.hooks
+    shared = [f"{RECORD_DIR}/"] if migrated else []
+    shared += [change.path for change in changed if change.path in (ignore.PATH, ci.WORKFLOW)]
+    if shared:
+        lines.append(f"Review the changes to {_listed(shared)} and commit them.")
+    elif changed or machine.hooks:
+        lines.append("Updated this machine's files.")
     else:
-        lines.append(f"{untouched} file(s) already current. Review the changes and commit them.")
-    return Done("\n".join(lines), transaction.paths)
+        lines.append("Everything is up to date.")
+    return Done("\n".join(lines), paths + machine.paths)

@@ -9,6 +9,7 @@ from waymark.record.changes import PROPOSAL_FILE
 from waymark.record.charter import CHARTER_FILE
 from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.files import RecordFiles
+from waymark.record.githooks import hook_manager
 from waymark.record.milestones import GOAL_FILE, ROADMAP_FILE
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.project import RECORD_DIR
@@ -28,7 +29,10 @@ def init_project(
     """Create the record at the top of the git repository around a folder.
 
     Also installs the skills, agent definitions and hooks for the project's
-    agent tools: every tool wm knows, unless ``tools`` names them.
+    agent tools: every tool wm knows, unless ``tools`` names them, and adds the
+    ``.gitignore`` block that keeps them out of git. In a repository that
+    already has a record, as in a fresh clone, it sets up this machine instead
+    and leaves the record alone.
     """
     root = git.repository_root(start)
     if root is None:
@@ -37,10 +41,7 @@ def init_project(
         )
     files = RecordFiles(root)
     if files.is_file(f"{RECORD_DIR}/{CONFIG_FILE}"):
-        raise Refusal(
-            f"This repository already has a record ({RECORD_DIR}/{CONFIG_FILE}). "
-            'Run "wm check" to see how it stands.'
-        )
+        return _set_up_clone(root, atlas, tools)
     if atlas is not None and not _ATLAS_NAME.fullmatch(atlas):
         raise Refusal(
             f'"{atlas}" can\'t be an atlas name. Use letters, digits, dots, hyphens or '
@@ -62,11 +63,12 @@ def init_project(
         f"{RECORD_DIR}/{CHARTER_FILE}", templates.render(templates.CHARTER, title=root.name)
     )
     integration.stage(transaction, files, chosen)
+    integration.stage_ignore(transaction, files, integration.ignore_patterns(chosen, record=True))
     paths = commit(transaction)
     kind = f'the atlas "{atlas}"' if atlas is not None else "a project"
     titles = ", ".join(adapters.get(tool).title for tool in chosen) or "no agent tool"
     registered = f" {register_new_atlas(root, atlas)}" if atlas is not None else ""
-    hooks = "\n".join(githooks.install(root))
+    hooks = "\n".join(githooks.install(root, record=True))
     return Done(
         f"Initialized {kind} in {RECORD_DIR}/, with skills, agents and hooks for {titles}."
         f"{registered}\n{hooks}\n"
@@ -74,6 +76,37 @@ def init_project(
         "Next: run the wm-kickoff skill in your agent tool to draft the charter.",
         paths,
     )
+
+
+def _set_up_clone(root: Path, atlas: str | None, tools: tuple[str, ...] | None) -> Done:
+    """Set up this machine in a repository that already has a record, leaving the record alone.
+
+    Needs the pinned wm and a record in this wm's format, so a fresh clone is
+    never migrated by accident.
+    """
+    if atlas is not None or tools is not None:
+        raise Refusal(
+            f"This repository already has a record ({RECORD_DIR}/{CONFIG_FILE}), so wm init "
+            "sets up this machine from its settings, and --atlas and --tool don't apply. "
+            f'Run "wm init" without them; to change the agent tools, edit "agent_tools" in '
+            f'{RECORD_DIR}/{CONFIG_FILE}, then run "wm update".'
+        )
+    record = open_record(root, writing=True)
+    machine = integration.setup_machine(record)
+    changed = [change for change in machine.changes if change.status != "unchanged"]
+    installed = hook_manager(root) is None and bool(machine.hooks)
+    lines = [f"{change.status}: {change.path}" for change in changed] + machine.hooks
+    if changed or installed:
+        assert record.config is not None
+        tools_set = record.config.agent_tools
+        titles = ", ".join(adapters.get(tool).title for tool in tools_set) or "no agent tool"
+        lines.append(
+            f"This machine is set up, with skills, agents and hooks for {titles}. "
+            f"The record in {RECORD_DIR}/ was not changed."
+        )
+    else:
+        lines.append("This machine is already set up. Nothing changed.")
+    return Done("\n".join(lines), machine.paths)
 
 
 def _require_new_name(name: str, kind: str, taken: bool) -> None:

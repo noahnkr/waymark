@@ -13,6 +13,8 @@ from pathlib import Path
 from waymark.record import git, templates
 
 HOOKS_DIR = ".waymark/hooks"
+HOOKS_IGNORED = f"/{HOOKS_DIR}/"
+"""The ``.gitignore`` pattern that keeps the hooks, which belong to each clone, out of git."""
 HOOKS = {"commit-msg": "hook-commit-msg", "pre-commit": "hook-pre-commit"}
 """Each hook's file name, and its template."""
 

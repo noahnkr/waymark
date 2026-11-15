@@ -10,17 +10,16 @@ told what to add instead.
 import datetime
 from pathlib import Path
 
-from waymark.record import git
+from waymark.record import git, ignore
 from waymark.record.commits import commit_problem
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, parse_config
 from waymark.record.files import RecordFiles
 from waymark.record.githooks import (
-    ATTRIBUTES,
     HOOKS,
     HOOKS_DIR,
+    HOOKS_IGNORED,
     hook_files,
     hook_manager,
-    hook_scripts,
     make_executable,
     read_message,
 )
@@ -39,9 +38,12 @@ COMMANDS = {
 _SHOWN = 5
 
 
-def install(root: Path) -> list[str]:
-    """Write the committed hooks into a repository and point this clone's git at them.
+def install(root: Path, *, record: bool) -> list[str]:
+    """Write the hooks into a repository and point this clone's git at them.
 
+    The hooks belong to each clone: nothing is staged. In a repository without
+    a record (``record`` is False), the ``.gitignore`` block that keeps the hooks
+    out of git is written here; with a record, the caller writes the full block.
     A repository that already uses another hook setup is not taken over; the
     lines say what to add to it instead.
     """
@@ -57,28 +59,18 @@ def install(root: Path) -> list[str]:
         if current != text:
             transaction.write(path, text)
             lines.append(f"{'created' if current is None else 'updated'}: {path}")
+    if not record:
+        current = files.read(ignore.PATH, []) if files.is_file(ignore.PATH) else None
+        text = ignore.merged(current, [HOOKS_IGNORED])
+        if text != current:
+            transaction.write(ignore.PATH, text)
+            lines.append(f"{'created' if current is None else 'updated'}: {ignore.PATH}")
     commit(transaction)
     make_executable(root)
-    git.stage(root, [ATTRIBUTES])
-    git.stage_executable(root, sorted(hook_scripts()))
     if git.config_value(root, "core.hooksPath") != HOOKS_DIR:
         git.set_config(root, "core.hooksPath", HOOKS_DIR)
         lines.append(f"Git in this clone now runs the hooks in {HOOKS_DIR}/ (core.hooksPath).")
-    if lines:
-        lines.append(
-            f"The hooks in {HOOKS_DIR}/ are staged with their executable bit; commit them so "
-            "every clone gets them."
-        )
     return lines
-
-
-def git_hooks(start: Path) -> Done:
-    """Install the committed hooks in the git repository around a folder."""
-    root = git.repository_root(start)
-    if root is None:
-        raise Refusal("Git hooks go in a git repository, and this folder is not in one.")
-    lines = install(root)
-    return Done("\n".join(lines) or "The git hooks are installed and in use.")
 
 
 def _scopes(start: Path) -> tuple[str, ...] | None:

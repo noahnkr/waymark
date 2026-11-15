@@ -1,6 +1,7 @@
-"""The committed git hooks: installing them, and the checks they run."""
+"""The git hooks: installing them, and the checks they run."""
 
 import datetime
+import shutil
 import stat
 import subprocess
 import sys
@@ -10,11 +11,12 @@ import pytest
 
 from tests.conftest import git_init
 from tests.support import ATLAS_CONFIG, CONFIG, Workspace
-from waymark.record.githooks import HOOKS_DIR, HooksState, hooks_status
+from waymark.record import ignore
+from waymark.record.githooks import HOOKS_DIR, HOOKS_IGNORED, HooksState, hooks_status
 from waymark.record.project import find_project
 from waymark.record.record import load_record
 from waymark.services import githooks, integration, setup
-from waymark.services.atlas import register
+from waymark.services.atlas import point, register
 from waymark.services.common import Refusal
 from waymark.services.doctor import Status, doctor
 from waymark.views import payloads, render
@@ -53,13 +55,33 @@ def repo(tmp_path: Path) -> Path:
     return root
 
 
-def test_hooks_are_written_staged_executable_and_used_by_this_clone(repo: Path) -> None:
-    lines = githooks.install(repo)
+def staged(root: Path) -> str:
+    return git(root, "diff", "--cached", "--name-only")
+
+
+def is_ignored(root: Path, path: str) -> bool:
+    result = subprocess.run(
+        ["git", "-C", str(root), "check-ignore", "-q", "--no-index", "--", path],
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def block(root: Path) -> list[str]:
+    lines = (root / ignore.PATH).read_text(encoding="utf-8").splitlines()
+    return lines[lines.index(ignore.BEGIN) + 1 : lines.index(ignore.END)]
+
+
+def test_hooks_are_written_executable_and_used_by_this_clone_without_staging(
+    repo: Path,
+) -> None:
+    lines = githooks.install(repo, record=False)
     assert f"created: {HOOKS_DIR}/commit-msg" in lines
+    assert "created: .gitignore" in lines
     assert hooks_path(repo) == HOOKS_DIR
-    staged = git(repo, "ls-files", "-s", HOOKS_DIR)
-    assert staged.count("100755") == 2
-    assert "100644" in staged
+    assert staged(repo) == ""
+    assert not any("commit them" in line for line in lines)
     assert (
         (repo / HOOKS_DIR / ".gitattributes")
         .read_text(encoding="utf-8")
@@ -70,9 +92,95 @@ def test_hooks_are_written_staged_executable_and_used_by_this_clone(repo: Path) 
     assert b"\r\n" not in script
     assert b'wm run-hook commit-msg "$1"' in script
     if sys.platform != "win32":
-        assert (repo / HOOKS_DIR / "pre-commit").stat().st_mode & stat.S_IXUSR
+        for name in ("commit-msg", "pre-commit"):
+            assert (repo / HOOKS_DIR / name).stat().st_mode & stat.S_IXUSR
     assert hooks_status(repo).state is HooksState.SET
-    assert githooks.install(repo) == []
+    assert githooks.install(repo, record=False) == []
+
+
+def test_installing_with_a_record_leaves_the_block_to_the_caller(repo: Path) -> None:
+    githooks.install(repo, record=True)
+    assert not (repo / ".gitignore").exists()
+    assert staged(repo) == ""
+
+
+def test_git_hooks_command_installs_the_hooks_and_keeps_them_out_of_git(repo: Path) -> None:
+    done = integration.git_hooks(repo)
+    assert f"created: {HOOKS_DIR}/commit-msg" in done.message
+    assert "created: .gitignore" in done.message
+    assert "core.hooksPath" in done.message
+    said = [line for line in done.message.splitlines() if not line.startswith("created: ")]
+    assert not any("commit" in line for line in said)
+    assert hooks_path(repo) == HOOKS_DIR
+    assert staged(repo) == ""
+    assert block(repo) == [HOOKS_IGNORED]
+    assert git(repo, "status", "--porcelain", "--untracked-files=all") == "?? .gitignore\n"
+    assert integration.git_hooks(repo).message == "The git hooks are installed and in use."
+
+
+def test_git_hooks_works_when_the_waymark_folder_is_already_ignored(repo: Path) -> None:
+    (repo / ".gitignore").write_text("/.waymark/\n", encoding="utf-8")
+    done = integration.git_hooks(repo)
+    assert "updated: .gitignore" in done.message
+    assert staged(repo) == ""
+    assert hooks_status(repo).state is HooksState.SET
+    assert (repo / ".gitignore").read_text(encoding="utf-8").startswith("/.waymark/\n")
+    assert block(repo) == [HOOKS_IGNORED]
+
+
+def test_git_hooks_in_a_code_repo_lists_only_the_hooks(tmp_path: Path) -> None:
+    atlas = Workspace(tmp_path / "atlas", ATLAS_CONFIG.replace('"some-tool"', '"claude-code"'))
+    git_init(atlas.root)
+    code = tmp_path / "suite-api"
+    git_init(code)
+    register(atlas.root)
+    point(code, "suite")
+    assert (code / ".waymark" / "atlas.toml").is_file()
+    integration.git_hooks(code)
+    assert block(code) == [HOOKS_IGNORED]
+    assert not is_ignored(code, ".waymark/atlas.toml")
+    assert is_ignored(code, f"{HOOKS_DIR}/commit-msg")
+    assert staged(code) == ""
+
+
+def test_git_hooks_in_a_project_writes_the_full_block(repo: Path) -> None:
+    Workspace(repo, CONFIG.replace('"some-tool"', '"claude-code"'))
+    integration.git_hooks(repo)
+    assert block(repo) == integration.ignore_patterns(("claude-code",), record=True)
+    assert HOOKS_IGNORED in block(repo)
+    assert staged(repo) == ""
+    assert hooks_status(repo).state is HooksState.SET
+    assert integration.git_hooks(repo).message == "The git hooks are installed and in use."
+
+
+def test_git_hooks_refuses_a_project_whose_settings_cant_be_read(repo: Path) -> None:
+    Workspace(repo, "not = [toml\n")
+    with pytest.raises(Refusal, match="wm check"):
+        integration.git_hooks(repo)
+    assert not (repo / HOOKS_DIR).exists()
+
+
+@pytest.mark.skipif(shutil.which("wm") is None, reason="needs wm on PATH")
+def test_hooks_run_in_a_fresh_clone_after_git_hooks(repo: Path, tmp_path: Path) -> None:
+    (repo / "app.py").write_text("x = 1\n", encoding="utf-8")
+    git(repo, "add", "app.py")
+    git(repo, "-c", "user.email=sam@example.com", "commit", "--quiet", "-m", "chore: start")
+    integration.git_hooks(repo)
+    clone = tmp_path / "clone"
+    subprocess.run(["git", "clone", "--quiet", str(repo), str(clone)], check=True)
+    assert not (clone / HOOKS_DIR).exists()
+    integration.git_hooks(clone)
+    (clone / "notes.txt").write_text("x\n", encoding="utf-8")
+    git(clone, "add", "notes.txt")
+    identity = ["-c", "user.name=Sam Doe", "-c", "user.email=sam@example.com"]
+    refused = subprocess.run(
+        ["git", "-C", str(clone), *identity, "commit", "--quiet", "-m", "wip"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert refused.returncode != 0
+    assert "The commit was stopped" in refused.stderr
 
 
 def test_hooks_warn_and_let_the_commit_through_without_wm() -> None:
@@ -100,10 +208,12 @@ def test_a_repository_with_another_hook_setup_is_not_taken_over(
     assert callable(setup_manager)
     setup_manager(repo)
     before = hooks_path(repo)
-    lines = githooks.install(repo)
+    lines = githooks.install(repo, record=False)
     assert "not installed" in lines[0]
     assert 'wm run-hook commit-msg "$1"' in "\n".join(lines)
+    assert integration.git_hooks(repo).message.startswith("Git hooks: not installed")
     assert not (repo / HOOKS_DIR).exists()
+    assert not (repo / ".gitignore").exists()
     assert hooks_path(repo) == before
     assert hooks_status(repo).state is HooksState.MANAGED
 
@@ -186,4 +296,4 @@ def test_pre_commit_in_a_code_repo_does_nothing(repo: Path) -> None:
 
 def test_git_hooks_command_needs_a_git_repository(tmp_path: Path) -> None:
     with pytest.raises(Refusal, match="not in one"):
-        githooks.git_hooks(tmp_path)
+        integration.git_hooks(tmp_path)

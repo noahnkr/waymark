@@ -47,8 +47,10 @@ wm init --atlas notes
 ```
 
 This writes the record, the agent tool files and the git hooks into the atlas,
-and registers the atlas on this machine. Skills, agents and hooks live only in
-the atlas; the code repos never need them.
+adds the `.gitignore` block that keeps the agent tool files and hooks out of git
+(see [Getting started](getting-started.md#2-set-up-your-repository)), and
+registers the atlas on this machine. Skills, agents and hooks live only in the
+atlas; the code repos never need them.
 
 ## 2. Name the code repos
 
@@ -76,7 +78,8 @@ listing their folders in `.claude/settings.local.json`, a per-machine file that
 is kept out of git. `wm atlas doctor` checks the registry, each repo's folder and
 branch, and the pins; it changes nothing.
 
-Commit the atlas, then start Claude Code in it and run `/wm-kickoff`.
+Commit the atlas's `waymark/` and `.gitignore`, then start Claude Code in it and
+run `/wm-kickoff`.
 
 ## 3. Optional: pointers and git hooks in the code repos
 
@@ -87,8 +90,11 @@ wm atlas point notes   # writes .waymark/atlas.toml: the atlas's name, a path hi
 wm git-hooks           # adds the commit-message check, and points this clone at it
 ```
 
-Commit what they write if the repo's other users should have it too. A repo you
-don't own, such as a client's, can stay untouched: the atlas works without both.
+`wm git-hooks` writes the hooks in `.waymark/hooks/` and adds a `.gitignore`
+block that lists only them. The hooks belong to each clone. Commit `.gitignore`,
+and `.waymark/atlas.toml` if the repo's other users should have the pointer; the
+block doesn't ignore the pointer. A repo you don't own, such as a client's, can
+stay untouched: the atlas works without both.
 
 ## 4. A change that spans both repos
 
@@ -147,9 +153,14 @@ messages are checked locally, by the git hooks.
 
 ## Another machine, or a teammate
 
-Clone the atlas and the code repos. Side by side, as the hints expect, everything
-works at once; run `wm atlas register` to record them anyway. In other places,
-register each one with its folder. `wm atlas doctor` says what is missing.
+Clone the atlas and the code repos, and install the `wm` version the atlas pins.
+Then run `wm init` in the atlas. It sets up this machine: the agent tool files
+and the git hooks. It doesn't change the record.
+
+Side by side, as the hints expect, the code repos are found at once; run
+`wm atlas register` to record them anyway. In other places, register each one with its folder. In a code repo
+that uses the git hooks, run `wm git-hooks` to install them in this clone.
+`wm atlas doctor` says what is missing.
 
 ## Reading another atlas's specs
 

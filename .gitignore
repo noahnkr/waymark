@@ -28,3 +28,11 @@ dist/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Waymark: this machine's agent tool files and git hooks, written by wm
+/.agents/skills/wm-*/
+/.claude/skills/wm-*/
+/.claude/agents/wm-*.md
+/.claude/settings.json
+/.waymark/hooks/
+# end of Waymark
