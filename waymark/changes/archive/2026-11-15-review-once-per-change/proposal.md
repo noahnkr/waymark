@@ -40,3 +40,7 @@ Across the 8 independent reviews so far, none has found a bug. A slice is the wr
 - Code: `record/` (proposal, tasks, state, fingerprint), `services/` (lifecycle, instructions, context, check, pr), `hooks/decide.py` (delegation and the reviewer's ending), `views/` and `cli.py`.
 - Assets: `wm-apply`, `wm-propose`, `wm-update`, `wm-onboard` and `wm-pr`, and the `wm-reviewer` definition.
 - Docs: concepts, getting started, the smoke test, architecture, the README and the regenerated CLI and JSON references.
+
+## Outcome
+
+A change is now reviewed once, as a whole, after every item is ticked: its level comes from a Review: line in the proposal (or default_review), the review and its critical/warning/suggestion findings are written in a ## Review section at the end of the task list, a changes verdict names the items to rebuild, and the reviewer agent is started with the change's name and ends with CHANGE: and VERDICT: lines. Item review: tags are an error in active changes; wm show and wm pr show the change's review, and the show.change and context pack schemas went to version 2. The planner built every item in the session; one re-acceptance was needed because the fingerprint now covers the change's level instead of each item's, and the independent review's three non-critical findings were fixed before merge.

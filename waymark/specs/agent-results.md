@@ -2,7 +2,7 @@
 
 ## Purpose
 
-How `wm` records the result of an implementer or reviewer from the agent's own words: its ending, the lines `ITEM: <change> <item>` then `RESULT: …` or `VERDICT: …`, whether the agent ends with a final message or hands its report back through its tool.
+How `wm` records the result of an implementer or reviewer from the agent's own words: its ending, the lines `ITEM: <change> <item>` then `RESULT: …` for an implementer, or `CHANGE: <change>` then `VERDICT: …` for a reviewer, whether the agent ends with a final message or hands its report back through its tool.
 
 ## Requirements
 
@@ -23,9 +23,9 @@ When an implementer or reviewer hands its report back through its agent tool ins
 - THEN item 1.1 is ticked, without anyone running `wm tick`
 
 #### Scenario: Reviewer in the background
-- GIVEN item 1.1 ticked and waiting for an independent review
-- WHEN its reviewer hands back a report ending in `ITEM: <change> 1.1` and `VERDICT: pass: <reasons>`
-- THEN a `(review)` line with the reviewer's own reasons is written under item 1.1
+- GIVEN a change with every item ticked, waiting for an independent review
+- WHEN its reviewer hands back a report ending in `CHANGE: <change>` and `VERDICT: pass: <reasons>`
+- THEN a `(review)` line with the reviewer's own reasons is written in the change's `## Review` section
 
 ### Requirement: Missing ending refused
 When a final message or a handed-back report lacks the two ending lines, `wm` SHALL refuse it with the reason, so the agent ends again with them. After a second attempt without them, `wm` SHALL let the agent finish and tell the planner to record the result with the `wm` commands.
