@@ -1,0 +1,28 @@
+# Tasks
+
+## 1. One review per change
+
+- [ ] 1.1 Read the change's review level and its `## Review` section
+  - Criteria: `record/proposal.py` reads `Review:` (`self`, `independent`, `none`), with `invalid-review-level` for another value and `short-path-review` for `independent` on the short path; `Change.review_level(default)` gives the line or the default; `record/tasks.py` reads an unnumbered `## Review` section at the end into `Tasks.review_records`, including `(review) … changes <items>: …` and findings sub-lines `<severity>: <place>: <text>` with severities `critical`, `warning`, `suggestion`; an active change with an item `review:` tag gives `obsolete-review-tag`, and archived changes still parse their item tags and records; the fingerprint drops each item's level and adds the change's effective level
+  - Verify: tests in `tests/record/` for the scenarios "Level from the proposal" and "Old tag", the review section with findings, an archived change with old item reviews, and the fingerprint withdrawing acceptance when the `Review:` line or `default_review` changes
+- [ ] 1.2 Derive the change's review, its next step and the archive gate
+  - Criteria: `record/state.py` derives the change's review (level, reviewed, items to reopen, escalation) from the Review section, with independent required once any `changes` verdict is recorded and a `(resolved)` record closing what came before; `next_step` offers the named items to reopen and apply, then unticked items, then the review of the whole change, then archive; a second `changes` or a `spec-gap` verdict escalates the change to `wm inbox`; `wm check` warns when deltas modify or remove a requirement at a level other than `independent`; `_archive_gate` checks the change's review, with the override kept
+  - Verify: tests in `tests/record/test_state.py` and `tests/services/` for the scenarios "All items ticked", "An item still to build", "Two items named", "Second request for changes", "Not reviewed" and "Risky change at self"
+- [ ] 1.3 Record reviews per change with `wm review`, `wm verdict`, `wm reopen` and `wm resolve`
+  - Criteria: `wm review <change> --self "<summary>" [--finding …]`, `wm verdict <change> pass|changes|spec-gap "<reasons>" [--items …] [--finding …]` and `wm resolve <change> review "<decided>"` write into the `## Review` section, creating it when needed; `changes` without `--items`, or naming an item the change doesn't have, is refused; `pass` or a self-review with a critical finding is refused; `wm reopen` is allowed only for an item the last `changes` verdict named; `wm resolve <change> <item>` still frees a blocked item or one with a spec gap; `wm instructions` gives the review step's guidance and commands at each level
+  - Verify: tests in `tests/services/test_lifecycle.py`, `tests/services/test_agent_interface.py` and `tests/test_cli.py` for the scenarios "Self-review with a finding" and "Pass with a critical finding", and each refusal
+- [ ] 1.4 Start the reviewer on a change and record its ending
+  - Criteria: `wm context <change> --for review` gives every item with its criteria and verification but not its notes, the deltas with their scenarios, the design and the project's context and review rules; the delegation gate takes a prompt of the change's name alone and refuses unless the change is accepted, every item is ticked and it needs an independent review it lacks; the hook records a reviewer's ending `CHANGE: <change>` then `VERDICT: …`, with `changes <items>` and `FINDING:` lines, from a final message or a handed-back report; an unparsable `FINDING:` line is refused with the reason; the implementer's prompt and ending are unchanged
+  - Verify: tests in `tests/services/test_agent_interface.py`, `tests/hooks/test_decide.py` and `tests/adapters/test_claude_code.py` for the `agent-results` scenario "Reviewer in the background" and the gate's refusals
+- [ ] 1.5 Show the change's review in `wm show` and `wm pr`
+  - Criteria: `wm show <change>` (text and `--json`) gives the change's review level, its review records and their findings, and items no longer carry a review level or review; the JSON schema's version is raised and `docs/json.md` regenerated; `wm pr` lists items without a review each and adds a line for the change's review
+  - Verify: tests in `tests/views/` and `tests/services/test_ci_and_pr.py`, and `uv run --no-sync python -m tools.docs --check`
+
+## 2. Skills, charter and docs
+
+- [ ] 2.1 Rewrite the skills and the reviewer definition for one review per change
+  - Criteria: `wm-apply` has one review step per change at its level, with findings and named items on `changes`; `wm-propose` suggests the `Review:` line instead of item tags; `wm-update` says the line withdraws acceptance; `wm-onboard` and `wm-pr` match; `wm-reviewer` is started with `<change>`, checks completeness, correctness and coherence across the change, reports `FINDING:` lines and ends with `CHANGE:` then `VERDICT:`; the planner runs `wm update` to regenerate the rendered files
+  - Verify: `uv run --no-sync pytest tests/adapters`; read each skill once through as the planner would
+- [ ] 2.2 Update the charter and the docs
+  - Criteria: the charter's vision speaks of riskier changes, not tasks, being checked by a second agent, and its tasks rule no longer gives docs items review level `none`; concepts (the review levels, the gates, the glossary), getting started, the smoke test, architecture and the README describe one review per change; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
+  - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`
