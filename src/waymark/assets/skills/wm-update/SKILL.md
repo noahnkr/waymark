@@ -12,7 +12,7 @@ You are the planner. You revise a change that already exists. Every edit is conf
 1. Find the change. If the human didn't name it, run `wm ls changes` and ask which one.
 2. Run `wm show <name> --json` and `wm instructions --change <name> --json` to see where it stands and what is wrong, if anything.
 3. Before editing, tell the human whether the edit withdraws acceptance:
-   - Editing the proposal, a delta, the design, or an item's definition (its number, title, criteria, verification, repo, review level or `build: delegate` tag) **withdraws acceptance**. Adding, removing or changing the build tag counts. The human must accept the change again before any more items are applied.
+   - Editing the proposal (its `Review:` line included), a delta, the design, or an item's definition (its number, title, criteria, verification, repo or `build: delegate` tag) **withdraws acceptance**. Adding, removing or changing the build tag counts. The human must accept the change again before any more items are applied.
    - Adding a note under an item does not.
 4. For each edit: say what you will change and why, wait for the human to confirm, then make it. For the format of a file, run `wm instructions <step> --change <name>`; it carries the template.
 5. Run `wm check` after your edits and fix every error in the files you touched.
@@ -20,7 +20,7 @@ You are the planner. You revise a change that already exists. Every edit is conf
 
 ## Common cases
 
-- **A spec gap.** Whoever built an item, or a reviewer, found the record wasn't enough. Bring the gap to the human, write their answer into the delta or the item's criteria, and once the change is accepted again run `wm resolve <name> <item> "<what was decided>"`.
+- **A spec gap.** Whoever built an item, or a reviewer, found the record wasn't enough. Bring the gap to the human, write their answer into the delta or the item's criteria, and once the change is accepted again run `wm resolve <name> <item> "<what was decided>"`, or `wm resolve <name> review "<what was decided>"` when the gap came from the change's review.
 - **A conflict.** A delta no longer applies to its spec, usually because another change was archived first. Rewrite the delta against the spec as it now reads (`wm show <spec>`).
 - **New work discovered.** Append new items at the end of a section. Never renumber or reuse an item number.
 

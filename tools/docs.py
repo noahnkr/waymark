@@ -156,7 +156,7 @@ def json_reference() -> str:
         "instructions": "`wm instructions`",
         "context.explore": "`wm context --for explore`",
         "context.implement": "`wm context <change> <item> --for implement`",
-        "context.review": "`wm context <change> <item> --for review`",
+        "context.review": "`wm context <change> --for review`",
         "doctor": "`wm doctor`, `wm atlas doctor`",
         "pr": "`wm pr`",
     }
@@ -184,6 +184,7 @@ def json_reference() -> str:
 PROPOSAL = """# Add a result limit
 
 Owner: {owner}
+Review: independent
 
 ## Why
 
@@ -247,10 +248,10 @@ TASKS = """# Tasks
 
 ## 1. Limit
 
-- [ ] 1.1 Cap the result count   `review: independent`
+- [ ] 1.1 Cap the result count
   - Criteria: at most fifty results come back, best first
   - Verify: a test searches an index with fifty-one matches
-- [ ] 1.2 Name the limit in the help text   `review: none`
+- [ ] 1.2 Name the limit in the help text
   - Criteria: the search help says fifty
 """
 
@@ -319,8 +320,8 @@ def evidence() -> str:
         drafted = _status(root)
         accepted = lifecycle.accept(root, CHANGE, DAY).message
         lifecycle.tick(root, CHANGE, "1.1")
-        lifecycle.verdict(root, CHANGE, "1.1", Verdict.PASS, REVIEWER_REASONS, DAY)
         lifecycle.tick(root, CHANGE, "1.2")
+        lifecycle.verdict(root, CHANGE, Verdict.PASS, REVIEWER_REASONS, DAY)
         built = _status(root)
         files = {
             "proposal": _read(root, f"{folder}/proposal.md"),
@@ -337,7 +338,7 @@ def evidence() -> str:
         created,
         "",
         "# /wm-propose: the agent drafts the proposal, a spec delta, the design",
-        "# and the task list, with a review level for each task",
+        "# and the task list; the proposal sets the change's review level",
         "",
         "$ wm status",
         drafted,
@@ -345,11 +346,12 @@ def evidence() -> str:
         f"$ wm accept {CHANGE}",
         accepted,
         "",
-        "# /wm-apply: the agent builds 1.1 from the change, runs the",
-        f"# fifty-one-match test, and runs wm tick {CHANGE} 1.1",
-        "# A reviewer agent that never saw the build checks it and ends with",
+        "# /wm-apply: the agent builds 1.1 and 1.2 from the change, runs the",
+        f"# fifty-one-match test, and ticks each with wm tick {CHANGE} <item>",
+        "# A reviewer agent that never saw the build checks the whole change and",
+        f"# ends with CHANGE: {CHANGE}, then",
         f"#   VERDICT: pass: {REVIEWER_REASONS}",
-        "# wm writes the verdict under 1.1. Then 1.2 is built; it needs no review.",
+        "# wm writes the verdict in the task list's Review section.",
         "",
         "$ wm status",
         built,

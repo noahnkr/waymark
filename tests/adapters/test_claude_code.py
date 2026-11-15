@@ -366,9 +366,12 @@ def test_implementers_blocked_result_writes_the_blocked_line(hooks: Hooks) -> No
 def test_reviewers_verdict_is_written_as_the_review_record(hooks: Hooks) -> None:
     today = datetime.date.today().isoformat()
     lifecycle.tick(hooks.project.root, CHANGE, "1.1")
-    reply = hooks.stop("wm-reviewer", "ITEM: add-limit 1.1\nVERDICT: changes: off by one at fifty")
+    lifecycle.tick(hooks.project.root, CHANGE, "1.2")
+    reply = hooks.stop(
+        "wm-reviewer", "CHANGE: add-limit\nVERDICT: changes 1.1: off by one at fifty"
+    )
     assert "Recorded the verdict changes" in reply["systemMessage"]
-    line = f"  - (review) {today} changes: off by one at fifty"
+    line = f"- (review) {today} changes 1.1: off by one at fifty"
     assert line in hooks.project.read(TASKS_FILE)
 
 
@@ -388,9 +391,10 @@ def test_implementers_handed_back_report_ticks_its_item(hooks: Hooks) -> None:
 def test_reviewers_handed_back_verdict_is_written_as_the_review_record(hooks: Hooks) -> None:
     today = datetime.date.today().isoformat()
     lifecycle.tick(hooks.project.root, CHANGE, "1.1")
-    reply = hooks.handback("wm-reviewer", "ITEM: add-limit 1.1\nVERDICT: pass: caps at fifty")
+    lifecycle.tick(hooks.project.root, CHANGE, "1.2")
+    reply = hooks.handback("wm-reviewer", "CHANGE: add-limit\nVERDICT: pass: caps at fifty")
     assert "Recorded the verdict pass" in reply["systemMessage"]
-    assert f"  - (review) {today} pass: caps at fifty" in hooks.project.read(TASKS_FILE)
+    assert f"- (review) {today} pass: caps at fifty" in hooks.project.read(TASKS_FILE)
 
 
 def test_handed_back_report_without_its_ending_is_denied(hooks: Hooks) -> None:

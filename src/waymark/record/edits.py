@@ -8,8 +8,8 @@ import re
 from collections.abc import Sequence
 
 from waymark.record.outline import parse_facts
-from waymark.record.proposal import ACCEPTED, OUTCOME, OWNER, PATH, SYNCED, Proposal
-from waymark.record.tasks import Tasks
+from waymark.record.proposal import ACCEPTED, OUTCOME, OWNER, PATH, REVIEW, SYNCED, Proposal
+from waymark.record.tasks import REVIEW_SECTION, Tasks
 from waymark.record.text import Document
 
 _BOX = re.compile(r"^- \[[ xX]\]")
@@ -47,12 +47,34 @@ def edit_item(
     return "".join(lines)
 
 
+def add_review(tasks: Tasks, record: str, findings: Sequence[str] = ()) -> str:
+    """Append a record, and the findings under it, to the change's Review section.
+
+    The section is created at the end of the task list when it isn't there yet.
+    """
+    newline = tasks.doc.newline
+    lines = _lines(tasks.doc)
+    added = [f"- {record}{newline}", *(f"  - {finding}{newline}" for finding in findings)]
+    section = tasks.review_section
+    if section is None:
+        while lines and not lines[-1].strip():
+            lines.pop()
+        return "".join([*lines, newline, f"## {REVIEW_SECTION}{newline}", newline, *added])
+    end = section.end
+    while end > section.body_start and not lines[end - 1].strip():
+        end -= 1
+    if end == section.body_start:
+        added = [newline, *added]
+    lines[end:end] = added
+    return "".join(lines)
+
+
 def set_fact(proposal: Proposal, key: str, line: str | None) -> str:
     """Write, replace or remove one of wm's fact lines under a proposal's title."""
     doc = proposal.doc
     newline = doc.newline
     lines = _lines(doc)
-    facts = parse_facts(doc, {OWNER, PATH, ACCEPTED, SYNCED}, [], prose=True)
+    facts = parse_facts(doc, {OWNER, PATH, REVIEW, ACCEPTED, SYNCED}, [], prose=True)
     if key in facts:
         index = facts[key].index
         lines[index : index + 1] = [] if line is None else [line + newline]

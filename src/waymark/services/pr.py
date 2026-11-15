@@ -16,8 +16,8 @@ from waymark.record.changes import Change
 from waymark.record.config import RECORD_DIR
 from waymark.record.proposal import WHAT_CHANGES, WHY
 from waymark.record.record import CHANGES, Record
-from waymark.record.state import ChangeState, ItemState
-from waymark.record.tasks import Item, RecordKind
+from waymark.record.state import ChangeState
+from waymark.record.tasks import RecordKind
 from waymark.record.terms import Layout, ReviewLevel
 from waymark.services.common import Refusal, find_change, repo_locations, state_of
 
@@ -44,17 +44,25 @@ def _web(folder: Path | None) -> str | None:
     return web_url(git.remote_url(folder)) if folder is not None else None
 
 
-def _review(item: Item, state: ItemState) -> str:
-    if not item.ticked:
-        return "not built yet"
-    if state.level is ReviewLevel.NONE:
-        return "no review needed"
-    if not state.reviewed:
-        return "not reviewed yet"
-    verdicts = [r for r in item.records if r.kind is RecordKind.REVIEW and r.verdict]
-    if verdicts:
-        return f"independent review: {verdicts[-1].verdict.value if verdicts[-1].verdict else ''}"
-    return "self-reviewed"
+def _review_lines(change: Change, state: ChangeState) -> list[str]:
+    """One line on the change's review: its level, and how it came out."""
+    review = state.review
+    records = change.tasks.review_records if change.tasks else ()
+    last = records[-1] if records else None
+    if review.level is ReviewLevel.NONE and review.reviewed:
+        text = "No review needed (level none)."
+    elif not review.reviewed:
+        text = f"Not reviewed yet (level {review.level})."
+    elif last is not None and last.kind is RecordKind.REVIEW and last.verdict:
+        text = f"Independent review: {last.verdict.value}: {last.text}"
+    elif last is not None:
+        text = f"Self-reviewed: {last.text}"
+    else:
+        text = f"Reviewed (level {review.level})."
+    findings = [f for record in records[-1:] for f in record.findings]
+    lines = ["", "## Review", "", text]
+    lines += [f"- {f.severity.value}: {f.place}: {f.text}" for f in findings]
+    return lines
 
 
 def _spec_lines(change: Change) -> list[str]:
@@ -107,16 +115,14 @@ def _links(
     return links
 
 
-def _item_lines(change: Change, state: ChangeState, repo: str | None) -> list[str]:
-    states = {item_state.number: item_state for item_state in state.items}
+def _item_lines(change: Change, repo: str | None) -> list[str]:
     lines = []
     for item in change.tasks.items if change.tasks else ():
         if repo is not None and item.repo != repo:
             continue
         mark = "x" if item.ticked else " "
-        where = f", in {item.repo}" if item.repo and repo is None else ""
-        review = _review(item, states[item.number])
-        lines.append(f"- [{mark}] {item.number} {item.title} ({review}{where})")
+        where = f" (in {item.repo})" if item.repo and repo is None else ""
+        lines.append(f"- [{mark}] {item.number} {item.title}{where}")
     if not lines:
         return []
     return ["", f"## Items in {repo}" if repo else "## Items", "", *lines]
@@ -163,7 +169,9 @@ def describe(record: Record, name: str, repo: str | None = None) -> dict[str, An
     body = [proposal.sections.get(WHY, "").strip()]
     body += ["", f"## {WHAT_CHANGES}", "", proposal.sections.get(WHAT_CHANGES, "").strip()]
     body += ["", "## Specs", "", *_spec_lines(change)]
-    body += _item_lines(change, state_of(record, change), repo)
+    body += _item_lines(change, repo)
+    if repo is None:
+        body += _review_lines(change, state_of(record, change))
     body += _link_lines(name, places, here, links)
     return {
         "schema": "wm.pr",

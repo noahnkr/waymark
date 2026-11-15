@@ -1,18 +1,20 @@
 """Gate evidence in a record file: the lines only wm writes.
 
 Used to tell whether an edit adds, changes or removes evidence. The evidence
-is the ticks, blockers, spec gaps and review records in a task list, and the
-acceptance, synced and override lines in a proposal.
+is the ticks, blockers, spec gaps and review records in a task list (every
+line of its Review section counts), and the acceptance, synced and override
+lines in a proposal.
 """
 
 import re
 from collections import Counter
 
 from waymark.record.changes import PROPOSAL_FILE, TASKS_FILE
-from waymark.record.tasks import is_evidence_line
+from waymark.record.tasks import REVIEW_SECTION, is_evidence_line
 from waymark.record.text import Document
 
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+\.\d+)\s")
+_HEADING = re.compile(r"^## (.*)$")
 _PROPOSAL_EVIDENCE = re.compile(r"^(Accepted|Synced|Review override):")
 _NOTE = re.compile(r"^  [-*] Note: \S")
 
@@ -24,8 +26,17 @@ def evidence(relative: str, text: str) -> Counter[str]:
     doc = Document.parse(relative, text)
     if name == TASKS_FILE:
         number = "?"
+        in_review = False
         for line in doc.lines:
             if line.in_fence:
+                continue
+            heading = _HEADING.match(line.text)
+            if heading:
+                in_review = heading.group(1).strip().casefold() == REVIEW_SECTION.casefold()
+                continue
+            if in_review:
+                if not line.is_blank:
+                    found[f'"{line.text.strip()}" in the Review section'] += 1
                 continue
             item = _ITEM.match(line.text)
             if item:

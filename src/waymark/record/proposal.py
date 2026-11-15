@@ -7,12 +7,14 @@ from dataclasses import dataclass
 
 from waymark.record.outline import collect_sections, content, parse_facts, require_title
 from waymark.record.problems import Problem
+from waymark.record.terms import ReviewLevel
 from waymark.record.text import Document
 
 OWNER = "Owner"
 ACCEPTED = "Accepted"
 PATH = "Path"
 SYNCED = "Synced"
+REVIEW = "Review"
 SHORT = "short"
 FULL = "full"
 
@@ -46,6 +48,7 @@ class Proposal:
     title: str
     owner: str | None
     short_path: bool
+    review: ReviewLevel | None
     acceptance: Acceptance | None
     synced: datetime.date | None
     sections: Mapping[str, str]
@@ -106,7 +109,7 @@ def parse_proposal(doc: Document) -> Proposal:
     """Read a proposal."""
     problems: list[Problem] = []
     title = require_title(doc, problems)
-    facts = parse_facts(doc, {OWNER, ACCEPTED, PATH, SYNCED}, problems, prose=True)
+    facts = parse_facts(doc, {OWNER, ACCEPTED, PATH, SYNCED, REVIEW}, problems, prose=True)
 
     owner = facts[OWNER].value if OWNER in facts else ""
     if not owner:
@@ -131,6 +134,23 @@ def parse_proposal(doc: Document) -> Proposal:
                     "invalid-path",
                     f'"{PATH}:" is "{SHORT}" for the short path or "{FULL}". '
                     "Fix the value, or remove the line for the full path.",
+                )
+            )
+
+    review: ReviewLevel | None = None
+    if REVIEW in facts:
+        value = facts[REVIEW].value
+        if value in set(ReviewLevel):
+            review = ReviewLevel(value)
+        else:
+            levels = ", ".join(level.value for level in ReviewLevel)
+            problems.append(
+                Problem(
+                    doc.path,
+                    facts[REVIEW].index + 1,
+                    "invalid-review-level",
+                    f'"{REVIEW}:" is one of {levels}. Fix the value, or remove the line for '
+                    "the project's default.",
                 )
             )
 
@@ -162,6 +182,7 @@ def parse_proposal(doc: Document) -> Proposal:
         title=title,
         owner=owner or None,
         short_path=short_path,
+        review=review,
         acceptance=acceptance,
         synced=synced,
         sections=sections,

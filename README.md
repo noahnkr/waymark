@@ -17,8 +17,8 @@ Waymark is spec-driven development built on **living specs**: plain markdown in
 your repository that says what your system does today. Every change starts as an
 edit to those specs, and nothing is built until you've approved it. Then your
 agent builds each task from the written change, or hands a task you tagged to a
-fresh agent that sees only the record. The riskier tasks are checked by a second
-agent that never saw how they were built.
+fresh agent that sees only the record. Each change is then reviewed once, as a
+whole, and a riskier change by a second agent that never saw how it was built.
 A small command-line tool, `wm`, keeps track of where it all stands.
 
 ## See it in action
@@ -32,7 +32,7 @@ $ wm new change add-result-limit
 Created the change "add-result-limit" with a proposal to draft.
 
 # /wm-propose: the agent drafts the proposal, a spec delta, the design
-# and the task list, with a review level for each task
+# and the task list; the proposal sets the change's review level
 
 $ wm status
 ── Changes in flight ───────────────────────────────────────────────────
@@ -43,11 +43,12 @@ $ wm status
 $ wm accept add-result-limit
 Accepted "add-result-limit". Its items can now be applied.
 
-# /wm-apply: the agent builds 1.1 from the change, runs the
-# fifty-one-match test, and runs wm tick add-result-limit 1.1
-# A reviewer agent that never saw the build checks it and ends with
+# /wm-apply: the agent builds 1.1 and 1.2 from the change, runs the
+# fifty-one-match test, and ticks each with wm tick add-result-limit <item>
+# A reviewer agent that never saw the build checks the whole change and
+# ends with CHANGE: add-result-limit, then
 #   VERDICT: pass: cap and order hold; the scenario is covered by the test
-# wm writes the verdict under 1.1. Then 1.2 is built; it needs no review.
+# wm writes the verdict in the task list's Review section.
 
 $ wm status
 ── Changes in flight ───────────────────────────────────────────────────
@@ -68,7 +69,8 @@ The files behind it, all plain markdown in `waymark/`:
 # Add a result limit
 
 Owner: Alex Example
-Accepted: 2026-01-15 by Alex Example (fingerprint: 6cec39a287bf99f2)
+Review: independent
+Accepted: 2026-01-15 by Alex Example (fingerprint: e87258930fc50aef)
 
 ## Why
 
@@ -147,12 +149,15 @@ Sorting every match still costs memory on very large result sets.
 
 ## 1. Limit
 
-- [x] 1.1 Cap the result count   `review: independent`
+- [x] 1.1 Cap the result count
   - Criteria: at most fifty results come back, best first
   - Verify: a test searches an index with fifty-one matches
-  - (review) 2026-01-15 pass: cap and order hold; the scenario is covered by the test
-- [x] 1.2 Name the limit in the help text   `review: none`
+- [x] 1.2 Name the limit in the help text
   - Criteria: the search help says fifty
+
+## Review
+
+- (review) 2026-01-15 pass: cap and order hold; the scenario is covered by the test
 ```
 
 </details>
@@ -189,16 +194,17 @@ A search SHALL return at most fifty results.
   change, by your session or, for a task tagged `build: delegate`, by a fresh
   agent that sees nothing else. When something is missing, the agent writes it
   into the record or reports a spec gap instead of guessing.
-- **Review is recorded.** Each task is checked against its criteria, by your
-  session for routine work or by an independent reviewer agent that never saw
-  the build, and the result is written right under the task.
+- **Review is recorded.** Each change is checked once, as a whole, against its
+  scenarios, design and criteria: by your session for routine work, or by an
+  independent reviewer agent that never saw the build. The verdict and its
+  findings are written at the end of the task list.
 - **Pick up anywhere.** `wm` works out where things stand from the files and
   git, in any session, on any machine.
 - **Two sign-offs, both yours.** Agents draft every file and write the code. You
   approve each change before it's built, and again when it's archived.
 - **Light for small changes, thorough for big ones.** A small change takes the
   short path: a proposal, a task list and a quick self-check. A bigger one adds
-  a design, and its riskier tasks get a second agent as an independent reviewer.
+  a design, and a riskier change gets a second agent as an independent reviewer.
 
 In Claude Code, these rules are enforced by hooks, not just asked for. See
 [what's enforced, and where](#whats-enforced-and-where).
@@ -257,7 +263,7 @@ they're measured.
 
 | Enforced by | What | Holds in |
 |---|---|---|
-| `wm` and CI | Nothing is built before acceptance; archive refuses unbuilt or unreviewed items; conflicting changes are caught; record health (`wm check`, in CI) | Every agent tool |
+| `wm` and CI | Nothing is built before acceptance; archive refuses unbuilt items or an unreviewed change; conflicting changes are caught; record health (`wm check`, in CI) | Every agent tool |
 | Claude Code's hooks | Only you accept a change or override a missing review; implementers edit only code and their notes; in an atlas, the planner and implementers edit code only in the repo of the item being built; reviewers edit nothing; delegated agents can't commit, push or write the record; commit messages are conventional commits; results are recorded from the agents' own words | Claude Code |
 
 These are guard rails against mistakes and shortcuts, not security against

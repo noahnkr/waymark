@@ -32,6 +32,7 @@ GLOSSARY = (
     "Implementer",
     "Reviewer",
     "Review level",
+    "Finding",
     "Context pack",
     "Spec gap",
 )

@@ -31,7 +31,7 @@ def applied(project: Workspace, name: str = NAME, **options: object) -> Workspac
     project.change(name, tasks=ONE_ITEM, **options)  # type: ignore[arg-type]
     lifecycle.accept(project.root, name, DAY)
     lifecycle.tick(project.root, name, "1.1")
-    lifecycle.self_review(project.root, name, "1.1", "matches the criteria", DAY)
+    lifecycle.self_review(project.root, name, "matches the criteria", DAY)
     assert project.change_state(name).applied
     return project
 
@@ -103,17 +103,16 @@ def test_archive_is_refused_while_items_are_unticked_even_with_an_override(
     project.change()
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
     assert "item 1.2 is not ticked" in refused(project, outcome="Done.")
     assert "can't be overridden" in refused(project, outcome="Done.", override="no time")
 
 
-def test_archive_is_refused_while_a_review_record_is_missing(project: Workspace) -> None:
+def test_not_reviewed(project: Workspace) -> None:
     project.change(tasks=ONE_ITEM)
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
     message = refused(project, outcome="Done.")
-    assert "item 1.1 is missing the review record" in message
+    assert "missing the self review of the change" in message
     assert "--override" in message
 
 
@@ -137,8 +136,8 @@ def test_archive_override_also_passes_a_failed_review(project: Workspace) -> Non
     project.change(tasks=ONE_ITEM)
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.CHANGES, "naming", DAY)
-    assert "missing the review record" in refused(project, outcome="Shipped.")
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "naming", DAY, items=["1.1"])
+    assert "missing the independent review" in refused(project, outcome="Shipped.")
     lifecycle.archive(project.root, NAME, LATER, outcome="Shipped.", override="naming is fine")
     assert project.record().changes == {}
 
@@ -187,7 +186,7 @@ def test_archived_name_can_be_reused(project: Workspace) -> None:
     project.change(tasks=ONE_ITEM, deltas={"search": delta(modified=(CHANGED,))})
     lifecycle.accept(project.root, NAME, LATER)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", LATER)
+    lifecycle.self_review(project.root, NAME, "fine", LATER)
     lifecycle.archive(project.root, NAME, LATER, outcome="Second.")
     record = project.record()
     assert [entry.date for entry in record.archived_changes] == [DAY, LATER]
@@ -368,6 +367,6 @@ def test_default_tasks_change_runs_from_accept_to_archive(project: Workspace) ->
     lifecycle.accept(project.root, NAME, DAY)
     for number in ("1.1", "1.2"):
         lifecycle.tick(project.root, NAME, number)
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
+    lifecycle.self_review(project.root, NAME, "fine", DAY)
     lifecycle.archive(project.root, NAME, LATER, outcome="Done.")
     assert project.record().problems == ()

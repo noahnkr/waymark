@@ -197,3 +197,20 @@ def test_archived_changes_are_not_parsed_until_asked_for(workspace: Workspace) -
     assert record.problems == ()
     archived = load_archived_change(record, record.archived_changes[0])
     assert archived.problems != ()
+
+
+def test_archived_change_keeps_its_item_reviews(workspace: Workspace) -> None:
+    folder = "changes/archive/2026-01-20-add-limit"
+    workspace.write(f"{folder}/proposal.md", proposal(outcome="Done."))
+    workspace.write(
+        f"{folder}/tasks.md",
+        "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it   `review: independent`\n"
+        "  - (review) 2026-01-19 pass: boundary covered\n",
+    )
+    record = workspace.record()
+    archived = load_archived_change(record, record.archived_changes[0])
+    assert archived.problems == ()
+    assert archived.tasks is not None
+    (item,) = archived.tasks.items
+    assert item.level_tag is ReviewLevel.INDEPENDENT
+    assert item.records[0].text == "boundary covered"

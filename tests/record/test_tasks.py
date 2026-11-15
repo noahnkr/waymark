@@ -5,8 +5,9 @@ import datetime
 import pytest
 
 from tests.support import TASKS, document
+from waymark.record.evidence import evidence_changes
 from waymark.record.tasks import RecordKind, Tasks, is_evidence_line, parse_tasks
-from waymark.record.terms import ReviewLevel, Verdict
+from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 
@@ -222,3 +223,70 @@ def test_evidence_lines_are_blockers_and_review_records() -> None:
     assert not is_evidence_line("  - Criteria: fifty at most")
     assert not is_evidence_line("  - Note: (review) is mentioned here")
     assert not is_evidence_line("- [x] 1.1 Cap it")
+
+
+REVIEWED = (
+    HEAD
+    + "- [x] 1.1 Cap it\n"
+    + "- [x] 1.2 Tidy up\n"
+    + "\n## Review\n\n"
+    + "- (review) 2026-02-01 changes 1.1 1.2: the boundary is off by one\n"
+    + "  - critical: src/search.py:12: fifty-one results come back\n"
+    + "  - suggestion: docs/search.md: say the limit\n"
+    + "- (self-review) 2026-02-03: matches the criteria\n"
+    + "- (resolved) 2026-02-04: keep fifty\n"
+)
+
+
+def test_review_section_holds_the_change_records_and_their_findings() -> None:
+    tasks = parse(REVIEWED)
+    assert tasks.problems == ()
+    assert [item.records for item in tasks.items] == [(), ()]
+    first, second, third = tasks.review_records
+    assert (first.kind, first.verdict, first.items) == (
+        RecordKind.REVIEW,
+        Verdict.CHANGES,
+        ("1.1", "1.2"),
+    )
+    assert first.text == "the boundary is off by one"
+    assert [(f.severity, f.place, f.text) for f in first.findings] == [
+        (ReviewSeverity.CRITICAL, "src/search.py:12", "fifty-one results come back"),
+        (ReviewSeverity.SUGGESTION, "docs/search.md", "say the limit"),
+    ]
+    assert (second.kind, second.text, second.findings) == (
+        RecordKind.SELF_REVIEW,
+        "matches the criteria",
+        (),
+    )
+    assert (third.kind, third.date) == (RecordKind.RESOLVED, datetime.date(2026, 2, 4))
+    assert tasks.review_section is not None
+
+
+@pytest.mark.parametrize(
+    ("record", "code"),
+    [
+        ("- (review) 2026-02-01 changes: off by one", "changes-without-items"),
+        ("- (review) 2026-02-01 pass 1.1: fine", "items-without-changes"),
+        ("- (review) 2026-02-01 changes 9.9: off by one", "unknown-item"),
+        ("- (reopened) 2026-02-01", "malformed-evidence"),
+        ("- (review) 2026-02-01 pass: fine\n  - severe: here: bad", "malformed-finding"),
+        ("- (resolved) 2026-02-01: keep it\n  - warning: here: odd", "misplaced-finding"),
+        ("Looks good to me.", "unrecognized-review-line"),
+    ],
+)
+def test_review_section_lines_that_break_the_format_are_problems(record: str, code: str) -> None:
+    assert codes(HEAD + "- [x] 1.1 Cap it\n\n## Review\n\n" + record + "\n") == [code]
+
+
+def test_review_section_comes_last() -> None:
+    text = HEAD + "- [x] 1.1 Cap it\n\n## Review\n\n## 2. Docs\n\n- [ ] 2.1 Explain\n"
+    assert codes(text) == ["review-section-last"]
+
+
+def test_every_line_of_the_review_section_is_evidence() -> None:
+    before = HEAD + "- [x] 1.1 Cap it\n"
+    after = before + "\n## Review\n\n- (self-review) 2026-02-03: fine\n  - warning: a.py: odd\n"
+    assert evidence_changes("changes/add-limit/tasks.md", before, after) == [
+        'adds "- (self-review) 2026-02-03: fine" in the Review section',
+        'adds "- warning: a.py: odd" in the Review section',
+    ]

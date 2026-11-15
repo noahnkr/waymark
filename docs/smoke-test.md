@@ -1,7 +1,8 @@
 # Smoke-test checklist
 
 CI can't run Claude Code, so before each release one change is taken through
-Claude Code by hand: from proposal to archive, with one independent review. The
+Claude Code by hand: from proposal to archive, with one independent review of
+the whole change. The
 result goes into the release's changelog entry, and the Claude Code version goes
 into the README. When a bug escapes this checklist, add the step that would have
 caught it.
@@ -36,8 +37,8 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 ## Propose and accept
 
 - [ ] Run `/wm-propose` for a small change with **three** items: one untagged,
-      and two tagged `build: delegate`, one of which is also tagged
-      `review: independent`. Not on the short path.
+      and two tagged `build: delegate`. Its proposal has `Review: independent`.
+      Not on the short path.
 - [ ] Ask the agent to run `wm accept <change>`. **The hook refuses it**, and the
       agent tells you to run it yourself.
 - [ ] Run `wm accept <change>` yourself.
@@ -73,18 +74,26 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       implementer stops, the `ITEM:` and `RESULT:` lines in its final message are
       recorded: the item is ticked in `tasks.md` without anyone running
       `wm tick`.
-- [ ] The independent item is reviewed by the `wm-reviewer` agent, and its
-      verdict is written under the item as a `(review)` line in the reviewer's
-      own words. The reviewer can't edit files (ask it to fix something; it is
+- [ ] The planner commits each item's work with a conventional message once
+      the item is ticked. No item gets a review of its own.
+- [ ] Once every item is ticked, the planner starts the `wm-reviewer` agent
+      with a prompt of exactly `<change>`. Ask it to start one with
+      `<change> <item>` first: **the hook refuses it**.
+- [ ] The reviewer reads `wm context <change> --for review`. Its verdict is
+      written in the `## Review` section at the end of `tasks.md` as a
+      `(review)` line in the reviewer's own words, with any `FINDING:` lines
+      under it. The reviewer can't edit files (ask it to fix something; it is
       refused).
-- [ ] The other items get a `(self-review)` line from the planner.
-- [ ] The planner commits each item's work with a conventional message, after
-      its review.
+- [ ] **A request for changes.** If the reviewer asked for changes, the items
+      it named are reopened, rebuilt and ticked, and the reviewer is started
+      again. Otherwise record one yourself with
+      `wm verdict <change> changes "<reasons>" --items <item>` and check that
+      `wm instructions` reopens that item.
 
 ## Archive
 
-- [ ] Before the last review is recorded, try to archive: **refused**, naming
-      the missing review.
+- [ ] Before the review is recorded, try to archive: **refused**, naming the
+      missing review of the change.
 - [ ] Ask the agent to run `wm archive <change> --override "x"`. **Refused**.
 - [ ] Run `/wm-archive`. The change moves to `changes/archive/<date>-<change>/`,
       the deltas are in the specs, and the proposal has an Outcome.

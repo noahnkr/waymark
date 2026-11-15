@@ -4,7 +4,7 @@ import datetime
 import os
 import subprocess
 
-from tests.support import Workspace, delta, requirement, spec
+from tests.support import Workspace, delta, proposal, requirement, spec
 from waymark.services import lifecycle
 from waymark.services.check import Finding, Severity, check, has_errors
 
@@ -12,6 +12,10 @@ NOW = datetime.datetime(2026, 3, 1, 12, tzinfo=datetime.UTC)
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
+
+
+def reviewed_at(level: str) -> str:
+    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\nReview: {level}\n")
 
 
 def findings(project: Workspace) -> list[tuple[str, str, str]]:
@@ -67,7 +71,7 @@ def test_unknown_build_tag_and_repeated_tag_are_errors(project: Workspace) -> No
     project.change(
         tasks=HEAD
         + "- [ ] 1.1 Cap it   `build: someone`\n"
-        + "- [ ] 1.2 Page it   `review: none`   `review: self`\n"
+        + "- [ ] 1.2 Page it   `build: delegate`   `build: delegate`\n"
     )
     assert findings(project) == [
         ("error", "changes/add-limit/tasks.md", "unknown-build-tag"),
@@ -77,14 +81,23 @@ def test_unknown_build_tag_and_repeated_tag_are_errors(project: Workspace) -> No
 
 def test_delta_that_does_not_match_its_spec_is_an_error(project: Workspace) -> None:
     project.write("specs/search.md", spec(requirement("Result cap")))
-    project.change(deltas={"search": delta(modified=(CHANGED,))})
+    project.change(
+        proposal_text=reviewed_at("independent"), deltas={"search": delta(modified=(CHANGED,))}
+    )
     assert findings(project) == [("error", "changes/add-limit", "conflict")]
 
 
 def test_overlapping_changes_are_a_warning(project: Workspace) -> None:
     project.write("specs/search.md", spec())
-    project.change("fix-limit", deltas={"search": delta(modified=(CHANGED,))})
-    project.change("drop-limit", deltas={"search": delta(removed=(("Result limit", "Unused."),))})
+    independent = reviewed_at("independent")
+    project.change(
+        "fix-limit", proposal_text=independent, deltas={"search": delta(modified=(CHANGED,))}
+    )
+    project.change(
+        "drop-limit",
+        proposal_text=independent,
+        deltas={"search": delta(removed=(("Result limit", "Unused."),))},
+    )
     result = check(project.root, NOW)
     assert [(f.severity, f.code) for f in result] == [(Severity.WARNING, "overlap")]
     assert "drop-limit and fix-limit" in result[0].message
@@ -92,7 +105,7 @@ def test_overlapping_changes_are_a_warning(project: Workspace) -> None:
 
 
 def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> None:
-    project.change(tasks=HEAD + "- [ ] 1.1 Rename it   `review: none`\n")
+    project.change(proposal_text=reviewed_at("none"), tasks=HEAD + "- [ ] 1.1 Rename it\n")
     lifecycle.accept(project.root, "add-limit", DAY)
     assert findings(project) == []
     lifecycle.tick(project.root, "add-limit", "1.1")
@@ -128,9 +141,32 @@ def test_change_not_committed_yet_is_not_stale(project: Workspace) -> None:
 
 def test_findings_come_in_a_stable_order_with_errors_first(project: Workspace) -> None:
     project.write("specs/search.md", spec())
-    project.change("fix-limit", deltas={"search": delta(modified=(CHANGED,))})
-    project.change("drop-limit", deltas={"search": delta(removed=(("Result limit", "Unused."),))})
+    independent = reviewed_at("independent")
+    project.change(
+        "fix-limit", proposal_text=independent, deltas={"search": delta(modified=(CHANGED,))}
+    )
+    project.change(
+        "drop-limit",
+        proposal_text=independent,
+        deltas={"search": delta(removed=(("Result limit", "Unused."),))},
+    )
     project.replace("charter.md", "rebuilt nightly.", "rebuilt [nightly](jobs.md).")
     first = check(project.root, NOW)
     assert first == check(project.root, NOW)
     assert [f.severity for f in first] == [Severity.ERROR, Severity.WARNING]
+
+
+def test_risky_change_at_self(project: Workspace) -> None:
+    project.write("specs/search.md", spec())
+    project.change("fix-limit", deltas={"search": delta(modified=(CHANGED,))})
+    result = check(project.root, NOW)
+    assert [(f.severity, f.path, f.code) for f in result] == [
+        (Severity.WARNING, "changes/fix-limit/proposal.md", "review-level")
+    ]
+    assert "should be reviewed independently" in result[0].message
+    project.change(
+        "fix-limit",
+        proposal_text=reviewed_at("independent"),
+        deltas={"search": delta(modified=(CHANGED,))},
+    )
+    assert findings(project) == []

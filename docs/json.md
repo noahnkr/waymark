@@ -10,14 +10,14 @@ Every read command takes `--json`. Each payload starts with `schema` (its name) 
 | [`wm.inbox`](#wminbox) | 1 | `wm inbox` |
 | [`wm.ls`](#wmls) | 1 | `wm ls` |
 | [`wm.check`](#wmcheck) | 1 | `wm check` |
-| [`wm.show.change`](#wmshowchange) | 1 | `wm show` for a change |
+| [`wm.show.change`](#wmshowchange) | 2 | `wm show` for a change |
 | [`wm.show.spec`](#wmshowspec) | 1 | `wm show` for a spec |
 | [`wm.show.milestone`](#wmshowmilestone) | 1 | `wm show` for a milestone |
 | [`wm.show.exploration`](#wmshowexploration) | 1 | `wm show` for an exploration |
 | [`wm.instructions`](#wminstructions) | 1 | `wm instructions` |
 | [`wm.context.explore`](#wmcontextexplore) | 1 | `wm context --for explore` |
-| [`wm.context.implement`](#wmcontextimplement) | 1 | `wm context <change> <item> --for implement` |
-| [`wm.context.review`](#wmcontextreview) | 1 | `wm context <change> <item> --for review` |
+| [`wm.context.implement`](#wmcontextimplement) | 2 | `wm context <change> <item> --for implement` |
+| [`wm.context.review`](#wmcontextreview) | 2 | `wm context <change> --for review` |
 | [`wm.pr`](#wmpr) | 1 | `wm pr` |
 | [`wm.doctor`](#wmdoctor) | 1 | `wm doctor`, `wm atlas doctor` |
 
@@ -537,7 +537,7 @@ Printed by `wm show` for a change.
       "const": "wm.show.change"
     },
     "version": {
-      "const": 1
+      "const": 2
     },
     "name": {
       "type": "string"
@@ -866,22 +866,8 @@ Printed by `wm show` for a change.
           "ticked": {
             "type": "boolean"
           },
-          "level": {
-            "enum": [
-              "self",
-              "independent",
-              "none",
-              null
-            ]
-          },
           "delegate": {
             "type": "boolean"
-          },
-          "reviewed": {
-            "type": [
-              "boolean",
-              "null"
-            ]
           },
           "needs_human": {
             "type": [
@@ -952,13 +938,48 @@ Printed by `wm show` for a change.
                 },
                 "text": {
                   "type": "string"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "findings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "severity": {
+                        "enum": [
+                          "critical",
+                          "warning",
+                          "suggestion"
+                        ]
+                      },
+                      "place": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "severity",
+                      "place",
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  }
                 }
               },
               "required": [
                 "kind",
                 "date",
                 "verdict",
-                "text"
+                "text",
+                "items",
+                "findings"
               ],
               "additionalProperties": false
             }
@@ -968,9 +989,7 @@ Printed by `wm show` for a change.
           "number",
           "title",
           "ticked",
-          "level",
           "delegate",
-          "reviewed",
           "needs_human",
           "criteria",
           "verify",
@@ -982,6 +1001,117 @@ Printed by `wm show` for a change.
         ],
         "additionalProperties": false
       }
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "enum": [
+            "self",
+            "independent",
+            "none"
+          ]
+        },
+        "reviewed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "reopen": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "needs_human": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "review",
+                  "self-review",
+                  "reopened",
+                  "resolved"
+                ]
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "verdict": {
+                "enum": [
+                  "pass",
+                  "changes",
+                  "spec-gap",
+                  null
+                ]
+              },
+              "text": {
+                "type": "string"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "severity": {
+                      "enum": [
+                        "critical",
+                        "warning",
+                        "suggestion"
+                      ]
+                    },
+                    "place": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "severity",
+                    "place",
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "date",
+              "verdict",
+              "text",
+              "items",
+              "findings"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "level",
+        "reviewed",
+        "reopen",
+        "needs_human",
+        "records"
+      ],
+      "additionalProperties": false
     },
     "problems": {
       "type": "array",
@@ -1027,6 +1157,7 @@ Printed by `wm show` for a change.
     "deltas",
     "design",
     "items",
+    "review",
     "problems"
   ],
   "additionalProperties": false
@@ -1695,7 +1826,7 @@ Printed by `wm context <change> <item> --for implement`.
       "const": "wm.context.implement"
     },
     "version": {
-      "const": 1
+      "const": 2
     },
     "for": {
       "const": "implement"
@@ -1736,13 +1867,6 @@ Printed by `wm context <change> <item> --for implement`.
             "null"
           ]
         },
-        "review_level": {
-          "enum": [
-            "self",
-            "independent",
-            "none"
-          ]
-        },
         "notes": {
           "type": "array",
           "items": {
@@ -1768,12 +1892,47 @@ Printed by `wm context <change> <item> --for implement`.
               },
               "text": {
                 "type": "string"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "severity": {
+                      "enum": [
+                        "critical",
+                        "warning",
+                        "suggestion"
+                      ]
+                    },
+                    "place": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "severity",
+                    "place",
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
             "required": [
               "date",
               "verdict",
-              "text"
+              "text",
+              "items",
+              "findings"
             ],
             "additionalProperties": false
           }
@@ -1792,7 +1951,6 @@ Printed by `wm context <change> <item> --for implement`.
         "verify",
         "repo",
         "repo_found",
-        "review_level",
         "notes",
         "reviews",
         "resolutions"
@@ -1890,7 +2048,7 @@ Printed by `wm context <change> <item> --for implement`.
 
 ## wm.context.review
 
-Printed by `wm context <change> <item> --for review`.
+Printed by `wm context <change> --for review`.
 
 ```json
 {
@@ -1902,7 +2060,7 @@ Printed by `wm context <change> <item> --for review`.
       "const": "wm.context.review"
     },
     "version": {
-      "const": 1
+      "const": 2
     },
     "for": {
       "const": "review"
@@ -1910,120 +2068,135 @@ Printed by `wm context <change> <item> --for review`.
     "change": {
       "type": "string"
     },
-    "item": {
-      "type": "object",
-      "properties": {
-        "number": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "criteria": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "verify": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "repo": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "repo_found": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "review_level": {
-          "enum": [
-            "self",
-            "independent",
-            "none"
-          ]
-        },
-        "notes": {
-          "type": "array",
-          "items": {
+    "review_level": {
+      "enum": [
+        "self",
+        "independent",
+        "none"
+      ]
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "number": {
             "type": "string"
-          }
-        },
-        "reviews": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "date": {
-                "type": "string",
-                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-              },
-              "verdict": {
-                "enum": [
-                  "pass",
-                  "changes",
-                  "spec-gap",
-                  null
-                ]
-              },
-              "text": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "date",
-              "verdict",
-              "text"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "resolutions": {
-          "type": "array",
-          "items": {
+          },
+          "title": {
             "type": "string"
+          },
+          "criteria": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verify": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repo_found": {
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
-        }
-      },
-      "required": [
-        "number",
-        "title",
-        "criteria",
-        "verify",
-        "repo",
-        "repo_found",
-        "review_level",
-        "notes",
-        "reviews",
-        "resolutions"
-      ],
-      "additionalProperties": false
+        },
+        "required": [
+          "number",
+          "title",
+          "criteria",
+          "verify",
+          "repo",
+          "repo_found"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "verdict": {
+            "enum": [
+              "pass",
+              "changes",
+              "spec-gap",
+              null
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "enum": [
+                    "critical",
+                    "warning",
+                    "suggestion"
+                  ]
+                },
+                "place": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "severity",
+                "place",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "date",
+          "verdict",
+          "text",
+          "items",
+          "findings"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "resolutions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "context": {
       "type": "string"
     },
     "rules": {
       "type": "string"
-    },
-    "proposal": {
-      "anyOf": [
-        {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        {
-          "type": "null"
-        }
-      ]
     },
     "deltas": {
       "type": "array",
@@ -2044,29 +2217,6 @@ Printed by `wm context <change> <item> --for review`.
         "additionalProperties": false
       }
     },
-    "requirements": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "spec": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "spec",
-          "name",
-          "text"
-        ],
-        "additionalProperties": false
-      }
-    },
     "design": {
       "type": [
         "string",
@@ -2082,12 +2232,13 @@ Printed by `wm context <change> <item> --for review`.
     "version",
     "for",
     "change",
-    "item",
+    "review_level",
+    "items",
+    "reviews",
+    "resolutions",
     "context",
     "rules",
-    "proposal",
     "deltas",
-    "requirements",
     "design",
     "ends_with"
   ],

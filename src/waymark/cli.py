@@ -147,13 +147,23 @@ def _gap(args: argparse.Namespace) -> int:
 
 
 def _review(args: argparse.Namespace) -> int:
-    done = lifecycle.self_review(_here(), args.change, args.item, args.self_summary, _today())
+    done = lifecycle.self_review(
+        _here(), args.change, args.self_summary, _today(), findings=args.finding or ()
+    )
     return _report(done)
 
 
 def _verdict(args: argparse.Namespace) -> int:
     result = Verdict(args.verdict)
-    done = lifecycle.verdict(_here(), args.change, args.item, result, args.reasons, _today())
+    done = lifecycle.verdict(
+        _here(),
+        args.change,
+        result,
+        args.reasons,
+        _today(),
+        items=args.items or (),
+        findings=args.finding or (),
+    )
     return _report(done)
 
 
@@ -373,7 +383,10 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         commands, "gap", _gap, "Record a spec gap: the record wasn't enough to build an item."
     )
     gap.add_argument("note", help="what is missing from the record")
-    review = _item_command(commands, "review", _review, "Record a self-review of an item.")
+    finding_help = "a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable"
+    summary = "Record a self-review of a change, once every item is ticked."
+    review = commands.add_parser("review", help=summary, description=summary)
+    review.add_argument("change", help="the change's name")
     review.add_argument(
         "--self",
         dest="self_summary",
@@ -381,19 +394,33 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         required=True,
         help="what the review checked and found",
     )
-    verdict = _item_command(
-        commands, "verdict", _verdict, "Record a reviewer's verdict on an item."
-    )
+    review.add_argument("--finding", action="append", metavar="FINDING", help=finding_help)
+    review.set_defaults(handler=_review)
+    summary = "Record a reviewer's verdict on a change."
+    verdict = commands.add_parser("verdict", help=summary, description=summary)
+    verdict.add_argument("change", help="the change's name")
     verdict.add_argument("verdict", choices=[v.value for v in Verdict])
     verdict.add_argument("reasons", help="the reviewer's reasons")
-    _item_command(commands, "reopen", _reopen, "Reopen an item after a review asked for changes.")
-    resolve = _item_command(
-        commands,
-        "resolve",
-        _resolve,
-        "Record what was decided about an item that went to the human, and free it.",
+    verdict.add_argument(
+        "--items",
+        nargs="+",
+        metavar="ITEM",
+        help='the items to rebuild; a "changes" verdict names at least one',
     )
+    verdict.add_argument("--finding", action="append", metavar="FINDING", help=finding_help)
+    verdict.set_defaults(handler=_verdict)
+    _item_command(
+        commands, "reopen", _reopen, "Reopen an item that a review of its change named to rebuild."
+    )
+    summary = (
+        "Record what was decided about an item or a change's review that went to the human, "
+        "and free it."
+    )
+    resolve = commands.add_parser("resolve", help=summary, description=summary)
+    resolve.add_argument("change", help="the change's name")
+    resolve.add_argument("item", help="the item's number, or \"review\" for the change's review")
     resolve.add_argument("decision", help="what was decided")
+    resolve.set_defaults(handler=_resolve)
 
     summary = "Merge an applied change's deltas into the specs without archiving it."
     sync = commands.add_parser("sync", help=summary, description=summary)
@@ -461,10 +488,12 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         commands,
         "context",
         _context,
-        "Print the context pack for exploring, or for implementing or reviewing one item.",
+        "Print the context pack for exploring, implementing one item, or reviewing one change.",
     )
     context.add_argument("change", nargs="?", help="the change's name")
-    context.add_argument("item", nargs="?", help="the item's number, for example 1.2")
+    context.add_argument(
+        "item", nargs="?", help="the item's number, for example 1.2; none for a review"
+    )
     context.add_argument(
         "--for",
         dest="role",

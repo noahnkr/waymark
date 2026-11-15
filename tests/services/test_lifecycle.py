@@ -16,19 +16,32 @@ TASKS_FILE = f"changes/{NAME}/tasks.md"
 PROPOSAL_FILE = f"changes/{NAME}/proposal.md"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-INDEPENDENT = HEAD + "- [ ] 1.1 Cap it   `review: independent`\n  - Criteria: fifty at most\n"
+ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n"
+REVIEW = "\n## Review\n\n"
 
 
-def accepted(project: Workspace, tasks: str = TASKS) -> Workspace:
-    project.change(tasks=tasks)
+def reviewed_at(level: str) -> str:
+    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\nReview: {level}\n")
+
+
+def accepted(project: Workspace, tasks: str = TASKS, level: str | None = None) -> Workspace:
+    project.change(tasks=tasks, proposal_text=reviewed_at(level) if level else None)
     lifecycle.accept(project.root, NAME, DAY)
     return project
 
 
-def refused(project: Workspace, action: str, *arguments: object) -> str:
+def built(project: Workspace, tasks: str = TASKS, level: str | None = None) -> Workspace:
+    """An accepted change with every item ticked, waiting for its review."""
+    accepted(project, tasks, level)
+    for item in project.record().changes[NAME].tasks.items:  # type: ignore[union-attr]
+        lifecycle.tick(project.root, NAME, item.number)
+    return project
+
+
+def refused(project: Workspace, action: str, *arguments: object, **options: object) -> str:
     before = project.read(TASKS_FILE)
     with pytest.raises(Refusal) as refusal:
-        getattr(lifecycle, action)(project.root, NAME, *arguments)
+        getattr(lifecycle, action)(project.root, NAME, *arguments, **options)
     assert project.read(TASKS_FILE) == before
     return str(refusal.value)
 
@@ -117,8 +130,8 @@ def test_items_of_an_unaccepted_change_cannot_be_applied(project: Workspace) -> 
     project.change()
     assert "is not accepted" in refused(project, "tick", "1.1")
     assert "is not accepted" in refused(project, "block", "1.1", "waiting")
-    assert "is not accepted" in refused(project, "verdict", "1.1", Verdict.PASS, "fine", DAY)
-    assert "is not accepted" in refused(project, "self_review", "1.1", "fine", DAY)
+    assert "is not accepted" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
+    assert "is not accepted" in refused(project, "self_review", "fine", DAY)
 
 
 def test_items_of_a_change_whose_acceptance_was_withdrawn_cannot_be_applied(
@@ -137,121 +150,173 @@ def test_tick_marks_the_item_and_changes_no_other_line(project: Workspace) -> No
     assert project.read(TASKS_FILE) == before.replace("- [ ] 1.1", "- [x] 1.1")
     state = project.change_state()
     assert state.acceptance is AcceptanceState.VALID
-    assert (state.next_step.kind, state.next_step.item) == (StepKind.REVIEW, "1.1")
+    assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.2")
     assert "already ticked" in refused(project, "tick", "1.1")
 
 
-def test_self_review_writes_a_record_under_the_item(project: Workspace) -> None:
+def test_self_review_with_a_finding(project: Workspace) -> None:
     accepted(project)
-    assert "isn't ticked" in refused(project, "self_review", "1.1", "fine", DAY)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "  matches the\n criteria ", DAY)
-    lines = project.read(TASKS_FILE).split("\n")
-    record_line = "  - (self-review) 2026-01-15: matches the criteria"
-    assert (
-        lines.index(record_line) == lines.index("- [ ] 1.2 Document the limit   `review: none`") - 1
+    assert "item 1.2 is not ticked" in refused(project, "self_review", "fine", DAY)
+    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.self_review(
+        project.root,
+        NAME,
+        "  matches the\n criteria ",
+        DAY,
+        findings=["warning: src/a.py:12: the name is vague"],
+    )
+    assert project.read(TASKS_FILE) == TASKS.replace("- [ ]", "- [x]") + REVIEW + (
+        "- (self-review) 2026-01-15: matches the criteria\n"
+        "  - warning: src/a.py:12: the name is vague\n"
     )
     assert project.record().problems == ()
-    assert project.change_state().items[0].reviewed
-    assert "already has the review record" in refused(project, "self_review", "1.1", "again", DAY)
+    state = project.change_state()
+    assert state.review.reviewed
+    assert state.applied
+    assert "already has the review it needs" in refused(project, "self_review", "again", DAY)
 
 
-def test_self_review_does_not_count_for_an_item_needing_independent_review(
+def test_self_review_with_a_critical_finding_is_refused(project: Workspace) -> None:
+    built(project)
+    message = refused(
+        project, "self_review", "fine", DAY, findings=["critical: src/a.py: returns 51"]
+    )
+    assert "critical finding" in message
+
+
+def test_finding_that_breaks_the_format_is_refused(project: Workspace) -> None:
+    built(project)
+    message = refused(project, "self_review", "fine", DAY, findings=["looks odd"])
+    assert "<critical|warning|suggestion>: <place>: <text>" in message
+
+
+def test_self_review_does_not_count_for_a_change_needing_independent_review(
     project: Workspace,
 ) -> None:
-    accepted(project, INDEPENDENT)
-    lifecycle.tick(project.root, NAME, "1.1")
-    assert "independent review" in refused(project, "self_review", "1.1", "fine", DAY)
+    built(project, level="independent")
+    assert "independent review" in refused(project, "self_review", "fine", DAY)
 
 
-def test_item_at_level_none_takes_no_self_review(project: Workspace) -> None:
-    accepted(project)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
-    lifecycle.tick(project.root, NAME, "1.2")
-    assert "needs no review record" in refused(project, "self_review", "1.2", "fine", DAY)
+def test_change_at_level_none_takes_no_self_review(project: Workspace) -> None:
+    built(project, level="none")
+    assert "needs no review record" in refused(project, "self_review", "fine", DAY)
     assert project.change_state().applied
 
 
 def test_evidence_text_must_not_be_empty(project: Workspace) -> None:
-    accepted(project)
-    lifecycle.tick(project.root, NAME, "1.1")
-    assert "written into the record" in refused(project, "self_review", "1.1", "  \n ", DAY)
-    assert "written into the record" in refused(project, "block", "1.2", "")
+    built(project)
+    assert "written into the record" in refused(project, "self_review", "  \n ", DAY)
+
+
+def test_pass_with_a_critical_finding(project: Workspace) -> None:
+    built(project, level="independent")
+    message = refused(
+        project,
+        "verdict",
+        Verdict.PASS,
+        "fine",
+        DAY,
+        findings=["critical: src/search.py:12: fifty-one results come back"],
+    )
+    assert "critical finding" in message
 
 
 def test_passing_verdict_counts_as_the_independent_review(project: Workspace) -> None:
-    accepted(project, INDEPENDENT)
-    assert "isn't ticked" in refused(project, "verdict", "1.1", Verdict.PASS, "fine", DAY)
+    accepted(project, ONE_ITEM, "independent")
+    assert "item 1.1 is not ticked" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.PASS, "boundary covered", DAY)
-    assert "  - (review) 2026-01-15 pass: boundary covered" in project.read(TASKS_FILE)
+    lifecycle.verdict(
+        project.root,
+        NAME,
+        Verdict.PASS,
+        "boundary covered",
+        DAY,
+        findings=["suggestion: docs/search.md: say the limit"],
+    )
+    text = project.read(TASKS_FILE)
+    assert text.endswith(
+        "- (review) 2026-01-15 pass: boundary covered\n"
+        "  - suggestion: docs/search.md: say the limit\n"
+    )
     state = project.change_state()
-    assert state.items[0].reviewed
+    assert state.review.reviewed
     assert state.applied
     assert project.record().problems == ()
 
 
-def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n")
-    assert "nothing to reopen" in refused(project, "reopen", "1.1", DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.CHANGES, "off by one", DAY)
-    assert "waiting to be dealt with" in refused(
-        project, "verdict", "1.1", Verdict.PASS, "fine", DAY
+def test_changes_verdict_names_items_the_change_has(project: Workspace) -> None:
+    built(project)
+    assert "names the items to rebuild" in refused(
+        project, "verdict", Verdict.CHANGES, "off by one", DAY
     )
+    assert "9.9" in refused(project, "verdict", Verdict.CHANGES, "off by one", DAY, items=["9.9"])
+    assert "Only a" in refused(project, "verdict", Verdict.PASS, "fine", DAY, items=["1.1"])
+
+
+def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Workspace) -> None:
+    built(project)
+    assert "nothing to reopen" in refused(project, "reopen", "1.1", DAY)
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
+    assert "- (review) 2026-01-15 changes 1.1: off by one" in project.read(TASKS_FILE)
+    assert "wm reopen add-limit 1.1" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
+    assert "nothing to reopen" in refused(project, "reopen", "1.2", DAY)
 
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     text = project.read(TASKS_FILE)
-    assert "- [ ] 1.1 Cap it" in text
-    assert text.rstrip("\n").endswith("  - (reopened) 2026-01-15")
+    assert "- [ ] 1.1 Cap the result count" in text
+    assert "  - (reopened) 2026-01-15\n- [x] 1.2" in text
     state = project.change_state()
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
 
     lifecycle.tick(project.root, NAME, "1.1")
-    assert project.change_state().items[0].level is ReviewLevel.INDEPENDENT
-    assert "independent review" in refused(project, "self_review", "1.1", "fine", DAY)
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.PASS, "fixed", DAY)
+    state = project.change_state()
+    assert state.review.level is ReviewLevel.INDEPENDENT
+    assert (state.next_step.kind, state.next_step.item) == (StepKind.REVIEW, None)
+    assert "independent review" in refused(project, "self_review", "fine", DAY)
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fixed", DAY)
     assert project.change_state().applied
     assert project.record().problems == ()
 
 
 def test_second_changes_verdict_waits_for_the_human_until_resolved(project: Workspace) -> None:
-    accepted(project, INDEPENDENT)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.CHANGES, "off by one", DAY)
+    built(project, ONE_ITEM, "independent")
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.CHANGES, "still off", DAY)
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "still off", DAY, items=["1.1"])
     state = project.change_state()
     assert (state.next_step.kind, state.next_step.human) == (StepKind.RESOLVE_ITEMS, True)
     assert "nothing to reopen" in refused(project, "reopen", "1.1", DAY)
+    assert "waits on the human" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
 
-    lifecycle.resolve(project.root, NAME, "1.1", "use an inclusive bound", DAY)
-    text = project.read(TASKS_FILE)
-    assert "- [ ] 1.1 Cap it" in text
-    assert "  - (resolved) 2026-01-15: use an inclusive bound" in text
+    lifecycle.resolve(project.root, NAME, "review", "use an inclusive bound", DAY)
+    assert project.read(TASKS_FILE).endswith("- (resolved) 2026-01-15: use an inclusive bound\n")
     state = project.change_state()
-    assert state.items[0].escalated is None
-    assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
+    assert state.review.escalated is None
+    assert (state.next_step.kind, state.next_step.item) == (StepKind.REVIEW, None)
 
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.CHANGES, "nearly", DAY)
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "nearly", DAY, items=["1.1"])
     state = project.change_state()
-    assert state.items[0].redo
-    assert state.items[0].escalated is None
+    assert state.review.reopen == ("1.1",)
+    assert state.review.escalated is None
     assert project.record().problems == ()
 
 
 def test_reviewer_spec_gap_goes_to_the_human(project: Workspace) -> None:
-    accepted(project, INDEPENDENT)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.SPEC_GAP, "no scenario for zero", DAY)
+    built(project, ONE_ITEM, "independent")
+    lifecycle.verdict(project.root, NAME, Verdict.SPEC_GAP, "no scenario for zero", DAY)
     state = project.change_state()
     assert state.next_step.human
-    assert state.items[0].escalated == "the reviewer found a spec gap: no scenario for zero"
-    lifecycle.resolve(project.root, NAME, "1.1", "zero results is an empty list", DAY)
-    assert project.change_state().next_step.kind is StepKind.APPLY
+    assert state.review.escalated == "the reviewer found a spec gap: no scenario for zero"
+    assert "nothing to resolve" in refused(project, "resolve", "1.1", "fine", DAY)
+    lifecycle.resolve(project.root, NAME, "review", "zero results is an empty list", DAY)
+    assert project.change_state().next_step.kind is StepKind.REVIEW
+
+
+def test_resolve_review_is_refused_when_nothing_went_to_the_human(project: Workspace) -> None:
+    built(project)
+    assert "nothing to resolve" in refused(project, "resolve", "review", "fine", DAY)
 
 
 def test_block_writes_a_blocked_line_and_stops_the_item(project: Workspace) -> None:
@@ -284,8 +349,7 @@ def test_resolve_clears_a_blocker_and_records_the_decision(project: Workspace) -
     assert state.items[0].blocked is None
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
-    assert project.change_state().items[0].reviewed
+    assert project.change_state().items[0].ticked
 
 
 def test_spec_gap_from_an_implementer_goes_to_the_human(project: Workspace) -> None:
@@ -295,7 +359,7 @@ def test_spec_gap_from_an_implementer_goes_to_the_human(project: Workspace) -> N
     assert project.record().problems == ()
     state = project.change_state()
     assert state.items[0].escalated == (
-        "the implementer found a spec gap: the limit for an empty query is not stated"
+        "the builder found a spec gap: the limit for an empty query is not stated"
     )
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.2")
     assert "waits on the human" in refused(project, "tick", "1.1")
@@ -316,9 +380,10 @@ def test_evidence_commands_keep_windows_line_endings(project: Workspace) -> None
     accepted(project)
     project.write(TASKS_FILE, project.read(TASKS_FILE).replace("\n", "\r\n"))
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
     lifecycle.block(project.root, NAME, "1.2", "waiting")
     lifecycle.resolve(project.root, NAME, "1.2", "go ahead", DAY)
+    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.self_review(project.root, NAME, "fine", DAY)
     text = project.read(TASKS_FILE)
     assert "\n" not in text.replace("\r\n", "")
     assert project.record().problems == ()
@@ -328,18 +393,19 @@ def test_evidence_commands_keep_windows_line_endings(project: Workspace) -> None
 def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Workspace) -> None:
     accepted(project, HEAD + "- [ ] 1.1 Cap it")
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
-    assert (
-        project.read(TASKS_FILE) == HEAD + "- [x] 1.1 Cap it\n  - (self-review) 2026-01-15: fine\n"
+    lifecycle.self_review(project.root, NAME, "fine", DAY)
+    assert project.read(TASKS_FILE) == (
+        HEAD + "- [x] 1.1 Cap it\n" + REVIEW + "- (self-review) 2026-01-15: fine\n"
     )
 
 
 def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
+    short = proposal(short=True, impact="No spec changes.")
     project.change(
-        proposal_text=proposal(short=True, impact="No spec changes."),
+        proposal_text=short.replace("Path: short\n", "Path: short\nReview: none\n"),
         deltas={},
         design=None,
-        tasks=HEAD + "- [ ] 1.1 Fix the typo   `review: none`\n  - Criteria: the word is right\n",
+        tasks=HEAD + "- [ ] 1.1 Fix the typo\n  - Criteria: the word is right\n",
     )
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")

@@ -196,9 +196,7 @@ def _titled(title: str, text: str | None, style: Style) -> list[str]:
 
 def _item_lines(item: Payload, style: Style) -> list[str]:
     mark = style.symbol("done") if item["ticked"] else style.symbol("todo")
-    tags = [f"review: {item['level']}"] if item["level"] else []
-    if item["reviewed"]:
-        tags.append("reviewed")
+    tags = ["build: delegate"] if item["delegate"] else []
     if item["repo"]:
         tags.append(f"repo: {item['repo']}")
     head = f"  {mark} {style.paint(item['number'], BOLD)} {item['title']}"
@@ -215,9 +213,32 @@ def _item_lines(item: Payload, style: Style) -> list[str]:
             lines.append(style.paint(f"      {label}: {item[key]}", color))
     lines += [f"      Note: {note}" for note in item["notes"]]
     for record in item["records"]:
-        verdict = f" {record['verdict']}" if record["verdict"] else ""
-        text = f": {record['text']}" if record["text"] else ""
-        lines.append(style.paint(f"      ({record['kind']}) {record['date']}{verdict}{text}", DIM))
+        lines += _record_lines(record, "      ", style)
+    return lines
+
+
+def _record_lines(record: Payload, indent: str, style: Style) -> list[str]:
+    verdict = f" {record['verdict']}" if record["verdict"] else ""
+    named = f" {' '.join(record['items'])}" if record["items"] else ""
+    text = f": {record['text']}" if record["text"] else ""
+    lines = [style.paint(f"{indent}({record['kind']}) {record['date']}{verdict}{named}{text}", DIM)]
+    for finding in record["findings"]:
+        color = RED if finding["severity"] == "critical" else YELLOW
+        line = f"{indent}  {finding['severity']}: {finding['place']}: {finding['text']}"
+        lines.append(style.paint(line, color))
+    return lines
+
+
+def _review_section(review: Payload, style: Style) -> list[str]:
+    status = {True: "reviewed", False: "not reviewed yet", None: ""}[review["reviewed"]]
+    head = f"  Level: {review['level']}" + (f"; {status}" if status else "")
+    lines = ["", style.paint("Review", BOLD), head]
+    if review["reopen"]:
+        lines.append(style.paint(f"  To rebuild: {', '.join(review['reopen'])}", YELLOW))
+    if review["needs_human"]:
+        lines.append(style.paint(f"  Needs you: {review['needs_human']}", YELLOW))
+    for record in review["records"]:
+        lines += _record_lines(record, "  ", style)
     return lines
 
 
@@ -266,6 +287,7 @@ def show_change(payload: Payload, style: Style) -> str:  # noqa: PLR0912 - one p
         lines += ["", style.paint("Tasks", BOLD)]
         for item in payload["items"]:
             lines += _item_lines(item, style)
+        lines += _review_section(payload["review"], style)
     if payload["problems"]:
         lines += ["", style.paint("Problems", BOLD)]
         lines += [
@@ -365,7 +387,7 @@ def instructions(payload: Payload, style: Style) -> str:
     return "\n".join(lines)
 
 
-def _pack_item(item: Payload) -> list[str]:
+def _definition_lines(item: Payload) -> list[str]:
     lines = [f"**{item['number']} {item['title']}**", ""]
     for label, key in (("Criteria", "criteria"), ("Verify", "verify")):
         if item[key]:
@@ -374,25 +396,56 @@ def _pack_item(item: Payload) -> list[str]:
         folder = item["_local"]["repo_folder"]
         where = f"its folder on this machine is {folder}" if folder else "not found on this machine"
         lines.append(f"- Repo: {item['repo']} ({where})")
-    lines.append(f"- Review level: {item['review_level']}")
+    return lines
+
+
+def _review_lines(review: Payload) -> list[str]:
+    named = f" {' '.join(review['items'])}" if review["items"] else ""
+    lines = [f"- Earlier review ({review['date']}, {review['verdict']}{named}): {review['text']}"]
+    lines += [
+        f"  - {finding['severity']}: {finding['place']}: {finding['text']}"
+        for finding in review["findings"]
+    ]
+    return lines
+
+
+def _pack_item(item: Payload) -> list[str]:
+    lines = _definition_lines(item)
     lines += [f"- Decided by the human: {text}" for text in item["resolutions"]]
     for review in item["reviews"]:
-        lines.append(f"- Earlier review ({review['date']}, {review['verdict']}): {review['text']}")
+        lines += _review_lines(review)
     lines += [f"- Note from earlier work: {note}" for note in item["notes"]]
+    return lines
+
+
+def _review_head(payload: Payload) -> list[str]:
+    lines = [f"# Context pack: review {payload['change']}", ""]
+    lines += [f"Review the whole change at level {payload['review_level']}.", ""]
+    lines.append("## Its items")
+    for item in payload["items"]:
+        lines += ["", *_definition_lines(item)]
+    if payload["reviews"] or payload["resolutions"]:
+        lines += ["", "## Earlier reviews", ""]
+        for review in payload["reviews"]:
+            lines += _review_lines(review)
+        lines += [f"- Decided by the human: {text}" for text in payload["resolutions"]]
     return lines
 
 
 def context_delegated(payload: Payload, _: Style) -> str:
     """An implementer's or reviewer's context pack, as markdown."""
     role = payload["for"]
-    item = payload["item"]
-    lines = [f"# Context pack: {role} {payload['change']} {item['number']}", ""]
-    lines += ["## Your item", "", *_pack_item(item)]
+    if role == "review":
+        lines = _review_head(payload)
+    else:
+        item = payload["item"]
+        lines = [f"# Context pack: {role} {payload['change']} {item['number']}", ""]
+        lines += ["## Your item", "", *_pack_item(item)]
     if payload["context"]:
         lines += ["", "## Project context", "", payload["context"]]
     if payload["rules"]:
         lines += ["", "## Rules for this step", "", payload["rules"]]
-    if payload["proposal"]:
+    if payload.get("proposal"):
         lines += ["", "## Proposal"]
         for title, text in payload["proposal"].items():
             lines += ["", f"### {title}", "", text]
@@ -400,7 +453,7 @@ def context_delegated(payload: Payload, _: Style) -> str:
         lines += ["", "## Deltas"]
         for delta in payload["deltas"]:
             lines += ["", f"### Spec: {delta['spec']}", "", *_fenced(delta["text"])]
-    if payload["requirements"]:
+    if payload.get("requirements"):
         lines += ["", "## Requirements as they stand today"]
         for requirement in payload["requirements"]:
             title = f"### {requirement['spec']}: {requirement['name']}"

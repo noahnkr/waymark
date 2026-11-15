@@ -40,11 +40,11 @@ from waymark.record.state import (
     milestone_state,
     overlaps,
 )
-from waymark.record.tasks import Item
+from waymark.record.tasks import Item, ReviewRecord
 from waymark.record.terms import Layout, Verdict
 from waymark.services.check import Finding, Severity, check_record
 from waymark.services.common import Refusal, repo_locations
-from waymark.services.context import CONTEXT_VERSION
+from waymark.services.context import CONTEXT_VERSION, DELEGATED_VERSION
 
 if TYPE_CHECKING:  # the doctor's checks reach the views through the CLI; no import cycle
     from waymark.services.doctor import Report
@@ -58,14 +58,14 @@ VERSIONS = {
     "inbox": 1,
     "ls": 1,
     "check": 1,
-    "show.change": 1,
+    "show.change": 2,
     "show.spec": 1,
     "show.milestone": 1,
     "show.exploration": 1,
     "instructions": INSTRUCTIONS_VERSION,
     "context.explore": CONTEXT_VERSION,
-    "context.implement": CONTEXT_VERSION,
-    "context.review": CONTEXT_VERSION,
+    "context.implement": DELEGATED_VERSION,
+    "context.review": DELEGATED_VERSION,
     "doctor": 1,
     "pr": PR_VERSION,
 }
@@ -166,12 +166,23 @@ def _item_entries(name: str, change: Change, state: ChangeState) -> list[Payload
     entries: list[Payload] = []
     items = {item.number: item for item in (change.tasks.items if change.tasks else ())}
     command = f'wm resolve {name} {{}} "<what was decided>"'
+    if state.review.escalated:
+        records = change.tasks.review_records if change.tasks else ()
+        last = records[-1] if records else None
+        gap = last is not None and last.verdict is Verdict.SPEC_GAP
+        entries.append(
+            _entry(
+                "spec-gap" if gap else "verdict",
+                state.review.escalated,
+                change=name,
+                command=command.format("review"),
+            )
+        )
     for item_state in state.items:
         item = items[item_state.number]
-        last = item.records[-1] if item.records else None
         number = item.number
         if item_state.escalated:
-            gap = item.spec_gap is not None or (last and last.verdict is Verdict.SPEC_GAP)
+            gap = item.spec_gap is not None
             entries.append(
                 _entry(
                     "spec-gap" if gap else "verdict",
@@ -360,15 +371,39 @@ def ls(record: Record, kind: str, *, archived: bool = False, source: str | None 
     return {**_header("ls"), "kind": kind, "from": source, "entries": entries}
 
 
+def _record(record: ReviewRecord) -> Payload:
+    return {
+        "kind": record.kind.value,
+        "date": record.date.isoformat(),
+        "verdict": record.verdict.value if record.verdict else None,
+        "text": record.text,
+        "items": list(record.items),
+        "findings": [
+            {"severity": f.severity.value, "place": f.place, "text": f.text}
+            for f in record.findings
+        ],
+    }
+
+
+def _change_review(record: Record, change: Change, state: ChangeState | None) -> Payload:
+    """The change's review: its level, whether it is done, and its records with findings."""
+    review = state.review if state else None
+    return {
+        "level": (review.level if review else change.review_level(record.default_review)).value,
+        "reviewed": review.reviewed if review else None,
+        "reopen": list(review.reopen) if review else [],
+        "needs_human": review.escalated if review else None,
+        "records": [_record(r) for r in (change.tasks.review_records if change.tasks else ())],
+    }
+
+
 def _item(item: Item, state: ChangeState | None) -> Payload:
     item_state = next((i for i in state.items if i.number == item.number), None) if state else None
     return {
         "number": item.number,
         "title": item.title,
         "ticked": item.ticked,
-        "level": item_state.level.value if item_state else None,
         "delegate": item.delegate,
-        "reviewed": item_state.reviewed if item_state else None,
         "needs_human": item_state.escalated if item_state else None,
         "criteria": item.criteria,
         "verify": item.verify,
@@ -376,15 +411,7 @@ def _item(item: Item, state: ChangeState | None) -> Payload:
         "blocked": item.blocked,
         "spec_gap": item.spec_gap,
         "notes": list(item.notes),
-        "records": [
-            {
-                "kind": record.kind.value,
-                "date": record.date.isoformat(),
-                "verdict": record.verdict.value if record.verdict else None,
-                "text": record.text,
-            }
-            for record in item.records
-        ],
+        "records": [_record(record) for record in item.records],
     }
 
 
@@ -424,6 +451,7 @@ def show_change(record: Record, change: Change) -> Payload:
             else None
         ),
         "items": [_item(item, state) for item in (change.tasks.items if change.tasks else ())],
+        "review": _change_review(record, change, state),
         "problems": [
             {"path": p.path, "line": p.line, "code": p.code, "message": p.message}
             for p in change.problems

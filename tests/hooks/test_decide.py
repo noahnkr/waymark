@@ -18,7 +18,16 @@ FOLDER = f"changes/{NAME}"
 TASKS_FILE = f"{FOLDER}/tasks.md"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-INDEPENDENT = HEAD + "- [ ] 1.1 Cap it   `review: independent`\n  - Criteria: fifty at most\n"
+ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n"
+INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n")
+
+
+def built_for_review(project: Workspace) -> Workspace:
+    """An independently reviewed change with its one item ticked."""
+    project.change(proposal_text=INDEPENDENT, tasks=ONE_ITEM)
+    lifecycle.accept(project.root, NAME, DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    return project
 
 
 @pytest.fixture
@@ -126,15 +135,32 @@ def test_delegation_is_refused_when_the_record_has_problems(project: Workspace) 
     assert "sort.md" in decision.reason
 
 
-def test_delegation_to_a_reviewer_needs_something_to_review(accepted: Workspace) -> None:
-    assert "isn't ticked yet" in delegate(accepted, assets.REVIEWER, "add-limit 1.1").reason
+def test_delegation_to_a_reviewer_needs_something_to_review(project: Workspace) -> None:
+    project.change(proposal_text=INDEPENDENT)
+    lifecycle.accept(project.root, NAME, DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    assert "items still to build (1.2)" in delegate(project, assets.REVIEWER, "add-limit").reason
+    lifecycle.tick(project.root, NAME, "1.2")
+    assert delegate(project, assets.REVIEWER, "add-limit").allow
+
+
+def test_reviewer_is_started_with_the_change_alone(project: Workspace) -> None:
+    built_for_review(project)
+    refused = delegate(project, assets.REVIEWER, "add-limit 1.1")
+    assert not refused.allow
+    assert 'exactly "<change>"' in refused.reason
+
+
+def test_reviewer_is_not_started_below_independent(accepted: Workspace) -> None:
     lifecycle.tick(accepted.root, NAME, "1.1")
-    assert delegate(accepted, assets.REVIEWER, "add-limit 1.1").allow
+    lifecycle.tick(accepted.root, NAME, "1.2")
+    assert "no reviewer is started" in delegate(accepted, assets.REVIEWER, "add-limit").reason
 
 
 def test_delegation_of_an_unknown_change_or_item_is_refused(accepted: Workspace) -> None:
     assert "no active change" in delegate(accepted, assets.IMPLEMENTER, "add-order 1.1").reason
-    assert "no item 9.9" in delegate(accepted, assets.REVIEWER, "add-limit 9.9").reason
+    assert "no item 9.9" in delegate(accepted, assets.IMPLEMENTER, "add-limit 9.9").reason
+    assert "no active change" in delegate(accepted, assets.REVIEWER, "add-order").reason
 
 
 def test_other_agents_are_not_wm_business(accepted: Workspace) -> None:
@@ -241,8 +267,21 @@ def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -
             "fifty-one matches\n  - (review) 2026-01-16 pass: fine\n",
             "under item 1.1",
         ),
-        ("`review: none`\n", "`review: none`\n  - Blocked: waiting\n", "under item 1.2"),
-        ("`review: none`\n", "`review: none`\n  - Spec gap: unclear\n", "under item 1.2"),
+        (
+            "1.2 Document the limit\n",
+            "1.2 Document the limit\n  - Blocked: waiting\n",
+            "under item 1.2",
+        ),
+        (
+            "1.2 Document the limit\n",
+            "1.2 Document the limit\n  - Spec gap: unclear\n",
+            "under item 1.2",
+        ),
+        (
+            "1.2 Document the limit\n",
+            "1.2 Document the limit\n\n## Review\n\n- (self-review) 2026-01-16: fine\n",
+            "in the Review section",
+        ),
     ],
 )
 def test_agent_edit_that_adds_evidence_is_refused(
@@ -256,7 +295,8 @@ def test_agent_edit_that_adds_evidence_is_refused(
 
 def test_agent_edit_that_removes_or_changes_evidence_is_refused(accepted: Workspace) -> None:
     lifecycle.tick(accepted.root, NAME, "1.1")
-    lifecycle.self_review(accepted.root, NAME, "1.1", "fine", DAY)
+    lifecycle.tick(accepted.root, NAME, "1.2")
+    lifecycle.self_review(accepted.root, NAME, "fine", DAY)
     assert (
         "removes the tick on item 1.1"
         in replace(accepted, TASKS_FILE, "- [x] 1.1", "- [ ] 1.1").reason
@@ -322,7 +362,7 @@ def test_planner_may_run_the_other_wm_commands(accepted: Workspace) -> None:
     for text in (
         "wm tick add-limit 1.1",
         'wm archive add-limit --outcome "done"',
-        'wm review add-limit 1.1 --self "fine"',
+        'wm review add-limit --self "fine"',
         'git commit -m "feat: cap results"',
         "wm status",
     ):
@@ -464,26 +504,44 @@ def test_implementer_partial_leaves_a_note_and_the_item_unticked(accepted: Works
 
 
 def test_reviewer_verdict_is_written_from_its_own_words(project: Workspace) -> None:
-    project.change(tasks=INDEPENDENT)
-    lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    built_for_review(project)
     decision = stop(
         project,
         Role.REVIEWER,
-        "I checked.\n\nITEM: add-limit 1.1\nVERDICT: pass: boundary covered at 50 and 51",
+        "I checked.\n\nFINDING: suggestion: docs/search.md: say the limit\n\n"
+        "CHANGE: add-limit\nVERDICT: pass: boundary covered at 50 and 51",
     )
     assert decision.allow
-    assert "  - (review) 2026-01-15 pass: boundary covered at 50 and 51" in project.read(TASKS_FILE)
+    assert project.read(TASKS_FILE).endswith(
+        "## Review\n\n- (review) 2026-01-15 pass: boundary covered at 50 and 51\n"
+        "  - suggestion: docs/search.md: say the limit\n"
+    )
     assert project.change_state().applied
 
 
-def test_reviewer_changes_verdict_is_recorded_under_the_item(project: Workspace) -> None:
-    project.change(tasks=INDEPENDENT)
-    lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
-    stop(project, Role.REVIEWER, "ITEM: add-limit 1.1\nVERDICT: changes: off by one at 50")
-    assert "  - (review) 2026-01-15 changes: off by one at 50" in project.read(TASKS_FILE)
-    assert project.change_state().items[0].redo
+def test_reviewer_changes_verdict_names_the_items_to_rebuild(project: Workspace) -> None:
+    built_for_review(project)
+    stop(
+        project,
+        Role.REVIEWER,
+        "FINDING: critical: src/search.py:12: fifty-one come back\n"
+        "CHANGE: add-limit\nVERDICT: changes 1.1: off by one at 50",
+    )
+    text = project.read(TASKS_FILE)
+    assert "- (review) 2026-01-15 changes 1.1: off by one at 50" in text
+    assert "  - critical: src/search.py:12: fifty-one come back" in text
+    assert project.change_state().review.reopen == ("1.1",)
+
+
+def test_reviewer_finding_that_cannot_be_read_is_refused(project: Workspace) -> None:
+    built_for_review(project)
+    before = project.read(TASKS_FILE)
+    decision = stop(
+        project, Role.REVIEWER, "FINDING: looks odd\nCHANGE: add-limit\nVERDICT: pass: fine"
+    )
+    assert not decision.allow
+    assert '"FINDING: looks odd"' in decision.reason
+    assert project.read(TASKS_FILE) == before
 
 
 @pytest.mark.parametrize(
@@ -506,10 +564,12 @@ def test_implementer_must_end_with_its_item_and_result(accepted: Workspace, mess
     assert accepted.read(TASKS_FILE) == before
 
 
-def test_reviewer_must_end_with_its_item_and_verdict(accepted: Workspace) -> None:
-    decision = stop(accepted, Role.REVIEWER, "ITEM: add-limit 1.1\nRESULT: done")
-    assert not decision.allow
-    assert "VERDICT: pass | changes | spec-gap" in decision.reason
+def test_reviewer_must_end_with_its_change_and_verdict(accepted: Workspace) -> None:
+    for message in ("ITEM: add-limit 1.1\nRESULT: done", "ITEM: add-limit 1.1\nVERDICT: pass: ok"):
+        decision = stop(accepted, Role.REVIEWER, message)
+        assert not decision.allow
+        assert '"CHANGE: <change>"' in decision.reason
+        assert "VERDICT: pass | changes <item> <item>... | spec-gap" in decision.reason
 
 
 def test_ending_that_cannot_be_recorded_keeps_the_agent_going(accepted: Workspace) -> None:
@@ -568,15 +628,13 @@ def test_handback_records_every_result_as_a_final_message_would(accepted: Worksp
     assert "  - Blocked: no database" in accepted.read(TASKS_FILE)
 
 
-def test_reviewer_in_the_background_writes_its_verdict(project: Workspace) -> None:
-    project.change(tasks=INDEPENDENT)
-    lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+def test_reviewer_in_the_background(project: Workspace) -> None:
+    built_for_review(project)
     decision = handback(
-        project, Role.REVIEWER, "ITEM: add-limit 1.1\nVERDICT: pass: boundary covered at 50"
+        project, Role.REVIEWER, "CHANGE: add-limit\nVERDICT: pass: boundary covered at 50"
     )
     assert decision.allow
-    assert "  - (review) 2026-01-15 pass: boundary covered at 50" in project.read(TASKS_FILE)
+    assert "- (review) 2026-01-15 pass: boundary covered at 50" in project.read(TASKS_FILE)
     assert project.change_state().applied
 
 
@@ -590,9 +648,9 @@ def test_report_without_an_ending_is_refused(accepted: Workspace) -> None:
 
 
 def test_reviewer_report_without_a_verdict_is_refused(accepted: Workspace) -> None:
-    decision = handback(accepted, Role.REVIEWER, "ITEM: add-limit 1.1\nRESULT: done")
+    decision = handback(accepted, Role.REVIEWER, "CHANGE: add-limit\nRESULT: done")
     assert not decision.allow
-    assert "VERDICT: pass | changes | spec-gap" in decision.reason
+    assert "VERDICT: pass | changes <item> <item>... | spec-gap" in decision.reason
 
 
 def test_second_report_without_an_ending_is_let_through_with_a_notice(accepted: Workspace) -> None:

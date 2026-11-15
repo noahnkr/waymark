@@ -14,7 +14,7 @@ from waymark.record.state import (
     StepKind,
 )
 from waymark.record.tasks import RecordKind
-from waymark.record.terms import Layout, Phase, ReviewLevel, Verdict
+from waymark.record.terms import Layout, Phase, ReviewLevel, ReviewSeverity, Verdict
 from waymark.views.payloads import KINDS, VERSIONS
 
 Schema = dict[str, Any]
@@ -106,14 +106,25 @@ CHANGE_STATE = _object(
 
 DELTA_NAMES = {"added": NAMES, "modified": NAMES, "removed": NAMES}
 
+RECORD = _object(
+    {
+        "kind": _enum(RecordKind),
+        "date": DATE,
+        "verdict": _enum(Verdict, nullable=True),
+        "text": STRING,
+        "items": NAMES,
+        "findings": _array(
+            _object({"severity": _enum(ReviewSeverity), "place": STRING, "text": STRING})
+        ),
+    }
+)
+
 ITEM = _object(
     {
         "number": STRING,
         "title": STRING,
         "ticked": BOOLEAN,
-        "level": _enum(ReviewLevel, nullable=True),
         "delegate": BOOLEAN,
-        "reviewed": {"type": ["boolean", "null"]},
         "needs_human": TEXT_OR_NULL,
         "criteria": TEXT_OR_NULL,
         "verify": TEXT_OR_NULL,
@@ -121,16 +132,17 @@ ITEM = _object(
         "blocked": TEXT_OR_NULL,
         "spec_gap": TEXT_OR_NULL,
         "notes": NAMES,
-        "records": _array(
-            _object(
-                {
-                    "kind": _enum(RecordKind),
-                    "date": DATE,
-                    "verdict": _enum(Verdict, nullable=True),
-                    "text": STRING,
-                }
-            )
-        ),
+        "records": _array(RECORD),
+    }
+)
+
+CHANGE_REVIEW = _object(
+    {
+        "level": _enum(ReviewLevel),
+        "reviewed": {"type": ["boolean", "null"]},
+        "reopen": NAMES,
+        "needs_human": TEXT_OR_NULL,
+        "records": _array(RECORD),
     }
 )
 
@@ -221,6 +233,7 @@ SCHEMAS: dict[str, Schema] = {
             "deltas": _array(_object({"spec": STRING, **DELTA_NAMES})),
             "design": _nullable(_object({"decisions": NAMES})),
             "items": _array(ITEM),
+            "review": CHANGE_REVIEW,
             "problems": _array(
                 _object({"path": STRING, "line": INTEGER, "code": STRING, "message": STRING})
             ),
@@ -282,36 +295,62 @@ SCHEMAS: dict[str, Schema] = {
 
 _STEPS = [*(kind.value for kind in StepKind), "explore"]
 
-_PACK_ITEM = _object(
+_DEFINITION = {
+    "number": STRING,
+    "title": STRING,
+    "criteria": TEXT_OR_NULL,
+    "verify": TEXT_OR_NULL,
+    "repo": TEXT_OR_NULL,
+    "repo_found": {"type": ["boolean", "null"]},
+}
+_PACK_REVIEW = _object(
     {
-        "number": STRING,
-        "title": STRING,
-        "criteria": TEXT_OR_NULL,
-        "verify": TEXT_OR_NULL,
-        "repo": TEXT_OR_NULL,
-        "repo_found": {"type": ["boolean", "null"]},
-        "review_level": _enum(ReviewLevel),
-        "notes": NAMES,
-        "reviews": _array(
-            _object({"date": DATE, "verdict": _enum(Verdict, nullable=True), "text": STRING})
+        "date": DATE,
+        "verdict": _enum(Verdict, nullable=True),
+        "text": STRING,
+        "items": NAMES,
+        "findings": _array(
+            _object({"severity": _enum(ReviewSeverity), "place": STRING, "text": STRING})
         ),
-        "resolutions": NAMES,
     }
 )
+_PACK_ITEM = _object(
+    {**_DEFINITION, "notes": NAMES, "reviews": _array(_PACK_REVIEW), "resolutions": NAMES}
+)
+_DELTAS = _array(_object({"spec": STRING, "text": STRING}))
 
 
-def _delegated(role: str) -> Schema:
+def _implement_pack() -> Schema:
     return _payload(
-        f"context.{role}",
+        "context.implement",
         {
-            "for": {"const": role},
+            "for": {"const": "implement"},
             "change": STRING,
             "item": _PACK_ITEM,
             "context": STRING,
             "rules": STRING,
             "proposal": _nullable(SECTIONS),
-            "deltas": _array(_object({"spec": STRING, "text": STRING})),
+            "deltas": _DELTAS,
             "requirements": _array(_object({"spec": STRING, "name": STRING, "text": STRING})),
+            "design": TEXT_OR_NULL,
+            "ends_with": STRING,
+        },
+    )
+
+
+def _review_pack() -> Schema:
+    return _payload(
+        "context.review",
+        {
+            "for": {"const": "review"},
+            "change": STRING,
+            "review_level": _enum(ReviewLevel),
+            "items": _array(_object(_DEFINITION)),
+            "reviews": _array(_PACK_REVIEW),
+            "resolutions": NAMES,
+            "context": STRING,
+            "rules": STRING,
+            "deltas": _DELTAS,
             "design": TEXT_OR_NULL,
             "ends_with": STRING,
         },
@@ -379,8 +418,8 @@ SCHEMAS.update(
                 ),
             },
         ),
-        "context.implement": _delegated("implement"),
-        "context.review": _delegated("review"),
+        "context.implement": _implement_pack(),
+        "context.review": _review_pack(),
         "pr": _payload(
             "pr",
             {
