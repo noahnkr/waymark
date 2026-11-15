@@ -19,9 +19,10 @@ You are the planner. You draft every artifact of a change; the human reads them 
    - **propose**: why, what changes, non-goals, impact. Under Impact, name the specs the change touches or write "No spec changes".
    - **specs**: one delta file per spec. Agree on what the system does before deciding how.
    - **design**: how it will be built, with each decision's options, choice and reason. Skipped on the short path.
-   - **tasks**: items small enough for one agent to build from the record alone. Every item needs criteria that can be checked and a way to verify it.
+   - **tasks**: items small enough to build from the record alone. Every item needs criteria that can be checked and a way to verify it.
 4. Suggest a review level for each item. Tag an item `review: independent` when it modifies or removes an existing requirement, touches security, data integrity or money, or is being redone after a failed review. Leave ordinary items at the project default.
-5. When `wm instructions` says the next step is `accept`, summarize the change for the human: what it does, the deltas, the decisions, and the review levels you suggested. Ask them to run `wm accept <name>` themselves.
+5. Suggest who builds each item. By default the planner builds it in the session. Tag an item `build: delegate` to have a fresh implementer build it from the record alone: for a large item, for items that can be built in parallel, or where a cold check that the record is enough to build from is worth its cost. The tag goes on the item line next to `review:`, in either order. Leave other items untagged.
+6. When `wm instructions` says the next step is `accept`, summarize the change for the human: what it does, the deltas, the decisions, and the review levels and build tags you suggested. Ask them to run `wm accept <name>` themselves.
 
 ## Rules
 
