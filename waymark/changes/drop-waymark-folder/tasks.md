@@ -16,9 +16,10 @@
   - Note: `tests/services/test_githooks.py::test_git_hooks_in_a_code_repo_lists_only_the_hooks` now writes `.waymark/atlas.toml` by hand instead of calling `point`, since `integration.git_hooks` still takes a pointer `waymark/config.toml` for a record; 3.1 deletes that test.
   - Note: `wm doctor`'s new check is named "pointer" and appears only for a project found through the old pointer.
   - (self-review) 2026-11-15: wm atlas point writes the [pointer] waymark/config.toml, deletes .waymark/atlas.toml in the same transaction (new Transaction.delete saves the bytes and restores them on rollback) and removes an empty .waymark/; refuses over a record's settings; wm doctor warns about an old pointer with the wm atlas point command; wm atlas doctor reads both. Store, atlas and doctor tests (45) and mypy pass.
-- [ ] 1.3 Refuse `wm init` in a code repo that points at an atlas
+- [x] 1.3 Refuse `wm init` in a code repo that points at an atlas
   - Criteria: `wm init` (with or without `--atlas`/`--tool`) in a repository whose `waymark/config.toml` is a pointer, or that has only `.waymark/atlas.toml`, is refused before anything is written, naming the atlas and saying to run `wm init` in the atlas; a repository with a record behaves as before
   - Verify: tests in `tests/services/test_setup.py` for "Init in a code repo", with the new and the old pointer
+  - (self-review) 2026-11-15: init_project refuses before any write when waymark/config.toml is a pointer or only .waymark/atlas.toml exists, with or without --atlas/--tool, naming the atlas and saying to run wm init there; a repo with a record goes through as before. Six new cases and the setup tests (43) pass.
 
 ## 2. Commit messages in the command hook
 

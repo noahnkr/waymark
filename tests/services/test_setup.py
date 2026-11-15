@@ -221,6 +221,54 @@ def test_init_with_a_record_refuses_options_that_only_apply_to_a_new_one(tmp_pat
     assert record_bytes(tmp_path) == before
 
 
+def code_repo_files(root: Path) -> dict[Path, bytes]:
+    """Every file in a repository outside .git, with its bytes."""
+    return {
+        path: path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file() and ".git" not in path.parts
+    }
+
+
+@pytest.mark.parametrize(
+    ("pointer_file", "pointer_text"),
+    [
+        (
+            "waymark/config.toml",
+            '[pointer]\natlas = "notes"\npath = "../notes-atlas"\nwm_version = "0.1.1"\n',
+        ),
+        (".waymark/atlas.toml", 'atlas = "notes"\npath = "../notes-atlas"\n'),
+    ],
+    ids=["new pointer", "old pointer"],
+)
+@pytest.mark.parametrize(
+    "options",
+    [{}, {"atlas": "suite"}, {"tools": ("claude-code",)}],
+    ids=["plain", "with --atlas", "with --tool"],
+)
+def test_init_in_a_code_repo_is_refused_and_writes_nothing(
+    tmp_path: Path, pointer_file: str, pointer_text: str, options: dict[str, object]
+) -> None:
+    """Scenario: Init in a code repo."""
+    repo = tmp_path / "notes-api"
+    git_init(repo)
+    (repo / pointer_file).parent.mkdir(parents=True)
+    (repo / pointer_file).write_text(pointer_text, encoding="utf-8")
+    before = code_repo_files(repo)
+
+    with pytest.raises(Refusal) as refusal:
+        setup.init_project(repo, **options)  # type: ignore[arg-type]
+
+    message = str(refusal.value)
+    assert '"notes"' in message
+    assert 'Run "wm init" in the atlas' in message
+    assert code_repo_files(repo) == before
+    hooks_path = subprocess.run(
+        ["git", "-C", str(repo), "config", "core.hooksPath"], capture_output=True, check=False
+    )
+    assert hooks_path.stdout == b""
+
+
 def test_ignore_patterns_list_the_shared_skills_each_tool_and_the_hooks() -> None:
     tools = adapters.names()
     expected = ["/.agents/skills/wm-*/"]

@@ -12,6 +12,8 @@ from waymark.record.files import RecordFiles
 from waymark.record.githooks import hook_manager
 from waymark.record.milestones import GOAL_FILE, ROADMAP_FILE
 from waymark.record.names import NAME_RULE, is_valid_name
+from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE, is_pointer, parse_pointer
+from waymark.record.problems import Problem
 from waymark.record.project import RECORD_DIR
 from waymark.record.proposal import OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
@@ -40,6 +42,7 @@ def init_project(
             'wm needs a git repository, and this folder is not in one. Run "git init" first.'
         )
     files = RecordFiles(root)
+    _refuse_in_a_code_repo(files)
     if files.is_file(f"{RECORD_DIR}/{CONFIG_FILE}"):
         return _set_up_clone(root, atlas, tools)
     if atlas is not None and not _ATLAS_NAME.fullmatch(atlas):
@@ -75,6 +78,32 @@ def init_project(
         'To run "wm check" in GitHub Actions too, run "wm ci".\n'
         "Next: run the wm-kickoff skill in your agent tool to draft the charter.",
         paths,
+    )
+
+
+def _refuse_in_a_code_repo(files: RecordFiles) -> None:
+    """Refuse ``wm init`` in a code repo that points at an atlas, before anything is written.
+
+    The pointer is a pointer-only ``waymark/config.toml``, or, when there is no
+    ``waymark/config.toml``, wm 0.1.1's ``.waymark/atlas.toml``. A repository
+    with a record is left to the caller.
+    """
+    problems: list[Problem] = []
+    if files.is_file(POINTER_FILE):
+        text = files.read(POINTER_FILE, problems)
+        if text is None or not is_pointer(text):
+            return
+        source, old = POINTER_FILE, False
+    elif files.is_file(OLD_POINTER_FILE):
+        text = files.read(OLD_POINTER_FILE, problems)
+        source, old = OLD_POINTER_FILE, True
+    else:
+        return
+    pointer, _ = parse_pointer(text or "", old=old)
+    atlas = f'the atlas "{pointer.atlas}"' if pointer is not None else "an atlas"
+    raise Refusal(
+        f"This repository is a code repo that points at {atlas} ({source}), and its record "
+        'lives in the atlas. Nothing was written. Run "wm init" in the atlas instead.'
     )
 
 
