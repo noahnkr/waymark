@@ -8,6 +8,7 @@ Run by the release workflow. It only reads files.
 
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 from waymark import __version__
@@ -15,6 +16,7 @@ from waymark import __version__
 ROOT = Path(__file__).resolve().parent.parent
 CHANGELOG = ROOT / "CHANGELOG.md"
 README = ROOT / "README.md"
+CONFIG = ROOT / "waymark" / "config.toml"
 PENDING = "pending the 0.1.0 smoke test"
 _HEADING = re.compile(r"^## \[(?P<version>[^\]]+)\] - (?P<date>.+)$", re.MULTILINE)
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -30,8 +32,21 @@ def entry(changelog: str, version: str) -> str | None:
     return None
 
 
-def problems(tag: str, version: str, changelog: str, readme: str) -> list[str]:
-    """Why a tag can't be released; empty when it can."""
+def pin(config: Path) -> str | None:
+    """The wm version the record pins in its config; None when the file or the key is missing."""
+    try:
+        settings = tomllib.loads(config.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
+    value = settings.get("wm_version")
+    return value if isinstance(value, str) else None
+
+
+def problems(tag: str, version: str, changelog: str, readme: str, pinned: str | None) -> list[str]:
+    """Why a tag can't be released; empty when it can.
+
+    `pinned` is the record's `wm_version` from waymark/config.toml, None when it is missing.
+    """
     found = []
     if tag != f"v{version}":
         found.append(f"The tag {tag} doesn't match the package version {version} (tag v{version}).")
@@ -48,6 +63,16 @@ def problems(tag: str, version: str, changelog: str, readme: str) -> list[str]:
             found.append(f"The changelog entry for {version} doesn't record the smoke test result.")
     if PENDING in readme:
         found.append("The README still says the Claude Code version is pending the smoke test.")
+    if pinned is None:
+        found.append(
+            "waymark/config.toml is missing or doesn't set wm_version. "
+            f"Set it to {version} and run wm update."
+        )
+    elif pinned != version:
+        found.append(
+            f"waymark/config.toml pins wm_version {pinned}, not the package version {version}. "
+            f"Set the pin to {version} and run wm update."
+        )
     return found
 
 
@@ -64,7 +89,8 @@ def main(argv: list[str]) -> int:
             return 1
         print(text, end="")
         return 0
-    found = problems(tag, __version__, changelog, README.read_text(encoding="utf-8"))
+    readme = README.read_text(encoding="utf-8")
+    found = problems(tag, __version__, changelog, readme, pin(CONFIG))
     for problem in found:
         print(problem, file=sys.stderr)
     if not found:
