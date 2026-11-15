@@ -22,6 +22,7 @@ class EventKind(StrEnum):
     EDITED = "edited"
     COMMAND = "command"
     AGENT_STOP = "agent-stop"
+    HANDBACK = "handback"
 
 
 @dataclass(frozen=True)
@@ -44,8 +45,13 @@ class Event:
       ``replacements`` the edit makes;
     - ``EDITED``: ``path``;
     - ``COMMAND``: ``command``;
-    - ``AGENT_STOP``: ``message`` (the agent's final words) and ``retried``
-      (it was already asked once to fix its ending).
+    - ``AGENT_STOP``: ``message`` (the agent's final words), ``retried``
+      (it was already asked once to fix its ending) and ``agent_id``;
+    - ``HANDBACK``: ``message`` (the report an agent hands back through its
+      tool instead of a final message) and ``agent_id``.
+
+    ``agent_id`` names one run of a delegated agent, so its stop can tell
+    whether its handback was already recorded.
     """
 
     kind: EventKind
@@ -59,6 +65,7 @@ class Event:
     command: str = ""
     message: str = ""
     retried: bool = False
+    agent_id: str = ""
 
 
 @dataclass(frozen=True)

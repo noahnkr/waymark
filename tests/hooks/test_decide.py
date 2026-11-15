@@ -50,8 +50,26 @@ def command(project: Workspace, text: str, role: Role = Role.PLANNER) -> Decisio
     return ask(project, EventKind.COMMAND, role=role, command=text)
 
 
-def stop(project: Workspace, role: Role, message: str, retried: bool = False) -> Decision:
-    return ask(project, EventKind.AGENT_STOP, role=role, message=message, retried=retried)
+def stop(
+    project: Workspace, role: Role, message: str, retried: bool = False, agent_id: str = ""
+) -> Decision:
+    return ask(
+        project,
+        EventKind.AGENT_STOP,
+        role=role,
+        message=message,
+        retried=retried,
+        agent_id=agent_id,
+    )
+
+
+def handback(project: Workspace, role: Role, message: str, agent_id: str = "agent-1") -> Decision:
+    return ask(project, EventKind.HANDBACK, role=role, message=message, agent_id=agent_id)
+
+
+def markers(project: Workspace) -> list[str]:
+    folder = project.root / ".git" / "waymark" / "agents"
+    return sorted(path.name for path in folder.iterdir()) if folder.is_dir() else []
 
 
 def test_events_outside_a_waymark_project_are_allowed(tmp_path: Path) -> None:
@@ -420,3 +438,107 @@ def test_last_ending_in_the_message_is_the_one_recorded(accepted: Workspace) -> 
 
 def test_main_session_stopping_is_not_wm_business(accepted: Workspace) -> None:
     assert stop(accepted, Role.PLANNER, "nothing special") == Decision()
+
+
+def test_implementer_done_in_the_foreground_ticks_the_item(accepted: Workspace) -> None:
+    decision = stop(
+        accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: done: built", agent_id="a1"
+    )
+    assert decision.allow
+    assert "- [x] 1.1" in accepted.read(TASKS_FILE)
+    assert markers(accepted) == []
+
+
+def test_implementer_in_the_background_ticks_the_item(accepted: Workspace) -> None:
+    decision = handback(
+        accepted, Role.IMPLEMENTER, "Built it.\n\nITEM: add-limit 1.1\nRESULT: done: built"
+    )
+    assert decision.allow
+    assert decision.notice.startswith("Waymark: ")
+    assert "- [x] 1.1" in accepted.read(TASKS_FILE)
+    assert markers(accepted) == ["agent-1"]
+
+
+def test_handback_records_every_result_as_a_final_message_would(accepted: Workspace) -> None:
+    handback(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: blocked: no database")
+    assert "  - Blocked: no database" in accepted.read(TASKS_FILE)
+
+
+def test_reviewer_in_the_background_writes_its_verdict(project: Workspace) -> None:
+    project.change(tasks=INDEPENDENT)
+    lifecycle.accept(project.root, NAME, DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    decision = handback(
+        project, Role.REVIEWER, "ITEM: add-limit 1.1\nVERDICT: pass: boundary covered at 50"
+    )
+    assert decision.allow
+    assert "  - (review) 2026-01-15 pass: boundary covered at 50" in project.read(TASKS_FILE)
+    assert project.change_state().applied
+
+
+def test_report_without_an_ending_is_refused(accepted: Workspace) -> None:
+    before = accepted.read(TASKS_FILE)
+    decision = handback(accepted, Role.IMPLEMENTER, "All done, the tests pass.")
+    assert not decision.allow
+    assert '"ITEM: <change> <item>"' in decision.reason
+    assert "RESULT: done | partial | spec-gap | blocked" in decision.reason
+    assert accepted.read(TASKS_FILE) == before
+
+
+def test_reviewer_report_without_a_verdict_is_refused(accepted: Workspace) -> None:
+    decision = handback(accepted, Role.REVIEWER, "ITEM: add-limit 1.1\nRESULT: done")
+    assert not decision.allow
+    assert "VERDICT: pass | changes | spec-gap" in decision.reason
+
+
+def test_second_report_without_an_ending_is_let_through_with_a_notice(accepted: Workspace) -> None:
+    before = accepted.read(TASKS_FILE)
+    assert not handback(accepted, Role.IMPLEMENTER, "Finished.").allow
+    decision = handback(accepted, Role.IMPLEMENTER, "Finished, really.")
+    assert decision.allow
+    assert "recorded nothing for the implementer" in decision.notice
+    assert "wm commands" in decision.notice
+    assert accepted.read(TASKS_FILE) == before
+    after = stop(accepted, Role.IMPLEMENTER, "Bye.", agent_id="agent-1")
+    assert after == Decision()
+    assert markers(accepted) == []
+
+
+def test_report_refused_once_then_fixed_is_recorded(accepted: Workspace) -> None:
+    assert not handback(accepted, Role.IMPLEMENTER, "Finished.").allow
+    assert handback(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: done: ok").allow
+    assert "- [x] 1.1" in accepted.read(TASKS_FILE)
+
+
+def test_stop_after_a_recorded_handback_is_allowed_without_an_ending(accepted: Workspace) -> None:
+    handback(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: done: built")
+    after = accepted.read(TASKS_FILE)
+    decision = stop(accepted, Role.IMPLEMENTER, "Report handed back.", agent_id="agent-1")
+    assert decision == Decision()
+    assert accepted.read(TASKS_FILE) == after
+    assert markers(accepted) == []
+
+
+def test_stop_of_another_agent_still_needs_its_ending(accepted: Workspace) -> None:
+    handback(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: done: built")
+    decision = stop(accepted, Role.IMPLEMENTER, "Report handed back.", agent_id="agent-2")
+    assert not decision.allow
+    assert markers(accepted) == ["agent-1"]
+
+
+def test_stop_after_one_refused_handback_still_needs_its_ending(accepted: Workspace) -> None:
+    handback(accepted, Role.IMPLEMENTER, "Finished.")
+    assert not stop(accepted, Role.IMPLEMENTER, "Bye.", agent_id="agent-1").allow
+    decision = stop(
+        accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: done: ok", agent_id="agent-1"
+    )
+    assert decision.allow
+    assert "- [x] 1.1" in accepted.read(TASKS_FILE)
+    assert markers(accepted) == []
+
+
+def test_main_session_handing_back_is_not_wm_business(accepted: Workspace) -> None:
+    before = accepted.read(TASKS_FILE)
+    assert handback(accepted, Role.PLANNER, "nothing special") == Decision()
+    assert accepted.read(TASKS_FILE) == before
+    assert markers(accepted) == []

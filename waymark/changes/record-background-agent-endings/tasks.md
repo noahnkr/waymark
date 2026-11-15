@@ -10,9 +10,11 @@
 
 ## 2. Recording handbacks
 
-- [ ] 2.1 Record an ending from a handed-back report in the core   `review: independent`
+- [x] 2.1 Record an ending from a handed-back report in the core   `review: independent`
   - Criteria: a `HANDBACK` event and `agent_id` on `AGENT_STOP` exist in `hooks/events.py`; a handback with an ending records it exactly as a final message would, and marks the agent; a handback without one is refused with the ending reason, and on the second refusal allowed with a notice to record the result by hand; `AGENT_STOP` for an agent with a marker is allowed without reading the message, and the marker removed; `AGENT_STOP` without a marker behaves as before
   - Verify: tests in `tests/hooks/test_decide.py` for every scenario of the `agent-results` delta: final message, background implementer, background reviewer, report without an ending, stop after a recorded handback
+  - Note: for 2.2: `Event(EventKind.HANDBACK, cwd, role, message=..., agent_id=...)`; `AGENT_STOP` takes `agent_id=` too. Markers are keyed on `project.root`. A stop whose marker holds only one refused attempt still needs its ending, as the design says ("Otherwise it behaves as today"); the marker is removed whenever the stop is let through.
+  - (review) 2026-11-15 pass: HANDBACK and AGENT_STOP agent_id are in events.py; a handback is recorded through the same _record as a final message and marks the agent; a report without an ending is refused with the ending reason and let through with a notice on the second refusal; a stop after a recorded or given-up handback is allowed unread and its marker removed, and other stops behave as before; every agent-results scenario is tested and pytest (799), ruff and mypy pass.
 - [ ] 2.2 Map Claude Code's handback, and let the agents use it   `review: independent`
   - Criteria: `PreToolUse` on `SubagentHandback` becomes a `HANDBACK` event with the report from `tool_input.message`, the role from `agent_type` and `agent_id`; `SubagentStop` carries `agent_id`; a refused handback becomes a `PreToolUse` deny with the reason; the `PreToolUse` matcher includes `SubagentHandback`; neither agent definition forbids it; the settings and agent snapshots are updated
   - Verify: tests in `tests/adapters/test_claude_code.py` with a handback payload for each role, a refused one, and the updated snapshots; a test runs `wm hook claude-code PreToolUse` with a handback payload in a project and the item is ticked
