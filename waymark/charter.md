@@ -6,8 +6,8 @@ Waymark is spec-driven development for coding agents, built on living specs: pla
 markdown in the repository that says what the system does today. Every change starts
 as an edit to those specs and is approved by a human before anything is built. Each
 task is built from the written change, by the main session or, when tagged, by a fresh
-agent that sees only the record, and riskier tasks are checked by a second agent that
-never saw the build. The command-line tool, `wm`
+agent that sees only the record. Each change is reviewed once, as a whole, and riskier
+changes by a second agent that never saw the build. The command-line tool, `wm`
 (package `waymark-cli`), keeps track of where it all stands.
 
 It is for solo developers and small teams (roughly two to five) building real projects
@@ -20,7 +20,7 @@ atlas).
 - Every review is recorded under its task, and evidence is written only by `wm`.
 - Anyone can pick up the work from the files and git alone, in any session, on any machine.
 - The human approves each change twice: at accept and at archive.
-- Small changes stay light (the short path); big ones get a design and independent review.
+- Small changes stay light (the short path); big ones get a design, and risky ones an independent review.
 - Waymark is developed with Waymark: this record is the source of truth for its own work.
 
 ## Non-goals
@@ -73,7 +73,7 @@ Smoke test: the manual run of one change through Claude Code before each release
 ### tasks
 
 - Every new rule gets a test named after it.
-- Docs that a change makes stale get their own item, review level `none`.
+- Docs that a change makes stale get their own item.
 
 ### apply
 

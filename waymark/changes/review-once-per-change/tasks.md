@@ -24,6 +24,6 @@
 - [x] 2.1 Rewrite the skills and the reviewer definition for one review per change
   - Criteria: `wm-apply` has one review step per change at its level, with findings and named items on `changes`; `wm-propose` suggests the `Review:` line instead of item tags; `wm-update` says the line withdraws acceptance; `wm-onboard` and `wm-pr` match; `wm-reviewer` is started with `<change>`, checks completeness, correctness and coherence across the change, reports `FINDING:` lines and ends with `CHANGE:` then `VERDICT:`; the planner runs `wm update` to regenerate the rendered files
   - Verify: `uv run --no-sync pytest tests/adapters`; read each skill once through as the planner would
-- [ ] 2.2 Update the charter and the docs
+- [x] 2.2 Update the charter and the docs
   - Criteria: the charter's vision speaks of riskier changes, not tasks, being checked by a second agent, and its tasks rule no longer gives docs items review level `none`; concepts (the review levels, the gates, the glossary), getting started, the smoke test, architecture and the README describe one review per change; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`

@@ -17,8 +17,8 @@ Waymark is spec-driven development built on **living specs**: plain markdown in
 your repository that says what your system does today. Every change starts as an
 edit to those specs, and nothing is built until you've approved it. Then your
 agent builds each task from the written change, or hands a task you tagged to a
-fresh agent that sees only the record. The riskier tasks are checked by a second
-agent that never saw how they were built.
+fresh agent that sees only the record. Each change is then reviewed once, as a
+whole, and a riskier change by a second agent that never saw how it was built.
 A small command-line tool, `wm`, keeps track of where it all stands.
 
 ## See it in action
@@ -194,16 +194,17 @@ A search SHALL return at most fifty results.
   change, by your session or, for a task tagged `build: delegate`, by a fresh
   agent that sees nothing else. When something is missing, the agent writes it
   into the record or reports a spec gap instead of guessing.
-- **Review is recorded.** Each task is checked against its criteria, by your
-  session for routine work or by an independent reviewer agent that never saw
-  the build, and the result is written right under the task.
+- **Review is recorded.** Each change is checked once, as a whole, against its
+  scenarios, design and criteria: by your session for routine work, or by an
+  independent reviewer agent that never saw the build. The verdict and its
+  findings are written at the end of the task list.
 - **Pick up anywhere.** `wm` works out where things stand from the files and
   git, in any session, on any machine.
 - **Two sign-offs, both yours.** Agents draft every file and write the code. You
   approve each change before it's built, and again when it's archived.
 - **Light for small changes, thorough for big ones.** A small change takes the
   short path: a proposal, a task list and a quick self-check. A bigger one adds
-  a design, and its riskier tasks get a second agent as an independent reviewer.
+  a design, and a riskier change gets a second agent as an independent reviewer.
 
 In Claude Code, these rules are enforced by hooks, not just asked for. See
 [what's enforced, and where](#whats-enforced-and-where).
@@ -262,7 +263,7 @@ they're measured.
 
 | Enforced by | What | Holds in |
 |---|---|---|
-| `wm` and CI | Nothing is built before acceptance; archive refuses unbuilt or unreviewed items; conflicting changes are caught; record health (`wm check`, in CI) | Every agent tool |
+| `wm` and CI | Nothing is built before acceptance; archive refuses unbuilt items or an unreviewed change; conflicting changes are caught; record health (`wm check`, in CI) | Every agent tool |
 | Claude Code's hooks | Only you accept a change or override a missing review; implementers edit only code and their notes; in an atlas, the planner and implementers edit code only in the repo of the item being built; reviewers edit nothing; delegated agents can't commit, push or write the record; commit messages are conventional commits; results are recorded from the agents' own words | Claude Code |
 
 These are guard rails against mistakes and shortcuts, not security against

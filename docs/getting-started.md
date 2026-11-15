@@ -89,21 +89,24 @@ yourself). It takes one real, small change on your own code through every step,
 and explains each one as it happens:
 
 1. **Propose.** The agent drafts a proposal: why, what changes, non-goals,
-   impact. A small change takes the short path: proposal and tasks, no design.
+   impact, and the change's review level when it isn't the project default. A
+   small change takes the short path: proposal and tasks, no design.
 2. **Specs.** It writes the change's deltas against the living specs. On an
    existing codebase, this is where the first spec for that area is born.
-3. **Tasks.** It writes the task list: each item with criteria, how to verify
-   it, and a review level.
+3. **Tasks.** It writes the task list: each item with criteria and how to
+   verify it.
 4. **Accept.** You read the change and run `wm accept <change>` yourself. Agents
    are blocked from running it.
 5. **Apply.** The agent builds each item itself, from the record, and records
    the result. An item tagged `build: delegate` goes to a fresh implementer
    agent instead (see [who builds an item](concepts.md#who-builds-an-item)).
-6. **Review.** Each item is checked at its level, and the check is written under
-   the item.
+6. **Review.** Once every item is built, the whole change is checked once at
+   its level, and the review and its findings are written at the end of the task
+   list (see [review](concepts.md#review)).
 7. **Archive.** Your second approval. Once you agree, the change is archived:
    its deltas merge into the specs and its outcome is written. `wm` refuses while
-   any item is unbuilt or unreviewed; only you can archive past a missing review,
+   any item is unbuilt or the change is unreviewed; only you can archive past a
+   missing review,
    with `wm archive <change> --override "<reason>"`.
 
 ## Every day after that
