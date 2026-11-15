@@ -10,9 +10,10 @@
   - Criteria: at the apply step, `wm instructions --change <change>` (text and `--json`) tells the planner to build an untagged item from `wm context <change> <item> --for implement`, to run the checks the item touches, and to record the result with `wm tick`, `wm block` or `wm gap`, and it lists those commands without mentioning an implementer; for a tagged item it gives today's guidance to start an implementer; `wm reopen` comes first in both when a review asked for changes
   - Verify: tests in `tests/services/test_agent_interface.py` for the scenarios "Untagged item" and "Tagged item", and for a reopened item of each kind
   - (self-review) 2026-11-15: apply guidance branches on Item.delegate: untagged items tell the planner to build from the context pack, run the checks the item touches and record with wm tick/block/gap (commands match their CLI syntax), with no implementer mentioned; tagged items keep the implementer guidance; wm reopen stays first in both. Agent-interface tests (29) pass, covering both scenarios and a reopened item of each kind.
-- [ ] 1.3 Let the planner edit an accepted item's code repo in an atlas
+- [x] 1.3 Let the planner edit an accepted item's code repo in an atlas
   - Criteria: in an atlas, `hooks/decide.py` allows a planner edit inside a code repo named by the next item of an accepted change, and refuses one in any other code repo with a reason that names the repos it may edit now; edits to the record and outside an atlas are unchanged; `working_repos` gets a name that isn't specific to implementers
   - Verify: tests in `tests/hooks/test_decide.py` for the scenarios "Repo of the item being built" and "Another repo", and the existing implementer edit tests still pass
+  - (self-review) 2026-11-15: in an atlas the planner may edit a code repo named by the next item of an accepted change and is refused elsewhere with the repos it may edit now (shared _places helper); record edits, edits outside an atlas and implementer wording unchanged; working_repos renamed editable_repos with no leftover references. Hook tests (170) and mypy pass, including both scenarios.
 
 ## 2. Skills, charter and docs
 

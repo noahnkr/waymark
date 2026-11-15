@@ -7,7 +7,7 @@ import pytest
 
 from tests.conftest import git_init
 from tests.support import ATLAS_CONFIG, DESIGN, Workspace, delta, requirement
-from waymark.hooks.decide import decide, working_repos
+from waymark.hooks.decide import decide, editable_repos
 from waymark.hooks.events import Decision, Event, EventKind, Role
 from waymark.services import lifecycle
 from waymark.services.atlas import register
@@ -46,7 +46,7 @@ def edit(atlas: Workspace, path: Path, role: Role) -> Decision:
 def test_implementer_may_edit_inside_the_repo_of_the_item_being_applied(
     suite: Workspace, tmp_path: Path
 ) -> None:
-    assert working_repos(suite.record()) == {"api": [f"{NAME} 1.1"]}
+    assert editable_repos(suite.record()) == {"api": [f"{NAME} 1.1"]}
     assert edit(suite, tmp_path / "suite-api" / "src" / "app.py", Role.IMPLEMENTER).allow
 
 
@@ -67,7 +67,7 @@ def test_implementer_edit_outside_every_repo_is_refused_in_an_atlas(
 def test_the_allowed_repo_moves_on_with_the_next_item(suite: Workspace, tmp_path: Path) -> None:
     lifecycle.tick(suite.root, NAME, "1.1")
     lifecycle.self_review(suite.root, NAME, "1.1", "fine", DAY)
-    assert working_repos(suite.record()) == {"web": [f"{NAME} 1.2"]}
+    assert editable_repos(suite.record()) == {"web": [f"{NAME} 1.2"]}
     assert edit(suite, tmp_path / "web" / "page.html", Role.IMPLEMENTER).allow
     assert not edit(suite, tmp_path / "suite-api" / "app.py", Role.IMPLEMENTER).allow
 
@@ -76,18 +76,37 @@ def test_no_repo_is_open_to_implementers_while_no_item_is_to_apply(
     suite: Workspace, tmp_path: Path
 ) -> None:
     suite.replace(f"changes/{NAME}/tasks.md", "fifty at most", "at most fifty")
-    assert working_repos(suite.record()) == {}
+    assert editable_repos(suite.record()) == {}
     decision = edit(suite, tmp_path / "suite-api" / "app.py", Role.IMPLEMENTER)
     assert not decision.allow
     assert "No accepted change has an item to apply" in decision.reason
 
 
-def test_planner_edit_inside_a_code_repo_is_refused_in_an_atlas(
+def test_planner_may_edit_only_the_repo_of_the_item_being_applied(
     suite: Workspace, tmp_path: Path
 ) -> None:
+    assert edit(suite, tmp_path / "suite-api" / "app.py", Role.PLANNER).allow
+    decision = edit(suite, tmp_path / "web" / "page.html", Role.PLANNER)
+    assert not decision.allow
+    assert '"api"' in decision.reason
+    assert f"{NAME} 1.1" in decision.reason
+    assert edit(suite, suite.root / "README.md", Role.PLANNER).allow
+
+
+def test_planner_follows_the_next_item_to_its_repo(suite: Workspace, tmp_path: Path) -> None:
+    lifecycle.tick(suite.root, NAME, "1.1")
+    lifecycle.self_review(suite.root, NAME, "1.1", "fine", DAY)
+    assert edit(suite, tmp_path / "web" / "page.html", Role.PLANNER).allow
+    assert not edit(suite, tmp_path / "suite-api" / "app.py", Role.PLANNER).allow
+
+
+def test_no_repo_is_open_to_the_planner_while_no_item_is_to_apply(
+    suite: Workspace, tmp_path: Path
+) -> None:
+    suite.replace(f"changes/{NAME}/tasks.md", "fifty at most", "at most fifty")
     decision = edit(suite, tmp_path / "suite-api" / "app.py", Role.PLANNER)
     assert not decision.allow
-    assert "The planner edits only the record" in decision.reason
+    assert "the planner may edit" in decision.reason
     assert edit(suite, suite.root / "README.md", Role.PLANNER).allow
 
 
@@ -98,7 +117,7 @@ def test_a_repo_found_through_its_hint_is_checked_the_same_way(tmp_path: Path) -
     atlas.change(tasks=TASKS.split("- [ ] 1.2", maxsplit=1)[0], design=DESIGN)
     lifecycle.accept(atlas.root, NAME, DAY)
     assert edit(atlas, tmp_path / "suite-api" / "app.py", Role.IMPLEMENTER).allow
-    assert not edit(atlas, tmp_path / "suite-api" / "app.py", Role.PLANNER).allow
+    assert edit(atlas, tmp_path / "suite-api" / "app.py", Role.PLANNER).allow
 
 
 def test_in_repo_layout_keeps_code_edits_open(project: Workspace) -> None:
