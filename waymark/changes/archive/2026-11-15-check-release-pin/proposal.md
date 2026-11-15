@@ -21,3 +21,7 @@ Waymark now develops itself with its own record, which pins the `wm` version in 
 ## Impact
 
 No spec changes. This is maintainer tooling in `tools/release.py`, not behavior of `wm`. Its tests are in `tests/test_docs.py`.
+
+## Outcome
+
+python -m tools.release check <tag> now reads wm_version from waymark/config.toml and refuses a release when the pin is missing or differs from the package version, saying to set it and run wm update. Built as proposed, on the short path, and recorded by the handback hook without a manual tick.
