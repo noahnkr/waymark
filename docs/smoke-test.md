@@ -35,7 +35,8 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 
 ## Propose and accept
 
-- [ ] Run `/wm-propose` for a small change with **two** items, one of them tagged
+- [ ] Run `/wm-propose` for a small change with **three** items: one untagged,
+      and two tagged `build: delegate`, one of which is also tagged
       `review: independent`. Not on the short path.
 - [ ] Ask the agent to run `wm accept <change>`. **The hook refuses it**, and the
       agent tells you to run it yourself.
@@ -43,7 +44,10 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 
 ## Apply and review
 
-- [ ] Run `/wm-apply`. The planner starts the `wm-implementer` agent with a
+- [ ] Run `/wm-apply`. **The planner builds the untagged item itself**: it reads
+      `wm context <change> <item> --for implement`, runs the checks the item
+      touches and ticks the item with `wm tick`. It starts no implementer.
+- [ ] For a tagged item, the planner starts the `wm-implementer` agent with a
       prompt of exactly `<change> <item>`.
 - [ ] Ask the planner to delegate an item with extra words in the prompt
       ("build 1.1 carefully"). **The hook refuses the delegation.**
@@ -73,7 +77,7 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       verdict is written under the item as a `(review)` line in the reviewer's
       own words. The reviewer can't edit files (ask it to fix something; it is
       refused).
-- [ ] The other item gets a `(self-review)` line from the planner.
+- [ ] The other items get a `(self-review)` line from the planner.
 - [ ] The planner commits each item's work with a conventional message, after
       its review.
 
@@ -95,6 +99,9 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       `.claude/settings.local.json`.
 - [ ] **Hooks see those edits (G57).** An implementer's edit in the wrong code
       repo is refused; in its item's repo it is allowed.
+- [ ] **The planner's edits.** While an untagged item that names one repo is
+      being built, the planner's edit in that repo is allowed. Its edit in the
+      other repo is refused, with a reason that names the repo it may edit now.
 
 ## Record the result
 

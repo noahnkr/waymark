@@ -15,9 +15,10 @@
 
 Waymark is spec-driven development built on **living specs**: plain markdown in
 your repository that says what your system does today. Every change starts as an
-edit to those specs, and nothing is built until you've approved it. Then each
-task goes to a fresh agent that works from the written change alone, and the
-riskier ones are checked by a second agent that never saw how they were built.
+edit to those specs, and nothing is built until you've approved it. Then your
+agent builds each task from the written change, or hands a task you tagged to a
+fresh agent that sees only the record. The riskier tasks are checked by a second
+agent that never saw how they were built.
 A small command-line tool, `wm`, keeps track of where it all stands.
 
 ## See it in action
@@ -42,11 +43,11 @@ $ wm status
 $ wm accept add-result-limit
 Accepted "add-result-limit". Its items can now be applied.
 
-# /wm-apply: a fresh agent builds 1.1 from the change alone and ends with
-#   RESULT: done: capped after sorting; the fifty-one-match test passes
+# /wm-apply: the agent builds 1.1 from the change, runs the
+# fifty-one-match test, and runs wm tick add-result-limit 1.1
 # A reviewer agent that never saw the build checks it and ends with
 #   VERDICT: pass: cap and order hold; the scenario is covered by the test
-# wm writes both under 1.1. Then 1.2 is built; it needs no review.
+# wm writes the verdict under 1.1. Then 1.2 is built; it needs no review.
 
 $ wm status
 ── Changes in flight ───────────────────────────────────────────────────
@@ -184,9 +185,10 @@ A search SHALL return at most fifty results.
 
 ## Why Waymark
 
-- **Agents only know what's written down.** Each task is built by a fresh agent
-  from the written change alone. When something is missing, it reports a spec
-  gap instead of guessing.
+- **Agents only know what's written down.** Each task is built from the written
+  change, by your session or, for a task tagged `build: delegate`, by a fresh
+  agent that sees nothing else. When something is missing, the agent writes it
+  into the record or reports a spec gap instead of guessing.
 - **Review is recorded.** Each task is checked against its criteria, by your
   session for routine work or by an independent reviewer agent that never saw
   the build, and the result is written right under the task.
@@ -256,7 +258,7 @@ they're measured.
 | Enforced by | What | Holds in |
 |---|---|---|
 | `wm` and CI | Nothing is built before acceptance; archive refuses unbuilt or unreviewed items; conflicting changes are caught; record health (`wm check`, in CI) | Every agent tool |
-| Claude Code's hooks | Only you accept a change or override a missing review; implementers edit only code (in their item's repo) and their notes; reviewers edit nothing; delegated agents can't commit, push or write the record; commit messages are conventional commits; results are recorded from the agents' own words | Claude Code |
+| Claude Code's hooks | Only you accept a change or override a missing review; implementers edit only code and their notes; in an atlas, the planner and implementers edit code only in the repo of the item being built; reviewers edit nothing; delegated agents can't commit, push or write the record; commit messages are conventional commits; results are recorded from the agents' own words | Claude Code |
 
 These are guard rails against mistakes and shortcuts, not security against
 someone set on getting around them.

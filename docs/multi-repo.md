@@ -141,10 +141,12 @@ its items name. The `wm-apply` skill creates the branches where they're missing.
 `wm status` shows each repo's current branch under the change and warns when one
 differs while the change is being built.
 
-**Building.** The implementer's context pack gives its item's repo folder on
-this machine. Claude Code's hooks hold each implementer's edits to that repo, and
-refuse the planner's edits in any code repo. An item whose repo isn't on this
-machine can't be delegated until it is registered.
+**Building.** An item's context pack gives its repo folder on this machine.
+Claude Code's hooks let the planner and implementers edit a code repo only while
+an accepted change's item being built names it, and refuse an edit in any other
+code repo with the repos that may be edited now. The planner may edit the
+record at any time. An item whose repo isn't on this machine can't be delegated
+until it is registered.
 
 **Commits and pull requests.** Code is committed in the code repos and the record
 in the atlas. Each repository gets its own pull request; the `wm-pr` skill opens
