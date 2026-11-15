@@ -1,0 +1,31 @@
+# Tasks
+
+## 1. The pointer in the code repo's settings
+
+- [ ] 1.1 Read a pointer-only `waymark/config.toml`, and still read the old pointer   `review: independent`
+  - Criteria: `record/pointer.py` reads and renders a `waymark/config.toml` whose only table is `[pointer]` (`atlas`, optional `path`, `wm_version`), tells it from a record's settings with `is_pointer`, and still parses `.waymark/atlas.toml`; `find_project` goes through a pointer found as `waymark/config.toml`, falls back to `.waymark/atlas.toml` before the registry, and marks a project found through the old file; `wm check` and `wm status` run in a code repo with either pointer act on the atlas, and the pointer is never reported as a broken record
+  - Verify: tests in `tests/record/test_atlas.py` and `tests/test_atlas_cli.py` for the scenarios "Commands act on the atlas", "Check in a code repo" and "Atlas set up with 0.1.1" (status part)
+- [ ] 1.2 Write the new pointer with `wm atlas point`, and warn about the old one
+  - Criteria: `wm atlas point <atlas>` writes the `[pointer]` settings in `waymark/config.toml`, removes `.waymark/atlas.toml` in the same transaction and `.waymark/` when it is then empty, and refuses where `waymark/config.toml` is a record; `wm doctor` warns when the project was found through the old pointer and gives the `wm atlas point <atlas>` command; `wm atlas doctor` reads pointers in either place
+  - Verify: tests in `tests/services/test_atlas.py` and `tests/services/test_doctor.py` for "Point a code repo", "Move the pointer" and "Atlas set up with 0.1.1" (doctor part)
+
+## 2. Commit messages in the command hook
+
+- [ ] 2.1 Read the message of each `git commit` in a shell command
+  - Criteria: `hooks/commands.commit_messages` gives, for each `git commit` invocation, the message from `-m`/`--message` (several joined with blank lines), the body of a `$(cat <<'EOF' … EOF)` here-document in any of its usual spellings, the path given with `-F`/`--file`, or nothing when the message can't be read (no message option, another command substitution, a variable)
+  - Verify: tests in `tests/hooks/test_commands.py` for each form, including commands joined with `&&` and a Windows-style path
+- [ ] 2.2 Refuse a `git commit` whose message isn't conventional   `review: independent`
+  - Criteria: `decide` refuses a shell command with a `git commit` whose readable message fails `commit_problem` with the project's commit scopes, for every role, with "The commit was stopped: <problem>"; a message read from `-F` is read through `record/files.py`; unreadable messages and commands outside a Waymark project are allowed; the existing command rules keep their order and wording
+  - Verify: tests in `tests/hooks/test_decide.py` for every scenario of the `commits` delta, and one through `wm hook claude-code PreToolUse` in `tests/adapters/test_claude_code.py`
+
+## 3. No git hooks
+
+- [ ] 3.1 Remove the git hooks, and clean up the ones 0.1.1 installed   `review: independent`
+  - Criteria: the `git-hooks` and `run-hook` commands, `services/githooks.py`, the hook templates and the status payload's `git_hooks` field and warning are gone, with the status schema's version raised; `ignore_patterns` no longer lists the hooks; `record/oldhooks.py` `remove_old_hooks` unsets `core.hooksPath` only when it is `.waymark/hooks` and deletes that folder (and `.waymark/` when empty); `setup_machine` calls it and says when it removed them; `wm doctor` has no git hooks check and its tracked-files check includes `.waymark/hooks`; `wm init` writes no hooks and changes no git setting
+  - Verify: tests in `tests/services/test_setup.py`, `tests/services/test_doctor.py`, `tests/views/` and `tests/test_cli.py` for every scenario of the `setup` delta; the full suite passes with the removed tests deleted
+
+## 4. Docs
+
+- [ ] 4.1 Update the docs and the charter for no `.waymark/` folder   `review: none`
+  - Criteria: `docs/getting-started.md`, `docs/multi-repo.md`, `docs/concepts.md`, `docs/architecture.md`, the README's "What's enforced" table and `docs/smoke-test.md` no longer mention git hooks or `.waymark/` except as what `wm` cleans up from 0.1.1; they say commit messages are checked in Claude Code's command hook and `wm check` runs in CI; the multi-repo guide shows the pointer in `waymark/config.toml`; the smoke test checks that a planner's `git commit -m wip` is refused; the charter's constraint no longer names `.waymark/`; `docs/cli.md` and `docs/json.md` are regenerated; the docs follow the `waymark-write-docs` skill
+  - Verify: `python -m tools.docs --check`, `pytest tests/test_docs.py` and `codespell` pass; `grep -r "\.waymark" docs README.md` shows only the 0.1.1 cleanup and the old pointer
