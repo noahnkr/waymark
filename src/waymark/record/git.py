@@ -93,6 +93,16 @@ def exclude(repository: Path, relative: str) -> None:
         handle.write(f"{separator}/{relative}\n")
 
 
+def git_path(folder: Path, relative: str) -> Path:
+    """Where a path inside the git folder is for this working tree.
+
+    In a linked worktree it is that worktree's own git folder. Raises
+    ``GitError`` outside a repository.
+    """
+    where = Path(_run(folder, "rev-parse", "--git-path", relative).strip())
+    return where if where.is_absolute() else folder / where
+
+
 def config_value(repository: Path, key: str) -> str | None:
     """A setting from this clone's own git config; None when it isn't set there."""
     try:

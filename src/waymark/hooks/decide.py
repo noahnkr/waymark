@@ -11,6 +11,7 @@ from pathlib import Path
 from waymark import assets
 from waymark.hooks import commands
 from waymark.hooks.events import ALLOW, Decision, Event, EventKind, Role
+from waymark.record import agents
 from waymark.record.atlas import contains
 from waymark.record.changes import TASKS_FILE
 from waymark.record.evidence import evidence_changes, only_adds_notes
@@ -37,6 +38,8 @@ _RESULT = re.compile(r"^\s*RESULT:\s*(done|partial|spec-gap|blocked)\b[^\w\n]*(.
 _VERDICT = re.compile(r"^\s*VERDICT:\s*(pass|changes|spec-gap)\b[^\w\n]*(.*)$", re.MULTILINE)
 
 _AGENT_ROLES = {assets.IMPLEMENTER: IMPLEMENT, assets.REVIEWER: REVIEW}
+_HANDBACK_TRIES = 2
+"""Refused handbacks before the agent is let go and the planner told to record its result."""
 _EVIDENCE_COMMANDS = (
     "wm tick, wm block, wm gap, wm review, wm verdict, wm reopen or wm resolve; "
     "accepting is for the human, with wm accept"
@@ -280,18 +283,46 @@ def _record(project: Project, role: Role, message: str, today: datetime.date) ->
     return lifecycle.add_note(root, name, number, f"partial: {note}" if note else "partial")
 
 
-def _agent_stop(project: Project, event: Event, today: datetime.date) -> Decision:
+def _gave_up(role: Role, refusal: Refusal) -> Decision:
+    return Decision(
+        notice=f"Waymark recorded nothing for the {role.value}: {refusal} "
+        "Record its result yourself with the wm commands."
+    )
+
+
+def _handback(project: Project, event: Event, today: datetime.date) -> Decision:
+    """An agent hands its report back through its tool: record its ending from the report.
+
+    A report without an ending is refused, so the agent hands back again with
+    one; the second refusal lets it through with a notice for the planner.
+    """
     if event.role is Role.PLANNER:
         return ALLOW
     try:
         done = _record(project, event.role, event.message, today)
     except Refusal as refusal:
-        if event.retried:
-            return Decision(
-                notice=f"Waymark recorded nothing for the {event.role.value}: {refusal} "
-                "Record its result yourself with the wm commands."
-            )
+        if agents.count_attempt(project.root, event.agent_id) >= _HANDBACK_TRIES:
+            return _gave_up(event.role, refusal)
         return _refuse(f"wm could not record your result. {refusal}")
+    agents.mark_recorded(project.root, event.agent_id)
+    return Decision(notice=f"Waymark: {done.message}")
+
+
+def _agent_stop(project: Project, event: Event, today: datetime.date) -> Decision:
+    if event.role is Role.PLANNER:
+        return ALLOW
+    marker = agents.read_marker(project.root, event.agent_id)
+    if marker is not None and (marker.recorded or marker.attempts >= _HANDBACK_TRIES):
+        agents.remove_marker(project.root, event.agent_id)
+        return ALLOW
+    try:
+        done = _record(project, event.role, event.message, today)
+    except Refusal as refusal:
+        if event.retried:
+            agents.remove_marker(project.root, event.agent_id)
+            return _gave_up(event.role, refusal)
+        return _refuse(f"wm could not record your result. {refusal}")
+    agents.remove_marker(project.root, event.agent_id)
     return Decision(notice=f"Waymark: {done.message}")
 
 
@@ -311,4 +342,6 @@ def decide(event: Event, today: datetime.date) -> Decision:  # noqa: PLR0911
         return _edited(project, event)
     if event.kind is EventKind.COMMAND:
         return _command(event)
+    if event.kind is EventKind.HANDBACK:
+        return _handback(project, event, today)
     return _agent_stop(project, event, today)
