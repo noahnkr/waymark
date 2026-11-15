@@ -37,7 +37,7 @@ DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 PLAIN = Style()
 FINDING = '--finding "<critical|warning|suggestion>: <place>: <text>"'
-RULES = CHARTER +"\n### tasks\n\nKeep items small.\n\n### explore\n\nAsk before assuming.\n"
+RULES = CHARTER + "\n### tasks\n\nKeep items small.\n\n### explore\n\nAsk before assuming.\n"
 
 
 def valid(payload: dict[str, Any]) -> dict[str, Any]:
@@ -52,11 +52,15 @@ def at(project: Workspace, step: str | None = None) -> dict[str, Any]:
     return valid(instructions(project.record(), step, NAME))
 
 
-def pack(project: Workspace, role: str, number: str = "1.1") -> dict[str, Any]:
+def pack(project: Workspace, role: str, number: str | None = "1.1") -> dict[str, Any]:
+    if role == "review":
+        number = None
     return valid(context_pack(project.record(), role, NAME, number))
 
 
-def refused(project: Workspace, role: str, number: str = "1.1") -> str:
+def refused(project: Workspace, role: str, number: str | None = "1.1") -> str:
+    if role == "review":
+        number = None
     with pytest.raises(Refusal) as refusal:
         context_pack(project.record(), role, NAME, number)
     return str(refusal.value)
@@ -66,6 +70,9 @@ def accepted(project: Workspace, tasks: str = TASKS, **options: Any) -> Workspac
     project.change(tasks=tasks, **options)
     lifecycle.accept(project.root, NAME, DAY)
     return project
+
+
+INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n")
 
 
 def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace) -> None:
@@ -297,27 +304,64 @@ def test_implementer_pack_holds_the_item_the_change_and_the_touched_requirements
     assert "## Requirements as they stand today" in text
 
 
-def test_reviewer_pack_leaves_out_how_the_item_was_built(project: Workspace) -> None:
-    accepted(project)
+def test_reviewer_pack_holds_the_whole_change_but_not_how_it_was_built(
+    project: Workspace,
+) -> None:
+    accepted(project, proposal_text=INDEPENDENT)
     lifecycle.tick(project.root, NAME, "1.1")
     project.replace(
         f"{FOLDER}/tasks.md",
         "fifty-one matches\n",
         "fifty-one matches\n  - Note: took a shortcut through the cache\n",
     )
+    lifecycle.tick(project.root, NAME, "1.2")
     built = pack(project, "review")
-    assert built["item"]["criteria"] == "at most fifty results come back"
-    assert built["item"]["verify"] == "a test covers fifty-one matches"
-    assert built["item"]["notes"] == []
-    assert built["proposal"] is None
-    assert built["design"] is None
-    assert built["requirements"] == []
+    assert built["change"] == NAME
+    assert built["review_level"] == "independent"
+    assert [item["number"] for item in built["items"]] == ["1.1", "1.2"]
+    assert built["items"][0]["criteria"] == "at most fifty results come back"
+    assert built["items"][0]["verify"] == "a test covers fifty-one matches"
+    assert "notes" not in built["items"][0]
+    assert "proposal" not in built
+    assert built["design"].startswith("# Design")
     assert "#### Scenario: Many matches" in built["deltas"][0]["text"]
     assert built["rules"] == "Check every scenario."
+    assert "CHANGE: <change>" in built["ends_with"]
     assert VERDICT_LINE in built["ends_with"]
     text = render.to_text(built, PLAIN)
+    assert text.startswith(f"# Context pack: review {NAME}")
     assert "shortcut" not in text
-    assert "Cut the result list after sorting" not in text
+    assert "Long result lists are slow" not in text
+
+
+def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Workspace) -> None:
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.verdict(
+        project.root,
+        NAME,
+        Verdict.CHANGES,
+        "off by one",
+        DAY,
+        items=["1.1"],
+        findings=["critical: src/search.py:12: fifty-one come back"],
+    )
+    lifecycle.reopen(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    built = pack(project, "review")
+    assert built["review_level"] == "independent"
+    assert built["reviews"] == [
+        {
+            "date": "2026-01-15",
+            "verdict": "changes",
+            "text": "off by one",
+            "items": ["1.1"],
+            "findings": [
+                {"severity": "critical", "place": "src/search.py:12", "text": "fifty-one come back"}
+            ],
+        }
+    ]
+    assert "critical: src/search.py:12" in render.to_text(built, PLAIN)
 
 
 def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
@@ -327,13 +371,21 @@ def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
     lifecycle.block(project.root, NAME, "1.1", "which bound?")
     lifecycle.resolve(project.root, NAME, "1.1", "use an inclusive bound", DAY)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.CHANGES, "off by one", DAY)
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     item = pack(project, "implement")["item"]
     assert item["notes"] == ["half done"]
     assert item["resolutions"] == ["use an inclusive bound"]
-    assert item["reviews"] == [{"date": "2026-01-15", "verdict": "changes", "text": "off by one"}]
-    assert item["review_level"] == "independent"
+    assert item["reviews"] == [
+        {
+            "date": "2026-01-15",
+            "verdict": "changes",
+            "text": "off by one",
+            "items": ["1.1"],
+            "findings": [],
+        }
+    ]
+    assert "review_level" not in item
 
 
 def test_context_pack_for_an_unaccepted_change_is_refused(project: Workspace) -> None:
@@ -373,8 +425,11 @@ def test_context_pack_names_exactly_one_change_and_item(project: Workspace) -> N
             context_pack(record, "implement", *arguments)
     with pytest.raises(Refusal, match=r"no item 9\.9"):
         context_pack(record, "implement", NAME, "9.9")
+    for arguments in ((None, None), (NAME, "1.1")):
+        with pytest.raises(Refusal, match="exactly one change and no item"):
+            context_pack(record, "review", *arguments)
     with pytest.raises(Refusal, match="no active change"):
-        context_pack(record, "review", "add-order", "1.1")
+        context_pack(record, "review", "add-order")
     with pytest.raises(Refusal, match="takes no change or item"):
         context_pack(record, "explore", NAME, "1.1")
 
@@ -387,20 +442,26 @@ def test_implementer_pack_is_refused_for_an_item_that_is_done_or_waiting(
     assert "waits on the human" in refused(project, "implement")
     lifecycle.tick(project.root, NAME, "1.2")
     assert "already ticked" in refused(project, "implement", "1.2")
-    lifecycle.verdict(project.root, NAME, "1.2", Verdict.CHANGES, "no", DAY)
+    lifecycle.resolve(project.root, NAME, "1.1", "go ahead", DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "no", DAY, items=["1.2"])
     assert "Reopen it first" in refused(project, "implement", "1.2")
 
 
 def test_reviewer_pack_is_refused_when_there_is_nothing_to_review(project: Workspace) -> None:
-    accepted(project)
-    assert "isn't ticked yet" in refused(project, "review")
+    accepted(project, proposal_text=INDEPENDENT)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
-    assert "already has the review record" in refused(project, "review")
+    assert "items still to build (1.2)" in refused(project, "review")
     lifecycle.tick(project.root, NAME, "1.2")
-    project.replace(f"{FOLDER}/tasks.md", "`review: none`\n", "`review: none`\n  - Criteria: x\n")
-    lifecycle.accept(project.root, NAME, DAY)
-    assert "needs no review" in refused(project, "review", "1.2")
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY)
+    assert "already has the review it needs" in refused(project, "review")
+
+
+def test_reviewer_pack_is_refused_below_independent(project: Workspace) -> None:
+    accepted(project)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    assert "no reviewer is started" in refused(project, "review")
 
 
 def test_delegation_gate_passes_for_a_healthy_accepted_item(project: Workspace) -> None:

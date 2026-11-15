@@ -44,7 +44,7 @@ from waymark.record.tasks import Item
 from waymark.record.terms import Layout, Verdict
 from waymark.services.check import Finding, Severity, check_record
 from waymark.services.common import Refusal, repo_locations
-from waymark.services.context import CONTEXT_VERSION
+from waymark.services.context import CONTEXT_VERSION, DELEGATED_VERSION
 
 if TYPE_CHECKING:  # the doctor's checks reach the views through the CLI; no import cycle
     from waymark.services.doctor import Report
@@ -64,8 +64,8 @@ VERSIONS = {
     "show.exploration": 1,
     "instructions": INSTRUCTIONS_VERSION,
     "context.explore": CONTEXT_VERSION,
-    "context.implement": CONTEXT_VERSION,
-    "context.review": CONTEXT_VERSION,
+    "context.implement": DELEGATED_VERSION,
+    "context.review": DELEGATED_VERSION,
     "doctor": 1,
     "pr": PR_VERSION,
 }

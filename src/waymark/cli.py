@@ -488,10 +488,12 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         commands,
         "context",
         _context,
-        "Print the context pack for exploring, or for implementing or reviewing one item.",
+        "Print the context pack for exploring, implementing one item, or reviewing one change.",
     )
     context.add_argument("change", nargs="?", help="the change's name")
-    context.add_argument("item", nargs="?", help="the item's number, for example 1.2")
+    context.add_argument(
+        "item", nargs="?", help="the item's number, for example 1.2; none for a review"
+    )
     context.add_argument(
         "--for",
         dest="role",

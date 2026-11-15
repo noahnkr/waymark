@@ -21,10 +21,12 @@ from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
 from waymark.record.record import ARCHIVE, CHANGES, SPECS, Record, load_record
 from waymark.record.state import AcceptanceState, StepKind, derive_state
+from waymark.record.tasks import parse_finding
 from waymark.record.terms import Layout, Verdict
 from waymark.services import lifecycle
 from waymark.services.common import Done, Refusal, find_change, find_item, repo_locations
 from waymark.services.context import (
+    FINDING_LINE,
     IMPLEMENT,
     RESULT_LINE,
     REVIEW,
@@ -35,9 +37,15 @@ from waymark.views import payloads, render
 from waymark.views.style import Style
 
 _ADDRESS = re.compile(r"(\S+)\s+(\d+\.\d+)")
+_CHANGE_ADDRESS = re.compile(r"[a-z0-9][a-z0-9-]*")
 _ITEM_LINE = re.compile(r"^\s*ITEM:\s*(\S+)\s+(\d+\.\d+)\s*$", re.MULTILINE)
+_CHANGE_LINE = re.compile(r"^\s*CHANGE:\s*(\S+)\s*$", re.MULTILINE)
 _RESULT = re.compile(r"^\s*RESULT:\s*(done|partial|spec-gap|blocked)\b[^\w\n]*(.*)$", re.MULTILINE)
-_VERDICT = re.compile(r"^\s*VERDICT:\s*(pass|changes|spec-gap)\b[^\w\n]*(.*)$", re.MULTILINE)
+_VERDICT = re.compile(
+    r"^\s*VERDICT:\s*(pass|changes|spec-gap)\b:?((?:[\s,]+\d+\.\d+)*)[^\w\n]*(.*)$",
+    re.MULTILINE,
+)
+_FINDING = re.compile(r"^\s*FINDING:\s*(.*?)\s*$", re.MULTILINE)
 
 _AGENT_ROLES = {assets.IMPLEMENTER: IMPLEMENT, assets.REVIEWER: REVIEW}
 _HANDBACK_TRIES = 2
@@ -76,6 +84,8 @@ def _delegate(project: Project, event: Event) -> Decision:
     role = _AGENT_ROLES.get(event.agent)
     if role is None:
         return ALLOW
+    if role == REVIEW:
+        return _delegate_review(project, event)
     address = _ADDRESS.fullmatch(event.prompt.strip())
     if address is None:
         return _refuse(
@@ -90,6 +100,23 @@ def _delegate(project: Project, event: Event) -> Decision:
     except Refusal as refusal:
         return _refuse(str(refusal))
     problems = delegation_problems(record, change, item, role)
+    return _refuse(problems[0]) if problems else ALLOW
+
+
+def _delegate_review(project: Project, event: Event) -> Decision:
+    """A reviewer is started with the change's name alone, and only when the change needs it."""
+    prompt = event.prompt.strip()
+    if _CHANGE_ADDRESS.fullmatch(prompt) is None:
+        return _refuse(
+            f'Start the {event.agent} agent with exactly "<change>", for example '
+            '"add-search-limit", and nothing else. It reviews the whole change from the record.'
+        )
+    record = load_record(project)
+    try:
+        change = find_change(record, prompt)
+    except Refusal as refusal:
+        return _refuse(str(refusal))
+    problems = delegation_problems(record, change, None, REVIEW)
     return _refuse(problems[0]) if problems else ALLOW
 
 
@@ -299,23 +326,49 @@ def _command(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one
 
 
 def _ending(role: Role) -> str:
-    line = RESULT_LINE if role is Role.IMPLEMENTER else VERDICT_LINE
+    if role is Role.REVIEWER:
+        return (
+            'End your reply with two lines and nothing after them: "CHANGE: <change>", '
+            f'then "{VERDICT_LINE}" followed by your reasons. Give each finding before them '
+            f'on a line of its own: "{FINDING_LINE}".'
+        )
     return (
         'End your reply with two lines and nothing after them: "ITEM: <change> <item>", '
-        f'then "{line}" followed by a short note.'
+        f'then "{RESULT_LINE}" followed by a short note.'
+    )
+
+
+def _record_verdict(project: Project, message: str, today: datetime.date) -> Done:
+    """Write the reviewer's verdict on the change, with the items and findings it names."""
+    address = _CHANGE_LINE.findall(message)
+    outcome = _VERDICT.findall(message)
+    if not address or not outcome:
+        raise Refusal(_ending(Role.REVIEWER))
+    name = address[-1]
+    word, named, note = outcome[-1]
+    findings = _FINDING.findall(message)
+    unreadable = [text for text in findings if parse_finding(text) is None]
+    if unreadable:
+        raise Refusal(
+            f'"FINDING: {unreadable[0]}" is not a finding wm can read. Write each one as '
+            f'"{FINDING_LINE}". {_ending(Role.REVIEWER)}'
+        )
+    items = re.findall(r"\d+\.\d+", named)
+    return lifecycle.verdict(
+        project.root, name, Verdict(word), note, today, items=items, findings=findings
     )
 
 
 def _record(project: Project, role: Role, message: str, today: datetime.date) -> Done:
     """Write what the agent's final lines report; refused when they can't be recorded."""
+    if role is Role.REVIEWER:
+        return _record_verdict(project, message, today)
     address = _ITEM_LINE.findall(message)
-    outcome = (_RESULT if role is Role.IMPLEMENTER else _VERDICT).findall(message)
+    outcome = _RESULT.findall(message)
     if not address or not outcome:
         raise Refusal(_ending(role))
     (name, number), (word, note) = address[-1], outcome[-1]
     root = project.root
-    if role is Role.REVIEWER:
-        return lifecycle.verdict(root, name, number, Verdict(word), note, today)
     if word == "done":
         return lifecycle.tick(root, name, number)
     if word == "blocked":

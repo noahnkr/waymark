@@ -365,7 +365,7 @@ def instructions(payload: Payload, style: Style) -> str:
     return "\n".join(lines)
 
 
-def _pack_item(item: Payload) -> list[str]:
+def _definition_lines(item: Payload) -> list[str]:
     lines = [f"**{item['number']} {item['title']}**", ""]
     for label, key in (("Criteria", "criteria"), ("Verify", "verify")):
         if item[key]:
@@ -374,25 +374,56 @@ def _pack_item(item: Payload) -> list[str]:
         folder = item["_local"]["repo_folder"]
         where = f"its folder on this machine is {folder}" if folder else "not found on this machine"
         lines.append(f"- Repo: {item['repo']} ({where})")
-    lines.append(f"- Review level: {item['review_level']}")
+    return lines
+
+
+def _review_lines(review: Payload) -> list[str]:
+    named = f" {' '.join(review['items'])}" if review["items"] else ""
+    lines = [f"- Earlier review ({review['date']}, {review['verdict']}{named}): {review['text']}"]
+    lines += [
+        f"  - {finding['severity']}: {finding['place']}: {finding['text']}"
+        for finding in review["findings"]
+    ]
+    return lines
+
+
+def _pack_item(item: Payload) -> list[str]:
+    lines = _definition_lines(item)
     lines += [f"- Decided by the human: {text}" for text in item["resolutions"]]
     for review in item["reviews"]:
-        lines.append(f"- Earlier review ({review['date']}, {review['verdict']}): {review['text']}")
+        lines += _review_lines(review)
     lines += [f"- Note from earlier work: {note}" for note in item["notes"]]
+    return lines
+
+
+def _review_head(payload: Payload) -> list[str]:
+    lines = [f"# Context pack: review {payload['change']}", ""]
+    lines += [f"Review the whole change at level {payload['review_level']}.", ""]
+    lines.append("## Its items")
+    for item in payload["items"]:
+        lines += ["", *_definition_lines(item)]
+    if payload["reviews"] or payload["resolutions"]:
+        lines += ["", "## Earlier reviews", ""]
+        for review in payload["reviews"]:
+            lines += _review_lines(review)
+        lines += [f"- Decided by the human: {text}" for text in payload["resolutions"]]
     return lines
 
 
 def context_delegated(payload: Payload, _: Style) -> str:
     """An implementer's or reviewer's context pack, as markdown."""
     role = payload["for"]
-    item = payload["item"]
-    lines = [f"# Context pack: {role} {payload['change']} {item['number']}", ""]
-    lines += ["## Your item", "", *_pack_item(item)]
+    if role == "review":
+        lines = _review_head(payload)
+    else:
+        item = payload["item"]
+        lines = [f"# Context pack: {role} {payload['change']} {item['number']}", ""]
+        lines += ["## Your item", "", *_pack_item(item)]
     if payload["context"]:
         lines += ["", "## Project context", "", payload["context"]]
     if payload["rules"]:
         lines += ["", "## Rules for this step", "", payload["rules"]]
-    if payload["proposal"]:
+    if payload.get("proposal"):
         lines += ["", "## Proposal"]
         for title, text in payload["proposal"].items():
             lines += ["", f"### {title}", "", text]
@@ -400,7 +431,7 @@ def context_delegated(payload: Payload, _: Style) -> str:
         lines += ["", "## Deltas"]
         for delta in payload["deltas"]:
             lines += ["", f"### Spec: {delta['spec']}", "", *_fenced(delta["text"])]
-    if payload["requirements"]:
+    if payload.get("requirements"):
         lines += ["", "## Requirements as they stand today"]
         for requirement in payload["requirements"]:
             title = f"### {requirement['spec']}: {requirement['name']}"

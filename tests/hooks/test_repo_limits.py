@@ -66,7 +66,6 @@ def test_implementer_edit_outside_every_repo_is_refused_in_an_atlas(
 
 def test_the_allowed_repo_moves_on_with_the_next_item(suite: Workspace, tmp_path: Path) -> None:
     lifecycle.tick(suite.root, NAME, "1.1")
-    lifecycle.self_review(suite.root, NAME, "1.1", "fine", DAY)
     assert editable_repos(suite.record()) == {"web": [f"{NAME} 1.2"]}
     assert edit(suite, tmp_path / "web" / "page.html", Role.IMPLEMENTER).allow
     assert not edit(suite, tmp_path / "suite-api" / "app.py", Role.IMPLEMENTER).allow
@@ -95,7 +94,6 @@ def test_planner_may_edit_only_the_repo_of_the_item_being_applied(
 
 def test_planner_follows_the_next_item_to_its_repo(suite: Workspace, tmp_path: Path) -> None:
     lifecycle.tick(suite.root, NAME, "1.1")
-    lifecycle.self_review(suite.root, NAME, "1.1", "fine", DAY)
     assert edit(suite, tmp_path / "web" / "page.html", Role.PLANNER).allow
     assert not edit(suite, tmp_path / "suite-api" / "app.py", Role.PLANNER).allow
 
