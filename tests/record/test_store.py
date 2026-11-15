@@ -58,6 +58,27 @@ def test_failed_transaction_restores_every_file_and_removes_new_ones(
     assert workspace.read("changes/add-limit/proposal.md") == "old\n"
 
 
+def test_transaction_deletes_a_file_and_puts_it_back_when_it_fails(workspace: Workspace) -> None:
+    workspace.write("specs/old.md", "# Old\n")
+    pending = transaction(workspace)
+    pending.write("specs/new.md", "# New\n")
+    pending.delete("specs/old.md")
+    pending.delete("specs/missing.md")
+    pending.commit()
+    assert not workspace.path("specs/old.md").exists()
+    assert workspace.read("specs/new.md") == "# New\n"
+
+    workspace.write("specs/old.md", "# Old\n")
+    workspace.write("changes/archive", "a file in the way\n")
+    workspace.write("changes/add-limit/proposal.md", "one\n")
+    failing = transaction(workspace)
+    failing.delete("specs/old.md")
+    failing.move("changes/add-limit", "changes/archive/2026-02-01-add-limit")
+    with pytest.raises(StoreError, match="Nothing was changed"):
+        failing.commit()
+    assert workspace.read("specs/old.md") == "# Old\n"
+
+
 def test_transaction_refuses_to_move_onto_an_existing_folder(workspace: Workspace) -> None:
     workspace.write("changes/add-limit/proposal.md", "one\n")
     workspace.write("changes/archive/2026-02-01-add-limit/proposal.md", "two\n")

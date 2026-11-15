@@ -14,23 +14,24 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       wheel, and check `wm --version`.
 - [ ] Note the Claude Code version: `claude --version`.
 - [ ] Make a scratch git repository with a little code in it (a small script and
-      a test are enough), and commit it. Run `wm init`: nothing is staged, and
-      `git status` shows only `waymark/` and `.gitignore` as new. Run
-      `wm doctor`: no errors.
-- [ ] Stage `waymark/` and `.gitignore`, and commit with a message that isn't
-      conventional, such as `wip`: the commit is stopped with the reason. Commit
-      again as `chore: set up waymark`.
+      a test are enough), and commit it. Run `wm init`: nothing is staged,
+      `git status` shows only `waymark/` and `.gitignore` as new, and
+      `git config core.hooksPath` prints nothing. Run `wm doctor`: no errors.
+- [ ] Commit `waymark/` and `.gitignore` as `chore: set up waymark`.
 - [ ] **A fresh clone.** Clone the scratch repository into another folder and
       run `wm init` there: it sets up this machine and changes nothing in
-      `waymark/`. `git status` is clean, and `wm doctor` has no errors.
-      `git commit --allow-empty -m wip` in the clone is stopped too. Delete the
-      clone.
+      `waymark/`. `git status` is clean, and `wm doctor` has no errors. Delete
+      the clone.
 
 ## Session start and kickoff
 
 - [ ] Start Claude Code in the repository. Its first context includes the
       `wm status` view (ask the agent what the status says).
 - [ ] Run `/wm-kickoff` and let it draft the charter. `wm check` passes.
+- [ ] **Commit messages.** Ask the planner to stage something and run
+      `git commit -m wip`. **The hook refuses it** with the reason, and nothing
+      is committed. Ask it to commit again with a conventional message: the
+      commit goes through.
 
 ## Propose and accept
 

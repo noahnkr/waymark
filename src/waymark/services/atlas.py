@@ -4,6 +4,7 @@ wm never clones, pulls or pushes. These commands only record where the
 repositories already are, and read another atlas's specs where it sits.
 """
 
+import contextlib
 import os
 from pathlib import Path
 
@@ -12,7 +13,14 @@ from waymark.record import git
 from waymark.record.atlas import Found, atlas_name_at, locate_atlas, locate_repo, repo_problem
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, Config
 from waymark.record.files import RecordFiles
-from waymark.record.pointer import POINTER_FILE, Pointer, render_pointer
+from waymark.record.pointer import (
+    OLD_POINTER_DIR,
+    OLD_POINTER_FILE,
+    POINTER_FILE,
+    Pointer,
+    is_pointer,
+    render_pointer,
+)
 from waymark.record.project import Project
 from waymark.record.record import Record, load_record
 from waymark.record.registry import Registry, load_registry, stage_registry
@@ -128,14 +136,26 @@ def _relative_hint(folder: Path, base: Path) -> str | None:
         return None
 
 
+def _remove_if_empty(folder: Path) -> None:
+    with contextlib.suppress(OSError):  # not empty, or already gone
+        folder.rmdir()
+
+
 def point(start: Path, atlas: str, path: str | None = None) -> Done:
-    """Write the pointer file that tells a code repo which atlas holds its record."""
+    """Write the pointer that tells a code repo which atlas holds its record.
+
+    The pointer is a pointer-only ``waymark/config.toml``. The old
+    ``.waymark/atlas.toml`` is removed with the same step, and the ``.waymark/``
+    folder too when nothing else is left in it.
+    """
     top = git.repository_root(start)
     if top is None:
         raise Refusal("A pointer goes in a code repo, and this folder is not in a git repository.")
-    if (top / RECORD_DIR / CONFIG_FILE).is_file():
+    files = RecordFiles(top)
+    current = files.read(POINTER_FILE, []) if files.is_file(POINTER_FILE) else None
+    if files.is_file(POINTER_FILE) and (current is None or not is_pointer(current)):
         raise Refusal(
-            f"This repository holds a Waymark record itself ({RECORD_DIR}/{CONFIG_FILE}), so it "
+            f"This repository holds a Waymark record itself ({POINTER_FILE}), so it "
             "needs no pointer."
         )
     if path is not None:
@@ -151,12 +171,17 @@ def point(start: Path, atlas: str, path: str | None = None) -> Done:
         hint = _relative_hint(folder, top)
     config = load_record(Project(folder)).config
     pin = config.wm_version if config else __version__
-    transaction = Transaction(RecordFiles(top))
-    existed = (top / POINTER_FILE).is_file()
+    old = files.is_file(OLD_POINTER_FILE)
+    transaction = Transaction(files)
     transaction.write(POINTER_FILE, render_pointer(Pointer(atlas, hint, pin)))
+    if old:
+        transaction.delete(OLD_POINTER_FILE)
     commit(transaction)
-    verb = "Updated" if existed else "Wrote"
-    return Done(
-        f'{verb} {POINTER_FILE}: this repository\'s record is the atlas "{atlas}". Commit it so '
-        "anyone who clones this repository finds the atlas too."
-    )
+    if old:
+        _remove_if_empty(top / OLD_POINTER_DIR)
+    verb = "Updated" if current is not None else "Wrote"
+    lines = [f'{verb} {POINTER_FILE}: this repository\'s record is the atlas "{atlas}".']
+    if old:
+        lines.append(f"Removed {OLD_POINTER_FILE}, the pointer's old place.")
+    lines.append("Commit the change so anyone who clones this repository finds the atlas too.")
+    return Done(" ".join(lines))

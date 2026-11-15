@@ -14,6 +14,8 @@ from waymark.hooks.events import ALLOW, Decision, Event, EventKind, Role
 from waymark.record import agents
 from waymark.record.atlas import contains
 from waymark.record.changes import TASKS_FILE
+from waymark.record.commits import commit_problem
+from waymark.record.config import CONFIG_FILE, parse_config
 from waymark.record.evidence import evidence_changes, only_adds_notes
 from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
@@ -219,7 +221,39 @@ def _edited(project: Project, event: Event) -> Decision:
     )
 
 
-def _command(event: Event) -> Decision:  # noqa: PLR0911 - one return per rule
+def _commit_scopes(project: Project) -> tuple[str, ...] | None:
+    """The project's commit scopes, if it lists any; None means any scope is accepted."""
+    text = RecordFiles(project.record_root).read(CONFIG_FILE, [])
+    config = parse_config(text)[0] if text is not None else None
+    return config.commit_scopes if config else None
+
+
+def _message_text(event: Event, message: commands.CommitMessage) -> str | None:
+    """A commit's message: given on the command line, or read from the file -F names."""
+    if message.file is None:
+        return message.text
+    path = Path(message.file)
+    if not path.is_absolute():
+        path = event.cwd / path
+    return RecordFiles(path.parent).read(path.name, [])
+
+
+def _commit_messages(project: Project, event: Event) -> Decision:
+    """Refuse a git commit whose message isn't a conventional commit; unreadable ones pass."""
+    found = commands.commit_messages(event.command)
+    texts = [_message_text(event, message) for message in found if message is not None]
+    readable = [text for text in texts if text is not None]
+    if not readable:
+        return ALLOW
+    scopes = _commit_scopes(project)
+    for text in readable:
+        problem = commit_problem(text, scopes)
+        if problem is not None:
+            return _refuse(f"The commit was stopped: {problem}")
+    return ALLOW
+
+
+def _command(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one return per rule
     for call in commands.wm_calls(event.command):
         if call.subcommand == "accept":
             return _refuse(
@@ -232,7 +266,7 @@ def _command(event: Event) -> Decision:  # noqa: PLR0911 - one return per rule
                 "missing; they can run the command with --override themselves."
             )
     if event.role is Role.PLANNER:
-        return ALLOW
+        return _commit_messages(project, event)
     writing = commands.writing_wm_call(event.command)
     if writing is not None:
         return _refuse(
@@ -253,7 +287,7 @@ def _command(event: Event) -> Decision:  # noqa: PLR0911 - one return per rule
                 f"A reviewer runs read-only commands, and here {change}. Read the code and "
                 "run the tests; report anything that needs changing in your verdict."
             )
-    return ALLOW
+    return _commit_messages(project, event)
 
 
 def _ending(role: Role) -> str:
@@ -341,7 +375,7 @@ def decide(event: Event, today: datetime.date) -> Decision:  # noqa: PLR0911
     if event.kind is EventKind.EDITED:
         return _edited(project, event)
     if event.kind is EventKind.COMMAND:
-        return _command(event)
+        return _command(project, event)
     if event.kind is EventKind.HANDBACK:
         return _handback(project, event, today)
     return _agent_stop(project, event, today)

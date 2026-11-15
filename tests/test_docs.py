@@ -62,7 +62,7 @@ def test_every_required_doc_exists() -> None:
 
 def test_the_cli_reference_covers_every_command() -> None:
     text = (ROOT / "docs/cli.md").read_text(encoding="utf-8")
-    for command in ("init", "atlas register", "atlas doctor", "run-hook", "pr", "context"):
+    for command in ("init", "atlas register", "atlas doctor", "ci", "pr", "context"):
         assert f"## wm {command}\n" in text, command
 
 

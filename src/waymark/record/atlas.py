@@ -12,7 +12,13 @@ from pathlib import Path
 
 from waymark.record import git
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, CodeRepo, parse_config
-from waymark.record.pointer import POINTER_FILE, Pointer, parse_pointer
+from waymark.record.pointer import (
+    OLD_POINTER_FILE,
+    POINTER_FILE,
+    Pointer,
+    is_pointer,
+    parse_pointer,
+)
 from waymark.record.registry import Registry
 
 REGISTER = "wm atlas register"
@@ -54,12 +60,32 @@ def atlas_name_at(folder: Path) -> str | None:
     return config.atlas_name if config else None
 
 
-def read_pointer(folder: Path) -> tuple[Pointer | None, str | None]:
-    """A folder's pointer file, and why it can't be read, if it can't; (None, None) without one."""
+def pointer_file(folder: Path) -> str | None:
+    """Which file holds a folder's pointer; None when it has none.
+
+    A ``waymark/config.toml`` that is a pointer comes first, then the old
+    ``.waymark/atlas.toml``.
+    """
     text = _read(folder / POINTER_FILE)
-    if text is None:
+    if text is not None and is_pointer(text):
+        return POINTER_FILE
+    if (folder / OLD_POINTER_FILE).is_file():
+        return OLD_POINTER_FILE
+    return None
+
+
+def read_pointer(folder: Path) -> tuple[Pointer | None, str | None]:
+    """A folder's pointer, in either place, and why it can't be read, if it can't.
+
+    Returns (None, None) without one.
+    """
+    name = pointer_file(folder)
+    if name is None:
         return None, None
-    return parse_pointer(text)
+    text = _read(folder / name)
+    if text is None:
+        return None, f"{name} can't be read."
+    return parse_pointer(text, old=name == OLD_POINTER_FILE)
 
 
 def pointer_atlas(folder: Path) -> tuple[str | None, str | None]:

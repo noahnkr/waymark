@@ -14,16 +14,18 @@ from pathlib import Path
 
 from waymark import __version__
 from waymark.record import git
-from waymark.record.atlas import Found, locate_atlas, locate_repo, read_pointer
+from waymark.record.atlas import Found, locate_atlas, locate_repo, pointer_file, read_pointer
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT
 from waymark.record.files import RecordFiles
-from waymark.record.githooks import HOOKS_DIR, HooksState, hooks_status
-from waymark.record.pointer import POINTER_FILE
+from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE
 from waymark.record.project import Project, ProjectNotFoundError, find_project
 from waymark.record.record import Record, load_record
 from waymark.record.registry import Registry, load_registry
 from waymark.services import integration
 from waymark.services.common import Refusal, install_hint
+
+OLD_HOOKS_DIR = ".waymark/hooks"
+"""Where wm 0.1.0 committed the git hooks, relative to the repository's top."""
 
 
 class Status(StrEnum):
@@ -65,7 +67,7 @@ def _wm_on_path() -> Check:
         return Check(
             "wm on PATH",
             Status.ERROR,
-            "wm is not on PATH, so agent tool hooks and git hooks can't run it. Install it as "
+            "wm is not on PATH, so the agent tool hooks can't run it. Install it as "
             f"a tool: {install_hint(__version__)}",
         )
     return Check("wm on PATH", Status.OK, f"wm {__version__} is installed.", Path(found))
@@ -89,35 +91,16 @@ def _project_check(project: Project) -> Check:
     return Check("project", Status.OK, "Found the record.", project.root)
 
 
-def _hooks_check(root: Path, *, optional: bool) -> Check:
-    """Whether this clone runs the committed git hooks. In a code repo they are optional."""
-    name = "git hooks" if not optional else "code repo git hooks"
-    status = hooks_status(root)
-    if status.state is HooksState.SET:
-        return Check(name, Status.OK, f"Git runs the hooks in {HOOKS_DIR}/.", root)
-    if status.state is HooksState.MANAGED:
-        return Check(
-            name,
-            Status.OK,
-            f"wm left the hooks to another setup, because {status.manager}. Make sure it runs "
-            '"wm run-hook commit-msg" and "wm run-hook pre-commit".',
-            root,
-        )
-    if status.state is HooksState.NOT_SET:
-        return Check(
-            name,
-            Status.WARNING,
-            f'This clone doesn\'t run the hooks in {HOOKS_DIR}/. Run "wm git-hooks" to point '
-            "git at them.",
-            root,
-        )
-    if optional:
-        return Check(name, Status.OK, 'No Waymark hooks; "wm git-hooks" adds them.', root)
+def _old_pointer_check(code_repo: Path) -> Check:
+    """A warning for a code repo whose pointer is still in its old place."""
+    pointer, _ = read_pointer(code_repo)
+    command = f"wm atlas point {pointer.atlas}" if pointer else "wm atlas point <atlas>"
     return Check(
-        name,
+        "pointer",
         Status.WARNING,
-        f'The project has no hooks in {HOOKS_DIR}/. Run "wm git-hooks" to add them.',
-        root,
+        f"This code repo's pointer is in {OLD_POINTER_FILE}, its old place. Run "
+        f'"{command}" in it to move the pointer to {POINTER_FILE}.',
+        code_repo,
     )
 
 
@@ -205,16 +188,19 @@ def _quoted(path: str) -> str:
 
 
 def _machine_files_in_git(record: Record) -> Check:
-    """Whether files wm writes for each machine are still tracked, as a 0.1.0 project had them."""
+    """Whether files wm writes for each machine are still tracked, as a 0.1.0 project had them.
+
+    The git hooks wm 0.1.0 committed in ``.waymark/hooks/`` count too.
+    """
     assert record.config is not None
     root = record.project.root
     tools = record.config.agent_tools
     try:
         written = integration.integration_files(RecordFiles(root), tools)
-        patterns = integration.ignore_patterns(tools, record=True)
+        patterns = [*integration.ignore_patterns(tools), f"/{OLD_HOOKS_DIR}/"]
     except Refusal as refusal:
         return Check("machine files in git", Status.ERROR, str(refusal))
-    found = git.tracked(root, [*sorted(written), HOOKS_DIR])
+    found = git.tracked(root, [*sorted(written), OLD_HOOKS_DIR])
     if not found:
         return Check(
             "machine files in git", Status.OK, "No file wm writes for this machine is tracked."
@@ -254,9 +240,8 @@ def doctor(start: Path) -> Report:
         checks.append(Check("project", Status.ERROR, error.plain, start))
         return Report("project", tuple(checks))
     checks.append(_project_check(project))
-    checks.append(_hooks_check(project.root, optional=False))
-    if project.code_repo is not None:
-        checks.append(_hooks_check(project.code_repo, optional=True))
+    if project.old_pointer and project.code_repo is not None:
+        checks.append(_old_pointer_check(project.code_repo))
     record = load_record(project)
     checks += _pin_checks(record)
     checks += _reference_checks(record, registry)
@@ -302,15 +287,16 @@ def _pointer_check(name: str, folder: Path, atlas: str, pin: str) -> Check | Non
         return Check(f"pointer {name}", Status.ERROR, problem, folder)
     if pointer is None:
         return None
+    file = pointer_file(folder)
     if pointer.wm_version not in (None, pin):
         return Check(
             f"pointer {name}",
             Status.WARNING,
-            f"Its {POINTER_FILE} pins wm {pointer.wm_version}; the atlas pins {pin}. Run "
+            f"Its {file} pins wm {pointer.wm_version}; the atlas pins {pin}. Run "
             f'"wm atlas point {atlas}" in it to bring the pointer up to date.',
             folder,
         )
-    return Check(f"pointer {name}", Status.OK, f'{POINTER_FILE} names "{atlas}".', folder)
+    return Check(f"pointer {name}", Status.OK, f'{file} names "{atlas}".', folder)
 
 
 def _repo_checks(record: Record, registry: Registry) -> list[Check]:

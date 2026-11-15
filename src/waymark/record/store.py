@@ -1,6 +1,6 @@
 """Writing the record: several files and a folder move as one step.
 
-A transaction collects the files to write and the folder to move, then applies
+A transaction collects the files to write or delete and the folder to move, then applies
 them together. If anything fails, every file is put back and the move undone,
 so a multi-file operation either completes or leaves the record as it was.
 """
@@ -20,11 +20,18 @@ class Transaction:
     def __init__(self, files: RecordFiles) -> None:
         self._files = files
         self._writes: dict[str, str] = {}
+        self._deletes: set[str] = set()
         self._moves: list[tuple[str, str]] = []
 
     def write(self, relative: str, text: str) -> None:
         """Stage a file's new text. Files are written as UTF-8, exactly as given."""
         self._writes[relative] = text
+        self._deletes.discard(relative)
+
+    def delete(self, relative: str) -> None:
+        """Stage a file's removal. A file that isn't there is left alone."""
+        self._deletes.add(relative)
+        self._writes.pop(relative, None)
 
     def move(self, source: str, target: str) -> None:
         """Stage a folder move. It happens after the writes, which use the old paths."""
@@ -50,6 +57,13 @@ class Transaction:
                     originals[path] = path.read_bytes() if path.is_file() else None
                 path.parent.mkdir(parents=True, exist_ok=True)
                 _replace(path, text.encode("utf-8"))
+            for relative in sorted(self._deletes):
+                path = self._files.path(relative)
+                if not path.is_file():
+                    continue
+                if path not in originals:
+                    originals[path] = path.read_bytes()
+                path.unlink()
             for source, target in self._moves:
                 origin, destination = self._files.path(source), self._files.path(target)
                 if destination.exists():
@@ -83,6 +97,7 @@ def _roll_back(originals: dict[Path, bytes | None], moved: list[tuple[Path, Path
             if data is None:
                 path.unlink(missing_ok=True)
             else:
+                path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(data)
         except OSError:
             continue

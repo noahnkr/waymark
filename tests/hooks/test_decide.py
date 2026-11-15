@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.support import DESIGN, TASKS, Workspace, proposal
+from tests.support import CONFIG, DESIGN, TASKS, Workspace, proposal
 from waymark import assets
 from waymark.hooks.decide import decide
 from waymark.hooks.events import Decision, Event, EventKind, Replacement, Role
@@ -322,6 +322,77 @@ def test_implementer_may_change_state_but_reviewer_may_not(accepted: Workspace) 
         assert "A reviewer runs read-only commands" in decision.reason
     for text in ("pytest -q", "git diff", "cat src/a.py", "wm show add-limit"):
         assert command(accepted, text, Role.REVIEWER).allow, text
+
+
+def test_commit_that_is_not_conventional_is_refused(accepted: Workspace) -> None:
+    decision = command(accepted, 'git commit -m "wip"')
+    assert not decision.allow
+    assert decision.reason.startswith('The commit was stopped: "wip" is not a conventional')
+    assert "for example: fix: accept an empty search query" in decision.reason
+    chained = command(accepted, 'git add -A && git commit --message="update stuff" && git push')
+    assert "The commit was stopped" in chained.reason
+
+
+def test_conventional_commit_is_allowed(accepted: Workspace) -> None:
+    for text in (
+        'git commit -m "fix: accept an empty search query"',
+        'git add -A && git commit -m "feat: cap results" -m "Fifty at most."',
+        'git -C src commit --message "docs(api): describe the limit"',
+    ):
+        assert command(accepted, text).allow, text
+
+
+def test_commit_with_a_scope_the_settings_do_not_list_is_refused(project: Workspace) -> None:
+    project.write("config.toml", CONFIG + 'commit_scopes = ["api", "docs"]\n')
+    decision = command(project, 'git commit -m "feat(web): add a share button"')
+    assert not decision.allow
+    assert "The commit was stopped" in decision.reason
+    assert "(api, docs)" in decision.reason
+    assert command(project, 'git commit -m "feat(api): add a share button"').allow
+
+
+def test_commit_message_from_a_here_document_is_checked(accepted: Workspace) -> None:
+    heredoc = "git commit -m \"$(cat <<'EOF'\n{}\n\nMore words.\nEOF\n)\""
+    decision = command(accepted, heredoc.format("wip"))
+    assert not decision.allow
+    assert "The commit was stopped" in decision.reason
+    assert command(accepted, heredoc.format("feat: cap results")).allow
+
+
+def test_commit_message_from_a_file_is_read_against_the_commands_folder(
+    accepted: Workspace,
+) -> None:
+    (accepted.root / "message.txt").write_bytes(b"wip\n")
+    (accepted.root / "good.txt").write_bytes(b"feat: cap results\r\n\r\nFifty at most.\r\n")
+    decision = command(accepted, "git commit -F message.txt")
+    assert not decision.allow
+    assert "The commit was stopped" in decision.reason
+    assert not command(accepted, f"git commit --file {accepted.root / 'message.txt'}").allow
+    assert command(accepted, "git commit -F good.txt").allow
+    assert command(accepted, "git commit -F missing.txt").allow
+
+
+def test_commit_whose_message_cannot_be_read_is_allowed(accepted: Workspace) -> None:
+    for text in (
+        "git commit",
+        "git commit --amend --no-edit",
+        'git commit -m "$MESSAGE"',
+        'git commit -m "$(git log -1 --format=%s)"',
+        "git commit --fixup HEAD~1",
+    ):
+        assert command(accepted, text).allow, text
+
+
+def test_delegated_agents_commit_refusal_keeps_its_wording(accepted: Workspace) -> None:
+    for role in (Role.IMPLEMENTER, Role.REVIEWER):
+        decision = command(accepted, 'git commit -m "wip"', role)
+        assert not decision.allow
+        assert "The planner commits" in decision.reason
+
+
+def test_commit_outside_a_waymark_project_is_allowed(tmp_path: Path) -> None:
+    event = Event(EventKind.COMMAND, tmp_path, Role.PLANNER, command='git commit -m "wip"')
+    assert decide(event, DAY) == Decision()
 
 
 def test_implementer_done_ticks_its_item(accepted: Workspace) -> None:

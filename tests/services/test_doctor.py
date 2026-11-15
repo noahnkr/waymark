@@ -120,13 +120,46 @@ def test_atlas_doctor_warns_about_a_pointer_with_another_pin(
     register(suite.root)
     point(tmp_path / "suite-api", "suite")
     assert outcome(atlas_doctor(suite.root))["pointer api"] is Status.OK
-    pointer = tmp_path / "suite-api" / ".waymark" / "atlas.toml"
+    pointer = tmp_path / "suite-api" / "waymark" / "config.toml"
     pointer.write_text(
         pointer.read_text(encoding="utf-8").replace(__version__, "0.0.1"), encoding="utf-8"
     )
     report = atlas_doctor(suite.root)
     assert outcome(report)["pointer api"] is Status.WARNING
     assert "wm atlas point suite" in message(report, "pointer api")
+
+
+def test_atlas_doctor_reads_an_old_pointer_and_names_its_file(
+    suite: Workspace, tmp_path: Path
+) -> None:
+    register(suite.root)
+    old = tmp_path / "suite-api" / ".waymark"
+    old.mkdir()
+    (old / "atlas.toml").write_text('atlas = "suite"\nwm_version = "0.0.1"\n', encoding="utf-8")
+    report = atlas_doctor(suite.root)
+    assert outcome(report)["pointer api"] is Status.WARNING
+    assert ".waymark/atlas.toml pins wm 0.0.1" in message(report, "pointer api")
+    (old / "atlas.toml").write_text('atlas = "suite"\n', encoding="utf-8")
+    report = atlas_doctor(suite.root)
+    assert outcome(report)["pointer api"] is Status.OK
+    assert '.waymark/atlas.toml names "suite"' in message(report, "pointer api")
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_warns_about_a_pointer_in_its_old_place(suite: Workspace, tmp_path: Path) -> None:
+    """Scenario: Atlas set up with 0.1.1 (the doctor part)."""
+    code = tmp_path / "suite-api"
+    (code / ".waymark").mkdir()
+    (code / ".waymark" / "atlas.toml").write_text(
+        'atlas = "suite"\npath = "../atlas"\n', encoding="utf-8"
+    )
+    report = doctor(code)
+    assert outcome(report)["project"] is Status.OK
+    assert outcome(report)["pointer"] is Status.WARNING
+    assert ".waymark/atlas.toml" in message(report, "pointer")
+    assert '"wm atlas point suite"' in message(report, "pointer")
+    point(code, "suite", "../atlas")
+    assert "pointer" not in outcome(doctor(code))
 
 
 def test_atlas_doctor_warns_about_registry_entries_the_settings_dont_list(
@@ -199,10 +232,18 @@ def git(root: Path, *args: str) -> str:
 
 
 def committed_project(root: Path, *forced: str) -> None:
-    """A project set up by wm init and committed, with some ignored paths added anyway."""
+    """A project set up by wm init and committed, with some ignored paths added anyway.
+
+    Forcing ``.waymark/hooks`` first writes the git hooks a wm 0.1.0 project committed.
+    """
     git_init(root)
     git(root, "config", "user.email", "sam@example.com")
     setup.init_project(root)
+    if ".waymark/hooks" in forced:
+        hooks = root / ".waymark" / "hooks"
+        hooks.mkdir(parents=True)
+        for name in ("commit-msg", "pre-commit"):
+            (hooks / name).write_text(f"#!/bin/sh\nwm run-hook {name}\n", encoding="utf-8")
     git(root, "add", "-A")
     if forced:
         git(root, "add", "--force", "--", *forced)
@@ -260,3 +301,11 @@ def test_doctor_payload_with_tracked_machine_files_validates(tmp_path: Path) -> 
     committed_project(tmp_path, ".claude")
     payload = payloads.doctor(doctor(tmp_path))
     assert errors(render.public(payload), SCHEMAS["doctor"]) == []
+
+
+@pytest.mark.usefixtures("on_path")
+def test_doctor_has_no_git_hooks_check(tmp_path: Path) -> None:
+    committed_project(tmp_path)
+    names = [check.name for check in doctor(tmp_path).checks]
+    assert not any("hooks" in name for name in names), names
+    assert all("git-hooks" not in check.message for check in doctor(tmp_path).checks)

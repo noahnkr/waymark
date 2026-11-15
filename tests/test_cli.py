@@ -1,6 +1,5 @@
 """The ``wm`` command runs, and follows the exit-code contract."""
 
-import shutil
 import subprocess
 import sys
 import sysconfig
@@ -104,11 +103,10 @@ def signed(root: Path) -> None:
         assert git(root, "config", key, value).returncode == 0
 
 
-@pytest.mark.skipif(shutil.which("wm") is None, reason="the git hooks call wm from PATH")
 def test_wm_init_in_a_fresh_clone_sets_it_up_with_nothing_to_commit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Scenarios: New project, Fresh clone, Hooks run after a clone."""
+    """Scenarios: New project, Fresh clone."""
     origin = tmp_path / "origin"
     origin.mkdir()
     assert git(origin, "init", "--quiet").returncode == 0
@@ -126,14 +124,43 @@ def test_wm_init_in_a_fresh_clone_sets_it_up_with_nothing_to_commit(
     )
     assert cloned.returncode == 0, cloned.stderr
     signed(clone)
+    settings = git(clone, "config", "--local", "--list").stdout
     monkeypatch.chdir(clone)
     assert main(["init"]) == EXIT_OK
 
     assert (clone / ".claude" / "settings.json").is_file()
-    assert git(clone, "config", "core.hooksPath").stdout.strip() == ".waymark/hooks"
+    assert git(clone, "config", "--local", "--list").stdout == settings
+    assert not (clone / ".waymark").exists()
     assert git(clone, "status", "--porcelain", "--untracked-files=all").stdout == ""
-    (clone / "notes.txt").write_text("x\n", encoding="utf-8")
-    assert git(clone, "add", "notes.txt").returncode == 0
-    refused = git(clone, "commit", "--quiet", "-m", "wip")
-    assert refused.returncode != 0
-    assert "The commit was stopped" in refused.stderr
+
+
+@pytest.mark.parametrize("command", ["git-hooks", "run-hook"])
+def test_the_git_hook_commands_are_gone(command: str) -> None:
+    result = run_module(command)
+    assert result.returncode == EXIT_USAGE
+    assert "invalid choice" in result.stderr
+
+
+def test_wm_update_leaves_the_git_hooks_wm_0_1_1_installed_alone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A clone set up by 0.1.1 keeps its core.hooksPath and .waymark/hooks/."""
+    root = tmp_path / "project"
+    root.mkdir()
+    assert git(root, "init", "--quiet").returncode == 0
+    signed(root)
+    monkeypatch.chdir(root)
+    assert main(["init", "--tool", "claude-code"]) == EXIT_OK
+    hooks = root / ".waymark" / "hooks"
+    hooks.mkdir(parents=True)
+    for name in ("commit-msg", "pre-commit"):
+        (hooks / name).write_text(f"#!/bin/sh\nwm run-hook {name}\n", encoding="utf-8")
+    assert git(root, "config", "core.hooksPath", ".waymark/hooks").returncode == 0
+    before = {path.name: path.read_bytes() for path in hooks.iterdir()}
+    capsys.readouterr()
+
+    assert main(["update"]) == EXIT_OK
+
+    assert "Everything is up to date." in capsys.readouterr().out
+    assert git(root, "config", "--local", "core.hooksPath").stdout.strip() == ".waymark/hooks"
+    assert {path.name: path.read_bytes() for path in hooks.iterdir()} == before

@@ -8,6 +8,7 @@ import pytest
 from tests.conftest import git_init
 from tests.support import DESIGN, delta, requirement
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
+from waymark.record.pointer import is_pointer
 from waymark.record.project import find_project
 from waymark.record.record import load_record
 from waymark.record.state import StepKind, derive_state
@@ -158,7 +159,7 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     assert "additionalDirectories" in settings
 
     monkeypatch.chdir(api)
-    assert "Wrote .waymark/atlas.toml" in session.run("atlas", "point", "suite")
+    assert "Wrote waymark/config.toml" in session.run("atlas", "point", "suite")
     assert "Changes in flight" in session.run("status")
     monkeypatch.chdir(session.root)
 
@@ -196,7 +197,9 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     assert record.problems == ()
     assert record.changes == {}
     assert record.specs["search"].repos == ("api", "web")
-    assert not (api / "waymark").exists()
+    assert [path.name for path in (api / "waymark").iterdir()] == ["config.toml"]
+    assert is_pointer((api / "waymark" / "config.toml").read_text(encoding="utf-8"))
+    assert not (api / ".waymark").exists()
     assert not (web / "waymark").exists()
     assert not (web / ".waymark").exists()
 

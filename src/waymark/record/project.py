@@ -2,8 +2,9 @@
 
 From inside the repository or atlas that holds the record, it is found by
 looking upward for the record's settings. From inside a code repo that an
-atlas covers, it is found through the code repo's pointer file, or through
-this machine's registry.
+atlas covers, it is found through the code repo's pointer: a pointer-only
+``waymark/config.toml``, or the old ``.waymark/atlas.toml``. Without either,
+it is found through this machine's registry.
 """
 
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ from pathlib import Path
 
 from waymark.record.atlas import Found, contains, locate_atlas
 from waymark.record.config import CONFIG_FILE, RECORD_DIR
-from waymark.record.pointer import POINTER_FILE, parse_pointer
+from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE, is_pointer, parse_pointer
 from waymark.record.registry import Registry, load_registry
 
 __all__ = ["RECORD_DIR", "Project", "ProjectNotFoundError", "find_project"]
@@ -38,11 +39,14 @@ class Project:
     When it was found from inside one of an atlas's code repos, ``code_repo``
     is that repo's top folder. ``notes`` are things worth telling the person
     running the command, such as a hint that could be registered.
+    ``old_pointer`` is true when it was found through a code repo's old
+    ``.waymark/atlas.toml``.
     """
 
     root: Path
     code_repo: Path | None = None
     notes: tuple[str, ...] = ()
+    old_pointer: bool = False
 
     @property
     def record_root(self) -> Path:
@@ -56,14 +60,22 @@ def _upward(start: Path, relative: str) -> Path | None:
     return None
 
 
-def _through_pointer(start: Path, folder: Path, registry: Registry) -> Project:
+def _read(path: Path) -> str | None:
     try:
-        text = (folder / POINTER_FILE).read_bytes().decode("utf-8")
+        return path.read_bytes().decode("utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _through_pointer(start: Path, folder: Path, registry: Registry, *, old: bool) -> Project:
+    name = OLD_POINTER_FILE if old else POINTER_FILE
+    try:
+        text = (folder / name).read_bytes().decode("utf-8")
     except (OSError, UnicodeDecodeError) as error:
         detail = getattr(error, "strerror", None) or "not valid UTF-8"
-        reason = f"This code repo's {POINTER_FILE} can't be read ({detail})."
+        reason = f"This code repo's {name} can't be read ({detail})."
         raise ProjectNotFoundError(start, reason) from error
-    pointer, problem = parse_pointer(text)
+    pointer, problem = parse_pointer(text, old=old)
     if pointer is None:
         raise ProjectNotFoundError(start, f"This code repo's pointer: {problem}")
     location = locate_atlas(pointer.atlas, registry, folder, pointer.path_hint)
@@ -72,7 +84,7 @@ def _through_pointer(start: Path, folder: Path, registry: Registry) -> Project:
             start, f'This code repo points to the atlas "{pointer.atlas}". {location.detail}'
         )
     notes = (f"{location.detail} ({location.folder})",) if location.found is Found.HINT else ()
-    return Project(location.folder, folder, notes)
+    return Project(location.folder, folder, notes, old_pointer=old)
 
 
 def _through_registry(start: Path, registry: Registry) -> Project | None:
@@ -102,16 +114,23 @@ def find_project(start: Path, registry: Registry | None = None) -> Project:
     """Find the project that contains a folder, or the atlas a code repo belongs to.
 
     The record sits in the same place in a repository and in an atlas, so both
-    are found the same way; the settings say which one it is.
+    are found the same way; the settings say which one it is. A
+    ``waymark/config.toml`` that is a pointer leads to the atlas it names; the
+    old ``.waymark/atlas.toml`` is looked for only when no
+    ``waymark/config.toml`` is found, and before the registry.
     """
     origin = start.resolve()
     found = _upward(origin, f"{RECORD_DIR}/{CONFIG_FILE}")
     if found is not None:
-        return Project(found)
+        text = _read(found / RECORD_DIR / CONFIG_FILE)
+        if text is None or not is_pointer(text):
+            return Project(found)
     known = load_registry() if registry is None else registry
-    pointed = _upward(origin, POINTER_FILE)
+    if found is not None:
+        return _through_pointer(start, found, known, old=False)
+    pointed = _upward(origin, OLD_POINTER_FILE)
     if pointed is not None:
-        return _through_pointer(start, pointed, known)
+        return _through_pointer(start, pointed, known, old=True)
     project = _through_registry(origin, known)
     if project is None:
         raise ProjectNotFoundError(start)

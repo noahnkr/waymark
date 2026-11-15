@@ -120,12 +120,6 @@ def status(payload: Payload, style: Style) -> str:
         lines.append(style.paint(text, YELLOW))
     else:
         lines.append(style.paint(f"{style.symbol('done')} Nothing needs you.", GREEN))
-    if payload["git_hooks"] == "not-set":
-        text = (
-            f"{style.symbol('warning')} This clone doesn't run the committed git hooks: "
-            "wm git-hooks"
-        )
-        lines.append(style.paint(text, YELLOW))
     if payload["problems"]:
         count = payload["problems"]
         plural = "s" if count != 1 else ""

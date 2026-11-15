@@ -7,6 +7,8 @@ import pytest
 from waymark.cli import build_parser
 from waymark.hooks.commands import (
     READ_COMMANDS,
+    CommitMessage,
+    commit_messages,
     commits_or_pushes,
     invocations,
     state_change,
@@ -136,9 +138,7 @@ def test_reading_commands_added_later_are_not_mistaken_for_writes(command: str) 
     [
         "wm atlas register",
         "wm atlas point suite",
-        "wm git-hooks",
         "wm ci",
-        "wm run-hook pre-commit",
         "wm atlas",
     ],
 )
@@ -163,8 +163,6 @@ WRITES = frozenset(
         "archive",
         "close",
         "atlas",
-        "git-hooks",
-        "run-hook",
         "ci",
     }
 )
@@ -177,3 +175,103 @@ def test_every_command_is_known_to_read_or_to_write() -> None:
     names = set(action.choices)
     assert names == READ_COMMANDS | WRITES
     assert not READ_COMMANDS & WRITES
+
+
+@pytest.mark.parametrize(
+    ("command", "message"),
+    [
+        ('git commit -m "feat: add a limit"', "feat: add a limit"),
+        ("git commit -m 'fix: x; y & z | w'", "fix: x; y & z | w"),
+        ('git commit --message "docs: a"', "docs: a"),
+        ('git commit --message="docs: a"', "docs: a"),
+        ('git commit -m"fix: attached"', "fix: attached"),
+        ('git commit -am "fix: all"', "fix: all"),
+        ('git commit -m "feat: a" -m "The body."', "feat: a\n\nThe body."),
+        ('git commit -m "feat: a\n\nThe body."', "feat: a\n\nThe body."),
+        ('git -C repo commit -m "fix: x"', "fix: x"),
+        ('git add -A && git commit -m "fix: x" && git push', "fix: x"),
+        ("uv run git commit -m wip", "wip"),
+    ],
+)
+def test_commit_message_from_the_message_option(command: str, message: str) -> None:
+    assert commit_messages(command) == [CommitMessage(text=message)]
+
+
+@pytest.mark.parametrize(
+    ("opening", "tag"),
+    [
+        ("<<'EOF'", "EOF"),
+        ('<<"EOF"', "EOF"),
+        ("<<EOF", "EOF"),
+        ("<< 'EOF'", "EOF"),
+        ("<<'MSG'", "MSG"),
+    ],
+)
+def test_commit_message_from_a_here_document(opening: str, tag: str) -> None:
+    command = (
+        f'git add -A && git commit -m "$(cat {opening}\n'
+        "feat(hooks): read commit messages\n\nWith a body; and & a pipe |.\n"
+        f'{tag}\n)" && git status'
+    )
+    assert commit_messages(command) == [
+        CommitMessage(text="feat(hooks): read commit messages\n\nWith a body; and & a pipe |.")
+    ]
+
+
+def test_commit_message_from_an_indented_here_document() -> None:
+    command = "git commit -m \"$(cat <<-'EOF'\n\twip\n\tEOF\n)\""
+    assert commit_messages(command) == [CommitMessage(text="wip")]
+
+
+def test_unquoted_here_document_that_expands_is_unreadable() -> None:
+    command = 'git commit -m "$(cat <<EOF\nfix: $SUBJECT\nEOF\n)"'
+    assert commit_messages(command) == [None]
+
+
+@pytest.mark.parametrize(
+    ("command", "path"),
+    [
+        ("git commit -F msg.txt", "msg.txt"),
+        ("git commit --file=msg.txt", "msg.txt"),
+        ("git commit --file msg.txt", "msg.txt"),
+        ("git commit -aF msg.txt", "msg.txt"),
+        ("git add . && git commit -F C:\\Users\\me\\msg.txt", "C:/Users/me/msg.txt"),
+        ('git commit -F "C:\\Users\\me\\commit msg.txt"', "C:/Users/me/commit msg.txt"),
+    ],
+)
+def test_commit_message_file_is_given_as_a_path(command: str, path: str) -> None:
+    assert commit_messages(command) == [CommitMessage(file=path)]
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "git commit",
+        "git commit -a",
+        "git commit --amend --no-edit",
+        'git commit -m "$(git log -1 --format=%s)"',
+        'git commit -m "$SUBJECT"',
+        "git commit -m `cat msg`",
+        "git commit -F -",
+        'git commit -m "x" -F msg.txt',
+        "git commit --fixup HEAD~1",
+        "git commit -C HEAD",
+        "git commit -m",
+        'git commit -m "fix: unbalanced',
+    ],
+)
+def test_commit_message_that_cant_be_read_is_none(command: str) -> None:
+    assert commit_messages(command) == [None]
+
+
+def test_each_commit_in_a_command_line_has_an_entry() -> None:
+    command = 'git commit -m "fix: one"; git commit && git commit -F notes.txt'
+    assert commit_messages(command) == [
+        CommitMessage(text="fix: one"),
+        None,
+        CommitMessage(file="notes.txt"),
+    ]
+
+
+def test_commands_without_a_commit_have_no_messages() -> None:
+    assert commit_messages("git status && git push && echo 'git commit -m wip'") == []

@@ -121,6 +121,16 @@ guard rails against mistakes and shortcuts, not security against someone set on
 getting around them. In Claude Code the agent-side rules are enforced by its
 hooks; in a tool without hooks they rely on the agents following the skills.
 
+**Commit messages** must be [conventional commits](https://www.conventionalcommits.org).
+In Claude Code, its command hook refuses a `git commit` whose message isn't one,
+before the commit exists, and gives the reason. When the settings list commit
+scopes, only those scopes pass. A message the hook can't read, such as one
+written in an editor, is allowed. Commits made by hand outside Claude Code are
+not checked.
+
+**The record's health** is checked by `wm check`. In CI it runs on every push
+and pull request, through the workflow `wm ci` writes.
+
 ## Glossary
 
 | Term | Meaning |
