@@ -36,7 +36,8 @@ FOLDER = f"changes/{NAME}"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 PLAIN = Style()
-RULES = CHARTER + "\n### tasks\n\nKeep items small.\n\n### explore\n\nAsk before assuming.\n"
+FINDING = '--finding "<critical|warning|suggestion>: <place>: <text>"'
+RULES = CHARTER +"\n### tasks\n\nKeep items small.\n\n### explore\n\nAsk before assuming.\n"
 
 
 def valid(payload: dict[str, Any]) -> dict[str, Any]:
@@ -113,7 +114,7 @@ def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace)
     step = at(project)
     assert (step["step"], step["item"]) == ("review", None)
     assert step["commands"] == [
-        f'wm review {NAME} --self "<summary>" [--finding "<critical|warning|suggestion>: <place>: <text>"]',
+        f'wm review {NAME} --self "<summary>" [{FINDING}]',
         f'wm verdict {NAME} changes "<reasons>" --items <item>...',
     ]
 
