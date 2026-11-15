@@ -94,7 +94,7 @@ Smoke test: passed on 2026-11-19.
 
 
 def test_release_is_ready_when_tag_version_changelog_and_smoke_test_agree() -> None:
-    assert release.problems("v0.1.0", "0.1.0", CHANGELOG, "verified: 2.1.400") == []
+    assert release.problems("v0.1.0", "0.1.0", CHANGELOG, "verified: 2.1.400", "0.1.0") == []
     assert release.entry(CHANGELOG, "0.1.0") == (
         "## [0.1.0] - 2026-11-20\n\nFirst release.\n\nSmoke test: passed on 2026-11-19.\n"
     )
@@ -114,4 +114,31 @@ def test_release_is_ready_when_tag_version_changelog_and_smoke_test_agree() -> N
 def test_release_is_refused_until_everything_is_ready(
     tag: str, version: str, changelog: str, readme: str, problem: str
 ) -> None:
-    assert any(problem in found for found in release.problems(tag, version, changelog, readme))
+    found = release.problems(tag, version, changelog, readme, version)
+    assert any(problem in text for text in found)
+
+
+@pytest.mark.parametrize(
+    ("pinned", "problem"),
+    [
+        ("0.0.9", "pins wm_version 0.0.9, not the package version 0.1.0"),
+        (None, "doesn't set wm_version"),
+    ],
+)
+def test_release_is_refused_when_the_record_pin_is_not_the_package_version(
+    pinned: str | None, problem: str
+) -> None:
+    found = release.problems("v0.1.0", "0.1.0", CHANGELOG, "", pinned)
+    assert len(found) == 1
+    assert problem in found[0]
+    assert "Set" in found[0]
+    assert "wm update" in found[0]
+
+
+def test_the_pin_is_read_from_the_record_config(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    assert release.pin(config) is None
+    config.write_text("record_format = 1\n", encoding="utf-8")
+    assert release.pin(config) is None
+    config.write_text('wm_version = "0.1.0"\nrecord_format = 1\n', encoding="utf-8")
+    assert release.pin(config) == "0.1.0"
