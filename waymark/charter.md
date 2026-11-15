@@ -17,7 +17,7 @@ atlas).
 ## Goals
 
 - Agents work only from what is written down; a missing fact is written into the record or becomes a spec gap, not a guess.
-- Every review is recorded under its task, and evidence is written only by `wm`.
+- Every review is recorded with its change, and evidence is written only by `wm`.
 - Anyone can pick up the work from the files and git alone, in any session, on any machine.
 - The human approves each change twice: at accept and at archive.
 - Small changes stay light (the short path); big ones get a design, and risky ones an independent review.

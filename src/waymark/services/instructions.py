@@ -192,7 +192,8 @@ def _working(  # noqa: PLR0911 - one return per step
                 f"Start a reviewer for {name} with the change's name and nothing else.",
                 "The reviewer begins from its context pack and ends with a CHANGE line and a "
                 "VERDICT line.",
-                "Without isolated agents, record the verdict yourself with the verdict command.",
+                "Without isolated agents, the human or a session that didn't build the change "
+                "reviews it, and records the verdict with the verdict command.",
             ]
             commands = [
                 f"wm context {name} --for review",

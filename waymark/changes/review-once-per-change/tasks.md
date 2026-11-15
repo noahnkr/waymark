@@ -27,3 +27,10 @@
 - [x] 2.2 Update the charter and the docs
   - Criteria: the charter's vision speaks of riskier changes, not tasks, being checked by a second agent, and its tasks rule no longer gives docs items review level `none`; concepts (the review levels, the gates, the glossary), getting started, the smoke test, architecture and the README describe one review per change; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`
+
+## Review
+
+- (review) 2026-11-15 pass: every item's criteria hold and every scenario in the review and agent-results deltas is met and tested (921 tests pass; docs check, codespell, ruff, mypy and wm check are clean); the findings are a stale charter goal line and two minor inconsistencies, none breaking a criterion
+  - warning: waymark/charter.md:20: The goal "Every review is recorded under its task" still describes per-item review records; reviews now sit in the change's `## Review` section at the end of the task list, so this line contradicts the reworded vision and concepts docs.
+  - suggestion: src/waymark/services/instructions.py:195: The independent-review guidance "Without isolated agents, record the verdict yourself with the verdict command." conflicts with the wm-apply rule that such a change then needs the human or another session that didn't build it to review it.
+  - suggestion: tests/hooks/test_decide.py:365: The planner-command test still uses the old per-item syntax 'wm review add-limit 1.1 --self "fine"'; use the per-change form `wm review add-limit --self "fine"`.

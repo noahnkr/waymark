@@ -362,7 +362,7 @@ def test_planner_may_run_the_other_wm_commands(accepted: Workspace) -> None:
     for text in (
         "wm tick add-limit 1.1",
         'wm archive add-limit --outcome "done"',
-        'wm review add-limit 1.1 --self "fine"',
+        'wm review add-limit --self "fine"',
         'git commit -m "feat: cap results"',
         "wm status",
     ):
