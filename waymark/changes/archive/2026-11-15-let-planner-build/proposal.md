@@ -33,3 +33,7 @@ On `drop-waymark-folder` that came to 8 implementer runs, about 775k tokens and 
 - Code: `record/tasks.py` (the tag), `record/fingerprint.py` (the tag becomes part of what is accepted), `services/instructions.py`, `hooks/decide.py`, and the item templates and JSON schema in `views/`.
 - Assets: the `wm-apply`, `wm-propose`, `wm-onboard` and `wm-update` skills, and the `wm-implementer` definition.
 - Docs: concepts, getting started, the multi-repo guide, the smoke test, architecture, the README and the regenerated CLI and JSON references. The charter's vision and its apply rule change too.
+
+## Outcome
+
+The planner now builds task items itself by default: wm instructions at the apply step tells it to build an untagged item from its context pack, run the checks the item touches and record the result with wm tick, wm block or wm gap, while an item tagged build: delegate still goes to a fresh implementer. The tag is read in either order with review:, is part of what is accepted (added to the fingerprint only when present, so existing acceptances survive an upgrade), and in an atlas the planner may edit the code repo of the item being built. The skills, charter (vision, first goal and apply rule) and docs were reworded to match; the charter edits were made by the planner because implementers may not edit it, and the planner ran wm update for item 2.1 for the same reason.
