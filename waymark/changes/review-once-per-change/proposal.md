@@ -1,6 +1,7 @@
 # Review once per change
 
 Owner: Noah Roberts
+Accepted: 2026-11-15 by Noah Roberts (fingerprint: 81577cca8ff3ca11)
 Review: independent
 
 ## Why

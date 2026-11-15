@@ -26,6 +26,14 @@ class Verdict(StrEnum):
     SPEC_GAP = "spec-gap"
 
 
+class ReviewSeverity(StrEnum):
+    """How much a review finding matters."""
+
+    CRITICAL = "critical"
+    WARNING = "warning"
+    SUGGESTION = "suggestion"
+
+
 class Step(StrEnum):
     """A workflow step an agent works in; the charter holds rules for each."""
 

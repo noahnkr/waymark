@@ -91,7 +91,7 @@ TASKS = """# Tasks
 - [ ] 1.1 Cap the result count
   - Criteria: at most fifty results come back
   - Verify: a test covers fifty-one matches
-- [ ] 1.2 Document the limit   `review: none`
+- [ ] 1.2 Document the limit
 """
 
 

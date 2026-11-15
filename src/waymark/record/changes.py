@@ -10,7 +10,7 @@ from waymark.record.design import Design, parse_design
 from waymark.record.files import RecordFiles
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.problems import WHOLE_FILE, Problem
-from waymark.record.proposal import PATH, SHORT, Proposal, parse_proposal
+from waymark.record.proposal import PATH, REVIEW, SHORT, Proposal, parse_proposal
 from waymark.record.tasks import Tasks, parse_tasks
 from waymark.record.terms import Layout, ReviewLevel
 
@@ -40,6 +40,12 @@ class Change:
     @property
     def short_path(self) -> bool:
         return self.proposal is not None and self.proposal.short_path
+
+    def review_level(self, default: ReviewLevel) -> ReviewLevel:
+        """The change's review level: its proposal's Review line, or the project default."""
+        if self.proposal is not None and self.proposal.review is not None:
+            return self.proposal.review
+        return default
 
     def problems_in(self, relative: str) -> tuple[Problem, ...]:
         """The problems in one file or folder of the change."""
@@ -98,19 +104,33 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
                 f'the "{PATH}: {SHORT}" line from the proposal.',
             )
         )
-    if change.short_path and tasks is not None:
-        problems.extend(
+    if (
+        proposal is not None
+        and change.short_path
+        and change.review_level(default) is ReviewLevel.INDEPENDENT
+    ):
+        problems.append(
             Problem(
-                tasks.doc.path,
-                item.index + 1,
+                proposal.doc.path,
+                WHOLE_FILE,
                 "short-path-review",
-                f"Item {item.number} needs an independent review, which the short path "
-                f'doesn\'t allow. Remove the "{PATH}: {SHORT}" line from the proposal, or '
-                "lower the item's review level.",
+                "A change on the short path is reviewed at self or none, not independently. "
+                f'Remove the "{PATH}: {SHORT}" line, or set "{REVIEW}: self" or '
+                f'"{REVIEW}: none".',
             )
-            for item in tasks.items
-            if item.level(default) is ReviewLevel.INDEPENDENT
         )
+    for item in tasks.items if tasks else ():
+        if item.level_tag is not None:
+            problems.append(
+                Problem(
+                    tasks.doc.path if tasks else change.path,
+                    item.index + 1,
+                    "obsolete-review-tag",
+                    f"Item {item.number} has a review: tag, but a change is reviewed as a "
+                    f'whole now. Remove the tag, and set the level with a "{REVIEW}: <level>" '
+                    "line in the proposal.",
+                )
+            )
     if config is None:
         return
     atlas = config.layout is Layout.ATLAS

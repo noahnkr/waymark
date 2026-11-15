@@ -100,12 +100,39 @@ def test_short_path_change_with_a_design_is_a_problem(workspace: Workspace) -> N
 
 
 def test_short_path_allows_no_independent_review(workspace: Workspace) -> None:
+    text = proposal(short=True).replace("Path: short\n", "Path: short\nReview: independent\n")
+    workspace.change(proposal_text=text, design=None)
+    assert code_list(workspace) == [(f"{FOLDER}/proposal.md", "short-path-review")]
+
+
+def test_short_path_takes_an_independent_project_default_as_a_problem(
+    workspace: Workspace,
+) -> None:
+    workspace.replace("config.toml", 'default_review = "self"', 'default_review = "independent"')
+    workspace.change(proposal_text=proposal(short=True), design=None)
+    assert code_list(workspace) == [(f"{FOLDER}/proposal.md", "short-path-review")]
+
+
+def test_review_level_comes_from_the_proposal_or_the_project_default(
+    workspace: Workspace,
+) -> None:
+    workspace.change()
+    change = workspace.record().changes["add-limit"]
+    assert change.review_level(ReviewLevel.NONE) is ReviewLevel.NONE
+    text = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n")
+    workspace.change(proposal_text=text)
+    change = workspace.record().changes["add-limit"]
+    assert change.review_level(ReviewLevel.NONE) is ReviewLevel.INDEPENDENT
+
+
+def test_old_tag(workspace: Workspace) -> None:
     tasks = TASKS.replace(
         "1.1 Cap the result count", "1.1 Cap the result count   `review: independent`"
     )
-    workspace.change(proposal_text=proposal(short=True), design=None, tasks=tasks)
-    assert code_list(workspace) == [(TASKS_FILE, "short-path-review")]
-    assert workspace.change_state().next_step.kind is StepKind.TASKS
+    workspace.change(tasks=tasks)
+    assert code_list(workspace) == [(TASKS_FILE, "obsolete-review-tag")]
+    (problem,) = workspace.record().changes["add-limit"].problems
+    assert '"Review: <level>"' in problem.message
 
 
 def test_change_with_no_spec_changes_is_specified_without_deltas(workspace: Workspace) -> None:

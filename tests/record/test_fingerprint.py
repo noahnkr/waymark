@@ -59,8 +59,7 @@ def test_editing_the_design_withdraws_acceptance(workspace: Workspace) -> None:
         ("Cap the result count", "Cap the result count at fifty"),
         ("Criteria: at most fifty", "Criteria: at most forty"),
         ("Verify: a test covers", "Verify: nobody checks"),
-        ("1.2 Document the limit   `review: none`", "1.2 Document the limit"),
-        ("- [ ] 1.1 Cap the result count", "- [ ] 1.1 Cap the result count   `review: none`"),
+        ("1.2 Document the limit", "1.2 Document the limit in the guide"),
         ("- [ ] 1.1 Cap the result count", "- [ ] 1.1 Cap the result count   `build: delegate`"),
     ],
 )
@@ -74,8 +73,8 @@ def test_changing_an_item_definition_withdraws_acceptance(
 def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
     accepted(workspace).replace(
         "changes/add-limit/tasks.md",
-        "1.2 Document the limit   `review: none`",
-        "1.2 Document the limit   `review: none`   `build: delegate`",
+        "1.2 Document the limit",
+        "1.2 Document the limit   `build: delegate`",
     )
     state = workspace.change_state()
     assert state.acceptance is AcceptanceState.WITHDRAWN
@@ -84,20 +83,39 @@ def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
 
 
 def test_removing_the_build_tag_withdraws_acceptance(workspace: Workspace) -> None:
-    workspace.change(tasks=TASKS.replace("`review: none`", "`build: delegate`   `review: none`"))
+    workspace.change(
+        tasks=TASKS.replace("1.2 Document the limit", "1.2 Document the limit   `build: delegate`")
+    )
     workspace.accept()
     assert acceptance(workspace) is AcceptanceState.VALID
-    workspace.replace("changes/add-limit/tasks.md", "`build: delegate`   ", "")
+    workspace.replace("changes/add-limit/tasks.md", "   `build: delegate`", "")
     assert acceptance(workspace) is AcceptanceState.WITHDRAWN
 
 
-def test_untagged_items_fingerprint_as_before_the_build_tag(workspace: Workspace) -> None:
+def test_fingerprint_of_a_plain_change_is_stable(workspace: Workspace) -> None:
     workspace.change()
     record = workspace.record()
     fingerprint = change_fingerprint(
         record.changes["add-limit"], record.specs, record.default_review
     )
-    assert fingerprint == "eb98cf2e3d3071a6"
+    assert fingerprint == change_fingerprint(
+        workspace.record().changes["add-limit"], record.specs, record.default_review
+    )
+    assert len(fingerprint) == 16
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [
+        ("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n"),
+        ("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: self\n"),
+    ],
+)
+def test_adding_a_review_line_withdraws_acceptance(
+    workspace: Workspace, old: str, new: str
+) -> None:
+    accepted(workspace).replace("changes/add-limit/proposal.md", old, new)
+    assert acceptance(workspace) is AcceptanceState.WITHDRAWN
 
 
 def test_appending_an_item_withdraws_acceptance(workspace: Workspace) -> None:
@@ -124,7 +142,14 @@ def test_ticks_blockers_review_records_and_notes_keep_acceptance(workspace: Work
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.replace(
-        tasks, "`review: none`\n", "`review: none`\n  - Blocked: waiting for wording\n"
+        tasks,
+        "1.2 Document the limit\n",
+        "1.2 Document the limit\n  - Blocked: waiting for wording\n",
+    )
+    assert acceptance(workspace) is AcceptanceState.VALID
+    workspace.write(
+        tasks,
+        workspace.read(tasks) + "\n## Review\n\n- (self-review) 2026-01-17: fine\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
 

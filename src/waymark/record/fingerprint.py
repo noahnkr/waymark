@@ -3,10 +3,10 @@
 It covers what the human approved:
 
 - the proposal, apart from the acceptance line and the outcome;
+- the change's review level: its Review line, or the project default;
 - every delta, and the design;
-- each task item's definition (number, title, review level, criteria,
-  verification, repo and, when present, the build tag), but none of its
-  evidence;
+- each task item's definition (number, title, criteria, verification, repo
+  and, when present, the build tag), but none of its evidence;
 - the living text of what the deltas modify or remove, so that another change
   archiving into the same requirement withdraws this acceptance.
 
@@ -36,6 +36,7 @@ def fingerprint_parts(
     parts: list[tuple[str, str]] = []
     if change.proposal is not None:
         parts.append(("proposal", change.proposal.accepted_text()))
+    parts.append(("review", change.review_level(default_review).value))
     if change.design is not None:
         parts.append(("design", change.design.doc.text))
     for domain in sorted(change.deltas):
@@ -54,7 +55,6 @@ def fingerprint_parts(
     for item in change.tasks.items if change.tasks else ():
         definition = [
             item.title,
-            item.level(default_review).value,
             item.criteria if item.criteria is not None else _ABSENT,
             item.verify if item.verify is not None else _ABSENT,
             item.repo if item.repo is not None else _ABSENT,

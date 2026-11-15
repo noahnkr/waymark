@@ -8,7 +8,7 @@ from waymark.record.design import parse_design
 from waymark.record.explorations import Exploration, parse_exploration
 from waymark.record.milestones import parse_goal, parse_roadmap
 from waymark.record.proposal import Proposal, format_acceptance, parse_proposal
-from waymark.record.terms import Step
+from waymark.record.terms import ReviewLevel, Step
 
 ACCEPTED = "Accepted: 2026-01-15 by Sam Doe (fingerprint: 0123456789abcdef)"
 
@@ -233,3 +233,12 @@ def test_exploration_missing_section_is_a_problem() -> None:
     text = EXPLORATION.format(conclusion="").replace("## Related\n\nNothing yet.\n", "")
     exploration = parse_exploration("paging", document(text))
     assert [problem.code for problem in exploration.problems] == ["missing-section"]
+
+
+def test_proposal_review_line_sets_the_change_review_level() -> None:
+    assert parse(proposal()).review is None
+    reviewed = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n")
+    assert parse(reviewed).review is ReviewLevel.INDEPENDENT
+    assert proposal_codes(
+        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: strict\n")
+    ) == ["invalid-review-level"]
