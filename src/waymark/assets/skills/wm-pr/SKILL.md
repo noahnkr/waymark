@@ -11,7 +11,7 @@ You are the planner. A pull request is an outward action, so you open one only w
 
 1. Find the change. If the human didn't name it, run `wm ls changes` and ask which one.
 2. Run `wm show <name> --json`. Check that the work is committed on the change's branch; the branch is named after the change.
-3. Run `wm pr <name> --json` for the title and description. In a project that spans several repositories, run it once per repository: without `--repo` for the atlas, which carries the record, and with `--repo <repo>` for each code repo the change's items name. The description already says why, what changes, the specs touched, the items with how each was reviewed, and links to the change and to the other repositories' pull requests.
+3. Run `wm pr <name> --json` for the title and description. In a project that spans several repositories, run it once per repository: without `--repo` for the atlas, which carries the record, and with `--repo <repo>` for each code repo the change's items name. The description already says why, what changes, the specs touched, the items, the change's review with its findings, and links to the change and to the other repositories' pull requests.
 4. Show the human the title and description. You may add a line on what a reviewer should look at first. Ask whether to open the pull request, and against which branch.
 5. Only after they say yes: push the branch and open the pull request with the git host's own command-line tool, using that title and description.
 6. Give the human the link.

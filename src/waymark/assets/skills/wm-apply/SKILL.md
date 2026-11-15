@@ -1,11 +1,11 @@
 ---
 name: wm-apply
-description: Build an accepted Waymark change item by item - build each item yourself or delegate it to an implementer when it is tagged so, run its review, handle the verdict and commit. Use when a change is accepted and ready to build.
+description: Build an accepted Waymark change item by item - build each item yourself or delegate it to an implementer when it is tagged so, commit it, then review the whole change once and handle the verdict. Use when a change is accepted and ready to build.
 ---
 
 # Apply
 
-You are the planner. You build each item yourself, from the record, unless the item is tagged `build: delegate`: then a fresh implementer that sees only the record builds it. Either way the record is the source of truth, and each item is checked at its review level. You build or delegate, review, record and commit.
+You are the planner. You build each item yourself, from the record, unless the item is tagged `build: delegate`: then a fresh implementer that sees only the record builds it. Either way the record is the source of truth. Once every item is built, the whole change is reviewed once, at its review level. You build or delegate, record, commit and review.
 
 ## Before you start
 
@@ -19,7 +19,7 @@ Repeat until `wm instructions --change <name> --json` says the step is `archive`
 
 ### Step `apply`
 
-- If the commands start with `wm reopen`, run it first: a review asked for changes.
+- If the commands start with `wm reopen`, run it first: a review of the change named this item to rebuild. Read what the review found with `wm show <name>` before you start.
 - `wm instructions` says who builds the item. An item without a `build: delegate` tag, you build yourself; a tagged one, you delegate.
 
 **An item you build yourself.**
@@ -37,40 +37,48 @@ Repeat until `wm instructions --change <name> --json` says the step is `archive`
 
 - Start the `wm-implementer` agent with a prompt of exactly `<name> <item>` and nothing else, for example `add-search-limit 1.2`. It builds its own context from the record.
 - When it returns, run `wm show <name> --json` and look at the item:
-  - ticked: go on to its review;
+  - ticked: commit it and go on;
   - a `Blocked:` or `Spec gap:` line: that item waits on the human; go on to the next step;
   - neither, and the agent reported `partial`: delegate the item again;
   - neither, and your tool recorded nothing: record the result yourself with `wm tick`, `wm block` or `wm gap`, using the agent's own words.
 
-A ticked item goes on to its review. A blocked item, or one with a spec gap, waits on the human; go on to the next step.
+A blocked item, or one with a spec gap, waits on the human; go on to the next step.
+
+### After an item is ticked
+
+Commit the item's work, in the repository it belongs to, with a conventional commit message such as `feat(api): add the result limit`. If the project lists commit scopes, use one of them or none. When a git hook stops the commit, fix what it says; don't skip the hooks. Don't push and don't open a pull request unless the human asks.
 
 ### Step `review`
 
-`wm instructions` tells you which kind:
+Once every item is ticked, the change is reviewed once, as a whole. `wm instructions` tells you which kind; the change's review level comes from its proposal.
 
-- **Self-review.** Check the item against its criteria and the scenarios it serves: is it complete, correct and coherent with the rest? Read the code and run the verification. Then run `wm review <name> <item> --self "<summary>"`. If it isn't right, don't record a review: fix it, or for a tagged item delegate it again.
-- **Independent review.** Start the `wm-reviewer` agent with a prompt of exactly `<name> <item>`. When it returns, look at the item with `wm show`:
-  - `pass`: the item is reviewed;
-  - `changes`: the next `apply` step reopens it, and it is built again;
+- **Self-review.** Review the change against its deltas' scenarios, its design and each item's criteria:
+  - complete: every criterion holds, and every scenario is met by some item;
+  - correct: the code does what the requirements say, at the edges too;
+  - coherent: it follows the design, and the items fit together.
+
+  Read the code, run each item's verification, and run the project's full checks. Then record it with `wm review <name> --self "<summary>"`, adding a `--finding "<critical|warning|suggestion>: <place>: <text>"` for each thing you found. A critical finding means it isn't done: fix it, or record `wm verdict <name> changes "<reasons>" --items <item>...` to rebuild the items it names.
+- **Independent review.** Start the `wm-reviewer` agent with a prompt of exactly `<name>` and nothing else. It ends with `CHANGE:` and `VERDICT:` lines, and `wm` records the verdict and its findings. When it returns, look at the change with `wm show <name>`:
+  - `pass`: the change is reviewed;
+  - `changes`: the items it names are reopened and built again, then the change is reviewed again, independently;
   - a second `changes`, or `spec-gap`: it goes to the human.
-  If your tool recorded nothing, run `wm verdict <name> <item> <verdict> "<the reviewer's reasons>"` with the reviewer's own words.
+  If your tool recorded nothing, run `wm verdict <name> <verdict> "<the reviewer's reasons>"` with the reviewer's own words, its `--items` and its `--finding` lines.
+- **Level `none`.** No review is needed; the step is skipped.
 
-### After a review passes
-
-Commit the item's work, in the repository it belongs to, with a conventional commit message such as `feat(api): add the result limit`. If the project lists commit scopes, use one of them or none. When a git hook stops the commit, fix what it says; don't skip the hooks. At review level `none`, commit once the item is ticked. Don't push and don't open a pull request unless the human asks.
+Commit the review record once it is written.
 
 ### Step `resolve-items`
 
-Only items that wait on the human are left. Run `wm inbox` and bring each one to them: the blocker, the spec gap, or the verdict. A spec gap is fixed by revising the change with the `wm-update` skill. Once they have decided, run `wm resolve <name> <item> "<what was decided>"`.
+Only what waits on the human is left. Run `wm inbox` and bring each one to them: the blocker, the spec gap, or the verdict. A spec gap is fixed by revising the change with the `wm-update` skill. Once they have decided, run `wm resolve <name> <item> "<what was decided>"` for an item, or `wm resolve <name> review "<what was decided>"` for the change's review.
 
 ## When the step is `archive`
 
-Every item is built and reviewed. Tell the human, and offer the `wm-pr` skill and then the `wm-archive` skill.
+Every item is built and the change is reviewed. Tell the human, and offer the `wm-pr` skill and then the `wm-archive` skill.
 
 ## Rules
 
 - Never run `wm accept` or `wm archive --override`.
 - The record is the source of truth. Whoever builds an item builds it from the record; what isn't written there gets written there first.
-- Delegate with the change and item only. Don't explain the task in the prompt: what the implementer needs is in the record, and if it isn't, that is a spec gap.
+- Start an implementer with the change and item only, and a reviewer with the change only. Don't explain the task in the prompt: what they need is in the record, and if it isn't, that is a spec gap.
 - Record a reviewer's verdict in the reviewer's words, never your retelling.
-- If your tool has no isolated agents, build a tagged item yourself as you would an untagged one, and review it as a self-review.
+- If your tool has no isolated agents, build a tagged item yourself as you would an untagged one. A change that needs an independent review then needs the human, or another session that didn't build it, to review it.

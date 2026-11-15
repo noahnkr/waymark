@@ -279,6 +279,6 @@ def test_delegated_agents_are_told_how_to_end() -> None:
     _, implementer = assets.agent(assets.IMPLEMENTER)
     _, reviewer = assets.agent(assets.REVIEWER)
     assert "ITEM: <change> <item>\nRESULT: <done | partial | spec-gap | blocked>" in implementer
-    assert "ITEM: <change> <item>\nVERDICT: <pass | changes | spec-gap>" in reviewer
+    assert "CHANGE: <change>\nVERDICT: <pass | changes <item> <item>... | spec-gap>" in reviewer
     assert "wm context <change> <item> --for implement" in implementer
-    assert "wm context <change> <item> --for review" in reviewer
+    assert "wm context <change> --for review" in reviewer
