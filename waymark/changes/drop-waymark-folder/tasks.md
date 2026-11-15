@@ -23,9 +23,11 @@
 
 ## 2. Commit messages in the command hook
 
-- [ ] 2.1 Read the message of each `git commit` in a shell command
+- [x] 2.1 Read the message of each `git commit` in a shell command
   - Criteria: `hooks/commands.commit_messages` gives, for each `git commit` invocation, the message from `-m`/`--message` (several joined with blank lines), the body of a `$(cat <<'EOF' … EOF)` here-document in any of its usual spellings, the path given with `-F`/`--file`, or nothing when the message can't be read (no message option, another command substitution, a variable)
   - Verify: tests in `tests/hooks/test_commands.py` for each form, including commands joined with `&&` and a Windows-style path
+  - Note: `commit_messages` returns `list[CommitMessage | None]`, not `list[str | None]`: `CommitMessage.text` is a message from `-m`, `CommitMessage.file` a path from `-F` (Windows backslashes come back as `/`), so `decide` can tell them apart. `-F -` (stdin, e.g. `git commit -F - <<'EOF'`), `--fixup`/`--squash`/`-C`/`-c`/`-t`, and `-m` combined with `-F` give `None`.
+  - (self-review) 2026-11-15: commit_messages reads -m/--message (joined with blank lines), here-document bodies, -F/--file paths (Windows paths with /) and gives None when unreadable; returns CommitMessage(text|file) so decide can tell a message from a path, a sound departure from the design's str. Tried the agent heredoc form, chained commands, two -m, an editor commit and a Windows -F path by hand; hook tests (160) and mypy pass.
 - [ ] 2.2 Refuse a `git commit` whose message isn't conventional   `review: independent`
   - Criteria: `decide` refuses a shell command with a `git commit` whose readable message fails `commit_problem` with the project's commit scopes, for every role, with "The commit was stopped: <problem>"; a message read from `-F` is read through `record/files.py`; unreadable messages and commands outside a Waymark project are allowed; the existing command rules keep their order and wording
   - Verify: tests in `tests/hooks/test_decide.py` for every scenario of the `commits` delta, and one through `wm hook claude-code PreToolUse` in `tests/adapters/test_claude_code.py`
