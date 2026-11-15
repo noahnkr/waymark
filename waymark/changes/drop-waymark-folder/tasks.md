@@ -2,9 +2,13 @@
 
 ## 1. The pointer in the code repo's settings
 
-- [ ] 1.1 Read a pointer-only `waymark/config.toml`, and still read the old pointer   `review: independent`
+- [x] 1.1 Read a pointer-only `waymark/config.toml`, and still read the old pointer   `review: independent`
   - Criteria: `record/pointer.py` reads and renders a `waymark/config.toml` whose only table is `[pointer]` (`atlas`, optional `path`, `wm_version`), tells it from a record's settings with `is_pointer`, and still parses `.waymark/atlas.toml`; `find_project` goes through a pointer found as `waymark/config.toml`, falls back to `.waymark/atlas.toml` before the registry, and marks a project found through the old file; `wm check` and `wm status` run in a code repo with either pointer act on the atlas, and the pointer is never reported as a broken record
   - Verify: tests in `tests/record/test_atlas.py` and `tests/test_atlas_cli.py` for the scenarios "Commands act on the atlas", "Check in a code repo" and "Atlas set up with 0.1.1" (status part)
+  - Note: `parse_pointer` and `render_pointer` take `old=True` for `.waymark/atlas.toml`. `wm atlas point` still writes the old file through `render_pointer(..., old=True)` and `OLD_POINTER_FILE`, so 1.2 switches it to `POINTER_FILE`; its refusal on `waymark/config.toml` must then use `is_pointer`, or re-pointing is refused.
+  - Note: `record/atlas.py` gained `pointer_file(folder)`, and `read_pointer` reads either place (new first), so `wm atlas doctor`'s pointer check already reads both and names the file it read; 1.2 only needs its tests.
+  - Note: not handled here: `wm init` in a code repo with the new pointer goes to `_set_up_clone` and treats the pointer as a record; `services/githooks.py` and `integration.git_hooks` do too, but they go in 3.1.
+  - (review) 2026-11-15 pass: pointer.py reads and renders the [pointer]-only waymark/config.toml, has is_pointer and still parses .waymark/atlas.toml; find_project goes through the new pointer, falls back to the old one before the registry and sets old_pointer; tests show wm status and wm check in a code repo with either pointer act on the atlas with no broken-record report, and pytest, ruff and mypy pass.
 - [ ] 1.2 Write the new pointer with `wm atlas point`, and warn about the old one
   - Criteria: `wm atlas point <atlas>` writes the `[pointer]` settings in `waymark/config.toml`, removes `.waymark/atlas.toml` in the same transaction and `.waymark/` when it is then empty, and refuses where `waymark/config.toml` is a record; `wm doctor` warns when the project was found through the old pointer and gives the `wm atlas point <atlas>` command; `wm atlas doctor` reads pointers in either place
   - Verify: tests in `tests/services/test_atlas.py` and `tests/services/test_doctor.py` for "Point a code repo", "Move the pointer" and "Atlas set up with 0.1.1" (doctor part)

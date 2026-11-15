@@ -12,7 +12,7 @@ from waymark.record import git
 from waymark.record.atlas import Found, atlas_name_at, locate_atlas, locate_repo, repo_problem
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, Config
 from waymark.record.files import RecordFiles
-from waymark.record.pointer import POINTER_FILE, Pointer, render_pointer
+from waymark.record.pointer import OLD_POINTER_FILE, Pointer, render_pointer
 from waymark.record.project import Project
 from waymark.record.record import Record, load_record
 from waymark.record.registry import Registry, load_registry, stage_registry
@@ -152,11 +152,11 @@ def point(start: Path, atlas: str, path: str | None = None) -> Done:
     config = load_record(Project(folder)).config
     pin = config.wm_version if config else __version__
     transaction = Transaction(RecordFiles(top))
-    existed = (top / POINTER_FILE).is_file()
-    transaction.write(POINTER_FILE, render_pointer(Pointer(atlas, hint, pin)))
+    existed = (top / OLD_POINTER_FILE).is_file()
+    transaction.write(OLD_POINTER_FILE, render_pointer(Pointer(atlas, hint, pin), old=True))
     commit(transaction)
     verb = "Updated" if existed else "Wrote"
     return Done(
-        f'{verb} {POINTER_FILE}: this repository\'s record is the atlas "{atlas}". Commit it so '
-        "anyone who clones this repository finds the atlas too."
+        f'{verb} {OLD_POINTER_FILE}: this repository\'s record is the atlas "{atlas}". '
+        "Commit it so anyone who clones this repository finds the atlas too."
     )

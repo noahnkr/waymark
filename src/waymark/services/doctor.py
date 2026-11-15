@@ -14,11 +14,10 @@ from pathlib import Path
 
 from waymark import __version__
 from waymark.record import git
-from waymark.record.atlas import Found, locate_atlas, locate_repo, read_pointer
+from waymark.record.atlas import Found, locate_atlas, locate_repo, pointer_file, read_pointer
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT
 from waymark.record.files import RecordFiles
 from waymark.record.githooks import HOOKS_DIR, HooksState, hooks_status
-from waymark.record.pointer import POINTER_FILE
 from waymark.record.project import Project, ProjectNotFoundError, find_project
 from waymark.record.record import Record, load_record
 from waymark.record.registry import Registry, load_registry
@@ -302,15 +301,16 @@ def _pointer_check(name: str, folder: Path, atlas: str, pin: str) -> Check | Non
         return Check(f"pointer {name}", Status.ERROR, problem, folder)
     if pointer is None:
         return None
+    file = pointer_file(folder)
     if pointer.wm_version not in (None, pin):
         return Check(
             f"pointer {name}",
             Status.WARNING,
-            f"Its {POINTER_FILE} pins wm {pointer.wm_version}; the atlas pins {pin}. Run "
+            f"Its {file} pins wm {pointer.wm_version}; the atlas pins {pin}. Run "
             f'"wm atlas point {atlas}" in it to bring the pointer up to date.',
             folder,
         )
-    return Check(f"pointer {name}", Status.OK, f'{POINTER_FILE} names "{atlas}".', folder)
+    return Check(f"pointer {name}", Status.OK, f'{file} names "{atlas}".', folder)
 
 
 def _repo_checks(record: Record, registry: Registry) -> list[Check]:
