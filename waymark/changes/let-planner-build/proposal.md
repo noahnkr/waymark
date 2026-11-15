@@ -1,6 +1,7 @@
 # Let planner build
 
 Owner: Noah Roberts
+Accepted: 2026-11-15 by Noah Roberts (fingerprint: 196a9c81f3ab4df4)
 
 ## Why
 

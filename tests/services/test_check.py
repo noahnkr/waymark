@@ -63,6 +63,18 @@ def test_malformed_evidence_is_an_error(project: Workspace) -> None:
     assert findings(project) == [("error", "changes/add-limit/tasks.md", "malformed-evidence")]
 
 
+def test_unknown_build_tag_and_repeated_tag_are_errors(project: Workspace) -> None:
+    project.change(
+        tasks=HEAD
+        + "- [ ] 1.1 Cap it   `build: someone`\n"
+        + "- [ ] 1.2 Page it   `review: none`   `review: self`\n"
+    )
+    assert findings(project) == [
+        ("error", "changes/add-limit/tasks.md", "unknown-build-tag"),
+        ("error", "changes/add-limit/tasks.md", "repeated-tag"),
+    ]
+
+
 def test_delta_that_does_not_match_its_spec_is_an_error(project: Workspace) -> None:
     project.write("specs/search.md", spec(requirement("Result cap")))
     project.change(deltas={"search": delta(modified=(CHANGED,))})

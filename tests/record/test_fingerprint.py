@@ -4,7 +4,8 @@ import pytest
 
 from tests.support import TASKS, Workspace, delta, requirement, spec
 from waymark.record.deltas import merge_delta
-from waymark.record.state import AcceptanceState
+from waymark.record.fingerprint import change_fingerprint
+from waymark.record.state import AcceptanceState, StepKind
 
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 
@@ -60,6 +61,7 @@ def test_editing_the_design_withdraws_acceptance(workspace: Workspace) -> None:
         ("Verify: a test covers", "Verify: nobody checks"),
         ("1.2 Document the limit   `review: none`", "1.2 Document the limit"),
         ("- [ ] 1.1 Cap the result count", "- [ ] 1.1 Cap the result count   `review: none`"),
+        ("- [ ] 1.1 Cap the result count", "- [ ] 1.1 Cap the result count   `build: delegate`"),
     ],
 )
 def test_changing_an_item_definition_withdraws_acceptance(
@@ -67,6 +69,35 @@ def test_changing_an_item_definition_withdraws_acceptance(
 ) -> None:
     accepted(workspace).replace("changes/add-limit/tasks.md", old, new)
     assert acceptance(workspace) is AcceptanceState.WITHDRAWN
+
+
+def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
+    accepted(workspace).replace(
+        "changes/add-limit/tasks.md",
+        "1.2 Document the limit   `review: none`",
+        "1.2 Document the limit   `review: none`   `build: delegate`",
+    )
+    state = workspace.change_state()
+    assert state.acceptance is AcceptanceState.WITHDRAWN
+    assert state.next_step.kind is StepKind.ACCEPT
+    assert state.next_step.human
+
+
+def test_removing_the_build_tag_withdraws_acceptance(workspace: Workspace) -> None:
+    workspace.change(tasks=TASKS.replace("`review: none`", "`build: delegate`   `review: none`"))
+    workspace.accept()
+    assert acceptance(workspace) is AcceptanceState.VALID
+    workspace.replace("changes/add-limit/tasks.md", "`build: delegate`   ", "")
+    assert acceptance(workspace) is AcceptanceState.WITHDRAWN
+
+
+def test_untagged_items_fingerprint_as_before_the_build_tag(workspace: Workspace) -> None:
+    workspace.change()
+    record = workspace.record()
+    fingerprint = change_fingerprint(
+        record.changes["add-limit"], record.specs, record.default_review
+    )
+    assert fingerprint == "eb98cf2e3d3071a6"
 
 
 def test_appending_an_item_withdraws_acceptance(workspace: Workspace) -> None:

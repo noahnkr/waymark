@@ -51,7 +51,7 @@ def busy(project: Workspace) -> Workspace:
         + "- [ ] 1.1 Sort it   `review: independent`\n  - Criteria: newest first\n"
         + "- [ ] 1.2 Explain it\n  - Criteria: documented\n"
         + "- [ ] 1.3 Announce it\n  - Criteria: posted\n"
-        + "- [ ] 1.4 Translate it\n  - Criteria: two languages\n",
+        + "- [ ] 1.4 Translate it   `build: delegate`\n  - Criteria: two languages\n",
     )
     lifecycle.accept(project.root, "add-order", DAY)
     lifecycle.tick(project.root, "add-order", "1.1")
@@ -238,6 +238,8 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
     assert payload["design"] == {"decisions": ["Where to cut"]}
     items = {item["number"]: item for item in payload["items"]}
     assert items["1.1"]["level"] == "independent"
+    assert items["1.1"]["delegate"] is False
+    assert (items["1.4"]["title"], items["1.4"]["delegate"]) == ("Translate it", True)
     assert items["1.1"]["records"] == [
         {"kind": "review", "date": "2026-01-15", "verdict": "spec-gap", "text": "ties?"}
     ]

@@ -1,7 +1,7 @@
 """Task lists: numbered sections of checkbox items, with the evidence under each item.
 
-An item's definition is its number, title, review level, criteria, verification
-and repo. Its evidence is its tick, its blocker, its spec gap and its review
+An item's definition is its number, title, review level, build tag, criteria,
+verification and repo. Its evidence is its tick, its blocker, its spec gap and its review
 records.
 """
 
@@ -20,7 +20,8 @@ SPEC_GAP = "Spec gap"
 
 _SECTION = re.compile(r"^(\d+)\.\s+(\S.*)$")
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
-_LEVEL_TAG = re.compile(r"\s+`review:\s*([A-Za-z-]+)`$")
+_TAG = re.compile(r"\s+`(review|build):\s*([A-Za-z-]+)`$")
+DELEGATE = "delegate"
 _LIST_LINE = re.compile(r"^(?:[-*+]|\d+[.)])(?:\s|$)")
 _FIELD = re.compile(r"^  [-*] (\S.*)$")
 _LABELED = re.compile(r"^(Criteria|Verify|Repo|Blocked|Spec gap|Note):(?:\s+(.*))?$")
@@ -70,6 +71,7 @@ class Item:
     title: str
     ticked: bool
     level_tag: ReviewLevel | None
+    delegate: bool
     criteria: str | None
     verify: str | None
     repo: str | None
@@ -117,6 +119,7 @@ class _Draft:
     title: str
     ticked: bool
     level_tag: ReviewLevel | None
+    delegate: bool
     index: int
     end: int
     fields: dict[str, list[str]] = field(default_factory=dict)
@@ -144,6 +147,7 @@ class _Draft:
             title=self.title,
             ticked=self.ticked,
             level_tag=self.level_tag,
+            delegate=self.delegate,
             criteria=single("Criteria"),
             verify=single("Verify"),
             repo=single("Repo"),
@@ -249,25 +253,48 @@ class _Parser:
                 'a "Note:".',
             )
 
-    def item_line(self, index: int, section: TaskSection | None, text: str) -> bool:
-        match = _ITEM.match(text)
-        if match is None:
-            return False
-        self.close_item()
-        title = match.group(4)
+    def tags(self, index: int, title: str) -> tuple[str, ReviewLevel | None, bool]:
+        """Strip the trailing `review:` and `build:` tags, in either order, from a title."""
         level_tag: ReviewLevel | None = None
-        tag = _LEVEL_TAG.search(title)
-        if tag:
+        delegate = False
+        seen: set[str] = set()
+        while tag := _TAG.search(title):
             title = title[: tag.start()].rstrip()
-            if tag.group(1) in set(ReviewLevel):
-                level_tag = ReviewLevel(tag.group(1))
+            name, value = tag.group(1), tag.group(2)
+            if name in seen:
+                self.problem(
+                    index,
+                    "repeated-tag",
+                    f'The "{name}:" tag appears twice on this item. Keep one.',
+                )
+                continue
+            seen.add(name)
+            if name == "build":
+                if value == DELEGATE:
+                    delegate = True
+                else:
+                    self.problem(
+                        index,
+                        "unknown-build-tag",
+                        f'"{value}" is not a build tag. The only value is: {DELEGATE}.',
+                    )
+            elif value in set(ReviewLevel):
+                level_tag = ReviewLevel(value)
             else:
                 levels = ", ".join(level.value for level in ReviewLevel)
                 self.problem(
                     index,
                     "unknown-review-level",
-                    f'"{tag.group(1)}" is not a review level. Use one of: {levels}.',
+                    f'"{value}" is not a review level. Use one of: {levels}.',
                 )
+        return title, level_tag, delegate
+
+    def item_line(self, index: int, section: TaskSection | None, text: str) -> bool:
+        match = _ITEM.match(text)
+        if match is None:
+            return False
+        self.close_item()
+        title, level_tag, delegate = self.tags(index, match.group(4))
         number = f"{match.group(2)}.{match.group(3)}"
         if section is None:
             self.problem(
@@ -288,6 +315,7 @@ class _Parser:
             title=title,
             ticked=match.group(1) != " ",
             level_tag=level_tag,
+            delegate=delegate,
             index=index,
             end=index + 1,
         )

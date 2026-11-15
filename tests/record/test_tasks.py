@@ -2,6 +2,8 @@
 
 import datetime
 
+import pytest
+
 from tests.support import TASKS, document
 from waymark.record.tasks import RecordKind, Tasks, is_evidence_line, parse_tasks
 from waymark.record.terms import ReviewLevel, Verdict
@@ -53,6 +55,47 @@ def test_review_level_tag_overrides_the_project_default() -> None:
 
 def test_unknown_review_level_is_a_problem() -> None:
     assert codes(HEAD + "- [ ] 1.1 Cap it   `review: strict`\n") == ["unknown-review-level"]
+
+
+def test_build_tag_marks_an_item_for_delegation_in_either_order() -> None:
+    tasks = parse(
+        HEAD
+        + "- [ ] 1.1 Cap it   `review: independent`   `build: delegate`\n"
+        + "- [ ] 1.2 Page it   `build: delegate`   `review: none`\n"
+        + "- [ ] 1.3 Sort it   `build: delegate`\n"
+        + "- [ ] 1.4 Tidy up\n"
+    )
+    assert tasks.problems == ()
+    first, second, third, plain = tasks.items
+    assert [item.title for item in tasks.items] == ["Cap it", "Page it", "Sort it", "Tidy up"]
+    assert (first.delegate, first.level_tag) == (True, ReviewLevel.INDEPENDENT)
+    assert (second.delegate, second.level_tag) == (True, ReviewLevel.NONE)
+    assert (third.delegate, third.level_tag) == (True, None)
+    assert (plain.delegate, plain.level_tag) == (False, None)
+
+
+def test_unknown_build_tag_is_a_problem_that_names_delegate() -> None:
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `build: someone`\n")
+    (problem,) = tasks.problems
+    assert problem.code == "unknown-build-tag"
+    assert '"someone"' in problem.message
+    assert "The only value is: delegate." in problem.message
+    (item,) = tasks.items
+    assert item.title == "Cap it"
+    assert not item.delegate
+
+
+@pytest.mark.parametrize(
+    "tags",
+    [
+        "`build: delegate`   `build: delegate`",
+        "`review: none`   `build: delegate`   `review: self`",
+    ],
+)
+def test_repeated_tag_is_a_problem(tags: str) -> None:
+    tasks = parse(HEAD + f"- [ ] 1.1 Cap it   {tags}\n")
+    assert [problem.code for problem in tasks.problems] == ["repeated-tag"]
+    assert tasks.items[0].title == "Cap it"
 
 
 def test_review_records_sit_under_their_item() -> None:
