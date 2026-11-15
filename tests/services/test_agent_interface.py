@@ -107,14 +107,17 @@ def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace)
     assert step["commands"][0] == f"wm context {NAME} 1.1 --for implement"
 
     lifecycle.tick(project.root, NAME, "1.1")
-    step = at(project)
-    assert (step["step"], step["item"]) == ("review", "1.1")
-    assert step["commands"] == [f'wm review {NAME} 1.1 --self "<summary>"']
-
-    lifecycle.self_review(project.root, NAME, "1.1", "fine", DAY)
     assert (at(project)["step"], at(project)["item"]) == ("apply", "1.2")
 
     lifecycle.tick(project.root, NAME, "1.2")
+    step = at(project)
+    assert (step["step"], step["item"]) == ("review", None)
+    assert step["commands"] == [
+        f'wm review {NAME} --self "<summary>" [--finding "<critical|warning|suggestion>: <place>: <text>"]',
+        f'wm verdict {NAME} changes "<reasons>" --items <item>...',
+    ]
+
+    lifecycle.self_review(project.root, NAME, "fine", DAY)
     step = at(project)
     assert step["step"] == "archive"
     assert step["commands"] == [f'wm archive {NAME} --outcome "<what came of it>"']
@@ -126,7 +129,7 @@ def test_instructions_skip_the_design_on_the_short_path(project: Workspace) -> N
     design = at(project, "design")
     assert not design["ready"]
     assert "short path" in design["reason"]
-    assert any("short path" in line for line in at(project, "tasks")["guidance"])
+    assert any("short path" in line for line in at(project, "propose")["guidance"])
 
 
 def test_instructions_for_a_later_step_say_what_comes_first(project: Workspace) -> None:
@@ -189,13 +192,20 @@ def test_task_instructions_in_an_atlas_ask_for_a_repo_on_every_item(atlas: Works
     assert any("Repo line" in line for line in step["guidance"])
 
 
-def test_review_instructions_follow_the_items_review_level(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it   `review: independent`\n  - Criteria: fifty\n")
+def test_review_instructions_follow_the_changes_review_level(project: Workspace) -> None:
+    project.change(
+        proposal_text=proposal().replace(
+            "Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n"
+        ),
+        tasks=HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n",
+    )
+    lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
     step = at(project)
-    assert step["step"] == "review"
-    assert step["commands"][0] == f"wm context {NAME} 1.1 --for review"
+    assert (step["step"], step["item"]) == ("review", None)
+    assert step["commands"][0] == f"wm context {NAME} --for review"
     assert any("reviewer" in line for line in step["guidance"])
+    assert any("CHANGE line" in line for line in step["guidance"])
 
 
 def mentions_an_implementer(step: dict[str, Any]) -> bool:
@@ -234,7 +244,7 @@ def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
 ) -> None:
     accepted(project, HEAD + f"- [ ] 1.1 Cap it{tag}\n  - Criteria: fifty\n")
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, "1.1", Verdict.CHANGES, "off by one", DAY)
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"][0] == f"wm reopen {NAME} 1.1"
@@ -472,3 +482,21 @@ def test_context_packs_are_the_same_on_every_machine(project: Workspace) -> None
         path = f"{FOLDER}/{relative}"
         project.write(path, project.read(path).replace("\n", "\r\n"))
     assert context_pack(project.record(), "implement", NAME, "1.1") == first
+
+
+def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
+    project: Workspace,
+) -> None:
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.verdict(project.root, NAME, Verdict.SPEC_GAP, "no scenario for zero", DAY)
+    step = at(project)
+    assert (step["step"], step["item"]) == ("resolve-items", None)
+    assert step["commands"][0] == f'wm resolve {NAME} review "<what was decided>"'
+
+
+def test_proposal_instructions_explain_the_review_line(project: Workspace) -> None:
+    project.write(f"{FOLDER}/proposal.md", "# Limit\n\nOwner: Sam Doe\n")
+    guidance = " ".join(at(project)["guidance"])
+    assert '"Review: self|independent|none"' in guidance
+    assert "modifies or removes an existing requirement" in guidance

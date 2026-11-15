@@ -40,16 +40,15 @@ _UNLOCKS = {
     StepKind.TASKS: "Acceptance by the human; nothing is built before it.",
     StepKind.RESOLVE_CONFLICT: "Acceptance by the human.",
     StepKind.ACCEPT: "Applying the items.",
-    StepKind.APPLY: "The item's review.",
-    StepKind.REVIEW: "The next item; after the last one, archiving.",
-    StepKind.RESOLVE_ITEMS: "Applying the item again.",
+    StepKind.APPLY: "The next item; after the last one, the review of the change.",
+    StepKind.REVIEW: "Archiving, or rebuilding the items a review names.",
+    StepKind.RESOLVE_ITEMS: "Applying or reviewing again.",
     StepKind.ARCHIVE: "The living specs take the deltas, and the change moves to the archive.",
 }
 
 _RISK_SIGNALS = (
-    "the item modifies or removes an existing requirement",
+    "the change modifies or removes an existing requirement",
     "it touches security, data integrity or money",
-    "it is being redone after a failed review",
 )
 
 
@@ -104,7 +103,12 @@ def _drafting(
             'Under Impact, name the specs the change touches, or write "No spec changes".',
             "Don't write the Accepted line or the Outcome section; wm writes the first, and "
             "the second comes at archive.",
+            f"The change is reviewed once, as a whole, at the project's default level ({default}) "
+            'unless a "Review: self|independent|none" line under the Owner line says otherwise. '
+            "Suggest independent when " + "; or ".join(_RISK_SIGNALS) + ".",
         ]
+        if change.short_path:
+            guidance.append("This change is on the short path: its review level is self or none.")
         return outputs, [charter, *_specs(record)], guidance
     if step is StepKind.SPECS:
         outputs = [
@@ -134,14 +138,12 @@ def _drafting(
     guidance = [
         "Give every item criteria that can be checked, and say how to verify it.",
         "Number items by section and never renumber; append new items at the end.",
-        f"The default review level is {default}. Tag an item only when its level differs, "
-        "and suggest independent review for risky items: " + "; ".join(_RISK_SIGNALS) + ".",
+        "Tag an item `build: delegate` only when a fresh implementer should build it: a large "
+        "item, one built in parallel, or one worth a cold check that the record is enough.",
         "Don't tick items or write Blocked, Spec gap or review lines; wm writes those.",
     ]
     if record.layout is Layout.ATLAS:
         guidance.append("Give every item a Repo line naming the repo it works in.")
-    if change.short_path:
-        guidance.append("This change is on the short path: no item may need independent review.")
     read = [
         charter,
         *_existing(record, change, PROPOSAL_FILE, DESIGN_FILE),
@@ -184,24 +186,31 @@ def _working(  # noqa: PLR0911 - one return per step
             commands.insert(0, f"wm reopen {name} {number}")
         return guidance, commands
     if step is StepKind.REVIEW:
-        level = next((i.level for i in state.items if i.number == item), None)
-        if level is ReviewLevel.INDEPENDENT:
+        finding = '--finding "<critical|warning|suggestion>: <place>: <text>"'
+        if state.review.level is ReviewLevel.INDEPENDENT:
             guidance = [
-                f"Start a reviewer for item {number} with the change and item and nothing else.",
-                "The reviewer begins from its context pack and ends with a VERDICT line.",
+                f"Start a reviewer for {name} with the change's name and nothing else.",
+                "The reviewer begins from its context pack and ends with a CHANGE line and a "
+                "VERDICT line.",
                 "Without isolated agents, record the verdict yourself with the verdict command.",
             ]
             commands = [
-                f"wm context {name} {number} --for review",
-                f'wm verdict {name} {number} pass|changes|spec-gap "<reasons>"',
+                f"wm context {name} --for review",
+                f'wm verdict {name} pass|spec-gap "<reasons>" [{finding}]',
+                f'wm verdict {name} changes "<reasons>" --items <item>... [{finding}]',
             ]
             return guidance, commands
         guidance = [
-            f"Check item {number} against its criteria and the scenarios it serves: is it "
-            "complete, correct and coherent with the rest?",
-            "Then record the self-review. Commit once the review is recorded.",
+            f"Review {name} as a whole against its deltas' scenarios, its design and each "
+            "item's criteria: is it complete, correct and coherent?",
+            "Record the self-review with what you found, each finding with its severity and "
+            "place. If an item needs rebuilding, record changes with the items instead.",
+            "Commit once the review is recorded.",
         ]
-        return guidance, [f'wm review {name} {number} --self "<summary>"']
+        return guidance, [
+            f'wm review {name} --self "<summary>" [{finding}]',
+            f'wm verdict {name} changes "<reasons>" --items <item>...',
+        ]
     if step is StepKind.ARCHIVE:
         guidance = [
             "Archiving is the human's call: it comes after the code is merged.",
@@ -220,11 +229,13 @@ def _working(  # noqa: PLR0911 - one return per step
             "now reads; the human then accepts the change again.",
         ]
         return guidance, [f"wm show {name}"]
+    target = item or "review"
     guidance = [
-        "These items wait on the human: bring each blocker, spec gap or verdict to them.",
-        "Once they have decided, record the decision; the item returns to apply.",
+        "These wait on the human: bring each blocker, spec gap or verdict to them.",
+        "Once they have decided, record the decision; the item returns to apply, or the "
+        "change to its review.",
     ]
-    return guidance, [f'wm resolve {name} {number} "<what was decided>"', "wm inbox"]
+    return guidance, [f'wm resolve {name} {target} "<what was decided>"', "wm inbox"]
 
 
 def _explore(record: Record) -> dict[str, Any]:

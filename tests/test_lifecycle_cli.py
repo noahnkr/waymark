@@ -46,9 +46,15 @@ class Session:
     def read(self, relative: str) -> str:
         return (self.root / "waymark" / relative).read_bytes().decode("utf-8")
 
-    def fill_proposal(self, name: str, impact: str = "Specs: search.") -> None:
+    def fill_proposal(
+        self, name: str, impact: str = "Specs: search.", review: str | None = None
+    ) -> None:
         """Draft the proposal the way an agent would: by editing the skeleton."""
         text = self.read(f"changes/{name}/proposal.md")
+        if review is not None:
+            owner = text.index("Owner:")
+            end = text.index("\n", owner) + 1
+            text = text[:end] + f"Review: {review}\n" + text[end:]
         for hint, body in (
             ("<!-- The problem or opportunity, and why now. -->", "Long lists are slow."),
             ("<!-- What will be different once this change is archived. -->", "A capped list."),
@@ -78,7 +84,7 @@ def test_change_runs_from_init_to_archive_with_the_record_in_the_repo(session: S
 
     session.run("new", "change", name)
     assert session.step(name) == (Phase.PROPOSED, StepKind.PROPOSE, None)
-    session.fill_proposal(name)
+    session.fill_proposal(name, review="independent")
     assert session.step(name) == (Phase.PROPOSED, StepKind.SPECS, None)
 
     session.write(
@@ -91,7 +97,7 @@ def test_change_runs_from_init_to_archive_with_the_record_in_the_repo(session: S
     session.write(
         f"changes/{name}/tasks.md",
         HEAD
-        + "- [ ] 1.1 Cap the results   `review: independent`\n  - Criteria: fifty at most\n"
+        + "- [ ] 1.1 Cap the results\n  - Criteria: fifty at most\n"
         + "- [ ] 1.2 Explain the cap\n  - Criteria: the help text names the limit\n",
     )
     assert session.step(name) == (Phase.PLANNED, StepKind.ACCEPT, None)
@@ -102,25 +108,33 @@ def test_change_runs_from_init_to_archive_with_the_record_in_the_repo(session: S
     assert session.step(name) == (Phase.ACCEPTED, StepKind.APPLY, "1.1")
 
     session.run("tick", name, "1.1")
-    assert session.step(name) == (Phase.APPLYING, StepKind.REVIEW, "1.1")
-    refusal = session.run("review", name, "1.1", "--self", "fine", expect=EXIT_REFUSED)
-    assert "independent review" in refusal
-    session.run("verdict", name, "1.1", "changes", "the bound is off by one")
-    assert session.step(name) == (Phase.APPLYING, StepKind.APPLY, "1.1")
-    session.run("reopen", name, "1.1")
-    session.run("tick", name, "1.1")
-    session.run("verdict", name, "1.1", "pass", "boundary covered")
     assert session.step(name) == (Phase.APPLYING, StepKind.APPLY, "1.2")
-
     session.run("block", name, "1.2", "waiting for the wording")
     assert session.step(name) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.2")
     session.run("resolve", name, "1.2", "use the short wording")
     session.run("tick", name, "1.2")
-    assert session.step(name) == (Phase.APPLYING, StepKind.REVIEW, "1.2")
-    assert "missing the review record" in session.run(
+    assert session.step(name) == (Phase.APPLYING, StepKind.REVIEW, None)
+    assert "missing the independent review" in session.run(
         "archive", name, "--outcome", "Capped.", expect=EXIT_REFUSED
     )
-    session.run("review", name, "1.2", "--self", "the help text names the limit")
+
+    refusal = session.run("review", name, "--self", "fine", expect=EXIT_REFUSED)
+    assert "independent review" in refusal
+    session.run(
+        "verdict",
+        name,
+        "changes",
+        "the bound is off by one",
+        "--items",
+        "1.1",
+        "--finding",
+        "critical: src/search.py:12: fifty-one results come back",
+    )
+    assert session.step(name) == (Phase.APPLYING, StepKind.APPLY, "1.1")
+    session.run("reopen", name, "1.1")
+    session.run("tick", name, "1.1")
+    assert session.step(name) == (Phase.APPLYING, StepKind.REVIEW, None)
+    session.run("verdict", name, "pass", "boundary covered")
     assert session.step(name) == (Phase.APPLIED, StepKind.ARCHIVE, None)
     assert "1 warning" in session.run("check")
 
@@ -190,7 +204,7 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     assert f"- Repo: api (its folder on this machine is {api.resolve()})" in pack
     for number in ("1.1", "1.2"):
         session.run("tick", name, number)
-        session.run("review", name, number, "--self", "matches the criteria")
+    session.run("review", name, "--self", "matches the criteria")
     session.run("archive", name, "--outcome", "Capped in the API and shown in the web app.")
 
     record = load_record(find_project(session.root))
@@ -208,11 +222,11 @@ def test_small_change_takes_the_short_path_with_two_approvals(session: Session) 
     name = "fix-typo"
     session.run("init")
     session.run("new", "change", name, "--short")
-    session.fill_proposal(name, "No spec changes.")
+    session.fill_proposal(name, "No spec changes.", review="none")
     assert session.step(name) == (Phase.SPECIFIED, StepKind.TASKS, None)
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Fix the word   `review: none`\n  - Criteria: the word is right\n",
+        HEAD + "- [ ] 1.1 Fix the word\n  - Criteria: the word is right\n",
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")
@@ -246,12 +260,12 @@ def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:
     session.run("new", "milestone", "tidy-docs")
     session.run("new", "exploration", "wording")
     session.run("new", "change", name, "--short")
-    session.fill_proposal(name, "No spec changes.")
+    session.fill_proposal(name, "No spec changes.", review="none")
     session.write(
         "milestones/tidy-docs/roadmap.md",
         f"# Tidy docs: roadmap\n\n- [ ] [Fix the typo](../../changes/{name}/proposal.md)\n",
     )
-    session.write(f"changes/{name}/tasks.md", HEAD + "- [ ] 1.1 Fix the word   `review: none`\n")
+    session.write(f"changes/{name}/tasks.md", HEAD + "- [ ] 1.1 Fix the word\n")
     session.run("accept", name)
     session.run("tick", name, "1.1")
     session.run("sync", name, expect=EXIT_REFUSED)

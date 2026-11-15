@@ -5,12 +5,13 @@ wm writes the evidence itself; these functions are the only way it gets written.
 """
 
 import datetime
+from collections.abc import Sequence
 from pathlib import Path
 
 from waymark.record import git
 from waymark.record.changes import Change
 from waymark.record.deltas import merge_delta
-from waymark.record.edits import edit_item, set_fact, set_outcome
+from waymark.record.edits import add_review, edit_item, set_fact, set_outcome
 from waymark.record.fingerprint import change_fingerprint
 from waymark.record.milestones import ROADMAP_FILE
 from waymark.record.moves import rewrite_links, tick_roadmap_lines
@@ -35,8 +36,8 @@ from waymark.record.state import (
     milestone_state,
 )
 from waymark.record.store import Transaction
-from waymark.record.tasks import BLOCKED, SPEC_GAP, Tasks
-from waymark.record.terms import ReviewLevel, Verdict
+from waymark.record.tasks import BLOCKED, FINDING_FORMAT, SPEC_GAP, Tasks, parse_finding
+from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
 from waymark.record.text import Document
 from waymark.services.common import (
     Done,
@@ -50,6 +51,7 @@ from waymark.services.common import (
 )
 
 OVERRIDE_LABEL = "Review override"
+REVIEW_TARGET = "review"
 _DRAFTING = (StepKind.PROPOSE, StepKind.SPECS, StepKind.DESIGN, StepKind.TASKS)
 
 
@@ -184,86 +186,159 @@ def add_note(start: Path, name: str, number: str, note: str) -> Done:
     return Done(f'Wrote "Note: {text}" under item {number} of {name}. It is still to apply.', paths)
 
 
-def self_review(start: Path, name: str, number: str, summary: str, today: datetime.date) -> Done:
-    """Record the planner's own review of an item."""
-    record, change, state = _open(start, name)
-    _require_accepted(state)
-    item = find_item(change, number)
-    item_state = _item_state(state, number)
-    text = one_line(summary, "a summary of the review")
-    if not item.ticked:
-        raise Refusal(f"Item {number} isn't ticked yet, so there is nothing to review.")
-    if item_state.level is ReviewLevel.NONE:
-        raise Refusal(f"Item {number} is at review level none and needs no review record.")
-    if item_state.level is ReviewLevel.INDEPENDENT:
+def _findings(findings: Sequence[str]) -> tuple[list[str], bool]:
+    """The findings as wm writes them, and whether one of them is critical."""
+    written: list[str] = []
+    critical = False
+    for finding in findings:
+        parsed = parse_finding(one_line(finding, "a finding"))
+        if parsed is None:
+            raise Refusal(f'"{finding}" is not a finding. Write it as "{FINDING_FORMAT}".')
+        severity, place, text = parsed
+        critical = critical or severity is ReviewSeverity.CRITICAL
+        written.append(f"{severity.value}: {place}: {text}")
+    return written, critical
+
+
+def _require_reviewable(name: str, state: ChangeState) -> None:
+    """A change is reviewed once every item is ticked and no verdict waits to be dealt with."""
+    unticked = [item.number for item in state.items if not item.ticked]
+    if unticked:
         raise Refusal(
-            f"Item {number} needs an independent review, so a self-review doesn't count. "
-            "Have a reviewer check it and record the verdict."
+            f'"{name}" can\'t be reviewed yet: {_listed(unticked)} not ticked. The change is '
+            "reviewed as a whole once every item is built."
         )
-    if item_state.reviewed:
-        raise Refusal(f"Item {number} already has the review record it needs.")
-    line = f"(self-review) {today.isoformat()}: {text}"
-    paths = _write_tasks(record, change, edit_item(_tasks(change), number, add=[line]))
-    return Done(f"Recorded the self-review of item {number} of {name}.", paths)
+    if state.review.reopen:
+        raise Refusal(
+            f'A review of "{name}" named {", ".join(state.review.reopen)} to rebuild. Reopen '
+            f'and rebuild them first, starting with "wm reopen {name} {state.review.reopen[0]}".'
+        )
+    if state.review.escalated:
+        raise Refusal(
+            f'The review of "{name}" waits on the human: {state.review.escalated}. Once that is '
+            f'settled, run "wm resolve {name} {REVIEW_TARGET} "<what was decided>"".'
+        )
 
 
-def verdict(
-    start: Path, name: str, number: str, result: Verdict, reasons: str, today: datetime.date
+def self_review(
+    start: Path,
+    name: str,
+    summary: str,
+    today: datetime.date,
+    *,
+    findings: Sequence[str] = (),
 ) -> Done:
-    """Record a reviewer's verdict on an item."""
+    """Record the planner's own review of the whole change."""
     record, change, state = _open(start, name)
     _require_accepted(state)
-    item = find_item(change, number)
-    item_state = _item_state(state, number)
-    text = one_line(reasons, "the reviewer's reasons")
-    if not item.ticked:
-        raise Refusal(f"Item {number} isn't ticked yet, so there is nothing to review.")
-    if item_state.redo or item_state.escalated:
+    text = one_line(summary, "a summary of the review")
+    written, critical = _findings(findings)
+    _require_reviewable(name, state)
+    level = state.review.level
+    if level is ReviewLevel.NONE:
+        raise Refusal(f'"{name}" is at review level none and needs no review record.')
+    if level is ReviewLevel.INDEPENDENT:
         raise Refusal(
-            f"Item {number} already has a verdict that is waiting to be dealt with. "
-            f'Reopen it ("wm reopen {name} {number}") or resolve it '
-            f'("wm resolve {name} {number} "<what was decided>"") first.'
+            f'"{name}" needs an independent review, so a self-review doesn\'t count. Have a '
+            "reviewer check it and record the verdict."
         )
-    line = f"(review) {today.isoformat()} {result.value}: {text}"
-    paths = _write_tasks(record, change, edit_item(_tasks(change), number, add=[line]))
-    return Done(f"Recorded the verdict {result.value} on item {number} of {name}.", paths)
+    if state.review.reviewed:
+        raise Refusal(f'"{name}" already has the review it needs.')
+    if critical:
+        raise Refusal(
+            "A review with a critical finding can't count as done. Fix what it found and "
+            f'review again, or name the items to rebuild with "wm verdict {name} changes".'
+        )
+    line = f"(self-review) {today.isoformat()}: {text}"
+    paths = _write_tasks(record, change, add_review(_tasks(change), line, written))
+    return Done(f"Recorded the self-review of {name}.", paths)
+
+
+def verdict(  # noqa: PLR0913 - the verdict, and the items and findings it names
+    start: Path,
+    name: str,
+    result: Verdict,
+    reasons: str,
+    today: datetime.date,
+    *,
+    items: Sequence[str] = (),
+    findings: Sequence[str] = (),
+) -> Done:
+    """Record a reviewer's verdict on the whole change."""
+    record, change, state = _open(start, name)
+    _require_accepted(state)
+    text = one_line(reasons, "the reviewer's reasons")
+    written, critical = _findings(findings)
+    for number in items:
+        find_item(change, number)
+    if result is Verdict.CHANGES and not items:
+        raise Refusal(
+            'A "changes" verdict names the items to rebuild, for example '
+            f'"wm verdict {name} changes "<reasons>" --items 1.2 2.1".'
+        )
+    if result is not Verdict.CHANGES and items:
+        raise Refusal(f'Only a "changes" verdict names items to rebuild, not "{result.value}".')
+    if result is Verdict.PASS and critical:
+        raise Refusal(
+            'A "pass" can\'t come with a critical finding. Record "changes" with the items '
+            "to rebuild, or leave the finding out if it isn't critical."
+        )
+    _require_reviewable(name, state)
+    named = f" {' '.join(dict.fromkeys(items))}" if items else ""
+    line = f"(review) {today.isoformat()} {result.value}{named}: {text}"
+    paths = _write_tasks(record, change, add_review(_tasks(change), line, written))
+    return Done(f"Recorded the verdict {result.value} on {name}.", paths)
 
 
 def reopen(start: Path, name: str, number: str, today: datetime.date) -> Done:
-    """Reopen an item after a review asked for changes."""
+    """Reopen an item that a review named to rebuild."""
     record, change, state = _open(start, name)
     _require_accepted(state)
     find_item(change, number)
-    if not _item_state(state, number).redo:
+    if number not in state.review.reopen:
         raise Refusal(
-            f"Item {number} has no review asking for changes that is still open, "
-            "so there is nothing to reopen."
+            f"No open review of {name} names item {number} to rebuild, so there is nothing "
+            "to reopen."
         )
     line = f"(reopened) {today.isoformat()}"
     text = edit_item(_tasks(change), number, ticked=False, add=[line])
     paths = _write_tasks(record, change, text)
     return Done(
-        f"Reopened item {number} of {name}. It needs an independent review once redone.", paths
+        f"Reopened item {number} of {name}. The change needs an independent review once it "
+        "is rebuilt.",
+        paths,
     )
 
 
-def resolve(start: Path, name: str, number: str, decision: str, today: datetime.date) -> Done:
-    """Record what was decided about an item that went to the human, and free it."""
+def resolve(start: Path, name: str, target: str, decision: str, today: datetime.date) -> Done:
+    """Record what the human decided about an item or the review, and free it.
+
+    ``target`` is an item's number, or ``review`` for the change's review.
+    """
     record, change, state = _open(start, name)
-    item = find_item(change, number)
-    item_state = _item_state(state, number)
     text = one_line(decision, "what was decided")
+    line = f"(resolved) {today.isoformat()}: {text}"
+    if target == REVIEW_TARGET:
+        if not state.review.escalated:
+            raise Refusal(
+                f'Nothing about the review of "{name}" went to the human, so there is nothing '
+                "to resolve."
+            )
+        paths = _write_tasks(record, change, add_review(_tasks(change), line))
+        return Done(f"Resolved the review of {name}. The change is reviewed again.", paths)
+    item = find_item(change, target)
+    item_state = _item_state(state, target)
     if not (item.blocked or item_state.escalated):
         raise Refusal(
-            f"Item {number} isn't blocked and nothing about it went to the human, "
-            "so there is nothing to resolve."
+            f"Item {target} isn't blocked and nothing about it went to the human, "
+            f"so there is nothing to resolve. For the change's review, run \"wm resolve {name} "
+            f'{REVIEW_TARGET} "<what was decided>"".'
         )
-    line = f"(resolved) {today.isoformat()}: {text}"
     new_text = edit_item(
-        _tasks(change), number, ticked=False, remove=[BLOCKED, SPEC_GAP], add=[line]
+        _tasks(change), target, ticked=False, remove=[BLOCKED, SPEC_GAP], add=[line]
     )
     paths = _write_tasks(record, change, new_text)
-    return Done(f"Resolved item {number} of {name}. It is ready to be applied again.", paths)
+    return Done(f"Resolved item {target} of {name}. It is ready to be applied again.", paths)
 
 
 def _merge_specs(record: Record, change: Change, transaction: Transaction) -> dict[str, Spec]:

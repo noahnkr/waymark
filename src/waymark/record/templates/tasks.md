@@ -5,6 +5,6 @@
 - [ ] 1.1 <What to build>
   - Criteria: <what must be true when it is done>
   - Verify: <how to check it>
-- [ ] 1.2 <What to build>   `review: independent`
+- [ ] 1.2 <What to build>   `build: delegate`
   - Criteria: <what must be true when it is done>
   - Verify: <how to check it>

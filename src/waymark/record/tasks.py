@@ -591,6 +591,17 @@ class _Parser:
         )
 
 
+def parse_finding(text: str) -> tuple[ReviewSeverity, str, str] | None:
+    """A finding written "<severity>: <place>: <text>", or None when it isn't one."""
+    match = _FINDING.match(text.strip())
+    if match is None:
+        return None
+    return ReviewSeverity(match.group(1)), match.group(2), match.group(3)
+
+
+FINDING_FORMAT = "<critical|warning|suggestion>: <place>: <text>"
+
+
 def parse_tasks(doc: Document) -> Tasks:
     """Read a task list."""
     return _Parser(doc).parse()
