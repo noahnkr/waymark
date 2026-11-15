@@ -96,8 +96,9 @@ and explains each one as it happens:
    it, and a review level.
 4. **Accept.** You read the change and run `wm accept <change>` yourself. Agents
    are blocked from running it.
-5. **Apply.** The agent delegates each item to a fresh implementer agent, which
-   builds it from the record alone, and records the result.
+5. **Apply.** The agent builds each item itself, from the record, and records
+   the result. An item tagged `build: delegate` goes to a fresh implementer
+   agent instead (see [who builds an item](concepts.md#who-builds-an-item)).
 6. **Review.** Each item is checked at its level, and the check is written under
    the item.
 7. **Archive.** Your second approval. Once you agree, the change is archived:

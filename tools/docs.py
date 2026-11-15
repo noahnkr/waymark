@@ -254,7 +254,6 @@ TASKS = """# Tasks
   - Criteria: the search help says fifty
 """
 
-IMPLEMENTER_NOTE = "capped after sorting; the fifty-one-match test passes"
 REVIEWER_REASONS = "cap and order hold; the scenario is covered by the test"
 OUTCOME = "Searches return the fifty best matches."
 
@@ -346,11 +345,11 @@ def evidence() -> str:
         f"$ wm accept {CHANGE}",
         accepted,
         "",
-        "# /wm-apply: a fresh agent builds 1.1 from the change alone and ends with",
-        f"#   RESULT: done: {IMPLEMENTER_NOTE}",
+        "# /wm-apply: the agent builds 1.1 from the change, runs the",
+        f"# fifty-one-match test, and runs wm tick {CHANGE} 1.1",
         "# A reviewer agent that never saw the build checks it and ends with",
         f"#   VERDICT: pass: {REVIEWER_REASONS}",
-        "# wm writes both under 1.1. Then 1.2 is built; it needs no review.",
+        "# wm writes the verdict under 1.1. Then 1.2 is built; it needs no review.",
         "",
         "$ wm status",
         built,

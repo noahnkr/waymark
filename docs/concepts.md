@@ -18,7 +18,8 @@ specs      deltas: the change's edits to the living specs
 design     how it will be built, and the decisions taken (skipped on the short path)
 tasks      one checklist; each item has criteria, a way to verify it, a review level
 accept     YOU approve the change; nothing is built before this
-apply      each item built by a fresh implementer agent, from the record alone
+apply      each item built from the record: by the planner, or by a fresh
+           implementer agent when the item is tagged `build: delegate`
 review     each item checked at its level, and the check written under it
 archive    YOU approve finishing it; deltas merge into the specs, the outcome is written
 ```
@@ -29,7 +30,8 @@ on how.
 
 **Changing an accepted change withdraws its acceptance.** That covers the
 proposal, the deltas, the design and each task item's definition (its number,
-title, criteria, verification, repo and review level). It needs accepting again.
+title, criteria, verification, repo, review level and build tag). It needs
+accepting again.
 Ticks, blockers, review records and notes don't count.
 
 **Several changes can be in flight at once.** Two changes that name the same
@@ -84,13 +86,35 @@ A task item carries what an agent needs to build it, and what `wm` writes about 
 
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
-| Is | the main agent session, working with you | a fresh agent, started with `<change> <item>` and nothing else | a fresh agent, started the same way |
+| Is | the main agent session, working with you | a fresh agent, started for an item tagged `build: delegate` with `<change> <item>` and nothing else | a fresh agent, started with `<change> <item>` and nothing else |
 | Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules | its item, the deltas and their scenarios, the code; **not** how it was built |
-| May | explore, draft and edit artifacts, delegate, record self-reviews, archive | edit code (in an atlas, only in its item's repo) and add notes under its item | read code and the record; run tests and other read-only commands |
+| May | explore, draft and edit artifacts, build items (in an atlas, only in the repo of an item being built), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and add notes under its item | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `ITEM: <change> <item>` then `VERDICT: pass / changes / spec-gap` |
 
-Only you accept a change. Code is always built by an implementer, so it is
-always built from the record alone.
+Only you accept a change. The record is the source of truth: whoever builds an
+item builds it from the record. A fact the record lacks is written into it
+first, or reported as a spec gap.
+
+## Who builds an item
+
+By default the planner builds each item itself. It reads the item's context pack
+(`wm context <change> <item> --for implement`), builds the item, runs the checks
+the item touches, and records the result with `wm tick`, `wm block` or `wm gap`.
+
+An item tagged `build: delegate` goes to a fresh implementer instead:
+
+```markdown
+- [ ] 1.2 Rebuild the search index   `review: independent`   `build: delegate`
+```
+
+- **When to tag:** a large item, items that can be built in parallel, or an item
+  where a cold check that the record is enough to build from is worth its cost.
+- **Where:** at the end of the item line, next to `review:`, in either order.
+  `delegate` is the only value; `wm check` reports any other.
+- **Accepted with the item:** adding, removing or changing the tag withdraws
+  acceptance.
+- **Guidance, not a gate:** the tag decides what `wm instructions` and the skills
+  say. The hooks don't enforce it.
 
 ## Review levels
 
@@ -114,8 +138,9 @@ then on it needs an independent pass. A second `changes` verdict, or a
 | **Archive** | archiving a change that isn't accepted, has unbuilt or unreviewed items, or a delta that no longer applies | only a missing review can be overridden, by you, with a reason that is recorded |
 
 **Evidence is written only by `wm`**: acceptance, ticks, blockers, spec gaps and
-review records. Agents report their results in their last lines, and `wm`'s
-hooks write the evidence from them. Agents that try to write evidence by hand are
+review records. The planner records its own results with `wm tick`, `wm block`,
+`wm gap` and `wm review`. Implementers and reviewers report theirs in their last
+lines, and `wm`'s hooks write the evidence from them. Agents that try to write evidence by hand are
 refused, and `wm check` flags evidence that doesn't follow the format. These are
 guard rails against mistakes and shortcuts, not security against someone set on
 getting around them. In Claude Code the agent-side rules are enforced by its
@@ -145,7 +170,7 @@ and pull request, through the workflow `wm ci` writes.
 | **Proposal** | Why a change is wanted, what it changes, its non-goals and impact. Its outcome is added at archive. |
 | **Delta** | A change's edits to one spec: requirements added, modified or removed. Deltas merge into the specs at archive. |
 | **Design** | How a change will be built, including its decisions: the options, the choice and why. |
-| **Task item** | One checkbox in a change's task list, with its criteria, how to verify it, its review level and the record of building and reviewing it. |
+| **Task item** | One checkbox in a change's task list, with its criteria, how to verify it, its review level, an optional `build: delegate` tag, and the record of building and reviewing it. |
 | **Acceptance** | Your explicit approval of a change before any of it is built. Only you can give it. |
 | **Short path** | The light route for a small change: no design, and review level `self` or `none`. Marked by a `Path: short` line in the proposal. |
 | **Conflict** | A delta that no longer applies to its spec (a *mismatch*, which blocks its change), or two active changes that name the same requirement (an *overlap*, which is reported). |
@@ -154,8 +179,8 @@ and pull request, through the workflow `wm ci` writes.
 | **Owner** | The one person responsible for a change. |
 | **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion) that may lead to a change or be parked. |
 | **Milestone** | An optional goal that several changes work toward, with a roadmap listing them. |
-| **Planner** | The main agent session, working with you: it explores, drafts, delegates and archives. |
-| **Implementer** | A fresh agent that builds one task item from the record alone. |
+| **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |
+| **Implementer** | A fresh agent that builds one task item tagged `build: delegate`, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one task item against its criteria and scenarios, without seeing how it was built. |
 | **Review level** | How a task item is checked: `self`, `independent` or `none`. |
 | **Context pack** | The excerpts of the record that `wm` assembles for one job: exploring, implementing or reviewing. |

@@ -874,6 +874,9 @@ Printed by `wm show` for a change.
               null
             ]
           },
+          "delegate": {
+            "type": "boolean"
+          },
           "reviewed": {
             "type": [
               "boolean",
@@ -966,6 +969,7 @@ Printed by `wm show` for a change.
           "title",
           "ticked",
           "level",
+          "delegate",
           "reviewed",
           "needs_human",
           "criteria",

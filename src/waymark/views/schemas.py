@@ -112,6 +112,7 @@ ITEM = _object(
         "title": STRING,
         "ticked": BOOLEAN,
         "level": _enum(ReviewLevel, nullable=True),
+        "delegate": BOOLEAN,
         "reviewed": {"type": ["boolean", "null"]},
         "needs_human": TEXT_OR_NULL,
         "criteria": TEXT_OR_NULL,

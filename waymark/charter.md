@@ -5,8 +5,9 @@
 Waymark is spec-driven development for coding agents, built on living specs: plain
 markdown in the repository that says what the system does today. Every change starts
 as an edit to those specs and is approved by a human before anything is built. Each
-task is built by a fresh agent from the written change alone, and riskier tasks are
-checked by a second agent that never saw the build. The command-line tool, `wm`
+task is built from the written change, by the main session or, when tagged, by a fresh
+agent that sees only the record, and riskier tasks are checked by a second agent that
+never saw the build. The command-line tool, `wm`
 (package `waymark-cli`), keeps track of where it all stands.
 
 It is for solo developers and small teams (roughly two to five) building real projects
@@ -15,7 +16,7 @@ atlas).
 
 ## Goals
 
-- Agents work only from what is written down; a missing fact becomes a spec gap, not a guess.
+- Agents work only from what is written down; a missing fact is written into the record or becomes a spec gap, not a guess.
 - Every review is recorded under its task, and evidence is written only by `wm`.
 - Anyone can pick up the work from the files and git alone, in any session, on any machine.
 - The human approves each change twice: at accept and at archive.
@@ -76,7 +77,7 @@ Smoke test: the manual run of one change through Claude Code before each release
 
 ### apply
 
-- Run the full checks (pytest, ruff, mypy, codespell, `tools.docs --check`) before reporting done.
+- Run the checks the item touches, and the full checks (pytest, ruff, mypy, codespell, `tools.docs --check`) once before the pull request.
 - Never hand-edit generated docs; run `uv run --no-sync python -m tools.docs`.
 - Docs follow the `waymark-write-docs` skill.
 

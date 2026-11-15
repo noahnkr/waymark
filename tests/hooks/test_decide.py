@@ -5,11 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from tests.support import CONFIG, DESIGN, TASKS, Workspace, proposal
+from tests.conftest import git_init
+from tests.support import ATLAS_CONFIG, CONFIG, DESIGN, TASKS, Workspace, proposal
 from waymark import assets
 from waymark.hooks.decide import decide
 from waymark.hooks.events import Decision, Event, EventKind, Replacement, Role
 from waymark.services import lifecycle
+from waymark.services.atlas import register
 
 NAME = "add-limit"
 FOLDER = f"changes/{NAME}"
@@ -184,6 +186,37 @@ def test_specs_are_never_edited_by_an_agent(accepted: Workspace) -> None:
         assert not decision.allow
         assert "Write a delta" in decision.reason or "An implementer" in decision.reason
     assert "Specs are never edited by hand" in edit(accepted, "specs/x.md", content="x").reason
+
+
+@pytest.fixture
+def atlas(tmp_path: Path) -> Workspace:
+    """An atlas whose accepted change builds item 1.1 in the repo api next, and 1.2 in web."""
+    suite = Workspace(tmp_path / "atlas", ATLAS_CONFIG.replace('"some-tool"', '"claude-code"'))
+    for root in (suite.root, tmp_path / "suite-api", tmp_path / "web"):
+        git_init(root)
+    register(suite.root, "web", "../web")
+    suite.change(
+        tasks=HEAD
+        + "- [ ] 1.1 Add the endpoint\n  - Criteria: fifty at most\n  - Repo: api\n"
+        + "- [ ] 1.2 Show the list\n  - Criteria: fifty rows\n  - Repo: web\n",
+        design=DESIGN,
+    )
+    lifecycle.accept(suite.root, NAME, DAY)
+    return suite
+
+
+def test_planner_may_edit_the_repo_of_the_item_being_built(atlas: Workspace) -> None:
+    path = atlas.root.parent / "suite-api" / "src" / "app.py"
+    assert ask(atlas, EventKind.EDIT, role=Role.PLANNER, path=path, content="x").allow
+
+
+def test_planner_edit_in_another_repo_names_the_repo_it_may_edit(atlas: Workspace) -> None:
+    path = atlas.root.parent / "web" / "page.html"
+    decision = ask(atlas, EventKind.EDIT, role=Role.PLANNER, path=path, content="x")
+    assert not decision.allow
+    assert '"api"' in decision.reason
+    assert '"web"' in decision.reason
+    assert f"{NAME} 1.1" in decision.reason
 
 
 def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -> None:

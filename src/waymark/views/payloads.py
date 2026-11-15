@@ -367,6 +367,7 @@ def _item(item: Item, state: ChangeState | None) -> Payload:
         "title": item.title,
         "ticked": item.ticked,
         "level": item_state.level.value if item_state else None,
+        "delegate": item.delegate,
         "reviewed": item_state.reviewed if item_state else None,
         "needs_human": item_state.escalated if item_state else None,
         "criteria": item.criteria,

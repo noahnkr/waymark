@@ -75,7 +75,9 @@ Claude Code runs `wm hook claude-code <Event>` with its JSON on standard input.
    says what to do instead, add context for the agent, or record evidence. For
    example, at a handback or an agent stop it reads the `ITEM:` and `RESULT:` or
    `VERDICT:` lines and writes the tick, blocker, spec gap, note or review record
-   through the same lifecycle service the commands use. An agent's ending is
+   through the same lifecycle service the commands use. In an atlas, it lets the
+   planner and implementers edit a code repo only while an accepted change's
+   item being built names it (`editable_repos`). An agent's ending is
    recorded once: a per-agent marker in the clone's git folder
    (`record/agents.py`) lets the stop after a recorded handback through without
    asking for the ending again.

@@ -5,7 +5,8 @@ It covers what the human approved:
 - the proposal, apart from the acceptance line and the outcome;
 - every delta, and the design;
 - each task item's definition (number, title, review level, criteria,
-  verification and repo), but none of its evidence;
+  verification, repo and, when present, the build tag), but none of its
+  evidence;
 - the living text of what the deltas modify or remove, so that another change
   archiving into the same requirement withdraws this acceptance.
 
@@ -17,6 +18,7 @@ from collections.abc import Mapping
 
 from waymark.record.changes import Change
 from waymark.record.specs import Spec
+from waymark.record.tasks import DELEGATE
 from waymark.record.terms import ReviewLevel
 
 FINGERPRINT_LENGTH = 16
@@ -57,6 +59,8 @@ def fingerprint_parts(
             item.verify if item.verify is not None else _ABSENT,
             item.repo if item.repo is not None else _ABSENT,
         ]
+        if item.delegate:
+            definition.append(DELEGATE)
         parts.append((f"item:{item.number}", "\x00".join(definition)))
     return parts
 
