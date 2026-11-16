@@ -10,7 +10,7 @@
   - Verify:
     - tests in `tests/services/test_agent_interface.py` for the scenarios "Specs step" and "Tasks step"
     - `uv run --no-sync python -m tools.docs --check`
-- [ ] 1.2 Rewrite the drafting skills to the layout
+- [x] 1.2 Rewrite the drafting skills to the layout
   - Criteria:
     - `wm-propose`, `wm-update`, `wm-kickoff` and `wm-explore` each have Role, Inputs, Steps, their own sections, Quality bar, Show the human, When to stop and Rules, in that order, with Rules starting with the shared-rules line
     - `wm-propose` has a Questions step before drafting and a Consistency check step before acceptance, and its Show the human gives the fixed acceptance summary
