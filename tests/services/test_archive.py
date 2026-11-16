@@ -370,3 +370,17 @@ def test_default_tasks_change_runs_from_accept_to_archive(project: Workspace) ->
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     lifecycle.archive(project.root, NAME, LATER, outcome="Done.")
     assert project.record().problems == ()
+
+
+def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
+    project.change()
+    lifecycle.accept(project.root, NAME, DAY)
+    tasks = f"changes/{NAME}/tasks.md"
+    project.write(tasks, project.read(tasks) + "- [ ] 1.3 Announce it\n")
+    for number in ("1.1", "1.2", "1.3"):
+        lifecycle.tick(project.root, NAME, number)
+    lifecycle.self_review(project.root, NAME, "fine", DAY)
+    lifecycle.sync(project.root, NAME, DAY)
+    text = project.read(f"changes/{NAME}/proposal.md")
+    assert "; items: 1.1 1.2)" in text
+    assert project.change_state(NAME).acceptance is AcceptanceState.VALID

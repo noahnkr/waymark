@@ -70,7 +70,7 @@ The files behind it, all plain markdown in `waymark/`:
 
 Owner: Alex Example
 Review: independent
-Accepted: 2026-01-15 by Alex Example (fingerprint: e87258930fc50aef)
+Accepted: 2026-01-15 by Alex Example (fingerprint: e87258930fc50aef; items: 1.1 1.2)
 
 ## Why
 

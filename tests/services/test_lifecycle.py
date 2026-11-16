@@ -413,3 +413,15 @@ def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
     lifecycle.archive(project.root, NAME, DAY, outcome="Typo fixed.")
     assert project.record().changes == {}
     assert DESIGN not in project.read(f"changes/archive/2026-01-15-{NAME}/proposal.md")
+
+
+def test_accepted_again(project: Workspace) -> None:
+    accepted(project)
+    assert "; items: 1.1 1.2)" in project.read(PROPOSAL_FILE)
+    project.write(TASKS_FILE, project.read(TASKS_FILE) + "- [ ] 1.3 Announce it\n")
+    assert project.change_state().acceptance is AcceptanceState.VALID
+    project.write(f"changes/{NAME}/design.md", DESIGN.replace("after sorting", "after ranking"))
+    assert project.change_state().acceptance is AcceptanceState.WITHDRAWN
+    lifecycle.accept(project.root, NAME, DAY)
+    assert "; items: 1.1 1.2 1.3)" in project.read(PROPOSAL_FILE)
+    assert project.change_state().acceptance is AcceptanceState.VALID

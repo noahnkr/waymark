@@ -1,0 +1,20 @@
+# Tasks
+
+## 1. Acceptance that names its items
+
+- [x] 1.1 Write and read the items an acceptance covers, and fingerprint only those
+  - Criteria: the acceptance line reads and writes an optional `; items: <number> <number>...` after the fingerprint, and an older line without it still parses with no problem; `change_fingerprint` with a list covers only the listed items, in the listed order, with a missing listed item fingerprinted as absent, and without a list fingerprints exactly as before; `acceptance_state` uses the line's list; `wm accept` lists every item the change has; `wm sync` keeps the line's list, or its absence; the test support writes the list as `wm accept` does
+  - Verify: tests in `tests/record/test_artifacts.py`, `tests/record/test_fingerprint.py`, `tests/services/test_lifecycle.py` and `tests/services/test_archive.py` for the scenarios "Accepted item edited", "Accepted item removed", "Item added", "Accepted again" and "Older acceptance line", plus an older line whose fingerprint is unchanged
+
+## 2. Skills and docs
+
+- [x] 2.1 Say that only an added item keeps acceptance
+  - Criteria: `wm-update` says adding an item keeps acceptance and any other edit to what was accepted withdraws it; `wm-apply` says a spec gap or a review that needs new work may add an item without a new acceptance; concepts states the rule and shows an acceptance line with its item list; the planner runs `wm update`; the docs follow the `waymark-write-docs` skill
+  - Verify: `uv run --no-sync pytest tests/adapters tests/test_docs.py`, `uv run --no-sync codespell` and `wm check`
+
+## Review
+
+- (review) 2026-11-15 pass: every criterion of 1.1 and 2.1 holds, every acceptance-delta scenario is covered by a passing test, and the full suite, lint, types, spelling and wm check are clean.
+  - suggestion: src/waymark/assets/skills/wm-apply/SKILL.md:72: "add a new item" doesn't say to add it through the `wm-update` skill with the human's confirmation; naming that path would make clear the planner doesn't add items on its own.
+  - suggestion: src/waymark/record/proposal.py:30: an older pinned `wm` reads the new `; items:` line as malformed-evidence; the next CHANGELOG entry should say that the acceptance line gained an item list.
+  - suggestion: src/waymark/record/proposal.py:90: `format_acceptance` with an empty list writes the older form, which covers every item. Unreachable today because `accept` needs items, but a comment or check would make that explicit.

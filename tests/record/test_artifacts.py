@@ -242,3 +242,17 @@ def test_proposal_review_line_sets_the_change_review_level() -> None:
     assert proposal_codes(
         proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: strict\n")
     ) == ["invalid-review-level"]
+
+
+def test_acceptance_line_names_the_items_it_covers() -> None:
+    line = format_acceptance(
+        datetime.date(2026, 1, 15), "Sam Doe", "0123456789abcdef", ["1.1", "2.1"]
+    )
+    assert line == "Accepted: 2026-01-15 by Sam Doe (fingerprint: 0123456789abcdef; items: 1.1 2.1)"
+    parsed = parse(proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n{line}\n"))
+    assert parsed.problems == ()
+    assert parsed.acceptance is not None
+    assert parsed.acceptance.items == ("1.1", "2.1")
+    older = parse(proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n{ACCEPTED}\n"))
+    assert older.acceptance is not None
+    assert older.acceptance.items is None
