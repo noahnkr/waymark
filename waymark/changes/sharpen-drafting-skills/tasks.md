@@ -32,7 +32,7 @@
 
 ## 2. Docs
 
-- [ ] 2.1 Update the docs and the changelog
+- [x] 2.1 Update the docs and the changelog
   - Criteria:
     - concepts names the skill layout and says the writing and sizing rules come from `wm instructions`
     - the changelog lists the rewritten skills, the new `wm-propose` steps, and the writing and sizing rules
