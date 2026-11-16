@@ -87,7 +87,11 @@ def format_synced(date: datetime.date) -> str:
 def format_acceptance(
     date: datetime.date, who: str, fingerprint: str, items: Sequence[str] | None = None
 ) -> str:
-    """The acceptance line as wm writes it, with the items it covers when they are given."""
+    """The acceptance line as wm writes it, with the items it covers when they are given.
+
+    Without items it is the older form, which covers every item; `wm accept`
+    always names them, since a change is accepted only once it has items.
+    """
     covered = f"; items: {' '.join(items)}" if items else ""
     return f"{ACCEPTED}: {date.isoformat()} by {who} (fingerprint: {fingerprint}{covered})"
 

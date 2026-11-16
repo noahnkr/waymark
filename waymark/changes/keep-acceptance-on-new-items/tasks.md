@@ -11,3 +11,10 @@
 - [x] 2.1 Say that only an added item keeps acceptance
   - Criteria: `wm-update` says adding an item keeps acceptance and any other edit to what was accepted withdraws it; `wm-apply` says a spec gap or a review that needs new work may add an item without a new acceptance; concepts states the rule and shows an acceptance line with its item list; the planner runs `wm update`; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync pytest tests/adapters tests/test_docs.py`, `uv run --no-sync codespell` and `wm check`
+
+## Review
+
+- (review) 2026-11-15 pass: every criterion of 1.1 and 2.1 holds, every acceptance-delta scenario is covered by a passing test, and the full suite, lint, types, spelling and wm check are clean.
+  - suggestion: src/waymark/assets/skills/wm-apply/SKILL.md:72: "add a new item" doesn't say to add it through the `wm-update` skill with the human's confirmation; naming that path would make clear the planner doesn't add items on its own.
+  - suggestion: src/waymark/record/proposal.py:30: an older pinned `wm` reads the new `; items:` line as malformed-evidence; the next CHANGELOG entry should say that the acceptance line gained an item list.
+  - suggestion: src/waymark/record/proposal.py:90: `format_acceptance` with an empty list writes the older form, which covers every item. Unreachable today because `accept` needs items, but a comment or check would make that explicit.
