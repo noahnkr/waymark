@@ -89,3 +89,6 @@
   - warning `src/waymark/record/fingerprint.py:_without_comments`: a `<!--` inside inline code with no closing `-->` strips everything after it to the end of the part, so later edits to that delta or proposal don't withdraw acceptance
   - suggestion `tests/services/test_check.py:212`: the test is still named `..._is_an_old_layout` but checks for `missing-status`; rename it
   - suggestion `tests/record/test_authored_formats.py:test_structured_impact`: add cases for `- Specs:` with no value and for a spec named without backticks in a change with no deltas
+- (review) 2026-11-16 pass by wm-reviewer: the earlier change to 1.1 is made (only `- Specs: none` skips the specs step, and an empty or unbackticked Specs line gives impact-format, with tests); the fingerprint warning and test suggestions are addressed; every criterion and scenario holds, and tests, lint, format, types, the docs check and wm check pass
+  - warning `tooling`: codespell could not be run in this review because the uv launcher failed; CI must confirm spelling
+  - suggestion `waymark/changes/structure-authored-notes/design.md`: the risk "The Specs: check is only as good as the backticks" says an unbackticked spec gives `impact-mismatch`; with the fix it now gives `impact-format` when no spec is backticked, so the design's wording is out of date
