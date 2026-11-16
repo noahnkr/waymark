@@ -42,9 +42,18 @@ def at_format_1(workspace: Workspace) -> Workspace:
     return workspace
 
 
-def test_this_version_has_a_migration_for_every_earlier_format() -> None:
-    assert [migration.source for migration in MIGRATIONS] == list(range(1, RECORD_FORMAT))
+def test_this_version_migrates_no_earlier_format() -> None:
+    assert MIGRATIONS == ()
     assert pending(RECORD_FORMAT) == ()
+
+
+def test_scenario_older_record(workspace: Workspace) -> None:
+    workspace.replace("config.toml", "record_format = 3", "record_format = 2")
+    before = workspace.read("config.toml")
+    with pytest.raises(Refusal, match="format 2") as refusal:
+        migrate(files_of(workspace))
+    assert "doesn't migrate" in str(refusal.value)
+    assert workspace.read("config.toml") == before
 
 
 def test_record_in_the_current_format_needs_no_migration(workspace: Workspace) -> None:

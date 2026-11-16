@@ -21,7 +21,7 @@ These are layout changes a migration can make without guessing. This is the seco
 - **Task items:** criteria may be a nested list under `- Criteria:`, one criterion per bullet. The build tag becomes a `- Build: delegate` sub-line instead of a tag at the end of the title.
 - **Deltas:** the sections are `## ADDED Requirements`, `## MODIFIED Requirements` and `## REMOVED Requirements`. A new `## RENAMED Requirements` section, with `- From:` and `- To:` lines, renames a requirement without removing and adding it.
 - **Exploration:** a `- Status: open|parked|led-to <link>` line under the title says where it stands, and `Parked:` in the Conclusion goes.
-- **Record format 3.** `wm update` migrates every change, active and archived, the charter and the explorations to these layouts. `wm` then reads only format 3. `wm check --fix` keeps them in their standard form.
+- **Record format 3.** `wm` reads and writes only format 3. This repository's record, the only one there is, was moved to it with a one-off migration that ran here once. The migration code for formats 2 and 3, and the requirement "Record format 2", are then removed (the human chose this): `wm update` refuses an older record instead of migrating it. `wm check --fix` keeps the new layouts in their standard form.
 - **Templates, skills and docs** show the new layouts.
 
 ## Non-goals
@@ -32,8 +32,9 @@ These are layout changes a migration can make without guessing. This is the seco
 
 ## Impact
 
-- New spec `authored-formats`: the proposal, charter, task item, delta and exploration layouts, and the format 3 migration.
+- New spec `authored-formats`: the proposal, charter, task item, delta and exploration layouts, and record format 3.
+- Spec `records`: the requirement "Record format 2" is removed, and the purpose no longer speaks of migrating.
 - Spec `building`: the delegation tag becomes a `Build:` sub-line; the requirements that name the tag are modified.
-- **Behavior change for every user, for the changelog:** the record format goes to 3 and `wm update` migrates every change; proposal facts, the glossary, the build tag, delta headings and the exploration's state change form; `RENAMED` is new in deltas.
+- **Behavior change for every user, for the changelog:** the record format goes to 3, and `wm update` no longer migrates an older record; proposal facts, the glossary, the build tag, delta headings and the exploration's state change form; `RENAMED` is new in deltas.
 - Code: `record/` (outline, proposal, charter, tasks, deltas, explorations, layout, templates, fingerprint), `services/` (migrations, instructions, lifecycle), `views/`.
 - Assets: `wm-propose`, `wm-update`, `wm-kickoff`, `wm-explore`, `wm-apply`. Docs: concepts, getting started, the README example, the changelog.

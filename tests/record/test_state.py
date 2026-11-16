@@ -12,7 +12,6 @@ from waymark.record.state import (
     StepKind,
 )
 from waymark.record.terms import Phase, ReviewLevel
-from waymark.services.format_three import _exploration  # the migration's own rule
 
 FOLDER = "changes/add-limit"
 TASKS_FILE = f"{FOLDER}/tasks.md"
@@ -472,14 +471,11 @@ def test_milestone_progress_follows_its_roadmap_links(workspace: Workspace) -> N
     assert (milestone.archived, milestone.total) == (1, 4)
 
 
-def explore(workspace: Workspace, name: str, conclusion: str) -> None:
-    """An exploration with the status the format 3 migration gives its conclusion."""
+def explore(workspace: Workspace, name: str, status: str, conclusion: str = "") -> None:
     workspace.write(
         f"explorations/{name}.md",
-        _exploration(
-            f"# T\n\n## Context\n\n## Questions\n\n## Approaches\n\n## Conclusion\n\n"
-            f"{conclusion}\n\n## Related\n"
-        ),
+        f"# T\n\n- Status: {status}\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        f"## Conclusion\n\n{conclusion}\n\n## Related\n",
     )
 
 
@@ -490,12 +486,12 @@ def test_exploration_state_comes_from_its_status_line(workspace: Workspace) -> N
         "milestones/faster-search/goal.md",
         "# G\n\n## Goal\n\na\n\n## Done when\n\nb\n\n## Non-goals\n\nc\n",
     )
-    explore(workspace, "caching", "")
-    explore(workspace, "ranking", "Parked: nobody asked for it")
-    explore(workspace, "paging", "See [add-paging](../changes/add-paging/proposal.md).")
-    explore(workspace, "speed", "[Faster search](../milestones/faster-search/goal.md)")
-    explore(workspace, "old", "[done](../changes/archive/2026-01-20-add-limit/proposal.md)")
-    explore(workspace, "vague", "We should think about it more.")
+    explore(workspace, "caching", "open")
+    explore(workspace, "ranking", "parked", "nobody asked for it")
+    explore(workspace, "paging", "led-to [add-paging](../changes/add-paging/proposal.md)")
+    explore(workspace, "speed", "led-to [Faster search](../milestones/faster-search/goal.md)")
+    explore(workspace, "old", "led-to [done](../changes/archive/2026-01-20-add-limit/proposal.md)")
+    explore(workspace, "vague", "open", "We should think about it more.")
     states = workspace.state().explorations
     assert {
         name: (state.status, state.detail) for name, state in states.items() if name != "vague"

@@ -62,16 +62,9 @@ An exploration SHALL say where it stands in a `- Status:` line under its title: 
 - THEN it reports an error that asks for the reason in the Conclusion
 
 ### Requirement: Record format 3
-This version of `wm` SHALL write and read only record format 3. `wm update` SHALL migrate a format 2 record:
-- every proposal, active and archived, gets its facts as bullets;
-- the charter's glossary lines `<term>: <meaning>` become `- **<term>**: <meaning>`, and its step headings are capitalized;
-- a build tag at the end of an item line becomes a `- Build: delegate` line under the item;
-- every delta's section headings take the new form;
-- every exploration gets a `- Status:` line from its Conclusion: `parked` for a `Parked:` conclusion, whose reason stays as the Conclusion, `led-to` with the link for a linked one, and `open` otherwise.
+This version of `wm` SHALL write and read only record format 3, and SHALL NOT migrate a record in an older format. `wm update` SHALL refuse such a record with a reason that names its format and says this `wm` doesn't migrate it, and SHALL change nothing.
 
-Its wording SHALL NOT change. An active change accepted before the migration SHALL need to be accepted again after it.
-
-#### Scenario: Format 2 record migrated
-- GIVEN a format 2 record with an archived change whose proposal has the line `Owner: Ada`, an item ending in `` `build: delegate` ``, and an exploration whose Conclusion is `Parked: waits for a second user`
+#### Scenario: Older record
+- GIVEN a record in format 2
 - WHEN `wm update` runs
-- THEN the proposal has `- Owner: Ada`, the item has a `- Build: delegate` line, the exploration has `- Status: parked` and the Conclusion "waits for a second user", `record_format` is 3, and `wm check` reports the record healthy
+- THEN it is refused with a reason that names format 2, and no file changes
