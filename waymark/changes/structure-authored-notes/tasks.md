@@ -79,3 +79,7 @@
     - `uv run --no-sync python -m tools.docs --check`
     - codespell
     - `wm check`
+
+## Log
+
+- (accepted) 2026-11-16 fingerprint e01cf817349f38c2 items 1.1 1.2 1.3 1.4 1.5 1.6 1.7 2.1 2.2 by Noah Roberts
