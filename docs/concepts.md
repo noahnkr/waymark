@@ -188,13 +188,20 @@ Every line `wm` writes is a dated record of one shape:
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
 | Is | the main agent session, working with you | a fresh agent, started for an item with a `- Build: delegate` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
-| Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules | every item's criteria, the deltas and their scenarios, the design, earlier reviews, the code; **not** how it was built |
+| Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules, and when to stop | every item's criteria, the deltas and their scenarios, the design, earlier reviews, the severity rubric, the code; **not** how it was built |
 | May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
 
 Only you accept a change. The record is the source of truth: whoever builds an
 item builds it from the record. A fact the record lacks is written into it
 first, or reported as a spec gap.
+
+The implementer's context pack says when to stop and which result to end with:
+a spec gap, something outside the item, or three failed attempts at the same
+check. Every review, independent or a self-review, grades its findings by one
+severity rubric: critical when a criterion or scenario doesn't hold, warning
+when everything holds but something is fragile, suggestion for clarity. The
+review context pack and `wm instructions` at the review step both give it.
 
 ## Who builds an item
 
