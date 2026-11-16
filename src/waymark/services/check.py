@@ -81,7 +81,7 @@ def _review_level_findings(record: Record, name: str) -> list[Finding]:
         return []
     message = (
         f'The change "{name}" modifies or removes a requirement, and its review level is '
-        f'{level}. A change like this should be reviewed independently: add a "Review: '
+        f'{level}. A change like this should be reviewed independently: add a "- Review: '
         'independent" line to its proposal.'
     )
     return [

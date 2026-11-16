@@ -10,7 +10,7 @@ import pytest
 from tests.conftest import git_init
 from tests.support import Workspace
 from waymark import __version__, adapters
-from waymark.record import ignore
+from waymark.record import ignore, templates
 from waymark.record.files import RecordFiles
 from waymark.record.project import find_project
 from waymark.record.record import load_record
@@ -619,3 +619,40 @@ def test_init_leaves_another_hook_setup_alone(tmp_path: Path, value: str) -> Non
     assert (folder / "pre-commit").read_bytes() == before
     assert sorted(path.name for path in folder.iterdir()) == ["pre-commit"]
     assert done.message == "This machine is already set up. Nothing changed."
+
+
+LAYOUT_CODES = {
+    "old-layout",
+    "glossary-format",
+    "unknown-status",
+    "unexpected-text",
+    "malformed-item",
+}
+
+
+def test_every_template_is_written_in_the_current_layouts(tmp_path: Path) -> None:
+    """Each template, filled in as wm fills it, has no layout problem."""
+    git_init(tmp_path)
+    setup.init_project(tmp_path)
+    setup.create_change(tmp_path, "add-limit", short=True)
+    setup.create_exploration(tmp_path, "paging")
+    setup.create_milestone(tmp_path, "faster-search")
+    change = tmp_path / "waymark" / "changes" / "add-limit"
+    (change / "specs").mkdir()
+    for path, name in [
+        (change / "tasks.md", templates.TASKS),
+        (change / "design.md", templates.DESIGN),
+        (change / "specs" / "search.md", templates.DELTA),
+    ]:
+        path.write_text(templates.render(name), encoding="utf-8")
+    record = load_record(find_project(tmp_path))
+    assert {p.code for p in record.problems} & LAYOUT_CODES == set()
+    tasks = record.changes["add-limit"].tasks
+    assert tasks is not None
+    assert tasks.items[1].delegate
+    criteria = tasks.items[1].criteria or ""
+    bullets = [line for line in criteria.splitlines() if line.startswith("- ")]
+    assert len(bullets) == 2
+    assert record.explorations["paging"].status == "open"
+    charter = (tmp_path / "waymark" / "charter.md").read_text(encoding="utf-8")
+    assert "### Apply\n" in charter

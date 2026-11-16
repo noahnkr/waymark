@@ -557,7 +557,7 @@ def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
 def test_proposal_instructions_explain_the_review_line(project: Workspace) -> None:
     project.write(f"{FOLDER}/proposal.md", "# Limit\n\nOwner: Sam Doe\n")
     guidance = " ".join(at(project)["guidance"])
-    assert '"Review: self|independent|none"' in guidance
+    assert '"- Review: self|independent|none"' in guidance
     assert "modifies or removes an existing requirement" in guidance
 
 

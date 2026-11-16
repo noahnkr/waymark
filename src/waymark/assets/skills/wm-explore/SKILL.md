@@ -23,9 +23,9 @@ You are the planner. Exploring is thinking, not building: you help the human get
 When the idea is clear enough, or the human wants to stop, offer exactly these:
 
 1. **Do nothing.** The conversation was enough.
-2. **Save an exploration.** Run `wm new exploration <name>` and fill in its sections: Context, Questions, Approaches, Related. Leave Conclusion empty while it is open, or write `Parked: <reason>` when the idea is kept for later.
+2. **Save an exploration.** Run `wm new exploration <name>` and fill in its sections: Context, Questions, Approaches, Related. Its `- Status:` line says where it stands: leave it `open` while it is, or set it to `parked` and write the reason in the Conclusion when the idea is kept for later.
 3. **Fix it on the tiny path**, when the idea adds, changes or removes no requirement. Hand over to the `wm-fix` skill.
-4. **Start a proposal.** Hand over to the `wm-propose` skill. If an exploration was saved, its Conclusion becomes a link to the new change.
+4. **Start a proposal.** Hand over to the `wm-propose` skill. If an exploration was saved, set its status to `led-to` with a link to the new change, such as `- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md)`, and say in the Conclusion what was decided.
 5. **Start a milestone**, when the goal is too big or too uncertain for one change. Run `wm new milestone <name>`, draft its goal with the human, and list the likely changes on its roadmap as plain lines.
 
 ## Rules
