@@ -20,7 +20,7 @@ dist/
 /.opencode/
 /.windsurf/
 /.gemini/
-/.agents/skills/wm-*/
+/.agents/
 /.waymark/
 
 # Editors and operating systems

@@ -132,10 +132,16 @@ uv tool install --editable . --force      # wm on PATH runs this checkout, so it
 wm init                                   # this machine's agent tool files
 ```
 
-Agent tool files (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.codex/`, `.cursor/`
-and the like) and wm's own skills in `.agents/skills/wm-*/` are per machine
-and kept out of git. The skills for working on Waymark itself are
-committed in `.agents/skills/`:
+Agent tool folders and files (`.agents/`, `.claude/`, `CLAUDE.md`, `AGENTS.md`,
+`.codex/`, `.cursor/` and the like) are per machine and kept out of git. The
+skills for working on Waymark itself, the maintainer skills, are committed in
+`tools/skills/`. After `wm init`, install them into your agent tool's folder,
+and again whenever they change:
+
+```
+uv run --no-sync python -m tools.install_skills
+```
+
 
 | Skill | For |
 |---|---|

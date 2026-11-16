@@ -38,7 +38,7 @@ atlas).
 4. No cache: every command reads the files fresh; views stay within about a second on a record with a few hundred changes and specs.
 5. Careful writes: `wm` edits only the lines it owns, and a multi-file operation completes or leaves the record as it was. The one exception is `wm check --fix`, run when the human asks, which changes the layout of any file in the active record but never its wording.
 6. Only code in `src/waymark/adapters/` may name an agent tool; only `record/` and `assets/` touch files (held by `tests/test_constraints.py`).
-7. Agent tool setup (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.codex/`, `.cursor/`, the generated `.agents/skills/wm-*/`) is per machine and never committed; each clone sets it up with `wm init`. The maintainer skills in `.agents/skills/` are committed.
+7. Agent tool folders and files (`.agents/`, `.claude/`, `CLAUDE.md`, `AGENTS.md`, `.codex/`, `.cursor/`) are per machine and never committed; each clone sets them up with `wm init`. The maintainer skills are committed in `tools/skills/` and installed into the tool folders with `python -m tools.install_skills`.
 
 ## Glossary
 
@@ -46,13 +46,13 @@ atlas).
 - **Atlas**: a separate repository holding the record for a project spread over several repositories.
 - **Adapter**: the code that connects `wm` to one agent tool: renders its files, translates its hook events.
 - **Asset**: a skill or agent definition shipped in `src/waymark/assets/`, tool-neutral.
-- **Maintainer skill**: a skill in `.agents/skills/` for working on Waymark itself (docs, releases); not shipped to users.
+- **Maintainer skill**: a skill in `tools/skills/` for working on Waymark itself (docs, releases); installed per machine for contributors, and not shipped to users.
 - **Smoke test**: the manual run of one change through Claude Code before each release (`docs/smoke-test.md`).
 
 ## Context
 
 - Layout: `src/waymark/` with `cli.py`, `record/`, `services/`, `views/`, `hooks/`, `adapters/`, `assets/`; tests in `tests/` mirror it; `tools/docs.py` (generated docs) and `tools/release.py` (release checks); user docs in `docs/`. `docs/architecture.md` describes the components.
-- Setup: `uv sync`, then `uv tool install --editable . --force` so `wm` on PATH runs this checkout and matches the pin; then `wm init`.
+- Setup: `uv sync`, then `uv tool install --editable . --force` so `wm` on PATH runs this checkout and matches the pin; then `wm init`, then `uv run --no-sync python -m tools.install_skills` for the maintainer skills.
 - Checks, each via `uv run --no-sync`: `pytest`, `ruff format .`, `ruff check .`, `mypy`, `codespell`, `python -m tools.docs` (regenerates `docs/cli.md`, `docs/json.md` and the README evidence; a test fails when they are stale).
 - CI (`.github/workflows/ci.yml`) runs tests on Windows, macOS and Linux with Python 3.11 and the newest, plus lint, format, types, spelling, the wheel build and `wm check`. Pushing a `v*` tag runs `release.yml`, which publishes to PyPI.
 - Commits follow Conventional Commits in American English, scoped by component when one applies.
