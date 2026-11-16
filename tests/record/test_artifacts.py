@@ -1,10 +1,10 @@
 """Proposals, designs, the charter, milestones and explorations."""
 
-from tests.support import CHARTER, DESIGN, NO_SPECS, document, proposal
+from tests.support import CHARTER, DESIGN, NO_SPECS, document, milestone, proposal
 from waymark.record.charter import parse_charter
 from waymark.record.design import parse_design
 from waymark.record.explorations import Exploration, parse_exploration
-from waymark.record.milestones import parse_goal, parse_roadmap
+from waymark.record.milestones import parse_milestone
 from waymark.record.proposal import Proposal, parse_proposal
 from waymark.record.terms import ReviewLevel, Step
 
@@ -159,27 +159,35 @@ def test_charter_skeleton_with_empty_sections_is_readable() -> None:
     assert charter.rules == {}
 
 
-def test_goal_has_goal_done_when_and_non_goals() -> None:
-    text = (
-        "# Faster search\n\n## Goal\n\nAnswers in a blink.\n\n"
-        "## Done when\n\nP95 is low.\n\n## Non-goals\n\nRanking.\n"
-    )
-    goal = parse_goal(document(text))
+def test_milestone_has_goal_done_when_non_goals_and_roadmap() -> None:
+    goal, roadmap = parse_milestone(document(milestone("- Cache hot queries\n")))
     assert goal.problems == ()
-    assert goal.sections["Done when"] == "P95 is low."
-    missing = parse_goal(document(text.replace("## Done when\n\nP95 is low.\n\n", "")))
+    assert goal.title == "Faster search"
+    assert goal.sections["Done when"] == "- P95 is low."
+    assert [entry.text for entry in roadmap.entries] == ["Cache hot queries"]
+    missing, _ = parse_milestone(
+        document(milestone().replace("## Done when\n\n- P95 is low.\n\n", ""))
+    )
     assert [problem.code for problem in missing.problems] == ["missing-section"]
 
 
+def test_milestone_sections_come_in_order() -> None:
+    text = milestone("- Cache\n").replace("## Goal\n\nAnswers in a blink.\n\n", "")
+    text = text.replace("## Roadmap", "## Goal\n\nAnswers in a blink.\n\n## Roadmap")
+    goal, _ = parse_milestone(document(text))
+    assert [problem.code for problem in goal.problems] == ["section-order"]
+
+
 def test_roadmap_lists_links_to_changes_and_plain_lines() -> None:
-    text = (
-        "# Roadmap\n\n"
+    lines = (
         "- [x] [Limit results](../../changes/archive/2026-01-20-add-limit/proposal.md)\n"
         "- [ ] [Sort results](../../changes/add-order/)\n"
         "- [ ] Cache hot queries\n"
         "- A plain line\n"
     )
-    roadmap = parse_roadmap(document(text, "milestones/faster-search/roadmap.md"))
+    _, roadmap = parse_milestone(
+        document(milestone(lines), "milestones/faster-search/milestone.md")
+    )
     assert roadmap.problems == ()
     assert [entry.target for entry in roadmap.entries] == [
         "../../changes/archive/2026-01-20-add-limit/proposal.md",
@@ -189,6 +197,12 @@ def test_roadmap_lists_links_to_changes_and_plain_lines() -> None:
     ]
     assert [entry.checked for entry in roadmap.entries] == [True, False, False, False]
     assert roadmap.entries[2].text == "Cache hot queries"
+
+
+def test_only_roadmap_lines_are_entries() -> None:
+    """Requirement "Milestone as one file": Done when bullets aren't roadmap entries."""
+    _, roadmap = parse_milestone(document(milestone("- Cache hot queries\n")))
+    assert [entry.text for entry in roadmap.entries] == ["Cache hot queries"]
 
 
 def test_exploration_with_an_empty_conclusion_is_open() -> None:

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.support import CONFIG, Workspace, delta, proposal, requirement, spec
+from tests.support import CONFIG, Workspace, delta, milestone, proposal, requirement, spec
 from waymark.record.problems import Problem
 from waymark.record.project import ProjectNotFoundError, find_project
 from waymark.record.record import ArchiveEntry, load_archived_change, load_record, spec_history
@@ -51,11 +51,7 @@ def test_record_in_a_repo_has_the_repo_layout(workspace: Workspace) -> None:
 def test_record_loads_every_kind_of_artifact(workspace: Workspace) -> None:
     workspace.write("specs/search.md", spec())
     workspace.change("add-order", deltas={"search": delta(added=(requirement("Result order"),))})
-    workspace.write(
-        "milestones/faster-search/goal.md",
-        "# G\n\n## Goal\n\na\n\n## Done when\n\nb\n\n## Non-goals\n\nc\n",
-    )
-    workspace.write("milestones/faster-search/roadmap.md", "# Roadmap\n\n- Cache hot queries\n")
+    workspace.write("milestones/faster-search/milestone.md", milestone("- Cache hot queries\n"))
     workspace.write(
         "explorations/paging.md",
         "# P\n\n- Status: open\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
@@ -158,11 +154,26 @@ def test_file_that_is_not_utf8_is_a_problem(workspace: Workspace) -> None:
     assert record.specs == {}
 
 
-def test_milestone_needs_a_goal_and_a_roadmap(workspace: Workspace) -> None:
-    workspace.write("milestones/faster-search/roadmap.md", "# Roadmap\n")
+def test_milestone_needs_its_milestone_file(workspace: Workspace) -> None:
+    workspace.write("milestones/faster-search/notes.md", "# Notes\n")
     assert codes(workspace.record().problems) == [
-        ("milestones/faster-search/goal.md", "missing-file")
+        ("milestones/faster-search/milestone.md", "missing-file"),
+        ("milestones/faster-search/notes.md", "unexpected-file"),
     ]
+
+
+def test_scenario_old_milestone_files(workspace: Workspace) -> None:
+    workspace.write("milestones/faster-search/milestone.md", milestone())
+    workspace.write("milestones/faster-search/goal.md", "# G\n")
+    workspace.write("milestones/faster-search/roadmap.md", "# Roadmap\n")
+    workspace.write("milestones/archive/2026-01-20-old/goal.md", "# G\n")
+    found = [p for p in workspace.record().problems if p.code == "milestone-file"]
+    assert [p.path for p in found] == [
+        "milestones/archive/2026-01-20-old/goal.md",
+        "milestones/faster-search/goal.md",
+        "milestones/faster-search/roadmap.md",
+    ]
+    assert all("milestone.md" in p.message for p in found)
 
 
 def test_problems_are_reported_with_record_relative_paths_and_lines(workspace: Workspace) -> None:

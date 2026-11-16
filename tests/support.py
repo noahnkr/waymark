@@ -154,6 +154,16 @@ IMPACT = "- Specs: `search`\n- User-visible: at most fifty results\n- Code: the 
 NO_SPECS = "- Specs: none\n- User-visible: at most fifty results\n- Code: the search module"
 
 
+GOAL_TEXT = (
+    "## Goal\n\nAnswers in a blink.\n\n## Done when\n\n- P95 is low.\n\n## Non-goals\n\nRanking.\n"
+)
+
+
+def milestone(roadmap: str = "", *, title: str = "Faster search", goal: str = GOAL_TEXT) -> str:
+    """A milestone.md: the title, the goal sections, then the roadmap lines."""
+    return f"# {title}\n\n{goal}\n## Roadmap\n\n{roadmap}"
+
+
 def proposal(
     *,
     owner: str = "Sam Doe",

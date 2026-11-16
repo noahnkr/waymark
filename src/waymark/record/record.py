@@ -15,13 +15,12 @@ from waymark.record.explorations import Exploration, parse_exploration
 from waymark.record.files import RecordFiles
 from waymark.record.links import LinkChecker
 from waymark.record.milestones import (
-    GOAL_FILE,
-    ROADMAP_FILE,
+    MILESTONE_FILE,
+    OLD_FILES,
     Goal,
     Milestone,
     Roadmap,
-    parse_goal,
-    parse_roadmap,
+    parse_milestone,
 )
 from waymark.record.names import NAME_RULE, is_valid_name, parse_archive_name
 from waymark.record.problems import WHOLE_FILE, Problem
@@ -101,8 +100,6 @@ class Record:
         for milestone in self.milestones.values():
             if milestone.goal:
                 yield milestone.goal.doc
-            if milestone.roadmap:
-                yield milestone.roadmap.doc
         for exploration in self.explorations.values():
             yield exploration.doc
 
@@ -212,44 +209,57 @@ def _split_folder(
     return active, sorted(archived)
 
 
+def _old_milestone_file(path: str) -> Problem:
+    return Problem(
+        path,
+        WHOLE_FILE,
+        "milestone-file",
+        f"A milestone is one {MILESTONE_FILE}: its title, then Goal, Done when, Non-goals and "
+        "Roadmap. Merge this file into it and remove it.",
+    )
+
+
 def _load_milestone(files: RecordFiles, name: str, path: str, problems: list[Problem]) -> Milestone:
     found: list[Problem] = []
     goal: Goal | None = None
     roadmap: Roadmap | None = None
     for entry in files.entries(path):
         relative = f"{path}/{entry.name}"
-        if entry.is_dir or entry.name not in (GOAL_FILE, ROADMAP_FILE):
+        if not entry.is_dir and entry.name in OLD_FILES:
+            found.append(_old_milestone_file(relative))
+            continue
+        if entry.is_dir or entry.name != MILESTONE_FILE:
             found.append(
                 Problem(
                     relative,
                     WHOLE_FILE,
                     "unexpected-file",
-                    f"A milestone holds {GOAL_FILE} and {ROADMAP_FILE}. Move this elsewhere "
-                    "or remove it.",
+                    f"A milestone holds {MILESTONE_FILE}. Move this elsewhere or remove it.",
                 )
             )
             continue
         doc = files.document(relative, found)
-        if doc is None:
-            continue
-        if entry.name == GOAL_FILE:
-            goal = parse_goal(doc)
+        if doc is not None:
+            goal, roadmap = parse_milestone(doc)
             found.extend(goal.problems)
-        else:
-            roadmap = parse_roadmap(doc)
-            found.extend(roadmap.problems)
-    for file_name, artifact in ((GOAL_FILE, goal), (ROADMAP_FILE, roadmap)):
-        if artifact is None and not files.is_file(f"{path}/{file_name}"):
-            found.append(
-                Problem(
-                    f"{path}/{file_name}",
-                    WHOLE_FILE,
-                    "missing-file",
-                    f"The milestone has no {file_name}. Create it from the built-in template.",
-                )
+    if goal is None and not files.is_file(f"{path}/{MILESTONE_FILE}"):
+        found.append(
+            Problem(
+                f"{path}/{MILESTONE_FILE}",
+                WHOLE_FILE,
+                "missing-file",
+                f"The milestone has no {MILESTONE_FILE}. Create it from the built-in template.",
             )
+        )
     problems.extend(found)
     return Milestone(name, path, goal, roadmap, tuple(sorted(found)))
+
+
+def _check_archived_milestone(files: RecordFiles, path: str, problems: list[Problem]) -> None:
+    """An archived milestone is read as listed, but may not keep the two old files."""
+    for entry in files.entries(path):
+        if not entry.is_dir and entry.name in OLD_FILES:
+            problems.append(_old_milestone_file(f"{path}/{entry.name}"))
 
 
 def _check_spec_repos(spec: Spec, config: Config | None, problems: list[Problem]) -> None:
@@ -293,6 +303,8 @@ def load_record(project: Project) -> Record:
         name: _load_milestone(files, name, f"{MILESTONES}/{name}", problems)
         for name in milestone_names
     }
+    for entry in archived_milestones:
+        _check_archived_milestone(files, entry.path, problems)
 
     explorations: dict[str, Exploration] = {}
     for name, doc in _load_markdown_folder(files, EXPLORATIONS, "exploration", problems).items():

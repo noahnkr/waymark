@@ -9,7 +9,7 @@ from waymark.record.changes import PROPOSAL_FILE
 from waymark.record.charter import CHARTER_FILE
 from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.files import RecordFiles
-from waymark.record.milestones import GOAL_FILE, ROADMAP_FILE
+from waymark.record.milestones import MILESTONE_FILE
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE, is_pointer, parse_pointer
 from waymark.record.problems import Problem
@@ -163,14 +163,15 @@ def create_change(start: Path, name: str, *, short: bool = False, owner: str | N
 
 
 def create_milestone(start: Path, name: str) -> Done:
-    """Create a milestone folder with goal and roadmap skeletons."""
+    """Create a milestone folder with a milestone.md skeleton: its goal and roadmap."""
     record = open_record(start, writing=True)
     folder = f"{MILESTONES}/{name}"
     _require_new_name(name, "milestone", bool(record.files.entries(folder)))
     title = templates.title_from_name(name)
     transaction = Transaction(record.files)
-    transaction.write(f"{folder}/{GOAL_FILE}", templates.render(templates.GOAL, title=title))
-    transaction.write(f"{folder}/{ROADMAP_FILE}", templates.render(templates.ROADMAP, title=title))
+    transaction.write(
+        f"{folder}/{MILESTONE_FILE}", templates.render(templates.MILESTONE, title=title)
+    )
     return Done(f'Created the milestone "{name}" with a goal to draft.', commit(transaction))
 
 

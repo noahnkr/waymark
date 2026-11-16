@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from tests.support import Workspace, delta, proposal, requirement, spec
+from tests.support import Workspace, delta, milestone, proposal, requirement, spec
 from tests.views.validator import errors
 from waymark import __version__
 from waymark.record.terms import Verdict
@@ -21,7 +21,6 @@ from waymark.views.style import Style
 NOW = datetime.datetime(2026, 3, 1, 12, tzinfo=datetime.UTC)
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-GOAL = "# Faster\n\n## Goal\n\na\n\n## Done when\n\nb\n\n## Non-goals\n\nc\n"
 PLAIN = Style(color=False, unicode=False)
 FANCY = Style(color=True, unicode=True)
 
@@ -77,12 +76,13 @@ def busy(project: Workspace) -> Workspace:
     )
     project.change("add-paging", deltas={"search": delta(added=(requirement("Paging"),))})
     project.change("cut-noise", deltas={"search": delta(modified=(requirement("Gone"),))})
-    project.write("milestones/faster-search/goal.md", GOAL)
     project.write(
-        "milestones/faster-search/roadmap.md",
-        "# Roadmap\n\n"
-        "- [x] [Index](../../changes/archive/2026-01-20-add-index/proposal.md)\n"
-        "- [ ] [Order](../../changes/add-order/proposal.md)\n- [ ] Caching\n",
+        "milestones/faster-search/milestone.md",
+        milestone(
+            "- [x] [Index](../../changes/archive/2026-01-20-add-index/proposal.md)\n"
+            "- [ ] [Order](../../changes/add-order/proposal.md)\n- [ ] Caching\n",
+            title="Faster",
+        ),
     )
     project.write(
         "explorations/caching.md",

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from tests.conftest import git_init
-from tests.support import DESIGN, IMPACT, NO_SPECS, delta, requirement
+from tests.support import DESIGN, IMPACT, NO_SPECS, delta, milestone, requirement
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
 from waymark.record.pointer import is_pointer
 from waymark.record.project import find_project
@@ -265,15 +265,15 @@ def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:
     session.run("new", "change", name, "--short")
     session.fill_proposal(name, NO_SPECS, review="none")
     session.write(
-        "milestones/tidy-docs/roadmap.md",
-        f"# Tidy docs: roadmap\n\n- [ ] [Fix the typo](../../changes/{name}/proposal.md)\n",
+        "milestones/tidy-docs/milestone.md",
+        milestone(f"- [ ] [Fix the typo](../../changes/{name}/proposal.md)\n", title="Tidy docs"),
     )
     session.write(f"changes/{name}/tasks.md", HEAD + "- [ ] 1.1 Fix the word\n")
     session.run("accept", name)
     session.run("tick", name, "1.1")
     session.run("sync", name, expect=EXIT_REFUSED)
     session.run("archive", name, "--built", "Fixed.")
-    roadmap = session.read("milestones/tidy-docs/roadmap.md")
+    roadmap = session.read("milestones/tidy-docs/milestone.md")
     assert f"- [x] [Fix the typo](../../changes/archive/{TODAY}-{name}/proposal.md)" in roadmap
     state = derive_state(load_record(find_project(session.root)))
     assert (state.milestones["tidy-docs"].archived, state.milestones["tidy-docs"].total) == (1, 1)

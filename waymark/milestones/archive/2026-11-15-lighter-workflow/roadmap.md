@@ -1,7 +1,0 @@
-# Lighter workflow: roadmap
-
-- [let-planner-build](../../../changes/archive/2026-11-15-let-planner-build/proposal.md): the planner builds items in the session; `build: delegate` tags the items that go to a fresh implementer; focused tests per item and the full checks once before the PR
-- [review-once-per-change](../../../changes/archive/2026-11-15-review-once-per-change/proposal.md): one review per change against the deltas' scenarios, with findings by severity; independent only for risky changes
-- [archive-before-merge](../../../changes/archive/2026-11-15-archive-before-merge/proposal.md): archive on the change's branch so code and archive share one PR
-- [add-tiny-path](../../../changes/archive/2026-11-15-add-tiny-path/proposal.md): tiny, short and full paths, named in the proposal and held by `wm check`; specs stay functional
-- [keep-acceptance-on-new-items](../../../changes/archive/2026-11-15-keep-acceptance-on-new-items/proposal.md): adding an item no longer withdraws acceptance; changing what was accepted still does
