@@ -43,3 +43,6 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint 2aef20b355836ab6 items 1.1 1.2 2.1 2.2 by Noah Roberts
+- (self-review) 2026-11-16 by Noah Roberts: Checked against the delta's three scenarios, the design and each item's criteria. New milestone, Old milestone files and Roadmap ticked at archive each have a test; Done when bullets aren't entries, and a link outside the Roadmap section is rewritten but not ticked. Both milestones here are merged without wording changes, the exploration links resolve, and wm show keeps its JSON shape. Full checks pass: pytest (1099), ruff, mypy, codespell, tools.docs --check, wm check.
+  - warning `src/waymark/record/milestones.py:parse_milestone`: a list line inside a comment under ## Roadmap was counted as an entry; fixed in this review by skipping comment lines, with a test
+  - suggestion `tests/services/test_archive.py:test_scenario_roadmap_ticked_at_archive`: passes without the 1.2 fix because its Done when bullet has no link; test_a_link_outside_the_roadmap_is_rewritten_but_not_ticked is what guards the fix
