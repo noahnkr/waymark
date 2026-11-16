@@ -99,7 +99,7 @@ OpenSpec is light because it trusts the agent and enforces nothing. Waymark's di
 
 ## Conclusion
 
-Decided on 2026-11-15: B and C together, with A's tactics. The planner builds by default and delegation becomes the exception. Review happens once per change, with an independent review only for risky changes. A tiny change is just a commit. The charter folds into config last. This continues as the milestone [lighter-workflow](../milestones/lighter-workflow/goal.md).
+Decided on 2026-11-15: B and C together, with A's tactics. The planner builds by default and delegation becomes the exception. Review happens once per change, with an independent review only for risky changes. A tiny change is just a commit. The charter stays as it is: the project's context and its rules for agents are kept apart from the settings and atlas wiring in `waymark/config.toml`, so it is not folded into config. This continues as the milestone [lighter-workflow](../milestones/archive/2026-11-15-lighter-workflow/goal.md).
 
 ## Related
 
