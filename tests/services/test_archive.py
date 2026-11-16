@@ -5,6 +5,7 @@ import datetime
 import pytest
 
 from tests.support import (
+    GOAL_TEXT,
     NO_SPECS,
     TASKS,
     Workspace,
@@ -277,6 +278,32 @@ def test_archive_rewrites_links_inside_the_moved_files(project: Workspace) -> No
     assert "[tasks](tasks.md)" in text
     assert "[readme](../../../../README.md)" in text
     assert "[the web](https://example.com/a.md)" in text
+
+
+def test_scenario_roadmap_ticked_at_archive(project: Workspace) -> None:
+    applied(project)
+    goal = GOAL_TEXT.replace("- P95 is low.", "- [ ] P95 is low.")
+    project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- [ ] [Limit](../../changes/add-limit/proposal.md)\n", goal=goal),
+    )
+    lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    text = project.read("milestones/faster-search/milestone.md")
+    assert text == milestone(f"- [x] [Limit](../../{ARCHIVED}/proposal.md)\n", goal=goal)
+    state = project.state().milestones["faster-search"]
+    assert (state.archived, state.total) == (1, 1)
+    assert [line.status for line in state.lines] == [RoadmapStatus.ARCHIVED]
+
+
+def test_a_link_outside_the_roadmap_is_rewritten_but_not_ticked(project: Workspace) -> None:
+    applied(project)
+    goal = GOAL_TEXT.replace(
+        "- P95 is low.", "- [ ] [Limit](../../changes/add-limit/proposal.md) ships"
+    )
+    project.write("milestones/faster-search/milestone.md", milestone("- [ ] Paging\n", goal=goal))
+    lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    text = project.read("milestones/faster-search/milestone.md")
+    assert f"- [ ] [Limit](../../{ARCHIVED}/proposal.md) ships" in text
 
 
 def test_archive_ticks_the_roadmap_line_and_the_milestone_moves_on(project: Workspace) -> None:

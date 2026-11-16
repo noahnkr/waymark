@@ -6,6 +6,7 @@ from urllib.parse import quote
 
 from waymark.record.edits import replace_spans
 from waymark.record.links import local_path, resolve
+from waymark.record.milestones import roadmap_lines
 from waymark.record.text import Document
 
 _UNCHECKED = re.compile(r"^(\s*[-*]\s+)\[ \]")
@@ -50,9 +51,15 @@ def rewrite_links(doc: Document, source: str, target: str) -> str:
 
 
 def tick_roadmap_lines(doc: Document, folder: str) -> str:
-    """A roadmap's text with the lines that link into a folder ticked."""
+    """A milestone's text with the roadmap lines that link into a folder ticked.
+
+    Only lines in its ``## Roadmap`` section are ticked; a link elsewhere is left alone.
+    """
     replacements: dict[tuple[int, int, int], str] = {}
+    roadmap = roadmap_lines(doc)
     for link in doc.links():
+        if link.index not in roadmap:
+            continue
         resolved = resolve(doc.path, link.target)
         match = _UNCHECKED.match(doc.lines[link.index].text)
         if resolved is not None and _inside(resolved, folder) and match:
