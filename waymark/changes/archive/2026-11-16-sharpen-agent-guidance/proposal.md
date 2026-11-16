@@ -28,3 +28,8 @@ This is the last change on the `record-format-and-skills` milestone, split from 
   - the `wm-reviewer`, `wm-implementer` and `wm-apply` texts point at them.
 - Code: `services/context.py`, `services/instructions.py`, `views/` (the context pack and instructions views and their JSON schemas)
 - Assets and docs: the two agent definitions and `wm-apply`; concepts and the changelog.
+
+## Outcome
+
+- Built: One severity rubric (critical, warning, suggestion, graded by what a finding breaks) given by the review context pack and by wm instructions at the review step; stopping rules (spec-gap, blocked, partial after three attempts, other work left to a note) given by the implement context pack; the reviewer, the implementer and wm-apply's self-review use them.
+- Differs: none

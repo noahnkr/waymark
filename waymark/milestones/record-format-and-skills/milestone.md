@@ -36,4 +36,4 @@ Make the record read well on GitHub and parse without guesswork, and make the sk
 - [merge-milestone-files](../../changes/archive/2026-11-16-merge-milestone-files/proposal.md): `goal.md` and `roadmap.md` become one `milestone.md`; `wm` rewrites Markdown links when it moves a file
 - [add-step-guidance](../../changes/archive/2026-11-16-add-step-guidance/proposal.md): `wm instructions` gives a checklist for each drafting step and one preamble of the rules every skill shares; `wm check` enforces what it can
 - [sharpen-drafting-skills](../../changes/archive/2026-11-16-sharpen-drafting-skills/proposal.md): one layout for every skill; rules for writing requirements and sizing items; a question step and a cross-artifact consistency check in `wm-propose`; fixed summaries for the human; a kickoff interview script; deeper exploration
-- sharpen-agent-guidance: a severity rubric for the reviewer and stopping rules for the implementer, split from sharpen-drafting-skills
+- [sharpen-agent-guidance](../../changes/archive/2026-11-16-sharpen-agent-guidance/proposal.md): a severity rubric for the reviewer and stopping rules for the implementer, split from sharpen-drafting-skills
