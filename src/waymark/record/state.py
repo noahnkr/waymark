@@ -343,13 +343,16 @@ def _artifact_step(change: Change) -> tuple[Phase, NextStep] | None:
 
     no_deltas_needed = proposal.no_spec_changes and not change.deltas
     if change.problems_in(SPECS_DIR) or not (change.deltas or no_deltas_needed):
-        missing = 'Draft the deltas, or state "No spec changes" under the proposal\'s impact.'
+        missing = 'Draft the deltas, or write "- Specs: none" under the proposal\'s Impact.'
         return Phase.PROPOSED, NextStep(StepKind.SPECS, reason=reason(SPECS_DIR, missing))
 
     reached = Phase.SPECIFIED
     if change.problems_in(DESIGN_FILE) or (change.design is None and not change.short_path):
         step = NextStep(StepKind.DESIGN, reason=reason(DESIGN_FILE, "Draft the design."))
         return reached, step
+    if change.design is not None and (unsettled := change.design.unsettled):
+        settle = "Settle the design before it is accepted: " + "; ".join(unsettled) + "."
+        return reached, NextStep(StepKind.DESIGN, reason=settle)
     if not change.short_path:
         reached = Phase.DESIGNED
 

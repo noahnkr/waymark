@@ -2,7 +2,7 @@
 
 import shutil
 
-from tests.support import DESIGN, TASKS, Workspace, delta, proposal, requirement, spec
+from tests.support import DESIGN, NO_SPECS, TASKS, Workspace, delta, proposal, requirement, spec
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -97,6 +97,19 @@ def test_short_path_skips_the_designed_phase(workspace: Workspace) -> None:
     assert step(workspace.change_state()) == (Phase.PLANNED, StepKind.ACCEPT, None, True)
 
 
+def test_unsettled_design_keeps_the_next_step_at_design(workspace: Workspace) -> None:
+    design = DESIGN.replace("- Status: decided", "- Status: proposed").replace(
+        "None.", "- Fifty or twenty?"
+    )
+    workspace.change(design=design)
+    state = workspace.change_state()
+    assert (state.phase, state.next_step.kind) == (Phase.SPECIFIED, StepKind.DESIGN)
+    assert state.next_step.reason == (
+        'Settle the design before it is accepted: decision "Where to cut" is proposed; '
+        'open question "Fifty or twenty?" is listed.'
+    )
+
+
 def test_full_path_without_a_design(workspace: Workspace) -> None:
     workspace.change(design=None)
     assert step(workspace.change_state()) == (Phase.SPECIFIED, StepKind.DESIGN, None, False)
@@ -145,12 +158,12 @@ def test_old_tag(workspace: Workspace) -> None:
 
 
 def test_change_with_no_spec_changes_is_specified_without_deltas(workspace: Workspace) -> None:
-    workspace.change(proposal_text=proposal(impact="No spec changes."), deltas={}, design=None)
+    workspace.change(proposal_text=proposal(impact=NO_SPECS), deltas={}, design=None)
     assert step(workspace.change_state()) == (Phase.SPECIFIED, StepKind.DESIGN, None, False)
 
 
 def test_stating_no_spec_changes_while_having_deltas_is_a_problem(workspace: Workspace) -> None:
-    workspace.change(proposal_text=proposal(impact="No spec changes."))
+    workspace.change(proposal_text=proposal(impact=NO_SPECS))
     assert code_list(workspace) == [(f"{FOLDER}/proposal.md", "impact-mismatch")]
     assert workspace.change_state().next_step.kind is StepKind.PROPOSE
 

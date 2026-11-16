@@ -201,7 +201,7 @@ def archived(project: Workspace, outcome: str, day: datetime.date = DAY) -> None
     for number in ("1.1", "1.2"):
         lifecycle.tick(project.root, NAME, number)
     lifecycle.self_review(project.root, NAME, "fine", day)
-    lifecycle.archive(project.root, NAME, day, outcome=outcome)
+    lifecycle.archive(project.root, NAME, day, built=outcome)
 
 
 def test_archived_on_its_branch(project: Workspace) -> None:
@@ -216,7 +216,7 @@ def test_archived_on_its_branch(project: Workspace) -> None:
     assert "- search: adds Result limit" in body
     assert "- [x] 1.1 Cap the result count\n" in body
     assert "## Review\n\nSelf-reviewed: fine" in body
-    assert "## Outcome\n\nSearches return the fifty best matches." in body
+    assert "## Outcome\n\n- Built: Searches return the fifty best matches.\n- Differs: none" in body
     folder = f"waymark/changes/archive/{DAY.isoformat()}-{NAME}"
     url = f"https://github.com/someone/shop/blob/{NAME}/{folder}/proposal.md"
     assert payload["links"] == [{"name": "change", "url": url}]
@@ -235,7 +235,7 @@ def test_pr_for_a_name_archived_twice_describes_the_latest(project: Workspace) -
     )
     archived(project, "Second.", datetime.date(2026, 2, 1))
     body = describe(project.record(), NAME)["body"]
-    assert "## Outcome\n\nSecond." in body
+    assert "## Outcome\n\n- Built: Second.\n- Differs: none" in body
     assert "archive/2026-02-01-add-limit/proposal.md" in body
 
 

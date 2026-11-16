@@ -98,7 +98,7 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 - [ ] Ask the agent to run `wm archive <change> --override "x"`. **Refused**.
 - [ ] Run `/wm-archive` on the change's branch, before any pull request. The
       change moves to `changes/archive/<date>-<change>/`, the deltas are in the
-      specs, and the proposal has an Outcome. The archive is committed on the
+      specs, and the proposal has an Outcome with `- Built:` and `- Differs:` lines. The archive is committed on the
       branch.
 - [ ] Run `wm pr <change>`: it describes the archived change, with its
       Outcome, and links to the proposal in the archived folder.

@@ -32,7 +32,7 @@ Fast search for everyone.
 
 ## Goals
 
-- Answers in one step.
+1. Answers in one step.
 
 ## Non-goals
 
@@ -40,7 +40,7 @@ Fast search for everyone.
 
 ## Constraints
 
-- Runs offline.
+1. Runs offline.
 
 ## Glossary
 
@@ -75,9 +75,15 @@ Cut the result list after sorting.
 
 ### Decision: Where to cut
 
+- Status: decided
+- Decided by: planner
 - Options: in the query, or after sorting
 - Choice: after sorting
 - Why: the order must be final first
+
+## Open questions
+
+None.
 
 ## Risks and trade-offs
 
@@ -144,11 +150,15 @@ def delta(
     return "\n".join(parts)
 
 
+IMPACT = "- Specs: `search`\n- User-visible: at most fifty results\n- Code: the search module"
+NO_SPECS = "- Specs: none\n- User-visible: at most fifty results\n- Code: the search module"
+
+
 def proposal(
     *,
     owner: str = "Sam Doe",
     short: bool = False,
-    impact: str = "Specs: search.",
+    impact: str = IMPACT,
     outcome: str | None = None,
 ) -> str:
     facts = f"- Owner: {owner}\n" + ("- Path: short\n" if short else "")

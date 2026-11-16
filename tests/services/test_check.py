@@ -4,9 +4,23 @@ import datetime
 import os
 import subprocess
 
-from tests.support import Workspace, delta, proposal, requirement, spec
+import pytest
+
+from tests.support import (
+    DESIGN,
+    IMPACT,
+    NO_SPECS,
+    TASKS,
+    Workspace,
+    delta,
+    proposal,
+    requirement,
+    spec,
+)
 from waymark.services import lifecycle
 from waymark.services.check import Finding, Severity, check, has_errors
+from waymark.services.pr import describe
+from waymark.views import payloads
 
 NOW = datetime.datetime(2026, 3, 1, 12, tzinfo=datetime.UTC)
 DAY = datetime.date(2026, 1, 15)
@@ -92,6 +106,79 @@ def test_old_delta_headings_are_old_layouts(project: Workspace) -> None:
     assert [path for path, _ in old_layouts(project)] == ["changes/add-order/specs/search.md"]
 
 
+def test_scenario_impact_matches_the_deltas(project: Workspace) -> None:
+    project.change(proposal_text=proposal(impact=IMPACT.replace("`search`", "`search` (modified)")))
+    assert [f for f in check(project.root, NOW) if f.code.startswith("impact")] == []
+
+
+def test_scenario_delta_not_named_in_the_impact(project: Workspace) -> None:
+    ranking = delta(title="Ranking", added=(requirement("Score"),), purpose="How ranks work.")
+    project.change(deltas={"search": delta(added=(requirement(),)), "ranking": ranking})
+    project.write("specs/search.md", spec())
+    [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
+    assert (finding.severity, finding.path, finding.code) == (
+        Severity.ERROR,
+        "changes/add-limit/proposal.md",
+        "impact-mismatch",
+    )
+    assert "`ranking`" in finding.message
+
+
+def test_impact_needs_its_three_lines(project: Workspace) -> None:
+    project.change(proposal_text=proposal(impact="- Specs: `search`"))
+    [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
+    assert finding.code == "impact-format"
+    assert '"- User-visible:", "- Code:"' in finding.message
+
+
+@pytest.mark.parametrize("value", ["", " search (new)"])
+def test_only_specs_none_skips_the_specs_step(project: Workspace, value: str) -> None:
+    """Requirement "Structured impact": an empty or unrecognized Specs line is reported."""
+    impact = NO_SPECS.replace("- Specs: none", f"- Specs:{value}")
+    project.change(proposal_text=proposal(impact=impact), deltas={})
+    [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
+    assert (finding.path, finding.code) == ("changes/add-limit/proposal.md", "impact-format")
+    assert "in backticks" in finding.message
+    assert project.change_state().next_step.kind.value == "propose"
+    project.replace("changes/add-limit/proposal.md", f"- Specs:{value}\n", "- Specs: none\n")
+    assert [f for f in check(project.root, NOW) if f.code.startswith("impact")] == []
+
+
+def test_spec_named_without_a_delta_points_at_the_specs_step(project: Workspace) -> None:
+    project.change(proposal_text=proposal(impact=IMPACT.replace("`search`", "`search`, `ranking`")))
+    [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
+    assert (finding.path, finding.code) == ("changes/add-limit/specs", "impact-mismatch")
+    assert project.change_state().next_step.kind.value == "specs"
+
+
+OLD_DESIGN = (
+    DESIGN.replace("- Status: decided\n", "")
+    .replace("- Decided by: planner\n", "")
+    .replace("## Open questions\n\nNone.\n\n", "")
+)
+
+
+def test_scenario_archived_change_in_an_older_layout(project: Workspace) -> None:
+    """Requirement "New work only": archived changes are read as they were written."""
+    folder = "changes/archive/2026-01-20-add-limit"
+    project.write(f"{folder}/proposal.md", proposal(impact="Specs: search.", outcome="Done."))
+    project.write(f"{folder}/specs/search.md", delta(added=(requirement(),), purpose="Search."))
+    project.write(f"{folder}/design.md", OLD_DESIGN)
+    project.write(f"{folder}/tasks.md", TASKS.replace("- [ ]", "- [x]"))
+    assert "- Status:" not in OLD_DESIGN
+    assert "Open questions" not in OLD_DESIGN
+    assert check(project.root, NOW) == ()
+    record = project.record()
+    shown = payloads.show(record, "add-limit")
+    assert shown["name"] == "add-limit"
+    body = describe(record, "add-limit")["body"]
+    assert "## Outcome\n\nDone." in body
+    for name in ("proposal.md", "specs/search.md", "design.md", "tasks.md"):
+        project.write(f"changes/add-order/{name}", project.read(f"{folder}/{name}"))
+    active = {f.code for f in check(project.root, NOW) if f.path.startswith("changes/add-order")}
+    assert {"impact-format", "decision-format", "missing-section"} <= active
+
+
 def test_broken_links_are_errors(project: Workspace) -> None:
     project.replace("charter.md", "rebuilt nightly.", "rebuilt [nightly](jobs.md).")
     assert findings(project) == [("error", "charter.md", "broken-link")]
@@ -147,18 +234,19 @@ def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> Non
     assert findings(project) == [("warning", "changes/add-limit", "not-archived")]
 
 
-def test_exploration_without_a_status_line_is_an_old_layout(project: Workspace) -> None:
+def test_exploration_without_a_status_line_is_missing_its_status(project: Workspace) -> None:
     project.write(
         "explorations/paging.md",
         "# P\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
         "## Conclusion\n\nWe should think more.\n\n## Related\n",
     )
-    assert findings(project) == [("error", "explorations/paging.md", "old-layout")]
+    assert findings(project) == [("error", "explorations/paging.md", "missing-status")]
 
 
 def test_change_untouched_for_a_while_is_a_warning(project: Workspace) -> None:
     order = delta(title="Order", added=(requirement("Result order"),), purpose="How order works.")
-    project.change("add-order", deltas={"order": order})
+    impact = IMPACT.replace("`search`", "`order`")
+    project.change("add-order", proposal_text=proposal(impact=impact), deltas={"order": order})
     commit_all(project, "2026-01-01T09:00:00+00:00")
     project.change("add-limit")
     commit_all(project, "2026-02-20T09:00:00+00:00")

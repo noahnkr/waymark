@@ -12,12 +12,14 @@ It covers what the human approved:
 - the living text of what the deltas modify or remove, so that another change
   archiving into the same requirement withdraws this acceptance.
 
-Every part is hashed in its standard layout (``record/layout.py``), so line
-endings don't count, two checkouts of one commit agree, and fixing the layout
-never withdraws an acceptance.
+Every part is hashed without its comments and in its standard layout
+(``record/layout.py``), so line endings don't count, two checkouts of one commit
+agree, and neither fixing the layout nor editing a comment, such as a template's
+examples, withdraws an acceptance.
 """
 
 import hashlib
+import re
 from collections.abc import Callable, Mapping, Sequence
 
 from waymark.record.changes import Change
@@ -28,14 +30,62 @@ from waymark.record.terms import ReviewLevel
 
 FINGERPRINT_LENGTH = 16
 _ABSENT = "\x00absent"
+_COMMENT = re.compile(r"(`[^`\n]*`)|<!--.*?(?:-->|\Z)", re.DOTALL)
+"""A comment, or an inline code span, which is kept so a ``<!--`` written in one isn't a comment."""
+_GONE = "﷐"
+"""Marks where a comment was removed: a noncharacter, so never in the text itself."""
+_FENCE = re.compile(r"^[ \t]*(```|~~~)")
 
 
 def _line_endings(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
+def _without_comments(text: str) -> str:
+    """The text with its HTML comments removed, outside fenced code.
+
+    A line left blank by a removed comment goes, and runs of blank lines become one.
+    Text without a comment is returned as it is.
+    """
+    if "<!--" not in text:
+        return text
+    kept: list[str] = []
+    prose: list[str] = []
+    fence: str | None = None
+
+    def flush() -> None:
+        stripped = (
+            _COMMENT.sub(lambda match: match.group(1) or _GONE, "\n".join(prose)) if prose else ""
+        )
+        for line in stripped.split("\n") if prose else ():
+            if _GONE in line and not line.replace(_GONE, "").strip():
+                continue
+            kept.append(line.replace(_GONE, "").rstrip() if _GONE in line else line)
+        prose.clear()
+
+    for line in text.split("\n"):
+        match = _FENCE.match(line)
+        if fence is None and match:
+            flush()
+            fence = match.group(1)
+            kept.append(line)
+        elif fence is not None:
+            kept.append(line)
+            if match and match.group(1) == fence:
+                fence = None
+        else:
+            prose.append(line)
+    flush()
+    collapsed: list[str] = []
+    for line in kept:
+        if not line.strip() and collapsed and not collapsed[-1].strip():
+            continue
+        collapsed.append(line)
+    return "\n".join(collapsed)
+
+
 def _laid_out(text: str) -> str:
-    return standard_layout(_line_endings(text))[0]
+    return standard_layout(_without_comments(_line_endings(text)))[0]
 
 
 def fingerprint_parts(

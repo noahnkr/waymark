@@ -199,7 +199,8 @@ def _archive(args: argparse.Namespace) -> int:
         _here(),
         args.change,
         _today(),
-        outcome=args.outcome,
+        built=args.built,
+        differs=args.differs,
         override=args.override,
         by=args.by,
     )
@@ -488,7 +489,12 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     summary = "Archive an applied change. For the human to run."
     archive = commands.add_parser("archive", help=summary, description=summary)
     archive.add_argument("change", help="the change's name")
-    archive.add_argument("--outcome", metavar="TEXT", help="what came of the change")
+    archive.add_argument("--built", metavar="TEXT", help="what was built, for the outcome")
+    archive.add_argument(
+        "--differs",
+        metavar="TEXT",
+        help="how it differs from the proposal; none when left out",
+    )
     archive.add_argument(
         "--override",
         metavar="REASON",

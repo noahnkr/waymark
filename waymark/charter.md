@@ -16,12 +16,12 @@ atlas).
 
 ## Goals
 
-- Agents work only from what is written down; a missing fact is written into the record or becomes a spec gap, not a guess.
-- Every review is recorded with its change, and evidence is written only by `wm`.
-- Anyone can pick up the work from the files and git alone, in any session, on any machine.
-- The human approves each change twice: at accept and at archive. Tiny work, which changes no requirement, is approved with a yes in the session and at the merge.
-- Work takes the path its size needs: tiny work (no requirement changes) needs no change, small changes take the short path, big ones get a design, and risky ones an independent review.
-- Waymark is developed with Waymark: this record is the source of truth for its own work.
+1. Agents work only from what is written down; a missing fact is written into the record or becomes a spec gap, not a guess.
+2. Every review is recorded with its change, and evidence is written only by `wm`.
+3. Anyone can pick up the work from the files and git alone, in any session, on any machine.
+4. The human approves each change twice: at accept and at archive. Tiny work, which changes no requirement, is approved with a yes in the session and at the merge.
+5. Work takes the path its size needs: tiny work (no requirement changes) needs no change, small changes take the short path, big ones get a design, and risky ones an independent review.
+6. Waymark is developed with Waymark: this record is the source of truth for its own work.
 
 ## Non-goals
 
@@ -32,13 +32,13 @@ atlas).
 
 ## Constraints
 
-- Python 3.11 or newer, standard library only at runtime; development tools are dev-only dependencies.
-- Deterministic and offline: `wm` never calls a model and never clones, pulls or pushes; it runs only local git commands.
-- Windows, macOS and Linux alike: portable paths, UTF-8 files, existing line endings kept, no symlinks.
-- No cache: every command reads the files fresh; views stay within about a second on a record with a few hundred changes and specs.
-- Careful writes: `wm` edits only the lines it owns, and a multi-file operation completes or leaves the record as it was. The one exception is `wm check --fix`, run when the human asks, which changes the layout of any file in the active record but never its wording.
-- Only code in `src/waymark/adapters/` may name an agent tool; only `record/` and `assets/` touch files (held by `tests/test_constraints.py`).
-- Agent tool setup (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.codex/`, `.cursor/`, the generated `.agents/skills/wm-*/`) is per machine and never committed; each clone sets it up with `wm init`. The maintainer skills in `.agents/skills/` are committed.
+1. Python 3.11 or newer, standard library only at runtime; development tools are dev-only dependencies.
+2. Deterministic and offline: `wm` never calls a model and never clones, pulls or pushes; it runs only local git commands.
+3. Windows, macOS and Linux alike: portable paths, UTF-8 files, existing line endings kept, no symlinks.
+4. No cache: every command reads the files fresh; views stay within about a second on a record with a few hundred changes and specs.
+5. Careful writes: `wm` edits only the lines it owns, and a multi-file operation completes or leaves the record as it was. The one exception is `wm check --fix`, run when the human asks, which changes the layout of any file in the active record but never its wording.
+6. Only code in `src/waymark/adapters/` may name an agent tool; only `record/` and `assets/` touch files (held by `tests/test_constraints.py`).
+7. Agent tool setup (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.codex/`, `.cursor/`, the generated `.agents/skills/wm-*/`) is per machine and never committed; each clone sets it up with `wm init`. The maintainer skills in `.agents/skills/` are committed.
 
 ## Glossary
 

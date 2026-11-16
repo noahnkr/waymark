@@ -12,8 +12,8 @@ You are the planner. Your job here is to turn what the human knows about the pro
 1. Run `wm status --json` and read `waymark/charter.md` and `waymark/config.toml`. If the charter is already filled in, ask whether to revise it instead of starting over.
 2. Interview the human, a few questions at a time. Cover:
    - what the project is and who it is for (Vision);
-   - what it must achieve, and what it deliberately leaves out (Goals, Non-goals);
-   - limits every change must respect: platforms, dependencies, budgets (Constraints);
+   - what it must achieve, and what it deliberately leaves out (Goals, Non-goals); goals are a numbered list, `1. <goal>`, so others can refer to them;
+   - limits every change must respect: platforms, dependencies, budgets (Constraints), also a numbered list;
    - the project's own terms (Glossary), one per line as `- **<term>**: <meaning>`;
    - facts every agent needs: where things live, how to build, run and test, who owns what (Context);
    - any rules for a workflow step, such as "run the full test suite before reporting" for apply (Rules).

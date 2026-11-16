@@ -5,6 +5,7 @@ The acceptance and the sync are records in the task list's Log; an
 """
 
 import datetime
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -34,7 +35,18 @@ IMPACT = "Impact"
 OUTCOME = "Outcome"
 REQUIRED_SECTIONS = (WHY, WHAT_CHANGES, NON_GOALS, IMPACT)
 
-NO_SPEC_CHANGES = "No spec changes"
+SPECS = "Specs"
+USER_VISIBLE = "User-visible"
+CODE = "Code"
+IMPACT_LINES = (SPECS, USER_VISIBLE, CODE)
+NONE = "none"
+BUILT = "Built"
+DIFFERS = "Differs"
+
+_OUTCOME_LINE = re.compile(r"^[-*][ \t]+(Built|Differs):(?:[ \t]+(.*))?$")
+
+_IMPACT_LINE = re.compile(r"^[-*][ \t]+(Specs|User-visible|Code):(?:[ \t]+(.*))?$")
+_SPEC_NAME = re.compile(r"`([^`\s]+)`")
 
 
 @dataclass(frozen=True)
@@ -61,9 +73,28 @@ class Proposal:
     short_path: bool
     review: ReviewLevel | None
     sections: Mapping[str, str]
-    no_spec_changes: bool
+    impact: Mapping[str, str]
+    """The Impact's labeled lines: ``Specs``, ``User-visible`` and ``Code``, as written."""
+    impact_specs: tuple[str, ...] | None
+    """The specs named under ``Specs:``; empty for ``none``; None without the line, or when
+    it neither says ``none`` nor names a spec in backticks."""
     outcome: str | None
     problems: tuple[Problem, ...]
+
+    @property
+    def no_spec_changes(self) -> bool:
+        """Whether the Impact says ``- Specs: none``."""
+        return self.impact_specs == ()
+
+    @property
+    def outcome_lines(self) -> dict[str, str]:
+        """The Outcome's ``Built`` and ``Differs`` lines that have text."""
+        found: dict[str, str] = {}
+        for line in (self.outcome or "").split("\n"):
+            match = _OUTCOME_LINE.match(line)
+            if match and (match.group(2) or "").strip():
+                found.setdefault(match.group(1), match.group(2).strip())
+        return found
 
     def accepted_text(self) -> str:
         """The text acceptance covers: everything but the outcome."""
@@ -135,6 +166,14 @@ def parse_proposal(doc: Document) -> Proposal:
     found = collect_sections(doc, REQUIRED_SECTIONS, problems, optional=(OUTCOME,))
     sections = {name: content(doc, found, name, problems) for name in REQUIRED_SECTIONS}
     outcome = doc.body(found[OUTCOME]) if OUTCOME in found else None
+    impact = (
+        _impact_lines(doc, found[IMPACT].body_start, found[IMPACT].end) if IMPACT in found else {}
+    )
+    impact_specs: tuple[str, ...] | None = None
+    if SPECS in impact:
+        text = impact[SPECS]
+        names = tuple(_SPEC_NAME.findall(text))
+        impact_specs = () if text.casefold() == NONE else names or None
     return Proposal(
         doc=doc,
         title=title,
@@ -142,7 +181,34 @@ def parse_proposal(doc: Document) -> Proposal:
         short_path=short_path,
         review=review,
         sections=sections,
-        no_spec_changes=NO_SPEC_CHANGES.casefold() in sections[IMPACT].casefold(),
+        impact=impact,
+        impact_specs=impact_specs,
         outcome=outcome or None,
         problems=tuple(problems),
     )
+
+
+def _impact_lines(doc: Document, start: int, end: int) -> dict[str, str]:
+    """The Impact's labeled lines, each with the bullets indented under it."""
+    lines: dict[str, list[str]] = {}
+    current: list[str] | None = None
+    in_comment = False
+    for index in range(start, end):
+        line = doc.lines[index]
+        text = line.text
+        if in_comment or text.lstrip().startswith("<!--"):
+            in_comment = "-->" not in text
+            continue
+        if line.is_blank or line.in_fence:
+            continue
+        if text.startswith((" ", "\t")):
+            if current is not None:
+                current.append(text.strip())
+            continue
+        match = _IMPACT_LINE.match(text)
+        current = None
+        if match and match.group(1) not in lines:
+            current = lines[match.group(1)] = [match.group(2) or ""]
+    return {
+        label: "\n".join(part for part in parts if part).strip() for label, parts in lines.items()
+    }

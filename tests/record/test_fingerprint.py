@@ -2,7 +2,7 @@
 
 import pytest
 
-from tests.support import TASKS, Workspace, delta, requirement, spec
+from tests.support import TASKS, Workspace, delta, proposal, requirement, spec
 from waymark.record.deltas import merge_delta
 from waymark.record.fingerprint import change_fingerprint
 from waymark.record.state import AcceptanceState, StepKind
@@ -197,6 +197,42 @@ def test_writing_the_outcome_keeps_acceptance(workspace: Workspace) -> None:
     text = workspace.read("changes/add-limit/proposal.md")
     workspace.write("changes/add-limit/proposal.md", text + "\n## Outcome\n\nShipped as planned.\n")
     assert acceptance(workspace) is AcceptanceState.VALID
+
+
+def test_a_comment_edited_after_acceptance_keeps_it(workspace: Workspace) -> None:
+    """Requirement "Template examples": comments are left out of the fingerprint."""
+    workspace.change(
+        proposal_text=proposal().replace("## Why\n\n", "## Why\n\n<!-- Good: x. -->\n\n")
+    )
+    workspace.accept()
+    workspace.replace(
+        "changes/add-limit/proposal.md", "<!-- Good: x. -->", "<!-- Good: y.\nBad: z. -->"
+    )
+    assert acceptance(workspace) is AcceptanceState.VALID
+    workspace.replace("changes/add-limit/proposal.md", "<!-- Good: y.\nBad: z. -->\n\n", "")
+    assert acceptance(workspace) is AcceptanceState.VALID
+    workspace.replace(
+        "changes/add-limit/proposal.md", "Long result lists", "Very long result lists"
+    )
+    assert acceptance(workspace) is AcceptanceState.WITHDRAWN
+
+
+def test_a_comment_opener_in_inline_code_is_not_a_comment(workspace: Workspace) -> None:
+    mention = "## Why\n\nA spec says `<!--` starts a comment.\n\n"
+    workspace.change(proposal_text=proposal().replace("## Why\n\n", mention))
+    workspace.accept()
+    workspace.replace(
+        "changes/add-limit/proposal.md", "Long result lists", "Very long result lists"
+    )
+    assert acceptance(workspace) is AcceptanceState.WITHDRAWN
+
+
+def test_a_comment_inside_fenced_code_still_counts(workspace: Workspace) -> None:
+    fenced = "## Why\n\n```html\n<!-- a -->\n```\n\n"
+    workspace.change(proposal_text=proposal().replace("## Why\n\n", fenced))
+    workspace.accept()
+    workspace.replace("changes/add-limit/proposal.md", "<!-- a -->", "<!-- b -->")
+    assert acceptance(workspace) is AcceptanceState.WITHDRAWN
 
 
 def test_line_endings_do_not_change_the_fingerprint(workspace: Workspace) -> None:

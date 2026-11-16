@@ -1,7 +1,11 @@
 # <Spec title>
 
 <!-- One file per spec this change touches: specs/<domain>.md inside the change.
-     Keep only the sections you need. A requirement's heading is its key. -->
+     Keep only the sections you need. A requirement's heading is its key.
+     Good requirement: "A search SHALL return at most fifty results, best matches
+     first", with a scenario whose THEN can be checked.
+     Bad requirement: "The SearchService caps results in cut_list()". It names
+     internals, which belong in the design. -->
 
 ## Purpose
 
@@ -21,7 +25,7 @@
 ## MODIFIED Requirements
 
 <!-- Write each requirement out in full, as it should read afterwards, under the
-     same heading it has in the spec. -->
+     heading it has in the spec, or under its new name when this delta also renames it. -->
 
 ## REMOVED Requirements
 

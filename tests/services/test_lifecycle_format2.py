@@ -228,12 +228,12 @@ def test_sync_records_the_merge_and_keeps_the_acceptance(latest: Workspace) -> N
 def test_scenario_not_reviewed(latest: Workspace) -> None:
     built(latest)
     with pytest.raises(Refusal, match="missing the self review"):
-        lifecycle.archive(latest.root, NAME, DAY, outcome="Done.")
+        lifecycle.archive(latest.root, NAME, DAY, built="Done.")
 
 
 def test_scenario_overridden(latest: Workspace) -> None:
     built(latest)
-    lifecycle.archive(latest.root, NAME, DAY, outcome="Done.", override="the reviewer is away")
+    lifecycle.archive(latest.root, NAME, DAY, built="Done.", override="the reviewer is away")
     folder = f"changes/archive/{DAY.isoformat()}-{NAME}"
     tasks = latest.read(f"{folder}/tasks.md")
     assert "- (override) 2026-11-20 by Sam Doe: the reviewer is away\n" in tasks
@@ -246,7 +246,7 @@ def test_scenario_overridden(latest: Workspace) -> None:
 def test_the_archived_change_reads_as_format_2(latest: Workspace) -> None:
     built(latest)
     lifecycle.self_review(latest.root, NAME, "fine", DAY)
-    lifecycle.archive(latest.root, NAME, DAY, outcome="Done.")
+    lifecycle.archive(latest.root, NAME, DAY, built="Done.")
     from waymark.record.record import load_archived_change  # noqa: PLC0415
 
     record = latest.record()

@@ -118,7 +118,7 @@ it.
 Sessions run in the atlas. The planner drafts the change there as usual; what
 changes is that the work is split by repository:
 
-- the proposal's Impact names the repos touched;
+- the proposal's Impact names the repos touched, on its `- Code:` line;
 - a delta may say which repos a spec covers, with a `Repos: api, web` line;
 - **every task item names its repo**:
 

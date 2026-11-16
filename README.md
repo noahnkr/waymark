@@ -56,7 +56,7 @@ $ wm status
 
 ◆ 1 thing needs you: wm inbox
 
-$ wm archive add-result-limit --outcome "Searches return the fifty best matches."
+$ wm archive add-result-limit --built "Searches return the fifty best matches."
 Archived "add-result-limit" as changes/archive/2026-01-15-add-result-limit. Its deltas are now part of the specs.
 ```
 
@@ -86,7 +86,9 @@ Paging through the rest.
 
 ## Impact
 
-Specs: search.
+- Specs: `search` (new)
+- User-visible: `wm search` returns at most fifty results
+- Code: the search module
 ```
 
 </details>
@@ -130,9 +132,15 @@ Cut the sorted list at fifty, in the search service.
 
 ### Decision: Where to cut
 
+- Status: decided
+- Decided by: planner
 - Options: in the database query, or after sorting
 - Choice: after sorting
 - Why: the order has to be final before the cut
+
+## Open questions
+
+None.
 
 ## Risks and trade-offs
 
@@ -156,7 +164,7 @@ Sorting every match still costs memory on very large result sets.
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint bc8b3077fd573128 items 1.1 1.2 by Alex Example
+- (accepted) 2026-01-15 fingerprint b919ac9a1d099d10 items 1.1 1.2 by Alex Example
 - (review) 2026-01-15 pass by Alex Example: cap and order hold; the scenario is covered by the test
 ```
 

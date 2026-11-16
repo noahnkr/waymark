@@ -115,7 +115,9 @@ the end of the task list:
   - Criteria:
     - at most fifty results come back
     - they are the fifty best matches
-  - Verify: a test searches an index with fifty-one matches
+  - Verify:
+    - a test searches an index with fifty-one matches
+    - `wm check` here
   - (note) 2026-01-15 by Sam Doe: the cap sits after sorting
 
 ## Log
@@ -129,14 +131,16 @@ the end of the task list:
 
 | File | Layout |
 |---|---|
-| Proposal | `- Owner: <name>`, and optionally `- Review: <level>` and `- Path: short`, as bullets under the title |
-| Charter | the glossary as `- **<term>**: <meaning>` lines; under Rules, one capitalized heading per step, such as `### Apply`, which may be left out when the step has no rules |
-| Task item | `- Criteria:`, `- Verify:` and, in an atlas, `- Repo:` lines under it; criteria may be a nested list, one per bullet; `- Build: delegate` to have an implementer build it |
+| Proposal | `- Owner: <name>`, and optionally `- Review: <level>` and `- Path: short`, as bullets under the title; under `## Impact`, a `- Specs:` line naming each spec with a delta in backticks, or `none`, a `- User-visible:` line and a `- Code:` line; at archive, `- Built:` and `- Differs:` lines under `## Outcome` |
+| Charter | goals and constraints as numbered lists, `1. <text>`; the glossary as `- **<term>**: <meaning>` lines; under Rules, one capitalized heading per step, such as `### Apply`, which may be left out when the step has no rules |
+| Task item | `- Criteria:`, `- Verify:` and, in an atlas, `- Repo:` lines under it; criteria and verification may each be a nested list, one per bullet; `- Build: delegate` to have an implementer build it |
+| Design | each `### Decision:` with `- Status: proposed` or `decided` and `- Decided by: human` or `planner` lines; an `## Open questions` section with a list or `None.`. A proposed decision or a listed question keeps the change from acceptance |
 | Delta | `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` and `## RENAMED Requirements`; a rename is a `- From: <old name>` line and a `- To: <new name>` line, and keeps the requirement's text |
 | Exploration | `- Status: open`, `- Status: parked` with the reason in the Conclusion, or `- Status: led-to <link>` to the change or milestone it led to |
 
 `wm check` reports a layout of an older record format and says to run
-`wm update`.
+`wm update`. Archived changes are read as they were written, without the
+Impact, Outcome and decision lines.
 
 ### Records
 

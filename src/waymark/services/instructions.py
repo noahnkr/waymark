@@ -103,7 +103,8 @@ def _drafting(
         outputs = [_output(record, f"{folder}/{PROPOSAL_FILE}", None)]
         guidance = [
             "Fill in every section of the proposal; leave the '- Owner:' line as it is.",
-            'Under Impact, name the specs the change touches, or write "No spec changes".',
+            'Under Impact, write a "- Specs:" line naming each spec with a delta in backticks, '
+            'or "- Specs: none"; a "- User-visible:" line; and a "- Code:" line.',
             "Don't write records such as (accepted), a Log section or the Outcome section; wm "
             "writes the records in the task list's Log, and the outcome comes at archive.",
             f"The change is reviewed once, as a whole, at the project's default level ({default}) "
@@ -143,7 +144,8 @@ def _drafting(
     guidance = [
         "Give every item criteria that can be checked, and say how to verify it.",
         "Number items by section and never renumber; append new items at the end.",
-        "Criteria may be a nested list under '- Criteria:', one criterion per bullet.",
+        "Criteria and Verify may each be a nested list under '- Criteria:' or '- Verify:', "
+        "one criterion or one verification step per bullet.",
         "Add a '- Build: delegate' line under an item only when a fresh implementer should build "
         "it: a large item, one built in parallel, or one worth a cold check that the record is "
         "enough.",
@@ -223,10 +225,12 @@ def _working(  # noqa: PLR0911 - one return per step
         guidance = [
             "Archiving is the human's call. Ask them, then archive on the change's branch, "
             "before the pull request, so the code and the archive are reviewed together.",
-            "Say in the outcome what was built and anything that differs from the proposal.",
+            "Say in the outcome what was built, and how it differs from the proposal if it does.",
             "Commit the record on the branch, then describe the pull request with wm pr.",
         ]
-        return guidance, [f'wm archive {name} --outcome "<what came of it>"']
+        return guidance, [
+            f'wm archive {name} --built "<what was built>" --differs "<how it differs>"'
+        ]
     if step is StepKind.ACCEPT:
         guidance = [
             "Only the human accepts a change. Summarize the proposal, the deltas, the design "

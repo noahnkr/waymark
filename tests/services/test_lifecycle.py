@@ -5,7 +5,7 @@ import datetime
 import pytest
 
 from tests.conftest import git_init
-from tests.support import DESIGN, TASKS, Workspace, delta, proposal, requirement, spec
+from tests.support import DESIGN, NO_SPECS, TASKS, Workspace, delta, proposal, requirement, spec
 from waymark.record.state import AcceptanceState, StepKind
 from waymark.record.terms import Phase, ReviewLevel, Verdict
 from waymark.services import lifecycle
@@ -61,6 +61,25 @@ def test_accept_writes_the_acceptance_record_with_date_and_person(project: Works
     assert state.acceptance is AcceptanceState.VALID
     assert (state.phase, state.next_step.kind) == (Phase.ACCEPTED, StepKind.APPLY)
     assert project.record().problems == ()
+
+
+def test_scenario_proposed_decision(project: Workspace) -> None:
+    project.change(design=DESIGN.replace("- Status: decided", "- Status: proposed"))
+    message = refused(project, "accept", DAY)
+    assert 'decision "Where to cut" is proposed' in message
+    assert project.change_state().acceptance is AcceptanceState.MISSING
+
+
+def test_scenario_open_question(project: Workspace) -> None:
+    project.change(
+        design=DESIGN.replace(
+            "## Open questions\n\nNone.", "## Open questions\n\n- Fifty or twenty?"
+        )
+    )
+    message = refused(project, "accept", DAY)
+    assert 'open question "Fifty or twenty?" is listed' in message
+    state = project.change_state()
+    assert (state.next_step.kind, project.record().problems) == (StepKind.DESIGN, ())
 
 
 def test_accept_is_refused_while_an_artifact_is_missing(project: Workspace) -> None:
@@ -411,7 +430,7 @@ def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Wo
 
 
 def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
-    short = proposal(short=True, impact="No spec changes.")
+    short = proposal(short=True, impact=NO_SPECS)
     project.change(
         proposal_text=short.replace("Path: short\n", "Path: short\n- Review: none\n"),
         deltas={},
@@ -421,7 +440,7 @@ def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
     assert project.change_state().applied
-    lifecycle.archive(project.root, NAME, DAY, outcome="Typo fixed.")
+    lifecycle.archive(project.root, NAME, DAY, built="Typo fixed.")
     assert project.record().changes == {}
     assert DESIGN not in project.read(f"changes/archive/2026-01-15-{NAME}/proposal.md")
 

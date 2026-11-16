@@ -1,7 +1,8 @@
 """The layouts humans and the planner write: facts, the glossary, the exploration status."""
 
-from tests.support import CHARTER, Workspace, document, proposal
+from tests.support import CHARTER, DESIGN, NO_SPECS, Workspace, document, proposal
 from waymark.record.charter import parse_charter
+from waymark.record.design import parse_design
 from waymark.record.explorations import parse_exploration
 from waymark.record.proposal import parse_proposal
 from waymark.record.state import AcceptanceState, ExplorationStatus, derive_state
@@ -40,6 +41,28 @@ def test_proposal_facts_as_a_list() -> None:
     assert parsed.review.value == "independent"
 
 
+def test_structured_impact() -> None:
+    """Requirement "Structured impact": the three lines are read, with nested bullets."""
+    impact = (
+        "- Specs: `search` (modified), `ranking` (new)\n"
+        "- User-visible:\n  - at most fifty results\n  - a new flag\n"
+        "- Code: `record/search.py`\n"
+        "- Assets: the skills\n"
+    )
+    parsed = parse_proposal(document(proposal(impact=impact), "changes/add-limit/proposal.md"))
+    assert parsed.problems == ()
+    assert parsed.impact_specs == ("search", "ranking")
+    assert parsed.impact["User-visible"] == "- at most fifty results\n- a new flag"
+    assert not parsed.no_spec_changes
+    none = parse_proposal(document(proposal(impact=NO_SPECS), "p.md"))
+    assert none.impact_specs == ()
+    assert none.no_spec_changes
+    for value in ("", " search (new)"):
+        text = proposal(impact=NO_SPECS.replace("- Specs: none", f"- Specs:{value}"))
+        unnamed = parse_proposal(document(text, "p.md"))
+        assert (unnamed.impact_specs, unnamed.no_spec_changes) == (None, False)
+
+
 def test_scenario_new_change(project: Workspace) -> None:
     setup.create_change(project.root, "add-limit", short=True)
     text = project.read("changes/add-limit/proposal.md")
@@ -65,6 +88,55 @@ def test_glossary_as_a_list() -> None:
     assert parse_charter(document(capitalized, "charter.md")).problems == ()
 
 
+def charter_problems(text: str) -> list[tuple[int, str]]:
+    return [(p.line, p.code) for p in parse_charter(document(text, "charter.md")).problems]
+
+
+def test_scenario_bulleted_goal() -> None:
+    bulleted = CHARTER.replace("1. Answers in one step.", "- Answers in one step.")
+    [problem] = parse_charter(document(bulleted, "charter.md")).problems
+    assert problem.code == "numbered-list-format"
+    assert "1. <text>" in problem.message
+
+
+def test_numbered_goals_and_constraints() -> None:
+    """Requirement "Numbered goals and constraints": counted from 1, indented lines continue."""
+    two = CHARTER.replace(
+        "1. Answers in one step.\n",
+        "1. Answers in one step.\n   Even for long queries.\n2. Works offline.\n",
+    )
+    assert charter_problems(two) == []
+    skipped = CHARTER.replace("1. Answers in one step.\n", "1. One.\n3. Three.\n4. Four.\n")
+    assert [code for _, code in charter_problems(skipped)] == ["numbered-list-format"]
+    commented = CHARTER.replace("1. Runs offline.\n", "<!-- - a note -->\n1. Runs offline.\n")
+    assert charter_problems(commented) == []
+
+
+def test_settled_decisions_are_checked(workspace: Workspace) -> None:
+    """Requirement "Settled decisions": the two lines and the section are required."""
+    workspace.change(design=DESIGN.replace("- Decided by: planner\n", "- Decided by: Sam\n"))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert problem.code == "decision-format"
+    assert '"- Decided by: human" or "- Decided by: planner"' in problem.message
+    workspace.change(design=DESIGN.replace("- Status: decided\n", ""))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert (problem.code, "the line is missing" in problem.message) == ("decision-format", True)
+    workspace.change(design=DESIGN.replace("## Open questions\n\nNone.\n\n", ""))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert problem.code == "missing-section"
+    workspace.change(design=DESIGN.replace("None.", "We may cut later."))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert problem.code == "open-questions-format"
+
+
+def test_open_questions_are_read() -> None:
+    text = DESIGN.replace("None.", "- Fifty or twenty?\n- Who decides?")
+    design = parse_design(document(text, "changes/add-limit/design.md"))
+    assert design.open_questions == ("Fifty or twenty?", "Who decides?")
+    assert design.decisions[0].status == "decided"
+    assert design.decisions[0].decided_by == "planner"
+
+
 def test_exploration_status() -> None:
     """Requirement "Exploration status": the line is read and checked."""
     assert codes(explore("open")) == []
@@ -79,6 +151,27 @@ def test_scenario_parked_exploration(workspace: Workspace) -> None:
     assert (state.status, state.detail) == (ExplorationStatus.PARKED, "Waits for a second user.")
     built = context_pack(record, "explore")
     assert built["explorations"][0]["status"] == "parked"
+
+
+def test_scenario_missing_status() -> None:
+    [problem] = parse_exploration("paging", document(explore(""), "e.md")).problems
+    assert problem.code == "missing-status"
+    assert '"- Status: open"' in problem.message
+    assert "wm update" not in problem.message
+
+
+def test_scenario_parked_in_the_conclusion_only(workspace: Workspace) -> None:
+    workspace.write("explorations/paging.md", explore("open", "Parked: waits for a second user."))
+    state = derive_state(workspace.record()).explorations["paging"]
+    assert state.status is ExplorationStatus.OPEN
+    built = context_pack(workspace.record(), "explore")
+    assert built["explorations"][0]["status"] == "open"
+    assert codes(explore("open", "Parked:")) == []
+
+
+def test_parked_reason_is_the_conclusion() -> None:
+    parsed = parse_exploration("paging", document(explore("parked", "Waits."), "e.md"))
+    assert parsed.parked == "Waits."
 
 
 def test_scenario_parked_without_a_reason() -> None:
@@ -112,6 +205,16 @@ def test_scenario_nested_criteria(workspace: Workspace) -> None:
     workspace.accept()
     item = context_pack(workspace.record(), "implement", "add-limit", "1.1")["item"]
     assert item["criteria"] == "- fifty at most\n- sorted by score"
+
+
+def test_scenario_nested_verification(workspace: Workspace) -> None:
+    built = BUILT.replace(
+        "  - Verify: a test\n", "  - Verify:\n    - a test for the limit\n    - wm check here\n"
+    )
+    workspace.change(tasks=built)
+    workspace.accept()
+    item = context_pack(workspace.record(), "implement", "add-limit", "1.1")["item"]
+    assert item["verify"] == "- a test for the limit\n- wm check here"
 
 
 def test_scenario_tagged_item(workspace: Workspace) -> None:

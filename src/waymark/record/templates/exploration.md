@@ -20,7 +20,10 @@
 ## Conclusion
 
 <!-- Leave empty while open. When parked, why; when it led somewhere, what was
-     decided. -->
+     decided.
+     Good, when parked: "Waits for a second user who needs paging; one user can
+     live with the long list."
+     Bad: "Later." It doesn't say what would bring the idea back. -->
 
 ## Related
 

@@ -23,6 +23,9 @@ REQUIRED_SECTIONS = (VISION, GOALS, NON_GOALS, CONSTRAINTS, GLOSSARY, CONTEXT, R
 GLOSSARY_LINE = re.compile(r"^- \*\*(\S[^*]*?)\*\*: \S")
 """A glossary entry: ``- **<term>**: <meaning>``."""
 
+_NUMBERED_LINE = re.compile(r"^(\d+)\.[ \t]+\S")
+"""An item of a numbered list: ``<n>. <text>``."""
+
 _OLD_GLOSSARY_LINE = re.compile(r"^([A-Z][^:*]*?):\s+(\S.*)$")
 """A glossary entry in the format 2 layout: ``<term>: <meaning>``."""
 
@@ -81,7 +84,41 @@ def parse_charter(doc: Document) -> Charter:
                     rules[Step(name)] = text
     if GLOSSARY in found:
         _check_glossary(doc, found[GLOSSARY].body_start, found[GLOSSARY].end, problems)
+    for name in (GOALS, CONSTRAINTS):
+        if name in found:
+            _check_numbered(doc, name, found[name].body_start, found[name].end, problems)
     return Charter(doc, title, sections, sections[CONTEXT], rules, tuple(problems))
+
+
+def _check_numbered(
+    doc: Document, name: str, start: int, end: int, problems: list[Problem]
+) -> None:
+    """A numbered list, ``1. <text>``, counting from 1; indented lines continue an item."""
+    expected = 1
+    in_comment = False
+    for index in range(start, end):
+        line = doc.lines[index]
+        text = line.text.strip()
+        if in_comment or text.startswith("<!--"):
+            in_comment = "-->" not in text
+            continue
+        if line.is_blank or line.in_fence or line.text.startswith((" ", "\t")):
+            continue
+        match = _NUMBERED_LINE.match(text)
+        if match and int(match.group(1)) == expected:
+            expected += 1
+            continue
+        problems.append(
+            Problem(
+                doc.path,
+                index + 1,
+                "numbered-list-format",
+                f'{name} are a numbered list, one per line, such as "1. <text>". '
+                f'This line should read "{expected}. <text>".',
+            )
+        )
+        if match:
+            expected = int(match.group(1)) + 1
 
 
 def _check_glossary(doc: Document, start: int, end: int, problems: list[Problem]) -> None:

@@ -6,15 +6,28 @@ from dataclasses import dataclass
 
 from waymark.record.config import Config
 from waymark.record.deltas import Delta, parse_delta
-from waymark.record.design import Design, parse_design
+from waymark.record.design import (
+    DECIDED_BY,
+    DECIDERS,
+    NO_QUESTIONS,
+    OPEN_QUESTIONS,
+    STATUS,
+    STATUSES,
+    Design,
+    parse_design,
+)
 from waymark.record.files import RecordFiles
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.problems import WHOLE_FILE, Problem
 from waymark.record.proposal import (
     ACCEPTED,
+    IMPACT,
+    IMPACT_LINES,
+    NONE,
     PATH,
     REVIEW,
     SHORT,
+    SPECS,
     SYNCED,
     Acceptance,
     Proposal,
@@ -114,20 +127,109 @@ def _load_deltas(files: RecordFiles, path: str, problems: list[Problem]) -> dict
     return deltas
 
 
-def _check_against_config(change: Change, config: Config | None, problems: list[Problem]) -> None:
-    """Rules that span files: the short path's limits, and repos in an atlas."""
-    proposal, tasks = change.proposal, change.tasks
-    default = config.default_review if config else ReviewLevel.SELF
-    if proposal and proposal.no_spec_changes and change.deltas:
+def _check_decisions(design: Design, problems: list[Problem]) -> None:
+    """Each decision says whether it is settled and who made it; open questions are listed."""
+    for decision in design.decisions:
+        for label, value, allowed in (
+            (STATUS, decision.status, STATUSES),
+            (DECIDED_BY, decision.decided_by, DECIDERS),
+        ):
+            if value in allowed:
+                continue
+            choices = " or ".join(f'"- {label}: {choice}"' for choice in allowed)
+            found = f'"{value}" is not one of them' if value else "the line is missing"
+            problems.append(
+                Problem(
+                    design.doc.path,
+                    decision.index + 1,
+                    "decision-format",
+                    f'Decision "{decision.name}" has a {choices} line; {found}.',
+                )
+            )
+    if design.open_questions is None:
+        problems.append(
+            Problem(
+                design.doc.path,
+                WHOLE_FILE,
+                "missing-section",
+                f'Add a "## {OPEN_QUESTIONS}" section: a list of the questions still open, '
+                f'or "{NO_QUESTIONS}".',
+            )
+        )
+    problems.extend(
+        Problem(
+            design.doc.path,
+            index + 1,
+            "open-questions-format",
+            f'Open questions are a list, one question per line, or "{NO_QUESTIONS}".',
+        )
+        for index in design.open_questions_prose
+    )
+
+
+def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -> None:
+    """The Impact has its three lines, and ``Specs:`` names exactly the specs with a delta.
+
+    A spec named without a delta is reported on the specs folder, so the next step is
+    to draft that delta; a delta whose spec isn't named is reported on the proposal.
+    """
+    if IMPACT not in proposal.sections or not proposal.sections[IMPACT]:
+        return  # An empty Impact is already reported as an empty section.
+    missing = [label for label in IMPACT_LINES if label not in proposal.impact]
+    if missing:
+        wanted = ", ".join(f'"- {label}:"' for label in missing)
+        problems.append(
+            Problem(
+                proposal.doc.path,
+                WHOLE_FILE,
+                "impact-format",
+                f"The Impact holds a {wanted} line. Under Specs, name each spec with a delta "
+                f'in backticks, or write "- {SPECS}: {NONE}".',
+            )
+        )
+    if proposal.impact_specs is None:
+        if SPECS in proposal.impact:
+            problems.append(
+                Problem(
+                    proposal.doc.path,
+                    WHOLE_FILE,
+                    "impact-format",
+                    f'The Impact\'s "- {SPECS}:" line names each spec with a delta in backticks, '
+                    f'such as "- {SPECS}: `search`", or says "- {SPECS}: {NONE}".',
+                )
+            )
+        return
+    named = set(proposal.impact_specs)
+    for domain in sorted(set(change.deltas) - named):
         problems.append(
             Problem(
                 proposal.doc.path,
                 WHOLE_FILE,
                 "impact-mismatch",
-                'The impact says "No spec changes", but the change has deltas. '
-                "List the specs it touches, or remove the deltas.",
+                f'The change has a delta for `{domain}`, but the Impact\'s "{SPECS}:" line '
+                "doesn't name it. Add it there, or remove the delta.",
             )
         )
+    for domain in sorted(named - set(change.deltas), key=proposal.impact_specs.index):
+        problems.append(
+            Problem(
+                f"{change.path}/{SPECS_DIR}",
+                WHOLE_FILE,
+                "impact-mismatch",
+                f'The Impact\'s "{SPECS}:" line names `{domain}`, but the change has no delta '
+                f"for it. Draft {SPECS_DIR}/{domain}.md, or take it off the line.",
+            )
+        )
+
+
+def _check_against_config(change: Change, config: Config | None, problems: list[Problem]) -> None:
+    """Rules that span files: the short path's limits, and repos in an atlas."""
+    proposal, tasks = change.proposal, change.tasks
+    default = config.default_review if config else ReviewLevel.SELF
+    if proposal is not None:
+        _check_impact(change, proposal, problems)
+    if change.design is not None:
+        _check_decisions(change.design, problems)
     if change.short_path and change.design is not None:
         problems.append(
             Problem(
