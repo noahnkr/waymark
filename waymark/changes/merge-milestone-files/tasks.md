@@ -15,7 +15,7 @@
     - tests in `tests/record/test_artifacts.py`, `tests/record/test_project.py` and `tests/services/test_setup.py` for the scenarios "New milestone" and "Old milestone files"
     - the existing milestone tests in `tests/services/test_milestones.py`, `tests/record/test_state.py` and `tests/views/test_views.py`, moved to `milestone.md`, still pass
     - `wm check` and `wm status` here
-- [ ] 1.2 Tick roadmap lines only inside the Roadmap section at archive
+- [x] 1.2 Tick roadmap lines only inside the Roadmap section at archive
   - Criteria:
     - archiving a change ticks the unchecked lines linking into its folder inside the `## Roadmap` section of each `milestone.md`, and no line outside it
     - a link to the change elsewhere in `milestone.md` is still rewritten to the archived folder
