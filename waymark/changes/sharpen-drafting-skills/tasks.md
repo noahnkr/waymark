@@ -45,3 +45,6 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint 8c8e48bc323ed4e0 items 1.1 1.2 1.3 2.1 by Noah Roberts
+- (self-review) 2026-11-16 by Noah Roberts: Checked against the four scenarios, the design and each item's criteria. Installed skills and A section out of place are held by tests/test_skills.py over all nine shipped skills; Specs step and Tasks step by tests in test_agent_interface.py. Each of the nine skills was read against its old text: every step and rule is kept, moved into the layout, or covered by the shared rules or the writing rules in wm instructions. wm-propose has the Questions and Consistency check steps and the fixed acceptance summary; wm-kickoff the ordered interview; wm-explore the record-questions-approaches-recommendation method. Full checks pass: pytest (1122), ruff, mypy, codespell, tools.docs --check, wm check.
+  - suggestion `tests/test_skills.py:test_scenario_a_section_out_of_place`: the scenario is about the test that holds the layout, not something a user sees
+  - suggestion `.claude/skills`: this machine's installed copies keep the old text until wm init refreshes them
