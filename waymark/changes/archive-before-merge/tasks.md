@@ -11,3 +11,8 @@
 - [x] 1.3 Update the docs
   - Criteria: concepts (the workflow and the archive gate), getting started and the smoke test say the archive is taken on the change's branch before the pull request; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`
+
+## Review
+
+- (self-review) 2026-11-15: All three scenarios hold and are tested: wm instructions puts the archive on the change's branch before the pull request with no mention of a merge; wm pr describes the latest archived change of a name with its outcome and archived link (also with --repo in an atlas) and refuses an unknown name listing the active changes. The check warning, wm-archive, wm-apply and wm-pr skills and the docs match. Full checks pass (927 tests, ruff, mypy, codespell, tools.docs --check).
+  - warning: src/waymark/services/pr.py: for a change archived with --override, the Review section says 'Not reviewed yet'; the override reason only shows in the Outcome
