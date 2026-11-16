@@ -40,7 +40,7 @@
   - Verify:
     - a test in `tests/services/test_check.py` for the scenario "Archived change in an older layout"
     - `wm check` here, with the archived changes in this repository
-- [ ] 1.6 Read the exploration status from its line alone
+- [x] 1.6 Read the exploration status from its line alone
   - Criteria:
     - the `Parked:` reader goes; a parked exploration's reason is its Conclusion's text
     - an exploration with `- Status: open` and a `Parked:` Conclusion is open
