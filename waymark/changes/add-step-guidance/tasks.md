@@ -2,7 +2,7 @@
 
 ## 1. Guidance and checks
 
-- [ ] 1.1 Give each drafting step a checklist, and every step the shared rules
+- [x] 1.1 Give each drafting step a checklist, and every step the shared rules
   - Criteria:
     - `wm instructions` for propose, specs, design and tasks gives the checklist the design lists for that step, each check with `text` and `enforced`; every other step, and explore, gives an empty `checklist`
     - each enforced check names the problem codes that enforce it, and a test holds that every code named is one `wm check` can report
@@ -13,7 +13,7 @@
     - tests in `tests/services/test_agent_interface.py` for the scenarios "Specs checklist", "Apply has no checklist" and "Shared rules at every step"
     - a test in `tests/views/` that the text output shows the three blocks in order
     - `uv run --no-sync python -m tools.docs --check`
-- [ ] 1.2 Check that items say how they are done and decisions weigh options
+- [x] 1.2 Check that items say how they are done and decisions weigh options
   - Criteria:
     - for an active change, an item without a `- Criteria:` or `- Verify:` line gives `item-incomplete` on the item, naming the missing line
     - `Decision.options` holds the bullets under `- Options:`, or else the line split on ";" and the word "or"; for an active change, a decision with fewer than two gives `decision-options` on its heading
