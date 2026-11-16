@@ -14,7 +14,7 @@
 
 ## 2. Agents, skill and docs
 
-- [ ] 2.1 Point the agents and `wm-apply` at the rubric and the stopping rules
+- [x] 2.1 Point the agents and `wm-apply` at the rubric and the stopping rules
   - Criteria:
     - `wm-reviewer` grades each finding by the pack's severity rubric, in place of its own one-line severity definitions; its format lines and verdict rules stay
     - `wm-implementer` has a "When to stop" section that follows the pack's stopping rules; "Don't guess" stays
