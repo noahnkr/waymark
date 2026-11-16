@@ -4,7 +4,7 @@
 
 How `wm` records the result of an implementer or reviewer from the agent's own words: its ending, the lines `ITEM: <change> <item>` then `RESULT: …` for an implementer, or `CHANGE: <change>` then `VERDICT: …` for a reviewer, whether the agent ends with a final message or hands its report back through its tool.
 
-## Modified requirements
+## MODIFIED Requirements
 
 ### Requirement: Ending recorded from a handed-back report
 When an implementer or reviewer hands its report back through its agent tool instead of a final message, `wm` SHALL record the ending from the report's text exactly as from a final message.

@@ -59,7 +59,7 @@ def test_delta_names_a_requirement_in_one_operation_only() -> None:
 
 
 def test_delta_rejects_unknown_sections() -> None:
-    parsed = parse(delta(added=(LIMIT,)) + "\n## Renamed requirements\n")
+    parsed = parse(delta(added=(LIMIT,)) + "\n## Notes on requirements\n")
     assert [problem.code for problem in parsed.problems] == ["unknown-section"]
 
 
@@ -205,3 +205,72 @@ def test_merge_into_a_spec_without_a_final_newline() -> None:
 def test_merge_is_deterministic() -> None:
     change = delta(added=(ORDER,), modified=(LIMIT_CHANGED,))
     assert merged(spec(LIMIT, EMPTY), change) == merged(spec(LIMIT, EMPTY), change)
+
+
+CAP = requirement("Result cap")
+RENAME = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+
+
+def test_delta_sections_take_the_new_headings() -> None:
+    """Requirement "Delta sections": the upper-case headings read like the old ones."""
+    text = (
+        delta(added=(LIMIT,)).replace("## ADDED Requirements", "## ADDED Requirements")
+        + "\n## REMOVED Requirements\n\n### Requirement: Old\nReason: gone\n"
+    )
+    parsed = parse(text)
+    assert parsed.problems == ()
+    assert [r.name for r in parsed.added] == ["Result limit"]
+    assert [r.name for r in parsed.removed] == ["Old"]
+
+
+def test_scenario_requirement_renamed() -> None:
+    spec_text = spec(CAP, requirement("Empty query"))
+    text = merged(spec_text, RENAME)
+    renamed = living(text)
+    assert [r.name for r in renamed.requirements] == ["Result limit", "Empty query"]
+    before = living(spec_text).requirement("Result cap")
+    after = renamed.requirement("Result limit")
+    assert before is not None
+    assert after is not None
+    assert after.block[1:] == before.block[1:]
+    assert renamed.requirement("Result cap") is None
+
+
+def test_rename_matches_the_heading_in_any_case_or_spacing() -> None:
+    """Requirement "Delta sections": the heading is rebuilt, not edited in place."""
+    spec_text = spec(requirement("result   CAP"))
+    renamed = living(merged(spec_text, RENAME))
+    assert [r.name for r in renamed.requirements] == ["Result limit"]
+    assert "### Requirement: Result limit\n" in merged(spec_text, RENAME)
+
+
+def test_rename_of_a_name_inside_the_heading_prefix() -> None:
+    text = "# Search\n\n## RENAMED Requirements\n\n- From: Re\n- To: Query\n"
+    renamed = living(merged(spec(requirement("Re")), text))
+    assert [r.name for r in renamed.requirements] == ["Query"]
+
+
+def test_a_rename_and_a_modification_in_one_delta() -> None:
+    text = RENAME + "\n## MODIFIED Requirements\n\n" + LIMIT_CHANGED
+    renamed = living(merged(spec(CAP), text))
+    limit = renamed.requirement("Result limit")
+    assert limit is not None
+    assert "twenty" in limit.statement
+
+
+def test_scenario_rename_of_a_missing_requirement() -> None:
+    assert codes(merge(spec(LIMIT), RENAME.replace("Result limit", "Result size"))) == [
+        "delta-requirement-missing"
+    ]
+    assert codes(merge(spec(CAP, LIMIT), RENAME)) == ["delta-requirement-exists"]
+
+
+def test_renames_are_pairs() -> None:
+    assert [p.code for p in parse(RENAME + "- From: Lonely\n").problems] == ["malformed-rename"]
+    assert [p.code for p in parse(RENAME.replace("- From: Result cap\n", "")).problems] == [
+        "malformed-rename",
+        "empty-delta",
+    ]
+    parsed = parse(RENAME)
+    assert [(r.old, r.new) for r in parsed.renamed] == [("Result cap", "Result limit")]
+    assert ("result cap", "Result cap") in parsed.touched()

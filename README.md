@@ -68,8 +68,8 @@ The files behind it, all plain markdown in `waymark/`:
 ```markdown
 # Add a result limit
 
-Owner: Alex Example
-Review: independent
+- Owner: Alex Example
+- Review: independent
 
 ## Why
 
@@ -100,7 +100,7 @@ Specs: search.
 
 How a search finds and returns documents.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Result limit
 A search SHALL return at most fifty results.
@@ -156,7 +156,7 @@ Sorting every match still costs memory on very large result sets.
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint 256fef147180328e items 1.1 1.2 by Alex Example
+- (accepted) 2026-01-15 fingerprint bc8b3077fd573128 items 1.1 1.2 by Alex Example
 - (review) 2026-01-15 pass by Alex Example: cap and order hold; the scenario is covered by the test
 ```
 
@@ -191,7 +191,7 @@ A search SHALL return at most fifty results.
 ## Why Waymark
 
 - **Agents only know what's written down.** Each task is built from the written
-  change, by your session or, for a task tagged `build: delegate`, by a fresh
+  change, by your session or, for a task with a `- Build: delegate` line, by a fresh
   agent that sees nothing else. When something is missing, the agent writes it
   into the record or reports a spec gap instead of guessing.
 - **Review is recorded.** Each change is checked once, as a whole, against its

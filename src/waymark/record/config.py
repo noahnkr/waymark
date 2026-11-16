@@ -13,7 +13,7 @@ RECORD_DIR = "waymark"
 """The record's folder, at the top of a repository or an atlas."""
 
 _REPO_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
-RECORD_FORMAT = 2
+RECORD_FORMAT = 3
 """The record format this version of wm reads and writes."""
 
 _TOP_KEYS = frozenset(

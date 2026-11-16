@@ -1,6 +1,6 @@
 # Agent results
 
-## Modified requirements
+## MODIFIED Requirements
 
 ### Requirement: Ending recorded from a final message
 When an implementer or reviewer stops and its final message ends with its two ending lines, `wm` SHALL record what they report: a tick, a blocker, a spec gap, a note or a review record. A record written from an agent's ending SHALL be written `by wm-implementer` or `by wm-reviewer`.

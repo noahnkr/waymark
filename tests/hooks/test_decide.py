@@ -19,7 +19,7 @@ TASKS_FILE = f"{FOLDER}/tasks.md"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n"
-INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n")
+INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
 
 
 def built_for_review(project: Workspace) -> Workspace:

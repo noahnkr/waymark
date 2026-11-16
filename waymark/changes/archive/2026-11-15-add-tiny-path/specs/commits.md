@@ -1,6 +1,6 @@
 # Commits
 
-## Modified requirements
+## MODIFIED Requirements
 
 ### Requirement: Commit messages checked in agent commands
 In an agent tool with hooks, a `git commit` whose message isn't a conventional commit SHALL be refused before it runs, with the reason and an example. The check SHALL accept the commit types `wm` knows and, when the settings list commit scopes, only those scopes. It SHALL check a message given on the command line, however it is written there, and a message read from a file the command names. A commit whose message can't be seen before it runs, such as one written in an editor, SHALL be allowed.

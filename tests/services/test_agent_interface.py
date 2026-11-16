@@ -72,7 +72,7 @@ def accepted(project: Workspace, tasks: str = TASKS, **options: Any) -> Workspac
     return project
 
 
-INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n")
+INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
 
 
 def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace) -> None:
@@ -203,7 +203,7 @@ def test_task_instructions_in_an_atlas_ask_for_a_repo_on_every_item(atlas: Works
 def test_review_instructions_follow_the_changes_review_level(project: Workspace) -> None:
     project.change(
         proposal_text=proposal().replace(
-            "Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n"
+            "Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n"
         ),
         tasks=HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n",
     )
@@ -237,7 +237,7 @@ def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Wor
 
 
 def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it   `build: delegate`\n  - Criteria: fifty\n")
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Build: delegate\n  - Criteria: fifty\n")
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"] == [f"wm context {NAME} 1.1 --for implement"]
@@ -246,7 +246,7 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     )
 
 
-@pytest.mark.parametrize("tag", ["", "   `build: delegate`"])
+@pytest.mark.parametrize("tag", ["", "\n  - Build: delegate"])
 def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     project: Workspace, tag: str
 ) -> None:
@@ -507,8 +507,8 @@ def test_explore_pack_holds_the_charter_and_an_index_of_the_record(project: Work
     project.change("add-order", deltas={"search": delta(added=(requirement("Order"),))})
     project.write(
         "explorations/paging.md",
-        "# Paging\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
-        "## Conclusion\n\nParked: later\n\n## Related\n",
+        "# Paging\n\n- Status: parked\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        "## Conclusion\n\nlater\n\n## Related\n",
     )
     built = valid(context_pack(project.record(), "explore"))
     assert built["charter"]["Vision"] == "Fast search for everyone."
@@ -557,7 +557,7 @@ def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
 def test_proposal_instructions_explain_the_review_line(project: Workspace) -> None:
     project.write(f"{FOLDER}/proposal.md", "# Limit\n\nOwner: Sam Doe\n")
     guidance = " ".join(at(project)["guidance"])
-    assert '"Review: self|independent|none"' in guidance
+    assert '"- Review: self|independent|none"' in guidance
     assert "modifies or removes an existing requirement" in guidance
 
 

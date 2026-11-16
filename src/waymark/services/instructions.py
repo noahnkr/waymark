@@ -102,12 +102,12 @@ def _drafting(
     if step is StepKind.PROPOSE:
         outputs = [_output(record, f"{folder}/{PROPOSAL_FILE}", None)]
         guidance = [
-            "Fill in every section of the proposal; leave the Owner line as it is.",
+            "Fill in every section of the proposal; leave the '- Owner:' line as it is.",
             'Under Impact, name the specs the change touches, or write "No spec changes".',
             "Don't write records such as (accepted), a Log section or the Outcome section; wm "
             "writes the records in the task list's Log, and the outcome comes at archive.",
             f"The change is reviewed once, as a whole, at the project's default level ({default}) "
-            'unless a "Review: self|independent|none" line under the Owner line says otherwise. '
+            'unless a "- Review: self|independent|none" line under the Owner line says otherwise. '
             "Suggest independent when " + "; or ".join(_RISK_SIGNALS) + ".",
         ]
         if change.short_path:
@@ -143,9 +143,11 @@ def _drafting(
     guidance = [
         "Give every item criteria that can be checked, and say how to verify it.",
         "Number items by section and never renumber; append new items at the end.",
-        "Tag an item `build: delegate` only when a fresh implementer should build it: a large "
-        "item, one built in parallel, or one worth a cold check that the record is enough.",
-        "Don't tick items or write Blocked, Spec gap or review lines; wm writes those.",
+        "Criteria may be a nested list under '- Criteria:', one criterion per bullet.",
+        "Add a '- Build: delegate' line under an item only when a fresh implementer should build "
+        "it: a large item, one built in parallel, or one worth a cold check that the record is "
+        "enough.",
+        "Don't tick items or write records; wm writes those.",
     ]
     if record.layout is Layout.ATLAS:
         guidance.append("Give every item a Repo line naming the repo it works in.")

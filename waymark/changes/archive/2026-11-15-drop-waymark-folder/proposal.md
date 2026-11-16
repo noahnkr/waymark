@@ -1,6 +1,6 @@
 # Drop waymark folder
 
-Owner: Noah Roberts
+- Owner: Noah Roberts
 
 ## Why
 

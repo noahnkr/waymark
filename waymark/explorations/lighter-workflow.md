@@ -1,5 +1,7 @@
 # Lighter workflow
 
+- Status: led-to [lighter-workflow](../milestones/archive/2026-11-15-lighter-workflow/goal.md)
+
 ## Context
 
 Waymark is meant to be lightweight spec-driven development, but working on Waymark with it has felt slow, and the time and tokens don't match the size of the changes.

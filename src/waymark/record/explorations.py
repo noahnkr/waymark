@@ -4,7 +4,13 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from waymark.record.outline import collect_sections, require_title
+from waymark.record.outline import (
+    OLD_LAYOUT,
+    Fact,
+    collect_sections,
+    parse_facts,
+    require_title,
+)
 from waymark.record.problems import Problem
 from waymark.record.text import Document
 
@@ -16,6 +22,11 @@ RELATED = "Related"
 REQUIRED_SECTIONS = (CONTEXT, QUESTIONS, APPROACHES, CONCLUSION, RELATED)
 
 _PARKED = re.compile(r"^Parked:\s*(.*)$")
+STATUS = "Status"
+OPEN = "open"
+PARKED = "parked"
+LED_TO = "led-to"
+_STATUS = re.compile(r"^(open|parked|led-to)(?:\s+(\S.*))?$")
 
 
 @dataclass(frozen=True)
@@ -34,6 +45,10 @@ class Exploration:
     parked: str | None
     conclusion_links: tuple[str, ...]
     problems: tuple[Problem, ...]
+    status: str | None = None
+    """The ``- Status:`` value: open, parked or led-to; None when there is no line."""
+    status_links: tuple[str, ...] = ()
+    """The link targets on a ``led-to`` status line."""
 
 
 def parse_exploration(name: str, doc: Document) -> Exploration:
@@ -43,6 +58,8 @@ def parse_exploration(name: str, doc: Document) -> Exploration:
     found = collect_sections(doc, REQUIRED_SECTIONS, problems)
     sections = {name: doc.body(found[name]) if name in found else "" for name in REQUIRED_SECTIONS}
 
+    facts = parse_facts(doc, {STATUS}, problems, prose=True)
+    status, status_links = _status(doc, facts.get(STATUS), problems)
     conclusion = sections[CONCLUSION]
     parked: str | None = None
     links: tuple[str, ...] = ()
@@ -52,7 +69,18 @@ def parse_exploration(name: str, doc: Document) -> Exploration:
             link.target for link in doc.links() if section.body_start <= link.index < section.end
         )
         match = _PARKED.match(conclusion)
-        if match:
+        if status == PARKED:
+            parked = match.group(1).strip() if match else conclusion
+            if not parked:
+                problems.append(
+                    Problem(
+                        doc.path,
+                        section.start + 1,
+                        "parked-without-reason",
+                        "A parked exploration says why. Write the reason in the Conclusion.",
+                    )
+                )
+        elif match:
             parked = match.group(1).strip()
             if not parked:
                 problems.append(
@@ -63,4 +91,56 @@ def parse_exploration(name: str, doc: Document) -> Exploration:
                         'A parked exploration says why. Write "Parked: <reason>".',
                     )
                 )
-    return Exploration(name, doc, title, sections, conclusion, parked, links, tuple(problems))
+    return Exploration(
+        name,
+        doc,
+        title,
+        sections,
+        conclusion,
+        parked,
+        links,
+        tuple(problems),
+        status,
+        status_links,
+    )
+
+
+def _status(
+    doc: Document, fact: Fact | None, problems: list[Problem]
+) -> tuple[str | None, tuple[str, ...]]:
+    """The exploration's status and, for ``led-to``, the links on its line."""
+    if fact is None:
+        problems.append(
+            Problem(
+                doc.path,
+                1,
+                "old-layout",
+                f'{OLD_LAYOUT} An exploration says where it stands in a "- Status:" line '
+                "under its title.",
+            )
+        )
+        return None, ()
+    match = _STATUS.match(fact.value)
+    if match is None:
+        problems.append(
+            Problem(
+                doc.path,
+                fact.index + 1,
+                "unknown-status",
+                f'"{fact.value}" is not a status. Write "- Status: open", "- Status: parked" '
+                'or "- Status: led-to <link>".',
+            )
+        )
+        return None, ()
+    status = match.group(1)
+    links = tuple(link.target for link in doc.links() if link.index == fact.index)
+    if status == LED_TO and not links:
+        problems.append(
+            Problem(
+                doc.path,
+                fact.index + 1,
+                "unknown-status",
+                'A "led-to" status links to the change or milestone it led to.',
+            )
+        )
+    return status, links

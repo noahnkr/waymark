@@ -4,7 +4,7 @@
 
 The lines `wm` writes into a change as evidence: their one shape, where they go, who may write them, and how a record in an older format is brought to this one. What a human writes is a `Capital-Label:` line; what `wm` writes is a record.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: One record shape
 Every line `wm` writes as evidence SHALL be a record of the shape `(<kind>) <YYYY-MM-DD> [<args>] [by <who>]: <text>`, with the date straight after the kind, then the kind's arguments, then who wrote it. Who wrote it SHALL run to the `: ` or the end of the line, so it may hold spaces; `--by` SHALL refuse a value that holds `: `. A record with no text, such as `(reopened)`, SHALL end after who wrote it. In an active change, `wm check` SHALL report as an error a line that starts like a record and doesn't have this shape, naming the shape it expected.

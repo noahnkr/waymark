@@ -18,7 +18,8 @@
 
 ## Glossary
 
-<!-- The project's own terms, one per line: "Term: meaning". -->
+<!-- The project's own terms, one per line, such as:
+- **Record**: everything Waymark keeps in waymark/. -->
 
 ## Context
 
@@ -26,20 +27,21 @@
 
 ## Rules
 
-<!-- Project-specific rules for each workflow step. Each agent gets only its step's rules. -->
+<!-- Project-specific rules for each workflow step. Each agent gets only its step's rules.
+     A step with no rules may leave its heading out. -->
 
-### explore
+### Explore
 
-### propose
+### Propose
 
-### specs
+### Specs
 
-### design
+### Design
 
-### tasks
+### Tasks
 
-### apply
+### Apply
 
-### review
+### Review
 
-### archive
+### Archive

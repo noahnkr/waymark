@@ -42,12 +42,12 @@ atlas).
 
 ## Glossary
 
-Record: everything Waymark keeps in `waymark/`; the full glossary is in `docs/concepts.md`.
-Atlas: a separate repository holding the record for a project spread over several repositories.
-Adapter: the code that connects `wm` to one agent tool: renders its files, translates its hook events.
-Asset: a skill or agent definition shipped in `src/waymark/assets/`, tool-neutral.
-Maintainer skill: a skill in `.agents/skills/` for working on Waymark itself (docs, releases); not shipped to users.
-Smoke test: the manual run of one change through Claude Code before each release (`docs/smoke-test.md`).
+- **Record**: everything Waymark keeps in `waymark/`; the full glossary is in `docs/concepts.md`.
+- **Atlas**: a separate repository holding the record for a project spread over several repositories.
+- **Adapter**: the code that connects `wm` to one agent tool: renders its files, translates its hook events.
+- **Asset**: a skill or agent definition shipped in `src/waymark/assets/`, tool-neutral.
+- **Maintainer skill**: a skill in `.agents/skills/` for working on Waymark itself (docs, releases); not shipped to users.
+- **Smoke test**: the manual run of one change through Claude Code before each release (`docs/smoke-test.md`).
 
 ## Context
 
@@ -60,31 +60,31 @@ Smoke test: the manual run of one change through Claude Code before each release
 
 ## Rules
 
-### explore
+### Explore
 
-### propose
+### Propose
 
 - A change that alters what users see (commands, output, files written, the record format) says so under Impact, for the changelog.
 
-### specs
+### Specs
 
 - Requirements describe what `wm` does as a user or an agent sees it: its commands, their output, and the record's files and formats. Modules, functions and other internals go in the design.
 
-### design
+### Design
 
-### tasks
+### Tasks
 
 - Every new rule gets a test named after it.
 - Docs that a change makes stale get their own item.
 
-### apply
+### Apply
 
 - Run the checks the item touches, and the full checks (pytest, ruff, mypy, codespell, `tools.docs --check`) once before the pull request.
 - Never hand-edit generated docs; run `uv run --no-sync python -m tools.docs`.
 - Docs follow the `waymark-write-docs` skill.
 
-### review
+### Review
 
-### archive
+### Archive
 
 - Releases are cut with the `waymark-release` skill, never by hand.

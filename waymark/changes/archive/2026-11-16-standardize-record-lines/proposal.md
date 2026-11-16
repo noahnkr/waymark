@@ -1,7 +1,7 @@
 # Standardize record lines
 
-Owner: Noah Roberts
-Review: independent
+- Owner: Noah Roberts
+- Review: independent
 
 ## Why
 

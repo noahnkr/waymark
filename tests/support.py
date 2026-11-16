@@ -16,7 +16,7 @@ from waymark.record.state import ChangeState, RecordState, derive_state
 from waymark.record.text import Document
 
 CONFIG = (
-    f'wm_version = "{__version__}"\nrecord_format = 2\n'
+    f'wm_version = "{__version__}"\nrecord_format = 3\n'
     'default_review = "self"\nagent_tools = ["some-tool"]\n'
 )
 ATLAS_CONFIG = (
@@ -44,7 +44,7 @@ Fast search for everyone.
 
 ## Glossary
 
-- Match: a document that satisfies the query.
+- **Match**: a document that satisfies the query.
 
 ## Context
 
@@ -135,12 +135,12 @@ def delta(
     if purpose is not None:
         parts.append(f"## Purpose\n\n{purpose}\n")
     if added:
-        parts.append("## Added requirements\n\n" + "\n".join(added))
+        parts.append("## ADDED Requirements\n\n" + "\n".join(added))
     if modified:
-        parts.append("## Modified requirements\n\n" + "\n".join(modified))
+        parts.append("## MODIFIED Requirements\n\n" + "\n".join(modified))
     if removed:
         blocks = [f"### Requirement: {name}\nReason: {reason}\n" for name, reason in removed]
-        parts.append("## Removed requirements\n\n" + "\n".join(blocks))
+        parts.append("## REMOVED Requirements\n\n" + "\n".join(blocks))
     return "\n".join(parts)
 
 
@@ -151,7 +151,7 @@ def proposal(
     impact: str = "Specs: search.",
     outcome: str | None = None,
 ) -> str:
-    facts = f"Owner: {owner}\n" + ("Path: short\n" if short else "")
+    facts = f"- Owner: {owner}\n" + ("- Path: short\n" if short else "")
     text = (
         f"# Limit the results\n\n{facts}\n"
         "## Why\n\nLong result lists are slow.\n\n"

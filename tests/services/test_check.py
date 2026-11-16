@@ -15,7 +15,7 @@ CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 
 
 def reviewed_at(level: str) -> str:
-    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\nReview: {level}\n")
+    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n- Review: {level}\n")
 
 
 def findings(project: Workspace) -> list[tuple[str, str, str]]:
@@ -57,6 +57,41 @@ def test_format_problems_are_errors(project: Workspace) -> None:
     )
 
 
+def old_layouts(project: Workspace) -> list[tuple[str, int]]:
+    result = check(project.root, NOW)
+    found = [(f.path, f.line) for f in result if f.code == "old-layout"]
+    assert all("wm update" in f.message for f in result if f.code == "old-layout")
+    assert all(f.severity is Severity.ERROR for f in result if f.code == "old-layout")
+    return found
+
+
+def test_scenario_old_fact_line(project: Workspace) -> None:
+    project.change()
+    project.replace("changes/add-limit/proposal.md", "- Owner: Sam Doe\n", "Owner: Sam Doe\n")
+    assert old_layouts(project) == [("changes/add-limit/proposal.md", 3)]
+
+
+def test_scenario_old_glossary_line(project: Workspace) -> None:
+    project.replace(
+        "charter.md",
+        "- **Match**: a document that satisfies the query.\n",
+        "Record: everything in waymark/\n",
+    )
+    [finding] = [f for f in check(project.root, NOW) if f.path == "charter.md"]
+    assert finding.code == "old-layout"
+    assert "wm update" in finding.message
+    assert "- **<term>**: <meaning>" in finding.message
+
+
+def test_old_delta_headings_are_old_layouts(project: Workspace) -> None:
+    project.write("specs/search.md", spec())
+    text = delta(added=(requirement("Result order"),)).replace(
+        "## ADDED Requirements", "## Added requirements"
+    )
+    project.change("add-order", deltas={"search": text})
+    assert [path for path, _ in old_layouts(project)] == ["changes/add-order/specs/search.md"]
+
+
 def test_broken_links_are_errors(project: Workspace) -> None:
     project.replace("charter.md", "rebuilt nightly.", "rebuilt [nightly](jobs.md).")
     assert findings(project) == [("error", "charter.md", "broken-link")]
@@ -70,12 +105,12 @@ def test_malformed_evidence_is_an_error(project: Workspace) -> None:
 def test_unknown_build_tag_and_repeated_tag_are_errors(project: Workspace) -> None:
     project.change(
         tasks=HEAD
-        + "- [ ] 1.1 Cap it   `build: someone`\n"
-        + "- [ ] 1.2 Page it   `build: delegate`   `build: delegate`\n"
+        + "- [ ] 1.1 Cap it\n  - Build: someone\n"
+        + "- [ ] 1.2 Page it   `build: delegate`\n"
     )
     assert findings(project) == [
         ("error", "changes/add-limit/tasks.md", "unknown-build-tag"),
-        ("error", "changes/add-limit/tasks.md", "repeated-tag"),
+        ("error", "changes/add-limit/tasks.md", "old-layout"),
     ]
 
 
@@ -112,13 +147,13 @@ def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> Non
     assert findings(project) == [("warning", "changes/add-limit", "not-archived")]
 
 
-def test_unreadable_exploration_conclusion_is_an_error(project: Workspace) -> None:
+def test_exploration_without_a_status_line_is_an_old_layout(project: Workspace) -> None:
     project.write(
         "explorations/paging.md",
         "# P\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
         "## Conclusion\n\nWe should think more.\n\n## Related\n",
     )
-    assert findings(project) == [("error", "explorations/paging.md", "conclusion-unreadable")]
+    assert findings(project) == [("error", "explorations/paging.md", "old-layout")]
 
 
 def test_change_untouched_for_a_while_is_a_warning(project: Workspace) -> None:

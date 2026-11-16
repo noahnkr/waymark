@@ -4,7 +4,7 @@
 
 What the human's acceptance of a change covers, and which edits withdraw it. Only the human accepts, with `wm accept`, and nothing in a change is built before it.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Acceptance covers what was accepted
 An acceptance SHALL cover the change's proposal, its deltas, its design, the living text of the requirements its deltas modify or remove, the change's review level, and the definition of each task item it names. Changing any of these, or removing an item it names, SHALL withdraw the acceptance, and `wm status` SHALL ask the human to accept again. Ticks, blockers, notes and review records SHALL NOT withdraw it.

@@ -58,7 +58,8 @@ def test_record_loads_every_kind_of_artifact(workspace: Workspace) -> None:
     workspace.write("milestones/faster-search/roadmap.md", "# Roadmap\n\n- Cache hot queries\n")
     workspace.write(
         "explorations/paging.md",
-        "# P\n\n## Context\n\n## Questions\n\n## Approaches\n\n## Conclusion\n\n## Related\n",
+        "# P\n\n- Status: open\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        "## Conclusion\n\n## Related\n",
     )
     record = workspace.record()
     assert record.problems == ()

@@ -1,6 +1,6 @@
 # Review
 
-## Modified requirements
+## MODIFIED Requirements
 
 ### Requirement: Review recorded in the task list
 `wm` SHALL write the review of a change as a `(review)` or `(self-review)` record in the `## Log` section at the end of the change's task list, creating the section if needed. It SHALL write each finding under its record as a sub-line with a severity (`critical`, `warning` or `suggestion`), its place in backticks, and a text. It SHALL refuse a `pass` verdict, or a self-review, that comes with a critical finding.
@@ -28,7 +28,7 @@
 - WHEN the human runs `wm archive <change> --override "<reason>"`
 - THEN the archived change's Log holds an `(override)` record with the reason, and `wm pr` shows it
 
-## Removed requirements
+## REMOVED Requirements
 
 ### Requirement: No review tag on items
 Reason: The format 2 migration removes every `review:` tag from items and turns the review records under items into `(note)` records, in active and archived changes alike, so no change carries them any more. A tag left by hand is reported like any other text that doesn't belong on an item line.

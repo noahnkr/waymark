@@ -5,7 +5,7 @@ description: Build an accepted Waymark change item by item - build each item you
 
 # Apply
 
-You are the planner. You build each item yourself, from the record, unless the item is tagged `build: delegate`: then a fresh implementer that sees only the record builds it. Either way the record is the source of truth. Once every item is built, the whole change is reviewed once, at its review level. You build or delegate, record, commit and review.
+You are the planner. You build each item yourself, from the record, unless the item has a `- Build: delegate` line: then a fresh implementer that sees only the record builds it. Either way the record is the source of truth. Once every item is built, the whole change is reviewed once, at its review level. You build or delegate, record, commit and review.
 
 ## Before you start
 
@@ -20,7 +20,7 @@ Repeat until `wm instructions --change <name> --json` says the step is `archive`
 ### Step `apply`
 
 - If the commands start with `wm reopen`, run it first: a review of the change named this item to rebuild. Read what the review found with `wm show <name>` before you start.
-- `wm instructions` says who builds the item. An item without a `build: delegate` tag, you build yourself; a tagged one, you delegate.
+- `wm instructions` says who builds the item. An item without a `- Build: delegate` line, you build yourself; one with it, you delegate.
 
 **An item you build yourself.**
 
@@ -33,7 +33,7 @@ Repeat until `wm instructions --change <name> --json` says the step is `archive`
    - something outside the item stops you: `wm block <name> <item> "<reason>"`;
    - the record isn't enough to build it: `wm gap <name> <item> "<what is missing>"`.
 
-**An item tagged `build: delegate`.**
+**An item with `- Build: delegate`.**
 
 - Start the `wm-implementer` agent with a prompt of exactly `<name> <item>` and nothing else, for example `add-search-limit 1.2`. It builds its own context from the record.
 - When it returns, run `wm show <name> --json` and look at the item:

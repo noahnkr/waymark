@@ -39,7 +39,7 @@ def test_item_carries_its_criteria_verification_and_repo() -> None:
 
 
 def test_build_tag_marks_an_item_for_delegation() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Sort it   `build: delegate`\n- [ ] 1.2 Tidy up\n")
+    tasks = parse(HEAD + "- [ ] 1.1 Sort it\n  - Build: delegate\n- [ ] 1.2 Tidy up\n")
     assert tasks.problems == ()
     tagged, plain = tasks.items
     assert [item.title for item in tasks.items] == ["Sort it", "Tidy up"]
@@ -47,14 +47,14 @@ def test_build_tag_marks_an_item_for_delegation() -> None:
 
 
 def test_an_old_review_tag_is_in_the_old_record_format() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `review: independent`   `build: delegate`\n")
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `review: independent`\n  - Build: delegate\n")
     assert [problem.code for problem in tasks.problems] == ["old-record-format"]
     assert "wm update" in tasks.problems[0].message
     assert (tasks.items[0].title, tasks.items[0].delegate) == ("Cap it", True)
 
 
 def test_unknown_build_tag_is_a_problem_that_names_delegate() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `build: someone`\n")
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - Build: someone\n")
     (problem,) = tasks.problems
     assert problem.code == "unknown-build-tag"
     assert '"someone"' in problem.message
@@ -64,10 +64,16 @@ def test_unknown_build_tag_is_a_problem_that_names_delegate() -> None:
     assert not item.delegate
 
 
-def test_repeated_tag_is_a_problem() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `build: delegate`   `build: delegate`\n")
-    assert [problem.code for problem in tasks.problems] == ["repeated-tag"]
+def test_a_trailing_build_tag_is_an_old_layout() -> None:
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `build: delegate`\n")
+    assert [problem.code for problem in tasks.problems] == ["old-layout"]
     assert tasks.items[0].title == "Cap it"
+    assert not tasks.items[0].delegate
+
+
+def test_the_build_line_given_twice_is_a_problem() -> None:
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - Build: delegate\n  - Build: delegate\n")
+    assert [problem.code for problem in tasks.problems] == ["duplicate-field"]
 
 
 def test_field_may_continue_over_indented_lines() -> None:

@@ -36,8 +36,9 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 
 ## Propose and accept
 
-- [ ] Run `/wm-propose` for a small change with **three** items: one untagged,
-      and two tagged `build: delegate`. Its proposal has `Review: independent`.
+- [ ] Run `/wm-propose` for a small change with **three** items: one plain,
+      and two with a `- Build: delegate` line. Its proposal has
+      `- Review: independent`.
       Not on the short path.
 - [ ] Ask the agent to run `wm accept <change>`. **The hook refuses it**, and the
       agent tells you to run it yourself.

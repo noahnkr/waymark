@@ -4,7 +4,7 @@
 
 How `wm` sets up a repository on one machine: the agent tool files, which belong to the machine, and how they are kept out of git. The record itself is shared and committed.
 
-## Modified requirements
+## MODIFIED Requirements
 
 ### Requirement: Machine setup in a clone
 In a git repository that already has a record, `wm init` SHALL set up this machine without changing the record. It SHALL write the agent tool files for the tools the settings list and add the ignore block. It SHALL NOT write git hooks or change git's settings.
@@ -78,7 +78,7 @@ Messages about the agent tool files SHALL tell the user to run `wm init` to set 
 - WHEN it finishes
 - THEN its output does not tell the user to commit anything
 
-## Removed requirements
+## REMOVED Requirements
 
 ### Requirement: Git hooks not staged
 Reason: `wm` no longer installs git hooks. Commit messages are checked by the agent's command hook, and `wm check` runs in CI.

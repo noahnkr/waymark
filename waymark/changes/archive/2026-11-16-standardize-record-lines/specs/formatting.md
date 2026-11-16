@@ -4,7 +4,7 @@
 
 How `wm check --fix` brings the record to its standard layout when the human asks: what it rewrites, what it never touches, and what it reports.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Fix the layout on request
 `wm check --fix` SHALL rewrite the record into its standard layout, then report what the check still finds. It SHALL rewrite:

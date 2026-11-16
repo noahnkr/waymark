@@ -1,6 +1,6 @@
 # Acceptance
 
-## Modified requirements
+## MODIFIED Requirements
 
 ### Requirement: Acceptance covers what was accepted
 An acceptance SHALL cover the change's proposal, its deltas, its design, the living text of the requirements its deltas modify or remove, the change's review level, and the definition of each task item it names. Changing any of these, or removing an item it names, SHALL withdraw the acceptance, and `wm status` SHALL ask the human to accept again. Ticks and records SHALL NOT withdraw it.
@@ -33,7 +33,7 @@ An acceptance SHALL cover the change's proposal, its deltas, its design, the liv
 - WHEN the human runs `wm accept <change>`
 - THEN the Log holds a second `(accepted)` record that names items 1.1, 1.2 and 1.3, after the first
 
-## Removed requirements
+## REMOVED Requirements
 
 ### Requirement: Acceptance without an item list
 Reason: Every `(accepted)` record names its items. The format 2 migration writes every item of the change into an old acceptance that named none, and keeps its fingerprint, so the change is accepted again in format 2 anyway.

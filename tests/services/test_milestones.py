@@ -66,7 +66,8 @@ def test_closing_rewrites_links_to_the_milestone(project: Workspace) -> None:
     milestone(project)
     project.write(
         "explorations/speed.md",
-        "# Speed\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        f"# Speed\n\n- Status: led-to [Faster search](../milestones/{NAME}/goal.md)\n\n"
+        "## Context\n\n## Questions\n\n## Approaches\n\n"
         f"## Conclusion\n\n[Faster search](../milestones/{NAME}/goal.md)\n\n## Related\n",
     )
     lifecycle.close_milestone(project.root, NAME, DAY)

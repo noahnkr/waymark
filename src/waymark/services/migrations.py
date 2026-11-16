@@ -14,7 +14,6 @@ from waymark.record.edits import set_record_format
 from waymark.record.files import RecordFiles
 from waymark.record.store import Transaction
 from waymark.services.common import Refusal, commit
-from waymark.services.format_two import migrate_to_format_2
 
 
 @dataclass(frozen=True)
@@ -30,14 +29,12 @@ class Migration:
     apply: Callable[[RecordFiles, Transaction], None]
 
 
-MIGRATIONS: tuple[Migration, ...] = (
-    Migration(
-        1,
-        "wm's lines in every change became dated records, kept in each task list's Log",
-        migrate_to_format_2,
-    ),
-)
-"""Every migration this version knows, one per format number."""
+MIGRATIONS: tuple[Migration, ...] = ()
+"""Every migration this version knows, one per format number.
+
+None now: no record in an older format exists, so the migrations to formats 2 and
+3 were removed once they had run. A record in an older format is refused.
+"""
 
 
 def stored_format(files: RecordFiles) -> int:
@@ -67,6 +64,11 @@ def pending(
     by_source = {migration.source: migration for migration in migrations}
     chain: list[Migration] = []
     for number in range(current, target):
+        if number not in by_source and number == current:
+            raise Refusal(
+                f"The record is in format {current}, and this wm reads only format {target}. "
+                f"It doesn't migrate a record in format {current}; nothing was changed."
+            )
         if number not in by_source:
             raise Refusal(
                 f"There is no migration from record format {number} to {number + 1}. "

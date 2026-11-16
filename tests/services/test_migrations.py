@@ -38,13 +38,22 @@ def files_of(workspace: Workspace) -> RecordFiles:
 
 def at_format_1(workspace: Workspace) -> Workspace:
     """The workspace with its record in format 1, the first."""
-    workspace.replace("config.toml", "record_format = 2", "record_format = 1")
+    workspace.replace("config.toml", "record_format = 3", "record_format = 1")
     return workspace
 
 
-def test_this_version_has_a_migration_for_every_earlier_format() -> None:
-    assert [migration.source for migration in MIGRATIONS] == list(range(1, RECORD_FORMAT))
+def test_this_version_migrates_no_earlier_format() -> None:
+    assert MIGRATIONS == ()
     assert pending(RECORD_FORMAT) == ()
+
+
+def test_scenario_older_record(workspace: Workspace) -> None:
+    workspace.replace("config.toml", "record_format = 3", "record_format = 2")
+    before = workspace.read("config.toml")
+    with pytest.raises(Refusal, match="format 2") as refusal:
+        migrate(files_of(workspace))
+    assert "doesn't migrate" in str(refusal.value)
+    assert workspace.read("config.toml") == before
 
 
 def test_record_in_the_current_format_needs_no_migration(workspace: Workspace) -> None:
@@ -90,12 +99,12 @@ def test_failed_migration_leaves_the_record_in_the_last_whole_format(
 
 def test_advancing_the_format_number_changes_no_other_setting(workspace: Workspace) -> None:
     before = "# a comment\n" + workspace.read("config.toml")
-    after = set_record_format(before, 3)
-    assert after == before.replace("record_format = 2", "record_format = 3")
+    after = set_record_format(before, 4)
+    assert after == before.replace("record_format = 3", "record_format = 4")
 
 
 def test_record_from_a_newer_wm_is_refused(workspace: Workspace) -> None:
-    workspace.replace("config.toml", "record_format = 2", "record_format = 7")
+    workspace.replace("config.toml", "record_format = 3", "record_format = 7")
     with pytest.raises(Refusal, match="newer than this wm writes"):
         migrate(files_of(workspace))
 
@@ -108,6 +117,6 @@ def test_missing_migration_step_is_refused(workspace: Workspace) -> None:
 
 
 def test_settings_without_a_format_number_are_refused(workspace: Workspace) -> None:
-    workspace.replace("config.toml", "record_format = 2\n", "")
+    workspace.replace("config.toml", "record_format = 3\n", "")
     with pytest.raises(Refusal, match="record_format"):
         migrate(files_of(workspace))

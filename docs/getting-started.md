@@ -100,8 +100,8 @@ and explains each one as it happens:
 4. **Accept.** You read the change and run `wm accept <change>` yourself. Agents
    are blocked from running it.
 5. **Apply.** The agent builds each item itself, from the record, and records
-   the result. An item tagged `build: delegate` goes to a fresh implementer
-   agent instead (see [who builds an item](concepts.md#who-builds-an-item)).
+   the result. An item with a `- Build: delegate` line goes to a fresh
+   implementer agent instead (see [who builds an item](concepts.md#who-builds-an-item)).
    What `wm` writes about an item is a dated record under it, such as
    `(blocked) 2026-01-15 by Sam Doe: <reason>` (see [records](concepts.md#records)).
 6. **Review.** Once every item is built, the whole change is checked once at
@@ -140,9 +140,9 @@ installs the pinned one. To upgrade a project: change the pin, install that
 version, and run `wm update`. When it changes the record, `.gitignore` or the CI
 workflow, it names them and asks you to review and commit the changes. It never
 asks you to commit the agent tool files. A release that changes the record's
-format says in the [changelog](../CHANGELOG.md) what `wm update` migrates; the
-move to record format 2, for example, migrates every change and asks you to
-accept each active change again.
+format says in the [changelog](../CHANGELOG.md) whether `wm update` migrates an
+older record. When it doesn't, `wm update` refuses the record, names its format,
+and changes nothing.
 
 A project set up with `wm` 0.1.0 committed the agent tool files and its git
 hooks. `wm update` adds the `.gitignore` block, but git keeps tracking files it

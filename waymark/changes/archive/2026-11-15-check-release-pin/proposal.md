@@ -1,7 +1,7 @@
 # Check release pin
 
-Owner: Noah Roberts
-Path: short
+- Owner: Noah Roberts
+- Path: short
 
 ## Why
 

@@ -1,6 +1,6 @@
 # Record background agent endings
 
-Owner: Noah Roberts
+- Owner: Noah Roberts
 
 ## Why
 

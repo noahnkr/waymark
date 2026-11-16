@@ -21,7 +21,7 @@ REVIEW = "\n## Log\n\n"
 
 
 def reviewed_at(level: str) -> str:
-    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\nReview: {level}\n")
+    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n- Review: {level}\n")
 
 
 def accepted(project: Workspace, tasks: str = TASKS, level: str | None = None) -> Workspace:
@@ -413,7 +413,7 @@ def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Wo
 def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
     short = proposal(short=True, impact="No spec changes.")
     project.change(
-        proposal_text=short.replace("Path: short\n", "Path: short\nReview: none\n"),
+        proposal_text=short.replace("Path: short\n", "Path: short\n- Review: none\n"),
         deltas={},
         design=None,
         tasks=HEAD + "- [ ] 1.1 Fix the typo\n  - Criteria: the word is right\n",

@@ -2,10 +2,11 @@
 
 ## 1. Who builds an item
 
-- [x] 1.1 Read the `build: delegate` tag, and make it part of what is accepted
+- [x] 1.1 Read the tag, and make it part of what is accepted
   - Criteria: `record/tasks.py` reads `review:` and `build:` tags in either order at the end of an item line, strips both from the title, and sets `Item.delegate`; an unknown `build:` value gives the problem `unknown-build-tag`, whose message names `delegate` as the only value, and a repeated tag gives `repeated-tag`, both reported by `wm check`; `record/fingerprint.py` adds the flag to an item's part only when the tag is present, so an untagged item's fingerprint is unchanged; `wm show --json` gives `"delegate"` for each item, with the schema and `docs/json.md` updated
   - Verify: tests in `tests/record/` for both tag orders, the unknown and repeated tags, the scenario "Tag added after acceptance", and a test that an untagged change's fingerprint matches the value before this change
   - (note) 2026-11-15: review pass: both tag orders parse and are stripped from the title, Item.delegate is set, `wm check` reports unknown-build-tag (naming delegate as the only value) and repeated-tag, the fingerprint adds the flag only when tagged (untagged value eb98cf2e3d3071a6 matches HEAD), `wm show --json`, the schema and docs/json.md carry delegate, the required tests are present and the suite passes (881).
+  - Build: delegate
 - [x] 1.2 Tell the planner to build an untagged item, and to delegate a tagged one
   - Criteria: at the apply step, `wm instructions --change <change>` (text and `--json`) tells the planner to build an untagged item from `wm context <change> <item> --for implement`, to run the checks the item touches, and to record the result with `wm tick`, `wm block` or `wm gap`, and it lists those commands without mentioning an implementer; for a tagged item it gives today's guidance to start an implementer; `wm reopen` comes first in both when a review asked for changes
   - Verify: tests in `tests/services/test_agent_interface.py` for the scenarios "Untagged item" and "Tagged item", and for a reopened item of each kind

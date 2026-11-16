@@ -4,7 +4,7 @@
 
 How a code repo of an atlas is tied to it: the pointer the code repo carries, and how `wm` finds the atlas from it. The registry and path hints are described with the multi-repo guide.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Pointer in the code repo's settings
 A code repo SHALL point at its atlas through a pointer-only `waymark/config.toml`, holding the atlas's name, an optional path hint relative to the code repo, and the pinned `wm` version, and no record. `wm atlas point` SHALL write it. Commands run in a code repo with a pointer SHALL act on its atlas, and `wm check` there SHALL NOT report the code repo's `waymark/` as a broken record. `wm init` in a code repo with a pointer SHALL refuse without writing anything, naming the atlas and saying to run `wm init` there.

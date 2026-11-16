@@ -1,13 +1,21 @@
 """Deltas: a change's edits to one spec, and how they merge into it.
 
-A delta adds, modifies or removes requirements. It may also carry the spec's
-title, purpose and repos; it must carry the purpose when it creates the spec.
+A delta adds, modifies, removes or renames requirements. It may also carry the
+spec's title, purpose and repos; it must carry the purpose when it creates the
+spec. A rename keeps the requirement's statement and scenarios; the same delta
+may also modify the requirement under its new name.
 """
 
 import re
 from dataclasses import dataclass
 
-from waymark.record.outline import collect_sections, parse_facts, require_title, split_names
+from waymark.record.outline import (
+    OLD_LAYOUT,
+    collect_sections,
+    parse_facts,
+    require_title,
+    split_names,
+)
 from waymark.record.problems import Problem
 from waymark.record.specs import (
     PURPOSE,
@@ -22,11 +30,30 @@ from waymark.record.specs import (
 )
 from waymark.record.text import Document
 
-ADDED = "Added requirements"
-MODIFIED = "Modified requirements"
-REMOVED = "Removed requirements"
+ADDED = "ADDED Requirements"
+MODIFIED = "MODIFIED Requirements"
+REMOVED = "REMOVED Requirements"
+RENAMED = "RENAMED Requirements"
 
 _REASON = re.compile(r"^Reason:\s*(\S.*)$")
+_RENAME_LINE = re.compile(r"^[-*]\s+(From|To):\s*(.*?)\s*$")
+
+
+@dataclass(frozen=True)
+class Rename:
+    """A requirement a delta renames, keeping its statement and scenarios."""
+
+    old: str
+    new: str
+    index: int
+
+    @property
+    def old_key(self) -> str:
+        return requirement_key(self.old)
+
+    @property
+    def new_key(self) -> str:
+        return requirement_key(self.new)
 
 
 @dataclass(frozen=True)
@@ -55,12 +82,23 @@ class Delta:
     modified: tuple[Requirement, ...]
     removed: tuple[Removal, ...]
     problems: tuple[Problem, ...]
+    renamed: tuple[Rename, ...] = ()
 
     def touched(self) -> tuple[tuple[str, str], ...]:
-        """The key and name of every requirement this delta adds, modifies or removes."""
+        """The key and name of every requirement this delta adds, modifies, removes or renames."""
         named = [(item.key, item.name) for item in (*self.added, *self.modified)]
         named += [(item.key, item.name) for item in self.removed]
-        return tuple(named)
+        for rename in self.renamed:
+            named += [(rename.old_key, rename.old), (rename.new_key, rename.new)]
+        return tuple(dict.fromkeys(named))
+
+    def based_on(self) -> tuple[str, ...]:
+        """The names, as the spec now has them, of the requirements this delta builds on."""
+        renamed = {rename.new_key: rename.old for rename in self.renamed}
+        names = [renamed.get(item.key, item.name) for item in self.modified]
+        names += [item.name for item in self.removed]
+        names += [rename.old for rename in self.renamed]
+        return tuple(dict.fromkeys(names))
 
 
 @dataclass(frozen=True)
@@ -93,6 +131,53 @@ def _parse_removals(doc: Document, problems: list[Problem]) -> tuple[Removal, ..
     return tuple(removals)
 
 
+def _parse_renames(doc: Document, problems: list[Problem]) -> tuple[Rename, ...]:
+    sections = {section.title.casefold(): section for section in doc.sections(2)}
+    parent = sections.get(RENAMED.casefold())
+    if parent is None:
+        return ()
+    renames: list[Rename] = []
+    pending: tuple[str, int] | None = None
+    for index in range(parent.body_start, parent.end):
+        line = doc.lines[index]
+        if line.is_blank or line.in_fence:
+            continue
+        match = _RENAME_LINE.match(line.text)
+        if match is None or not match.group(2):
+            problems.append(
+                Problem(
+                    doc.path,
+                    index + 1,
+                    "malformed-rename",
+                    'A rename is a "- From: <old name>" line followed by a '
+                    '"- To: <new name>" line.',
+                )
+            )
+            continue
+        word, name = match.group(1), match.group(2)
+        if word == "From":
+            if pending is not None:
+                problems.append(_unpaired(doc, pending[1]))
+            pending = (name, index)
+        elif pending is None:
+            problems.append(_unpaired(doc, index))
+        else:
+            renames.append(Rename(pending[0], name, pending[1]))
+            pending = None
+    if pending is not None:
+        problems.append(_unpaired(doc, pending[1]))
+    return tuple(renames)
+
+
+def _unpaired(doc: Document, index: int) -> Problem:
+    return Problem(
+        doc.path,
+        index + 1,
+        "malformed-rename",
+        'Every "- From:" line is followed by its own "- To:" line.',
+    )
+
+
 def parse_delta(domain: str, doc: Document) -> Delta:
     """Read a delta file."""
     problems: list[Problem] = []
@@ -110,8 +195,13 @@ def parse_delta(domain: str, doc: Document) -> Delta:
                     f'"{REPOS_FACT}:" names no repo. List the repos, or remove the line.',
                 )
             )
+    for section in doc.sections(2):
+        heading = section.title.strip()
+        for name in (ADDED, MODIFIED, REMOVED, RENAMED):
+            if heading.casefold() == name.casefold() and heading != name:
+                problems.append(Problem(doc.path, section.start + 1, "old-layout", OLD_LAYOUT))
     sections = collect_sections(
-        doc, (), problems, optional=(PURPOSE, ADDED, MODIFIED, REMOVED), strict=True
+        doc, (), problems, optional=(PURPOSE, ADDED, MODIFIED, REMOVED, RENAMED), strict=True
     )
     purpose: str | None = None
     if PURPOSE in sections:
@@ -128,9 +218,14 @@ def parse_delta(domain: str, doc: Document) -> Delta:
     added = parse_requirements(doc, sections[ADDED], problems) if ADDED in sections else ()
     modified = parse_requirements(doc, sections[MODIFIED], problems) if MODIFIED in sections else ()
     removed = _parse_removals(doc, problems)
+    renamed = _parse_renames(doc, problems)
 
-    named = [(item.key, item.name) for item in (*added, *modified)]
+    new_names = {rename.new_key for rename in renamed}
+    named = [(item.key, item.name) for item in added]
+    named += [(item.key, item.name) for item in modified if item.key not in new_names]
     named += [(item.key, item.name) for item in removed]
+    named += [(rename.old_key, rename.old) for rename in renamed]
+    named += [(rename.new_key, rename.new) for rename in renamed]
     seen: set[str] = set()
     for key, name in named:
         if key in seen:
@@ -150,11 +245,13 @@ def parse_delta(domain: str, doc: Document) -> Delta:
                 doc.path,
                 1,
                 "empty-delta",
-                f'The delta changes nothing. Add a "## {ADDED}", "## {MODIFIED}" or '
-                f'"## {REMOVED}" section with at least one requirement.',
+                f'The delta changes nothing. Add a "## {ADDED}", "## {MODIFIED}", '
+                f'"## {REMOVED}" or "## {RENAMED}" section with at least one requirement.',
             )
         )
-    return Delta(domain, doc, title, repos, purpose, added, modified, removed, tuple(problems))
+    return Delta(
+        domain, doc, title, repos, purpose, added, modified, removed, tuple(problems), renamed
+    )
 
 
 def delta_mismatches(spec: Spec | None, delta: Delta) -> tuple[Problem, ...]:
@@ -192,8 +289,21 @@ def delta_mismatches(spec: Spec | None, delta: Delta) -> tuple[Problem, ...]:
                     f'Move it under "## {MODIFIED}", or rename it.',
                 )
             )
-    changed = [(item.name, item.start) for item in delta.modified]
+    for rename in delta.renamed:
+        if spec is not None and spec.requirement(rename.new) is not None:
+            problems.append(
+                Problem(
+                    path,
+                    rename.index + 1,
+                    "delta-requirement-exists",
+                    f'The spec already has a requirement "{rename.new}", so "{rename.old}" '
+                    "can't be renamed to it.",
+                )
+            )
+    new_names = {rename.new_key for rename in delta.renamed}
+    changed = [(item.name, item.start) for item in delta.modified if item.key not in new_names]
     changed += [(item.name, item.index) for item in delta.removed]
+    changed += [(rename.old, rename.index) for rename in delta.renamed]
     for name, index in changed:
         if spec is None or spec.requirement(name) is None:
             problems.append(
@@ -201,8 +311,9 @@ def delta_mismatches(spec: Spec | None, delta: Delta) -> tuple[Problem, ...]:
                     path,
                     index + 1,
                     "delta-requirement-missing",
-                    f'The spec "{delta.domain}" has no requirement "{name}" to modify or '
-                    f'remove. Update the delta to match the spec, or move it under "## {ADDED}".',
+                    f'The spec "{delta.domain}" has no requirement "{name}" to modify, '
+                    f"remove or rename. Update the delta to match the spec, or move it under "
+                    f'"## {ADDED}".',
                 )
             )
     return tuple(problems)
@@ -218,6 +329,9 @@ def delta_is_merged(spec: Spec | None, delta: Delta) -> bool:
             return False
     if any(spec.requirement(removal.name) is not None for removal in delta.removed):
         return False
+    for rename in delta.renamed:
+        if spec.requirement(rename.old) is not None or spec.requirement(rename.new) is None:
+            return False
     if delta.purpose is not None and spec.purpose != delta.purpose:
         return False
     return delta.repos is None or spec.repos == delta.repos
@@ -240,8 +354,20 @@ def _reparse(spec: Spec, lines: list[str]) -> Document:
 
 def _replace_and_remove(spec: Spec, delta: Delta, lines: list[str], newline: str) -> None:
     edits: list[tuple[int, int, list[str]]] = []
+    renamed = {rename.new_key: rename.old for rename in delta.renamed}
+    modified = {item.key for item in delta.modified}
+    for rename in delta.renamed:
+        if rename.new_key in modified:
+            continue
+        target = spec.requirement(rename.old)
+        assert target is not None
+        # Rebuilt rather than edited: the spec's heading may spell the old name in
+        # another case or spacing, which the lookup ignores.
+        hashes = target.block[0].split(maxsplit=1)[0]
+        heading = f"{hashes} Requirement: {rename.new}"
+        edits.append((target.start, target.start + 1, [heading + newline]))
     for requirement in delta.modified:
-        target = spec.requirement(requirement.name)
+        target = spec.requirement(renamed.get(requirement.key, requirement.name))
         assert target is not None
         edits.append((target.start, target.end, [text + newline for text in requirement.block]))
     for removal in delta.removed:
