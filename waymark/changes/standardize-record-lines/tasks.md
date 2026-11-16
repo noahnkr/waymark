@@ -20,7 +20,7 @@
 - [x] 1.6 Guard the records in the hooks and write agent endings `by` the agent
   - Criteria: evidence is every tick and every record in an active change's task list; an implementer's edit to any file in the record is refused with a reason that names `wm note` and `RESULT:`; `only_adds_notes` is gone; an implementer's ending is recorded `by wm-implementer`, with `partial` writing a `(note)`, and a reviewer's `by wm-reviewer`, from a final message or a handed-back report
   - Verify: tests in `tests/hooks/test_decide.py` and `tests/record/test_evidence.py` for the scenarios "Implementer writes a note by hand", "Reviewer's verdict", "Implementer done in the foreground", "Implementer partly done", "Implementer in the background" and "Reviewer in the background"
-- [ ] 1.7 Show item records and the Log in `wm show`
+- [x] 1.7 Show item records and the Log in `wm show`
   - Criteria: `wm show <change>` in text and `--json` gives each item's records and the change's Log, in place of the review records; the `show.change` schema version is raised and `docs/json.md` regenerated
   - Verify: tests in `tests/views/`, and `uv run --no-sync python -m tools.docs --check`
 

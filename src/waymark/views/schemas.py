@@ -110,6 +110,7 @@ RECORD = _object(
     {
         "kind": _enum(RecordKind),
         "date": DATE,
+        "by": TEXT_OR_NULL,
         "verdict": _enum(Verdict, nullable=True),
         "text": STRING,
         "items": NAMES,
@@ -131,7 +132,6 @@ ITEM = _object(
         "repo": TEXT_OR_NULL,
         "blocked": TEXT_OR_NULL,
         "spec_gap": TEXT_OR_NULL,
-        "notes": NAMES,
         "records": _array(RECORD),
     }
 )
@@ -142,7 +142,6 @@ CHANGE_REVIEW = _object(
         "reviewed": {"type": ["boolean", "null"]},
         "reopen": NAMES,
         "needs_human": TEXT_OR_NULL,
-        "records": _array(RECORD),
     }
 )
 
@@ -234,6 +233,7 @@ SCHEMAS: dict[str, Schema] = {
             "design": _nullable(_object({"decisions": NAMES})),
             "items": _array(ITEM),
             "review": CHANGE_REVIEW,
+            "log": _array(RECORD),
             "problems": _array(
                 _object({"path": STRING, "line": INTEGER, "code": STRING, "message": STRING})
             ),

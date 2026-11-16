@@ -58,7 +58,7 @@ VERSIONS = {
     "inbox": 1,
     "ls": 1,
     "check": 1,
-    "show.change": 2,
+    "show.change": 3,
     "show.spec": 1,
     "show.milestone": 1,
     "show.exploration": 1,
@@ -375,9 +375,10 @@ def _record(record: ReviewRecord) -> Payload:
     return {
         "kind": record.kind.value,
         "date": record.date.isoformat(),
+        "by": record.who,
         "verdict": record.verdict.value if record.verdict else None,
         "text": record.text,
-        "items": list(record.items),
+        "items": list(record.items or record.covers),
         "findings": [
             {"severity": f.severity.value, "place": f.place, "text": f.text}
             for f in record.findings
@@ -393,7 +394,6 @@ def _change_review(record: Record, change: Change, state: ChangeState | None) ->
         "reviewed": review.reviewed if review else None,
         "reopen": list(review.reopen) if review else [],
         "needs_human": review.escalated if review else None,
-        "records": [_record(r) for r in (change.tasks.review_records if change.tasks else ())],
     }
 
 
@@ -410,7 +410,6 @@ def _item(item: Item, state: ChangeState | None) -> Payload:
         "repo": item.repo,
         "blocked": item.blocked,
         "spec_gap": item.spec_gap,
-        "notes": list(item.notes),
         "records": [_record(record) for record in item.records],
     }
 
@@ -452,6 +451,7 @@ def show_change(record: Record, change: Change) -> Payload:
         ),
         "items": [_item(item, state) for item in (change.tasks.items if change.tasks else ())],
         "review": _change_review(record, change, state),
+        "log": [_record(r) for r in (change.tasks.log if change.tasks else ())],
         "problems": [
             {"path": p.path, "line": p.line, "code": p.code, "message": p.message}
             for p in change.problems
