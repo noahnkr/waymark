@@ -2,7 +2,7 @@
 
 ## 1. Formats and checks
 
-- [ ] 1.1 Read and check the structured Impact
+- [x] 1.1 Read and check the structured Impact
   - Criteria:
     - `parse_proposal` reads `- Specs:`, `- User-visible:` and `- Code:` under `## Impact`, with nested bullets, and `Specs:` into the backticked spec names or `none`
     - `- Specs: none` skips the specs step; the "No spec changes" text no longer does, and the propose step's guidance in `wm instructions` names `- Specs: none`
