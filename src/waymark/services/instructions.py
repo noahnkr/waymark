@@ -63,6 +63,26 @@ SHARED_RULES = (
 """The rules every skill shares, given at every step."""
 
 
+WRITING_RULES = (
+    "Write one behavior per requirement, stated in a sentence or two with SHALL.",
+    "Say what a user or another program sees, not how it is built.",
+    "Give a scenario for the usual case, and one for each refusal or boundary the requirement "
+    "names.",
+    "Make each scenario's WHEN one action, and its THEN an outcome someone else can check, "
+    "quoting exact output where it matters.",
+)
+"""The rules for writing requirements, given at the specs step."""
+
+SIZING_RULES = (
+    "Make one item per slice that can be built and verified on its own.",
+    "Split an item whose criteria run past about five bullets, or that spans unrelated parts "
+    "of the code.",
+    "Give docs and skills a change makes stale their own item.",
+    "Order the items so the record stays healthy after each one is ticked.",
+)
+"""The rules for sizing task items, given at the tasks step."""
+
+
 @dataclass(frozen=True)
 class Check:
     """One check of a drafting step: what must hold, and the codes wm check reports for it.
@@ -208,6 +228,7 @@ def _drafting(
             "Every requirement states what the system SHALL do and has at least one scenario.",
             "Requirements describe what the system does, as a user or another program sees it. "
             "Files the user doesn't touch, internals and mechanisms go in the design.",
+            *WRITING_RULES,
         ]
         return (
             outputs,
@@ -232,6 +253,7 @@ def _drafting(
         "it: a large item, one built in parallel, or one worth a cold check that the record is "
         "enough.",
         "Don't tick items or write records; wm writes those.",
+        *SIZING_RULES,
     ]
     if record.layout is Layout.ATLAS:
         guidance.append("Give every item a Repo line naming the repo it works in.")
