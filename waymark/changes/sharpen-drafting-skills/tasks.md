@@ -2,7 +2,7 @@
 
 ## 1. Guidance and skills
 
-- [ ] 1.1 Give the specs and tasks steps the writing and sizing rules
+- [x] 1.1 Give the specs and tasks steps the writing and sizing rules
   - Criteria:
     - `wm instructions` for the specs step gives, in its guidance, the four rules for writing requirements, worded as in the requirement "Writing and sizing rules"
     - `wm instructions` for the tasks step gives, in its guidance, the four rules for sizing items
