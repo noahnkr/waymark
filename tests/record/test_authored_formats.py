@@ -203,6 +203,16 @@ def test_scenario_nested_criteria(workspace: Workspace) -> None:
     assert item["criteria"] == "- fifty at most\n- sorted by score"
 
 
+def test_scenario_nested_verification(workspace: Workspace) -> None:
+    built = BUILT.replace(
+        "  - Verify: a test\n", "  - Verify:\n    - a test for the limit\n    - wm check here\n"
+    )
+    workspace.change(tasks=built)
+    workspace.accept()
+    item = context_pack(workspace.record(), "implement", "add-limit", "1.1")["item"]
+    assert item["verify"] == "- a test for the limit\n- wm check here"
+
+
 def test_scenario_tagged_item(workspace: Workspace) -> None:
     workspace.change(tasks=BUILT)
     workspace.accept()

@@ -10,6 +10,12 @@
 
 ## Decisions
 
+<!-- One "Decision:" heading per choice that had real options.
+     Good: options "cut in the query" and "cut after sorting"; choice "after
+     sorting"; why "the order must be final before the cut".
+     Bad: one option, or a why that repeats the choice ("we cut after sorting
+     because that is where we cut"). -->
+
 ### Decision: <name>
 - Status: <proposed while the human hasn't settled it, then decided>
 - Decided by: <human or planner>

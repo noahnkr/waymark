@@ -6,8 +6,9 @@
 
 ## Goals
 
-<!-- What it must achieve, as a numbered list, such as:
-1. Answers come back in one step. -->
+<!-- What it must achieve, as a numbered list.
+Good: "1. A search answers in under a second on a laptop." Others can check it.
+Bad: "1. Be fast." Nobody can tell when it holds. -->
 
 ## Non-goals
 

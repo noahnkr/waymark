@@ -4,18 +4,27 @@ import datetime
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from tests.conftest import git_init
-from tests.support import Workspace
+from tests.support import Workspace, document
 from waymark import __version__, adapters
 from waymark.record import ignore, templates
+from waymark.record.charter import parse_charter
+from waymark.record.deltas import parse_delta
+from waymark.record.design import parse_design
+from waymark.record.explorations import parse_exploration
 from waymark.record.files import RecordFiles
+from waymark.record.layout import _comment_flags
 from waymark.record.project import find_project
+from waymark.record.proposal import parse_proposal
 from waymark.record.record import load_record
 from waymark.record.state import ExplorationStatus, StepKind, derive_state
+from waymark.record.tasks import parse_tasks
 from waymark.record.terms import Layout, Phase
+from waymark.record.text import Document
 from waymark.services import check, ci, common, integration, lifecycle, migrations, setup
 from waymark.services.common import Refusal
 
@@ -452,6 +461,44 @@ def test_new_change_writes_a_proposal_owned_by_the_git_user(project: Workspace) 
     assert not change.short_path
     state = project.change_state()
     assert (state.phase, state.next_step.kind) == (Phase.PROPOSED, StepKind.PROPOSE)
+
+
+def test_scenario_new_proposal(project: Workspace) -> None:
+    """Requirement "Template examples": a good and a bad example, and no problem from them."""
+    setup.create_change(project.root, "add-limit")
+    text = project.read("changes/add-limit/proposal.md")
+    assert "Good: " in text
+    assert "Bad: " in text
+    change = project.record().changes["add-limit"]
+    assert {p.code for p in change.problems} == {"empty-section"}
+
+
+@pytest.mark.parametrize(
+    ("template", "path", "parse"),
+    [
+        ("proposal.md", "changes/x/proposal.md", parse_proposal),
+        ("design.md", "changes/x/design.md", parse_design),
+        ("tasks.md", "changes/x/tasks.md", parse_tasks),
+        ("delta.md", "changes/x/specs/search.md", lambda doc: parse_delta("search", doc)),
+        ("charter.md", "charter.md", parse_charter),
+        ("exploration.md", "explorations/x.md", lambda doc: parse_exploration("x", doc)),
+    ],
+)
+def test_every_template_carries_examples_the_checks_ignore(
+    template: str, path: str, parse: Callable[[Document], Any]
+) -> None:
+    text = templates.render(template, title="X", facts="- Owner: Sam Doe\n")
+    assert "Good" in text
+    assert "Bad" in text
+    doc = document(text, path)
+    commented = {
+        index + 1
+        for index, flag in enumerate(_comment_flags(doc))
+        if flag
+        and doc.lines[index].text.strip()
+        and not doc.lines[index].text.lstrip().startswith("<!--")
+    }
+    assert [p for p in parse(doc).problems if p.line in commented] == []
 
 
 def test_new_change_can_name_another_owner_and_take_the_short_path(project: Workspace) -> None:

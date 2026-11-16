@@ -144,7 +144,8 @@ def _drafting(
     guidance = [
         "Give every item criteria that can be checked, and say how to verify it.",
         "Number items by section and never renumber; append new items at the end.",
-        "Criteria may be a nested list under '- Criteria:', one criterion per bullet.",
+        "Criteria and Verify may each be a nested list under '- Criteria:' or '- Verify:', "
+        "one criterion or one verification step per bullet.",
         "Add a '- Build: delegate' line under an item only when a fresh implementer should build "
         "it: a large item, one built in parallel, or one worth a cold check that the record is "
         "enough.",
