@@ -11,6 +11,7 @@
   - Verify:
     - tests in `tests/record/test_authored_formats.py` and `tests/services/test_check.py` for the scenarios "Impact matches the deltas" and "Delta not named in the impact"
     - `wm check` here
+  - (reopened) 2026-11-16 by Noah Roberts
 - [x] 1.2 Archive with a structured Outcome
   - Criteria:
     - `wm archive` takes `--built` and `--differs`, and `--outcome` is gone
