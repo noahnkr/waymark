@@ -99,7 +99,15 @@ records, the specs change only by archiving or syncing, the record is never
 filled in by guessing, and nothing is pushed, opened as a pull request or merged
 without your yes. Each drafting step (propose, specs, design, tasks) also gets a
 checklist of what must hold before moving on; a check marked `wm` is one that
-`wm check` enforces, and the agent judges the rest.
+`wm check` enforces, and the agent judges the rest. The specs step also gives
+the rules for writing requirements, and the tasks step the rules for sizing
+items.
+
+Every skill `wm init` installs has the same sections: Role, Inputs, Steps, any
+sections of its own, Quality bar, Show the human, When to stop and Rules. Show
+the human gives the fixed shape of what the skill tells you, such as the summary
+`wm-propose` shows before you accept, and When to stop says when it hands back
+to you.
 
 A spec states what one area of the system does, as requirements, each with at
 least one scenario:

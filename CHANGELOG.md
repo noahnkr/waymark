@@ -5,6 +5,16 @@ the record's format says whether `wm update` migrates an older record.
 
 ## [Unreleased]
 
+- **The skills share one layout:** Role, Inputs, Steps, any sections of their
+  own, Quality bar, Show the human, When to stop and Rules. Each says what good
+  output looks like, the fixed shape of what it shows you, and when it stops.
+  - `wm-propose` asks what the record doesn't settle before drafting, and checks
+    the proposal, deltas, design and tasks against each other before acceptance.
+  - `wm-kickoff` interviews you one charter section at a time.
+  - `wm-explore` states what the record says, the questions, two or more
+    approaches with their costs, and a recommendation.
+- **`wm instructions` gives the specs step rules for writing requirements,** and
+  the tasks step rules for sizing items, in its guidance.
 - **`wm instructions` gives each drafting step a checklist** (propose, specs,
   design, tasks): what must hold before moving on, each check marked when
   `wm check` enforces it. The JSON gains `checklist`, a list of `text` and
