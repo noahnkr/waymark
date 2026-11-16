@@ -35,3 +35,5 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint c9c1cabd18360233 items 1.1 2.1 2.2 by Noah Roberts
+- (self-review) 2026-11-16 by Noah Roberts: Checked against the three scenarios, the design and each item's criteria, grading by the rubric this change adds (shown by wm instructions at this very step). Review pack, Self-review and Implement pack each have a test, including that the review pack and the review step give the same rubric and that both packs show it before How to finish. The reviewer keeps its format lines and verdict rules; the implementer keeps Don't guess and gains When to stop; wm-apply's self-review points at the rubric and still passes the layout test. The agent snapshots were regenerated and match the sources. Full checks pass: pytest (1125), ruff, mypy, codespell, tools.docs --check, wm check.
+  - suggestion `src/waymark/assets/agents/wm-implementer.md`: its When to stop section summarizes the stopping rules the pack gives, so a later change to the rules must update both
