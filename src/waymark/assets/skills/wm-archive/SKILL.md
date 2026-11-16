@@ -28,7 +28,7 @@ Revert the archive commit on the branch with `git revert`, so the change is acti
 `wm` says why:
 
 - **Not accepted, items not ticked, or a conflict.** These can't be overridden. Go back to the `wm-apply` or `wm-update` skill.
-- **The review is missing.** Review the change. Only the human may archive anyway, with `wm archive <name> --override "<reason>"`; the reason is written into the outcome. Never run the override yourself.
+- **The review is missing.** Review the change. Only the human may archive anyway, with `wm archive <name> --override "<reason>"`; the reason is written as an `(override)` record in the change's Log, and `wm pr` shows it. Never run the override yourself.
 
 ## Rules
 

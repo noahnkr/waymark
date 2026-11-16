@@ -26,7 +26,7 @@
 
 ## 2. Skills, charter and docs
 
-- [ ] 2.1 Rewrite the skills and agent definitions for records and the Log
+- [x] 2.1 Rewrite the skills and agent definitions for records and the Log
   - Criteria: `wm-apply` and `wm-update` name the item records, `wm note`, `--by` and the Log; `wm-propose` and `wm-archive` no longer name `Accepted:` or `Blocked:` lines; `wm-implementer` writes notes with `wm note` or its ending and never edits the record; `wm-reviewer` matches the finding format; the planner runs `wm update` to regenerate the rendered files
   - Verify: `uv run --no-sync pytest tests/adapters`; read each changed skill once through as the planner would
 - [ ] 2.2 Update the charter and the docs

@@ -2,7 +2,7 @@
 
 It covers what the human approved:
 
-- the proposal, apart from the acceptance line and the outcome;
+- the proposal, apart from its outcome;
 - the change's review level: its Review line, or the project default;
 - every delta, and the design;
 - each task item's definition (number, title, criteria, verification, repo

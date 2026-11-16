@@ -231,7 +231,7 @@ def item_state(item: Item, review_records: tuple[ReviewRecord, ...] = ()) -> Ite
 
 
 def review_state(change: Change, default: ReviewLevel) -> ReviewState:
-    """Derive the change's review from the records in its Review section.
+    """Derive the change's review from the records in its Log.
 
     A ``(resolved)`` record closes whatever came before it: requests for changes
     are counted from the last one on.
@@ -297,8 +297,8 @@ def mismatches(record: Record, change: Change) -> tuple[Conflict, ...]:
             if not delta_is_merged(spec, delta):
                 message = (
                     f'The change was synced, but the spec "{domain}" no longer matches its '
-                    "delta. Revise the delta to match the spec, or remove the "
-                    '"Synced:" line from the proposal and sync again.'
+                    "delta. Revise the delta to match the spec, or have the human remove the "
+                    '"(synced)" record from the task list\'s Log and sync again.'
                 )
                 found.append(Conflict(ConflictKind.MISMATCH, domain, None, (change.name,), message))
             continue
