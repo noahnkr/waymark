@@ -1,7 +1,7 @@
 # Review added items
 
-Owner: Noah Roberts
-Path: short
+- Owner: Noah Roberts
+- Path: short
 
 ## Why
 

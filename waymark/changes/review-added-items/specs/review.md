@@ -1,6 +1,6 @@
 # Review
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Review of items added after a review
 Every `(review)` and `(self-review)` record SHALL name the items it covers, as `covers <item> <item>...` before who wrote it; `wm` SHALL write every item of the change at the time, or the items that review was of. A record without `covers` SHALL cover every item. When every item is ticked and some item is covered by no passing review or self-review, `wm instructions` SHALL make the next step a review of those items only, at the change's level, and the record it writes SHALL cover just them. `wm archive` SHALL refuse such a change unless the human overrides it with a reason, as it refuses an unreviewed one.
