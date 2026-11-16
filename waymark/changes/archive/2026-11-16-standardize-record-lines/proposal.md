@@ -51,3 +51,7 @@ This is the first change on the `record-format-and-skills` milestone. The later 
 - Code: `record/` (a records module, tasks, proposal, evidence, fingerprint, state), `services/` (lifecycle, check, migrations, pr), `hooks/decide.py` (the evidence guard and agent endings), `views/` and `cli.py`.
 - Assets: `wm-apply`, `wm-update`, `wm-propose`, `wm-archive`, and the `wm-implementer` and `wm-reviewer` definitions.
 - Docs: concepts, getting started, the smoke test, architecture, the README and the regenerated CLI and JSON references; the charter's constraints.
+
+## Outcome
+
+Every line wm writes is now a dated record, (kind) DATE [args] [by WHO]: text. Item records sit under their item, and change-level records sit in a ## Log that replaced ## Review. A records module defines each kind once. wm note, --by on every writing command, and wm check --fix (layout only, with the fingerprint taken over the standard layout) are new. Record format 2 is the only format wm reads. wm update migrated every change, archived ones too, and active changes were accepted again. Beyond the proposal, (synced) carries the re-stamped fingerprint so the Log stays append-only, implementers may run wm note, and --fix adds no blank line after headings. The first independent review asked for changes to 1.4, 2.1 and 2.2; the second passed. Item 2.3, added afterwards, closed that review's warnings and was checked by a separate read-only review, since wm doesn't ask for a new review when an item is added after a pass.
