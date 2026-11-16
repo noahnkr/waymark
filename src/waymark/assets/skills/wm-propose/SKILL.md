@@ -32,7 +32,7 @@ You are the planner. You draft every artifact of a change; the human reads them 
 ## Rules
 
 - Only the human accepts a change. Never run `wm accept`.
-- Don't tick items, and don't write `Accepted:`, `Blocked:`, `Spec gap:` or review lines. `wm` writes those.
+- Don't tick items, and don't write records such as `(accepted)`, `(blocked)` or `(review)`, or a `## Log` section. `wm` writes those.
 - Don't edit files under `waymark/specs/`. Write deltas in the change instead.
 - If the record doesn't say enough to draft something, ask the human. Don't guess.
 - Write no code in this skill.

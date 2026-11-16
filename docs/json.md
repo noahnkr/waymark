@@ -10,7 +10,7 @@ Every read command takes `--json`. Each payload starts with `schema` (its name) 
 | [`wm.inbox`](#wminbox) | 1 | `wm inbox` |
 | [`wm.ls`](#wmls) | 1 | `wm ls` |
 | [`wm.check`](#wmcheck) | 1 | `wm check` |
-| [`wm.show.change`](#wmshowchange) | 2 | `wm show` for a change |
+| [`wm.show.change`](#wmshowchange) | 3 | `wm show` for a change |
 | [`wm.show.spec`](#wmshowspec) | 1 | `wm show` for a spec |
 | [`wm.show.milestone`](#wmshowmilestone) | 1 | `wm show` for a milestone |
 | [`wm.show.exploration`](#wmshowexploration) | 1 | `wm show` for an exploration |
@@ -537,7 +537,7 @@ Printed by `wm show` for a change.
       "const": "wm.show.change"
     },
     "version": {
-      "const": 2
+      "const": 3
     },
     "name": {
       "type": "string"
@@ -905,12 +905,6 @@ Printed by `wm show` for a change.
               "null"
             ]
           },
-          "notes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "records": {
             "type": "array",
             "items": {
@@ -918,15 +912,27 @@ Printed by `wm show` for a change.
               "properties": {
                 "kind": {
                   "enum": [
-                    "review",
+                    "accepted",
+                    "synced",
+                    "override",
                     "self-review",
+                    "review",
+                    "resolved",
                     "reopened",
-                    "resolved"
+                    "blocked",
+                    "gap",
+                    "note"
                   ]
                 },
                 "date": {
                   "type": "string",
                   "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "verdict": {
                   "enum": [
@@ -976,6 +982,7 @@ Printed by `wm show` for a change.
               "required": [
                 "kind",
                 "date",
+                "by",
                 "verdict",
                 "text",
                 "items",
@@ -996,7 +1003,6 @@ Printed by `wm show` for a change.
           "repo",
           "blocked",
           "spec_gap",
-          "notes",
           "records"
         ],
         "additionalProperties": false
@@ -1029,89 +1035,101 @@ Printed by `wm show` for a change.
             "string",
             "null"
           ]
-        },
-        "records": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "kind": {
-                "enum": [
-                  "review",
-                  "self-review",
-                  "reopened",
-                  "resolved"
-                ]
-              },
-              "date": {
-                "type": "string",
-                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-              },
-              "verdict": {
-                "enum": [
-                  "pass",
-                  "changes",
-                  "spec-gap",
-                  null
-                ]
-              },
-              "text": {
-                "type": "string"
-              },
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "findings": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "severity": {
-                      "enum": [
-                        "critical",
-                        "warning",
-                        "suggestion"
-                      ]
-                    },
-                    "place": {
-                      "type": "string"
-                    },
-                    "text": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "severity",
-                    "place",
-                    "text"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            "required": [
-              "kind",
-              "date",
-              "verdict",
-              "text",
-              "items",
-              "findings"
-            ],
-            "additionalProperties": false
-          }
         }
       },
       "required": [
         "level",
         "reviewed",
         "reopen",
-        "needs_human",
-        "records"
+        "needs_human"
       ],
       "additionalProperties": false
+    },
+    "log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              "accepted",
+              "synced",
+              "override",
+              "self-review",
+              "review",
+              "resolved",
+              "reopened",
+              "blocked",
+              "gap",
+              "note"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verdict": {
+            "enum": [
+              "pass",
+              "changes",
+              "spec-gap",
+              null
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "enum": [
+                    "critical",
+                    "warning",
+                    "suggestion"
+                  ]
+                },
+                "place": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "severity",
+                "place",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "date",
+          "by",
+          "verdict",
+          "text",
+          "items",
+          "findings"
+        ],
+        "additionalProperties": false
+      }
     },
     "problems": {
       "type": "array",
@@ -1158,6 +1176,7 @@ Printed by `wm show` for a change.
     "design",
     "items",
     "review",
+    "log",
     "problems"
   ],
   "additionalProperties": false

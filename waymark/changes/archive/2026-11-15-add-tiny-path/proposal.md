@@ -2,7 +2,6 @@
 
 Owner: Noah Roberts
 Review: independent
-Accepted: 2026-11-15 by Noah Roberts (fingerprint: 151e869beea32b3c)
 
 ## Why
 

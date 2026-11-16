@@ -37,7 +37,7 @@ def test_init_creates_the_settings_and_a_charter_skeleton(tmp_path: Path) -> Non
     assert record.problems == ()
     assert record.config is not None
     assert record.config.wm_version == __version__
-    assert record.config.record_format == 1
+    assert record.config.record_format == 2
     assert record.layout is Layout.REPO
     assert record.charter is not None
     assert record.charter.title == tmp_path.name
@@ -220,7 +220,7 @@ def test_init_in_a_clone_is_refused_when_the_record_needs_migrating(
 ) -> None:
     """Scenario: Record needs migrating."""
     clone = cloned_project(tmp_path)
-    monkeypatch.setattr(common, "RECORD_FORMAT", 2)
+    monkeypatch.setattr(common, "RECORD_FORMAT", 3)
     with pytest.raises(Refusal, match='Run "wm update"'):
         setup.init_project(clone)
     assert not (clone / ".claude").exists()
@@ -535,7 +535,7 @@ def test_reads_still_work_when_the_pinned_version_differs(project: Workspace) ->
 
 
 def test_writes_are_refused_when_the_record_format_differs(project: Workspace) -> None:
-    project.replace("config.toml", "record_format = 1", "record_format = 2")
+    project.replace("config.toml", "record_format = 2", "record_format = 1")
     with pytest.raises(Refusal, match="wm update"):
         setup.create_change(project.root, "add-limit")
 

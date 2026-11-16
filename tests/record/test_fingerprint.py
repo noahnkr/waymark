@@ -1,13 +1,10 @@
 """The acceptance fingerprint: what withdraws acceptance, and what doesn't."""
 
-import datetime
-
 import pytest
 
 from tests.support import TASKS, Workspace, delta, requirement, spec
 from waymark.record.deltas import merge_delta
 from waymark.record.fingerprint import change_fingerprint
-from waymark.record.proposal import format_acceptance
 from waymark.record.state import AcceptanceState, StepKind
 
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
@@ -122,9 +119,7 @@ def test_adding_a_review_line_withdraws_acceptance(
 
 
 def test_item_added(workspace: Workspace) -> None:
-    accepted(workspace).write(
-        "changes/add-limit/tasks.md", TASKS + "- [ ] 1.3 Announce it\n  - Criteria: posted\n"
-    )
+    accepted(workspace).write_tasks(TASKS + "- [ ] 1.3 Announce it\n  - Criteria: posted\n")
     assert acceptance(workspace) is AcceptanceState.VALID
     tasks = "changes/add-limit/tasks.md"
     workspace.replace(tasks, "- [ ] 1.1", "- [x] 1.1")
@@ -143,25 +138,8 @@ def test_accepted_item_edited(workspace: Workspace) -> None:
 
 
 def test_accepted_item_removed(workspace: Workspace) -> None:
-    accepted(workspace).write("changes/add-limit/tasks.md", TASKS.split("- [ ] 1.2", maxsplit=1)[0])
+    accepted(workspace).write_tasks(TASKS.split("- [ ] 1.2", maxsplit=1)[0])
     assert acceptance(workspace) is AcceptanceState.WITHDRAWN
-
-
-def test_older_acceptance_line(workspace: Workspace) -> None:
-    workspace.change()
-    record = workspace.record()
-    change = record.changes["add-limit"]
-    fingerprint = change_fingerprint(change, record.specs, record.default_review)
-    line = format_acceptance(datetime.date(2026, 1, 15), "Sam Doe", fingerprint)
-    assert "items:" not in line
-    workspace.replace(
-        "changes/add-limit/proposal.md", "Owner: Sam Doe\n", f"Owner: Sam Doe\n{line}\n"
-    )
-    assert acceptance(workspace) is AcceptanceState.VALID
-    assert workspace.record().problems == ()
-    workspace.write("changes/add-limit/tasks.md", TASKS + "- [ ] 1.3 Announce it\n")
-    assert acceptance(workspace) is AcceptanceState.WITHDRAWN
-    assert workspace.record().problems == ()
 
 
 def test_listing_every_item_fingerprints_like_no_list_but_for_order(workspace: Workspace) -> None:
@@ -188,21 +166,25 @@ def test_ticks_blockers_review_records_and_notes_keep_acceptance(workspace: Work
         tasks,
         "  - Verify: a test covers fifty-one matches\n",
         "  - Verify: a test covers fifty-one matches\n"
-        "  - Note: the cap sits after sorting\n"
-        "  - (self-review) 2026-01-16: matches the criteria\n",
+        "  - (note) 2026-01-16 by Sam Doe: the cap sits after sorting\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.replace(
         tasks,
         "1.2 Document the limit\n",
-        "1.2 Document the limit\n  - Blocked: waiting for wording\n",
+        "1.2 Document the limit\n  - (blocked) 2026-01-16 by Sam Doe: waiting for wording\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.write(
         tasks,
-        workspace.read(tasks) + "\n## Review\n\n- (self-review) 2026-01-17: fine\n",
+        workspace.read(tasks) + "- (self-review) 2026-01-17 by Sam Doe: fine\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
+    assert workspace.record().changes["add-limit"].problems == ()
+    assert [r.kind.value for r in workspace.record().changes["add-limit"].tasks.log] == [  # type: ignore[union-attr]
+        "accepted",
+        "self-review",
+    ]
 
 
 def test_writing_the_outcome_keeps_acceptance(workspace: Workspace) -> None:
@@ -222,10 +204,10 @@ def test_line_endings_do_not_change_the_fingerprint(workspace: Workspace) -> Non
 
 def test_tampered_fingerprint_is_not_a_valid_acceptance(workspace: Workspace) -> None:
     accepted(workspace)
-    text = workspace.read("changes/add-limit/proposal.md")
-    start = text.index("(fingerprint: ") + len("(fingerprint: ")
+    text = workspace.read("changes/add-limit/tasks.md")
+    start = text.index(" fingerprint ") + len(" fingerprint ")
     workspace.write(
-        "changes/add-limit/proposal.md", text[:start] + "0000000000000000" + text[start + 16 :]
+        "changes/add-limit/tasks.md", text[:start] + "0000000000000000" + text[start + 16 :]
     )
     assert acceptance(workspace) is AcceptanceState.WITHDRAWN
 

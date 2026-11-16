@@ -1,16 +1,12 @@
 """Proposals, designs, the charter, milestones and explorations."""
 
-import datetime
-
 from tests.support import CHARTER, DESIGN, document, proposal
 from waymark.record.charter import parse_charter
 from waymark.record.design import parse_design
 from waymark.record.explorations import Exploration, parse_exploration
 from waymark.record.milestones import parse_goal, parse_roadmap
-from waymark.record.proposal import Proposal, format_acceptance, parse_proposal
+from waymark.record.proposal import Proposal, parse_proposal
 from waymark.record.terms import ReviewLevel, Step
-
-ACCEPTED = "Accepted: 2026-01-15 by Sam Doe (fingerprint: 0123456789abcdef)"
 
 EXPLORATION = """# Paging
 
@@ -54,7 +50,6 @@ def test_proposal_has_an_owner_and_its_required_sections() -> None:
     assert parsed.problems == ()
     assert parsed.owner == "Sam Doe"
     assert parsed.sections["Why"] == "Long result lists are slow."
-    assert parsed.acceptance is None
     assert parsed.outcome is None
     assert not parsed.short_path
 
@@ -77,23 +72,6 @@ def test_proposal_outcome_is_optional_until_archive() -> None:
     assert parse(proposal(outcome="Shipped as planned.")).outcome == "Shipped as planned."
 
 
-def test_proposal_acceptance_line_holds_date_person_and_fingerprint() -> None:
-    parsed = parse(proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n{ACCEPTED}\n"))
-    assert parsed.problems == ()
-    assert parsed.acceptance is not None
-    assert parsed.acceptance.date == datetime.date(2026, 1, 15)
-    assert parsed.acceptance.who == "Sam Doe"
-    assert parsed.acceptance.fingerprint == "0123456789abcdef"
-    assert format_acceptance(datetime.date(2026, 1, 15), "Sam Doe", "0123456789abcdef") == ACCEPTED
-
-
-def test_proposal_acceptance_line_that_breaks_the_format_is_malformed_evidence() -> None:
-    broken = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nAccepted: yes, looks good\n")
-    parsed = parse(broken)
-    assert [problem.code for problem in parsed.problems] == ["malformed-evidence"]
-    assert parsed.acceptance is None
-
-
 def test_proposal_marks_the_short_path_with_a_path_line() -> None:
     assert parse(proposal(short=True)).short_path
     assert not parse(
@@ -109,11 +87,9 @@ def test_proposal_impact_can_state_no_spec_changes() -> None:
     assert not parse(proposal()).no_spec_changes
 
 
-def test_accepted_text_leaves_out_the_acceptance_line_and_the_outcome() -> None:
+def test_accepted_text_leaves_out_the_outcome() -> None:
     plain = parse(proposal())
-    accepted = parse(
-        proposal(outcome="Shipped.").replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n{ACCEPTED}\n")
-    )
+    accepted = parse(proposal(outcome="Shipped."))
     assert accepted.accepted_text().rstrip("\n") == plain.accepted_text().rstrip("\n")
     assert "Owner: Sam Doe" in accepted.accepted_text()
 
@@ -242,17 +218,3 @@ def test_proposal_review_line_sets_the_change_review_level() -> None:
     assert proposal_codes(
         proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: strict\n")
     ) == ["invalid-review-level"]
-
-
-def test_acceptance_line_names_the_items_it_covers() -> None:
-    line = format_acceptance(
-        datetime.date(2026, 1, 15), "Sam Doe", "0123456789abcdef", ["1.1", "2.1"]
-    )
-    assert line == "Accepted: 2026-01-15 by Sam Doe (fingerprint: 0123456789abcdef; items: 1.1 2.1)"
-    parsed = parse(proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n{line}\n"))
-    assert parsed.problems == ()
-    assert parsed.acceptance is not None
-    assert parsed.acceptance.items == ("1.1", "2.1")
-    older = parse(proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n{ACCEPTED}\n"))
-    assert older.acceptance is not None
-    assert older.acceptance.items is None

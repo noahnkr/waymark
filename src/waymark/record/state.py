@@ -17,7 +17,8 @@ from waymark.record.links import resolve
 from waymark.record.milestones import Milestone
 from waymark.record.names import parse_archive_name
 from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, Record
-from waymark.record.tasks import Item, RecordKind, ReviewRecord
+from waymark.record.records import RecordKind
+from waymark.record.tasks import Item, ReviewRecord
 from waymark.record.terms import Phase, ReviewLevel, Verdict
 
 ESCALATE_AFTER_CHANGES = 2
@@ -230,7 +231,7 @@ def item_state(item: Item, review_records: tuple[ReviewRecord, ...] = ()) -> Ite
 
 
 def review_state(change: Change, default: ReviewLevel) -> ReviewState:
-    """Derive the change's review from the records in its Review section.
+    """Derive the change's review from the records in its Log.
 
     A ``(resolved)`` record closes whatever came before it: requests for changes
     are counted from the last one on.
@@ -272,7 +273,7 @@ def review_state(change: Change, default: ReviewLevel) -> ReviewState:
 
 def acceptance_state(record: Record, change: Change) -> AcceptanceState:
     """Whether the change has an acceptance, and whether it still covers the change."""
-    acceptance = change.proposal.acceptance if change.proposal else None
+    acceptance = change.acceptance
     if acceptance is None:
         return AcceptanceState.MISSING
     current = change_fingerprint(change, record.specs, record.default_review, acceptance.items)
@@ -285,7 +286,7 @@ def mismatches(record: Record, change: Change) -> tuple[Conflict, ...]:
     Once a change is synced, its deltas are already in the specs; a mismatch is
     then a spec that has moved on since.
     """
-    synced = change.proposal is not None and change.proposal.synced is not None
+    synced = change.synced is not None
     found: list[Conflict] = []
     for domain in sorted(change.deltas):
         delta = change.deltas[domain]
@@ -296,8 +297,8 @@ def mismatches(record: Record, change: Change) -> tuple[Conflict, ...]:
             if not delta_is_merged(spec, delta):
                 message = (
                     f'The change was synced, but the spec "{domain}" no longer matches its '
-                    "delta. Revise the delta to match the spec, or remove the "
-                    '"Synced:" line from the proposal and sync again.'
+                    "delta. Revise the delta to match the spec, or have the human remove the "
+                    '"(synced)" record from the task list\'s Log and sync again.'
                 )
                 found.append(Conflict(ConflictKind.MISMATCH, domain, None, (change.name,), message))
             continue

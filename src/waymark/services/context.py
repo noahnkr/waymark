@@ -20,6 +20,7 @@ from waymark.record.atlas import Location
 from waymark.record.changes import Change
 from waymark.record.links import LinkChecker
 from waymark.record.record import Record
+from waymark.record.records import RecordKind
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -28,7 +29,7 @@ from waymark.record.state import (
     ItemState,
     derive_state,
 )
-from waymark.record.tasks import Item, RecordKind, ReviewRecord
+from waymark.record.tasks import Item, ReviewRecord
 from waymark.record.terms import Layout, ReviewLevel, Step
 from waymark.record.text import Document
 from waymark.services.common import Refusal, find_change, find_item, repo_locations, state_of

@@ -125,9 +125,9 @@ def test_archive_override_passes_missing_reviews_and_records_the_reason(
     lifecycle.archive(
         project.root, NAME, LATER, outcome="Shipped.", override="reviewed in the pull request"
     )
-    text = project.read(f"{ARCHIVED}/proposal.md")
-    assert text.endswith(
-        "## Outcome\n\nShipped.\n\nReview override: reviewed in the pull request\n"
+    assert project.read(f"{ARCHIVED}/proposal.md").endswith("## Outcome\n\nShipped.\n")
+    assert project.read(f"{ARCHIVED}/tasks.md").endswith(
+        "- (override) 2026-02-01 by Sam Doe: reviewed in the pull request\n"
     )
     assert project.record().changes == {}
 
@@ -322,10 +322,9 @@ def test_sync_merges_the_deltas_and_keeps_the_change_active_and_accepted(
     assert [item.name for item in living.requirements] == ["Result limit", "Empty query", "Order"]
     assert "twenty" in living.requirements[0].statement
     change = record.changes[NAME]
-    assert change.proposal is not None
-    assert change.proposal.synced == LATER
-    assert change.proposal.acceptance is not None
-    assert change.proposal.acceptance.date == DAY
+    assert change.synced == LATER
+    assert change.acceptance is not None
+    assert change.acceptance.date == DAY
     state = project.change_state()
     assert state.acceptance is AcceptanceState.VALID
     assert state.applied
@@ -376,11 +375,12 @@ def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
     project.change()
     lifecycle.accept(project.root, NAME, DAY)
     tasks = f"changes/{NAME}/tasks.md"
-    project.write(tasks, project.read(tasks) + "- [ ] 1.3 Announce it\n")
+    project.replace(tasks, "\n## Log\n", "- [ ] 1.3 Announce it\n\n## Log\n")
     for number in ("1.1", "1.2", "1.3"):
         lifecycle.tick(project.root, NAME, number)
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     lifecycle.sync(project.root, NAME, DAY)
-    text = project.read(f"changes/{NAME}/proposal.md")
-    assert "; items: 1.1 1.2)" in text
+    text = project.read(tasks)
+    assert " items 1.1 1.2 by " in text
+    assert "- (synced) 2026-01-15 fingerprint " in text
     assert project.change_state(NAME).acceptance is AcceptanceState.VALID

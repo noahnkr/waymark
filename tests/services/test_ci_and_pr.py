@@ -10,6 +10,7 @@ from tests.conftest import git_init
 from tests.support import ATLAS_CONFIG, CONFIG, Workspace, delta, requirement
 from tests.views.validator import errors
 from waymark import __version__
+from waymark.record.terms import Verdict
 from waymark.services import integration, lifecycle
 from waymark.services.ci import WORKFLOW, add_workflow
 from waymark.services.common import Refusal
@@ -172,7 +173,26 @@ def test_pr_text_gives_the_changes_review_and_its_findings(project: Workspace) -
         project.root, NAME, "fine", DAY, findings=["warning: src/a.py:3: the name is vague"]
     )
     body = describe(project.record(), NAME)["body"]
-    assert "## Review\n\nSelf-reviewed: fine\n- warning: src/a.py:3: the name is vague" in body
+    assert (
+        "## Review\n\nSelf-reviewed: fine\n\n"
+        "- (self-review) 2026-01-15 by Sam Doe: fine\n"
+        "  - warning `src/a.py:3`: the name is vague\n"
+    ) in body
+
+
+def test_pr_text_lists_every_review_record(project: Workspace) -> None:
+    project.change()
+    lifecycle.accept(project.root, NAME, DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
+    lifecycle.reopen(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fixed", DAY, by="wm-reviewer")
+    body = describe(project.record(), NAME)["body"]
+    assert "- (review) 2026-01-15 changes 1.1 by Sam Doe: off by one\n" in body
+    assert "- (review) 2026-01-15 pass by wm-reviewer: fixed\n" in body
+    assert "(accepted)" not in body
 
 
 def archived(project: Workspace, outcome: str, day: datetime.date = DAY) -> None:

@@ -7,10 +7,9 @@ that aren't touched come back byte for byte, with their line endings.
 import re
 from collections.abc import Sequence
 
-from waymark.record.outline import parse_facts
-from waymark.record.proposal import ACCEPTED, OUTCOME, OWNER, PATH, REVIEW, SYNCED, Proposal
-from waymark.record.tasks import REVIEW_SECTION, Tasks
-from waymark.record.text import Document
+from waymark.record.proposal import OUTCOME, Proposal
+from waymark.record.tasks import LOG_SECTION, Tasks
+from waymark.record.text import Document, Section
 
 _BOX = re.compile(r"^- \[[ xX]\]")
 _FORMAT_LINE = re.compile(r"^record_format\s*=\s*\d+", re.MULTILINE)
@@ -29,58 +28,47 @@ def edit_item(
     number: str,
     *,
     ticked: bool | None = None,
-    remove: Sequence[str] = (),
     add: Sequence[str] = (),
 ) -> str:
-    """Change one item's evidence: its tick, its labeled lines, and new lines at its end."""
+    """Change one item's evidence: its tick, and records added at its end.
+
+    Records are never removed; a later record supersedes an earlier one.
+    """
     item = tasks.item(number)
     assert item is not None
     newline = tasks.doc.newline
     lines = _lines(tasks.doc)
     lines[item.end : item.end] = [f"  - {text}{newline}" for text in add]
-    spans = sorted((item.spans[label] for label in remove if label in item.spans), reverse=True)
-    for start, end in spans:
-        del lines[start:end]
     if ticked is not None:
         mark = "x" if ticked else " "
         lines[item.index] = _BOX.sub(f"- [{mark}]", lines[item.index], count=1)
     return "".join(lines)
 
 
-def add_review(tasks: Tasks, record: str, findings: Sequence[str] = ()) -> str:
-    """Append a record, and the findings under it, to the change's Review section.
+def append_log(tasks: Tasks, record: str, findings: Sequence[str] = ()) -> str:
+    """Append a record, and the findings under it, to the change's Log section.
 
     The section is created at the end of the task list when it isn't there yet.
     """
+    return _append_to_section(tasks, tasks.log_section, LOG_SECTION, record, findings)
+
+
+def _append_to_section(
+    tasks: Tasks, section: Section | None, title: str, record: str, findings: Sequence[str]
+) -> str:
     newline = tasks.doc.newline
     lines = _lines(tasks.doc)
     added = [f"- {record}{newline}", *(f"  - {finding}{newline}" for finding in findings)]
-    section = tasks.review_section
     if section is None:
         while lines and not lines[-1].strip():
             lines.pop()
-        return "".join([*lines, newline, f"## {REVIEW_SECTION}{newline}", newline, *added])
+        return "".join([*lines, newline, f"## {title}{newline}", newline, *added])
     end = section.end
     while end > section.body_start and not lines[end - 1].strip():
         end -= 1
     if end == section.body_start:
         added = [newline, *added]
     lines[end:end] = added
-    return "".join(lines)
-
-
-def set_fact(proposal: Proposal, key: str, line: str | None) -> str:
-    """Write, replace or remove one of wm's fact lines under a proposal's title."""
-    doc = proposal.doc
-    newline = doc.newline
-    lines = _lines(doc)
-    facts = parse_facts(doc, {OWNER, PATH, REVIEW, ACCEPTED, SYNCED}, [], prose=True)
-    if key in facts:
-        index = facts[key].index
-        lines[index : index + 1] = [] if line is None else [line + newline]
-    elif line is not None:
-        last = max(fact.index for fact in facts.values())
-        lines[last + 1 : last + 1] = [line + newline]
     return "".join(lines)
 
 

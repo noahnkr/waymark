@@ -64,7 +64,7 @@ def test_broken_links_are_errors(project: Workspace) -> None:
 
 def test_malformed_evidence_is_an_error(project: Workspace) -> None:
     project.change(tasks=HEAD + "- [x] 1.1 Cap it\n  - (review) approved by me\n")
-    assert findings(project) == [("error", "changes/add-limit/tasks.md", "malformed-evidence")]
+    assert findings(project) == [("error", "changes/add-limit/tasks.md", "malformed-record")]
 
 
 def test_unknown_build_tag_and_repeated_tag_are_errors(project: Workspace) -> None:

@@ -251,7 +251,10 @@ def test_override_archives_a_change_whose_review_is_missing(session: Session) ->
     assert "--override" in refusal
     session.run("archive", name, "--outcome", "Done.", "--override", "checked by hand")
     text = session.read(f"changes/archive/{TODAY}-{name}/proposal.md")
-    assert text.endswith("## Outcome\n\nDone.\n\nReview override: checked by hand\n")
+    assert text.endswith("## Outcome\n\nDone.\n")
+    tasks = session.read(f"changes/archive/{TODAY}-{name}/tasks.md")
+    assert tasks.endswith(": checked by hand\n")
+    assert f"- (override) {TODAY} by " in tasks
 
 
 def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:

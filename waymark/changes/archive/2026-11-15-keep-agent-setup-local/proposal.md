@@ -1,7 +1,6 @@
 # Keep agent setup local
 
 Owner: Noah Roberts
-Accepted: 2026-11-14 by Noah Roberts (fingerprint: 4608e9d6c619ddea)
 
 ## Why
 

@@ -211,7 +211,6 @@ def _item_lines(item: Payload, style: Style) -> list[str]:
     ):
         if item[key]:
             lines.append(style.paint(f"      {label}: {item[key]}", color))
-    lines += [f"      Note: {note}" for note in item["notes"]]
     for record in item["records"]:
         lines += _record_lines(record, "      ", style)
     return lines
@@ -221,10 +220,12 @@ def _record_lines(record: Payload, indent: str, style: Style) -> list[str]:
     verdict = f" {record['verdict']}" if record["verdict"] else ""
     named = f" {' '.join(record['items'])}" if record["items"] else ""
     text = f": {record['text']}" if record["text"] else ""
-    lines = [style.paint(f"{indent}({record['kind']}) {record['date']}{verdict}{named}{text}", DIM)]
+    by = f" by {record['by']}" if record["by"] else ""
+    head = f"{indent}({record['kind']}) {record['date']}{verdict}{named}{by}{text}"
+    lines = [style.paint(head, DIM)]
     for finding in record["findings"]:
         color = RED if finding["severity"] == "critical" else YELLOW
-        line = f"{indent}  {finding['severity']}: {finding['place']}: {finding['text']}"
+        line = f"{indent}  {finding['severity']} `{finding['place']}`: {finding['text']}"
         lines.append(style.paint(line, color))
     return lines
 
@@ -237,7 +238,14 @@ def _review_section(review: Payload, style: Style) -> list[str]:
         lines.append(style.paint(f"  To rebuild: {', '.join(review['reopen'])}", YELLOW))
     if review["needs_human"]:
         lines.append(style.paint(f"  Needs you: {review['needs_human']}", YELLOW))
-    for record in review["records"]:
+    return lines
+
+
+def _log_section(log: list[Payload], style: Style) -> list[str]:
+    if not log:
+        return []
+    lines = ["", style.paint("Log", BOLD)]
+    for record in log:
         lines += _record_lines(record, "  ", style)
     return lines
 
@@ -288,6 +296,7 @@ def show_change(payload: Payload, style: Style) -> str:  # noqa: PLR0912 - one p
         for item in payload["items"]:
             lines += _item_lines(item, style)
         lines += _review_section(payload["review"], style)
+    lines += _log_section(payload["log"], style)
     if payload["problems"]:
         lines += ["", style.paint("Problems", BOLD)]
         lines += [

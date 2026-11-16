@@ -38,7 +38,7 @@ Repeat until `wm instructions --change <name> --json` says the step is `archive`
 - Start the `wm-implementer` agent with a prompt of exactly `<name> <item>` and nothing else, for example `add-search-limit 1.2`. It builds its own context from the record.
 - When it returns, run `wm show <name> --json` and look at the item:
   - ticked: commit it and go on;
-  - a `Blocked:` or `Spec gap:` line: that item waits on the human; go on to the next step;
+  - an open `(blocked)` or `(gap)` record under it: that item waits on the human; go on to the next step;
   - neither, and the agent reported `partial`: delegate the item again;
   - neither, and your tool recorded nothing: record the result yourself with `wm tick`, `wm block` or `wm gap`, using the agent's own words.
 
@@ -62,10 +62,18 @@ Once every item is ticked, the change is reviewed once, as a whole. `wm instruct
   - `pass`: the change is reviewed;
   - `changes`: the items it names are reopened and built again, then the change is reviewed again, independently;
   - a second `changes`, or `spec-gap`: it goes to the human.
-  If your tool recorded nothing, run `wm verdict <name> <verdict> "<the reviewer's reasons>"` with the reviewer's own words, its `--items` and its `--finding` lines.
+  If your tool recorded nothing, run `wm verdict <name> <verdict> "<the reviewer's reasons>" --by wm-reviewer` with the reviewer's own words, its `--items` and its `--finding` lines.
 - **Level `none`.** No review is needed; the step is skipped.
 
 Commit the review record once it is written.
+
+### What `wm` writes
+
+Every line `wm` writes is a dated record, `(kind) YYYY-MM-DD [<args>] [by <who>]: <text>`. Records about one item sit under it: `(blocked)`, `(gap)`, `(note)`, `(reopened)` and `(resolved)`. Records about the whole change sit in the `## Log` at the end of the task list: `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)` and `(override)`. Records are never edited or removed; a later one supersedes an earlier one, so `wm resolve` adds a `(resolved)` record and the blocker stays.
+
+- Leave a note on an unfinished item with `wm note <name> <item> "<text>"`.
+- `by` is your git name. Pass `--by "<name>"` to any writing command when someone else did the work, such as `--by wm-reviewer` when you record a reviewer's verdict for it.
+- `wm check --fix` puts the record in its standard layout when the human asks; it never changes wording.
 
 ### Step `resolve-items`
 

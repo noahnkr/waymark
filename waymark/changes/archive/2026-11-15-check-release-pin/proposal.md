@@ -2,7 +2,6 @@
 
 Owner: Noah Roberts
 Path: short
-Accepted: 2026-11-15 by Noah Roberts (fingerprint: 4ba87b480cc42c09)
 
 ## Why
 

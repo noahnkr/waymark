@@ -16,8 +16,8 @@ from waymark.record.changes import Change
 from waymark.record.config import RECORD_DIR
 from waymark.record.proposal import WHAT_CHANGES, WHY
 from waymark.record.record import Record
+from waymark.record.records import RecordKind
 from waymark.record.state import review_state
-from waymark.record.tasks import RecordKind
 from waymark.record.terms import Layout, ReviewLevel
 from waymark.services.common import Refusal, find_active_or_archived, repo_locations
 
@@ -45,7 +45,10 @@ def _web(folder: Path | None) -> str | None:
 
 
 def _review_lines(record: Record, change: Change) -> list[str]:
-    """One line on the change's review: its level, and how it came out."""
+    """The change's review: how it came out, then every review record with its findings.
+
+    An override is said once, after the list.
+    """
     review = review_state(change, record.default_review)
     records = change.tasks.review_records if change.tasks else ()
     last = records[-1] if records else None
@@ -59,9 +62,19 @@ def _review_lines(record: Record, change: Change) -> list[str]:
         text = f"Self-reviewed: {last.text}"
     else:
         text = f"Reviewed (level {review.level})."
-    findings = [f for record in records[-1:] for f in record.findings]
     lines = ["", "## Review", "", text]
-    lines += [f"- {f.severity.value}: {f.place}: {f.text}" for f in findings]
+    if change.tasks is not None:
+        written = change.tasks.doc.lines
+        shown = [record for record in change.tasks.log if record in records]
+        if shown:
+            lines.append("")
+        for shown_record in shown:
+            lines.append(written[shown_record.index].text.strip())
+            lines += [f"  {written[f.index].text.strip()}" for f in shown_record.findings]
+    override = change.tasks.latest(RecordKind.OVERRIDE) if change.tasks else None
+    if override is not None:
+        by = f" by {override.who}" if override.who else ""
+        lines += ["", f"Archived without its review{by}: {override.text}"]
     return lines
 
 

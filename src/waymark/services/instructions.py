@@ -104,8 +104,8 @@ def _drafting(
         guidance = [
             "Fill in every section of the proposal; leave the Owner line as it is.",
             'Under Impact, name the specs the change touches, or write "No spec changes".',
-            "Don't write the Accepted line or the Outcome section; wm writes the first, and "
-            "the second comes at archive.",
+            "Don't write records such as (accepted), a Log section or the Outcome section; wm "
+            "writes the records in the task list's Log, and the outcome comes at archive.",
             f"The change is reviewed once, as a whole, at the project's default level ({default}) "
             'unless a "Review: self|independent|none" line under the Owner line says otherwise. '
             "Suggest independent when " + "; or ".join(_RISK_SIGNALS) + ".",

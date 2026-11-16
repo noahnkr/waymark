@@ -7,8 +7,10 @@ from pathlib import Path
 
 import pytest
 
+from tests.support import Workspace, proposal
 from waymark import __version__
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
+from waymark.services import common
 
 
 def run_module(*args: str) -> subprocess.CompletedProcess[str]:
@@ -164,3 +166,53 @@ def test_wm_update_leaves_the_git_hooks_wm_0_1_1_installed_alone(
     assert "Everything is up to date." in capsys.readouterr().out
     assert git(root, "config", "--local", "core.hooksPath").stdout.strip() == ".waymark/hooks"
     assert {path.name: path.read_bytes() for path in hooks.iterdir()} == before
+
+
+def test_wm_note_and_by_write_records(
+    project: Workspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """wm note writes a (note) record, and --by names who wrote a record."""
+    monkeypatch.setattr(common, "RECORD_FORMAT", 2)
+    project.write(
+        "config.toml",
+        project.read("config.toml").replace("record_format = 1", "record_format = 2"),
+    )
+    project.change()
+    monkeypatch.chdir(project.root)
+    assert main(["accept", "add-limit"]) == EXIT_OK
+    assert main(["note", "add-limit", "1.2", "half done", "--by", "Ada Lovelace"]) == EXIT_OK
+    assert main(["block", "add-limit", "1.2", "the key", "--by", "Ada: the planner"]) == (
+        EXIT_REFUSED
+    )
+    tasks = project.read("changes/add-limit/tasks.md")
+    assert " by Ada Lovelace: half done\n" in tasks
+    assert "(note) " in tasks
+    assert "(blocked)" not in tasks
+    assert 'holds ": "' in capsys.readouterr().err
+
+
+def test_wm_check_fix_reports_what_it_fixed(
+    project: Workspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """wm check --fix names each fixed file, then reports the check."""
+    project.change(proposal_text=proposal().replace("Paging.", "Paging.   "))
+    monkeypatch.chdir(project.root)
+    assert main(["check", "--fix"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Fixed changes/add-limit/proposal.md: trailing spaces." in out
+    assert main(["check", "--fix"]) == EXIT_OK
+    assert "Nothing to fix" in capsys.readouterr().out
+    assert main(["check", "--fix", "--json"]) == EXIT_REFUSED
+
+
+def test_scenario_error_that_cant_be_fixed(
+    project: Workspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    broken = proposal().replace("Paging.", "Paging, see [the plan](missing.md).  ")
+    project.change(proposal_text=broken)
+    monkeypatch.chdir(project.root)
+    assert main(["check", "--fix"]) == EXIT_REFUSED
+    out = capsys.readouterr().out
+    assert "trailing spaces" in out
+    assert "broken-link" in out
+    assert "[the plan](missing.md)" in project.read("changes/add-limit/proposal.md")

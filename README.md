@@ -48,7 +48,7 @@ Accepted "add-result-limit". Its items can now be applied.
 # A reviewer agent that never saw the build checks the whole change and
 # ends with CHANGE: add-result-limit, then
 #   VERDICT: pass: cap and order hold; the scenario is covered by the test
-# wm writes the verdict in the task list's Review section.
+# wm writes the verdict as a record in the task list's Log.
 
 $ wm status
 ── Changes in flight ───────────────────────────────────────────────────
@@ -70,7 +70,6 @@ The files behind it, all plain markdown in `waymark/`:
 
 Owner: Alex Example
 Review: independent
-Accepted: 2026-01-15 by Alex Example (fingerprint: e87258930fc50aef; items: 1.1 1.2)
 
 ## Why
 
@@ -155,9 +154,10 @@ Sorting every match still costs memory on very large result sets.
 - [x] 1.2 Name the limit in the help text
   - Criteria: the search help says fifty
 
-## Review
+## Log
 
-- (review) 2026-01-15 pass: cap and order hold; the scenario is covered by the test
+- (accepted) 2026-01-15 fingerprint 256fef147180328e items 1.1 1.2 by Alex Example
+- (review) 2026-01-15 pass by Alex Example: cap and order hold; the scenario is covered by the test
 ```
 
 </details>

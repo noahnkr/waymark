@@ -10,7 +10,17 @@ from waymark.record.design import Design, parse_design
 from waymark.record.files import RecordFiles
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.problems import WHOLE_FILE, Problem
-from waymark.record.proposal import PATH, REVIEW, SHORT, Proposal, parse_proposal
+from waymark.record.proposal import (
+    ACCEPTED,
+    PATH,
+    REVIEW,
+    SHORT,
+    SYNCED,
+    Acceptance,
+    Proposal,
+    parse_proposal,
+)
+from waymark.record.records import RecordKind
 from waymark.record.tasks import Tasks, parse_tasks
 from waymark.record.terms import Layout, ReviewLevel
 
@@ -36,6 +46,30 @@ class Change:
     design: Design | None
     tasks: Tasks | None
     problems: tuple[Problem, ...]
+
+    @property
+    def acceptance(self) -> Acceptance | None:
+        """The acceptance that counts: the latest ``(accepted)`` record in the Log.
+
+        A ``(synced)`` record after it carries the fingerprint stamped again for
+        the merged specs.
+        """
+        if self.tasks is None:
+            return None
+        record = self.tasks.latest(RecordKind.ACCEPTED)
+        if record is None or record.fingerprint is None:
+            return None
+        fingerprint = record.fingerprint
+        synced = self.tasks.latest(RecordKind.SYNCED)
+        if synced is not None and synced.fingerprint and synced.index > record.index:
+            fingerprint = synced.fingerprint
+        return Acceptance(record.date, record.who or "", fingerprint, record.index, record.covers)
+
+    @property
+    def synced(self) -> datetime.date | None:
+        """When the change's deltas were merged into the specs, if they were."""
+        record = self.tasks.latest(RecordKind.SYNCED) if self.tasks else None
+        return record.date if record else None
 
     @property
     def short_path(self) -> bool:
@@ -119,18 +153,6 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
                 f'"{REVIEW}: none".',
             )
         )
-    for item in tasks.items if tasks else ():
-        if item.level_tag is not None:
-            problems.append(
-                Problem(
-                    tasks.doc.path if tasks else change.path,
-                    item.index + 1,
-                    "obsolete-review-tag",
-                    f"Item {item.number} has a review: tag, but a change is reviewed as a "
-                    f'whole now. Remove the tag, and set the level with a "{REVIEW}: <level>" '
-                    "line in the proposal.",
-                )
-            )
     if config is None:
         return
     atlas = config.layout is Layout.ATLAS
@@ -216,7 +238,27 @@ def load_change(
             else:
                 tasks = parse_tasks(doc)
                 problems.extend(tasks.problems)
+    if proposal is not None:
+        _old_proposal_lines(proposal, problems)
     change = Change(name, path, archived_on, proposal, deltas, design, tasks, ())
     if archived_on is None:
         _check_against_config(change, config, problems)
     return Change(name, path, archived_on, proposal, deltas, design, tasks, tuple(sorted(problems)))
+
+
+def _old_proposal_lines(proposal: Proposal, problems: list[Problem]) -> None:
+    """A proposal holds no records; report old acceptance, sync and override lines."""
+    for index, line in enumerate(proposal.doc.lines):
+        if line.in_fence:
+            continue
+        if line.text.startswith((f"{ACCEPTED}:", f"{SYNCED}:", "Review override:")):
+            problems.append(
+                Problem(
+                    proposal.doc.path,
+                    index + 1,
+                    "old-record-format",
+                    'This line is in the old record format. Run "wm update" to migrate the '
+                    "record; wm keeps the acceptance, the sync and the override as records in "
+                    "the task list's Log section.",
+                )
+            )

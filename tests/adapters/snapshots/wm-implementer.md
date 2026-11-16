@@ -23,13 +23,12 @@ If the command is refused, don't work around it: end with a `RESULT: blocked` li
 - Follow the project's context and rules from the pack.
 - Stay inside your item. If you see other work that is needed, say so in your note; don't do it.
 - If your item names a repo, the pack gives that repo's folder. Edit only inside that folder; work in other repos belongs to other items.
-- You may add notes for whoever comes next as `  - Note: <text>` lines under your own item in the change's `tasks.md`.
+- To leave a note for whoever comes next, run `wm note <change> <item> "<text>" --by wm-implementer` for your own item. It is the one `wm` command you may run that writes. Your `partial` result is written as a note too.
 
 ## What you must not do
 
-- Don't edit any other file in the record: not the proposal, the deltas, the design, the specs or the charter.
-- Don't tick your item, and don't write `Blocked:`, `Spec gap:` or review lines. `wm` writes those from your result.
-- Don't run `wm` commands that write. Reading commands such as `wm show` and `wm context` are fine.
+- Don't edit any file in the record: not the task list, the proposal, the deltas, the design, the specs or the charter. Every line `wm` writes there is a dated record, such as `(blocked) 2026-11-20 by wm-implementer: <reason>`, and `wm` writes it from your result.
+- Don't run `wm` commands that write, apart from `wm note`. Reading commands such as `wm show` and `wm context` are fine.
 - Don't commit and don't push.
 - Don't guess. If the record doesn't say enough to build the item, that is a spec gap: stop and report it.
 

@@ -33,12 +33,12 @@ When every item of an accepted change is ticked and the change isn't reviewed, `
 - THEN the step is to apply item 1.2, not a review
 
 ### Requirement: Review recorded in the task list
-`wm` SHALL write the review of a change as a `(review)` or `(self-review)` line in a `## Review` section at the end of the change's task list, creating the section if needed. It SHALL write each finding under its record as a sub-line with a severity (`critical`, `warning` or `suggestion`), a place and a text. It SHALL refuse a `pass` verdict, or a self-review, that comes with a critical finding.
+`wm` SHALL write the review of a change as a `(review)` or `(self-review)` record in the `## Log` section at the end of the change's task list, creating the section if needed. It SHALL write each finding under its record as a sub-line with a severity (`critical`, `warning` or `suggestion`), its place in backticks, and a text. It SHALL refuse a `pass` verdict, or a self-review, that comes with a critical finding.
 
 #### Scenario: Self-review with a finding
 - GIVEN an accepted change at review level `self` with every item ticked
 - WHEN the planner runs `wm review <change> --self "<summary>" --finding "warning: src/a.py:12: <text>"`
-- THEN the task list ends with a `## Review` section holding a `(self-review)` line with the summary and, under it, the warning with its place and text
+- THEN the task list ends with a `## Log` section holding a `(self-review)` record with the summary and, under it, ``- warning `src/a.py:12`: <text>``
 
 #### Scenario: Pass with a critical finding
 - GIVEN a change waiting for an independent review
@@ -62,17 +62,14 @@ A second `changes` verdict on a change, or a `spec-gap` verdict, SHALL send the 
 - THEN `wm inbox` lists the change with the verdict's reasons, and `wm instructions` names no step for the planner
 
 ### Requirement: Archive needs the change's review
-`wm archive` SHALL refuse a change that needs a review and has no passing one, unless the human overrides it with a reason, which is written into the outcome. A change at level `none` SHALL need no review.
+`wm archive` SHALL refuse a change that needs a review and has no passing one, unless the human overrides it with a reason. The override SHALL be written as an `(override)` record in the change's Log, and `wm pr` SHALL show it. A change at level `none` SHALL need no review.
 
 #### Scenario: Not reviewed
 - GIVEN a change at review level `self` with every item ticked and no review
 - WHEN `wm archive <change>` runs without an override
 - THEN it is refused, and the reason names the missing review
 
-### Requirement: No review tag on items
-In an active change, a `review:` tag on a task item SHALL be reported by `wm check` as an error that says the review level is now set in the proposal. Archived changes SHALL be shown as they were written, including their item reviews.
-
-#### Scenario: Old tag
-- GIVEN an active change with an item ending in `` `review: independent` ``
-- WHEN `wm check` runs
-- THEN it reports an error on that item that points to the proposal's `Review:` line
+#### Scenario: Overridden
+- GIVEN a change at review level `self` with every item ticked and no review
+- WHEN the human runs `wm archive <change> --override "<reason>"`
+- THEN the archived change's Log holds an `(override)` record with the reason, and `wm pr` shows it

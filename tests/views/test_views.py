@@ -268,8 +268,9 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
         "reviewed": False,
         "reopen": [],
         "needs_human": None,
-        "records": [],
     }
+    assert [record["kind"] for record in payload["log"]] == ["accepted"]
+    assert [record["kind"] for record in items["1.2"]["records"]] == ["blocked"]
     text = render.to_text(payload, PLAIN)
     for expected in ("Change: add-order", "Owner: Sam Doe", "Blocked: waiting for the wording"):
         assert expected in text
@@ -294,23 +295,22 @@ def test_show_change_gives_the_changes_review_and_its_findings(project: Workspac
         "reviewed": True,
         "reopen": [],
         "needs_human": None,
-        "records": [
-            {
-                "kind": "review",
-                "date": "2026-01-15",
-                "verdict": "pass",
-                "text": "edge covered",
-                "items": [],
-                "findings": [
-                    {"severity": "suggestion", "place": "docs/search.md", "text": "name the edge"}
-                ],
-            }
+    }
+    accepted, review = payload["log"]
+    assert (accepted["kind"], accepted["items"]) == ("accepted", ["1.1"])
+    assert {key: review[key] for key in ("kind", "date", "verdict", "text", "findings")} == {
+        "kind": "review",
+        "date": "2026-01-15",
+        "verdict": "pass",
+        "text": "edge covered",
+        "findings": [
+            {"severity": "suggestion", "place": "docs/search.md", "text": "name the edge"}
         ],
     }
     text = render.to_text(payload, PLAIN)
     assert "Level: independent; reviewed" in text
-    assert "(review) 2026-01-15 pass: edge covered" in text
-    assert "suggestion: docs/search.md: name the edge" in text
+    assert f"(review) 2026-01-15 pass by {review['by']}: edge covered" in text
+    assert "suggestion `docs/search.md`: name the edge" in text
 
 
 def test_show_spec_includes_pending_deltas_and_history(project: Workspace) -> None:

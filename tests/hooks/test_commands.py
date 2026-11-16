@@ -140,6 +140,7 @@ def test_reading_commands_added_later_are_not_mistaken_for_writes(command: str) 
         "wm atlas point suite",
         "wm ci",
         "wm atlas",
+        'wm note add-limit 1.2 "half done"',
     ],
 )
 def test_writing_commands_added_later_are_found(command: str) -> None:
@@ -155,6 +156,7 @@ WRITES = frozenset(
         "tick",
         "block",
         "gap",
+        "note",
         "review",
         "verdict",
         "reopen",

@@ -13,15 +13,14 @@ from waymark.hooks import commands
 from waymark.hooks.events import ALLOW, Decision, Event, EventKind, Role
 from waymark.record import agents
 from waymark.record.atlas import contains
-from waymark.record.changes import TASKS_FILE
 from waymark.record.commits import commit_problem
 from waymark.record.config import CONFIG_FILE, parse_config
-from waymark.record.evidence import evidence_changes, only_adds_notes
+from waymark.record.evidence import evidence_changes
 from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
-from waymark.record.record import ARCHIVE, CHANGES, SPECS, Record, load_record
+from waymark.record.record import SPECS, Record, load_record
+from waymark.record.records import IMPLEMENTER, REVIEWER, parse_finding_argument
 from waymark.record.state import AcceptanceState, StepKind, derive_state
-from waymark.record.tasks import parse_finding
 from waymark.record.terms import Layout, Verdict
 from waymark.services import lifecycle
 from waymark.services.common import Done, Refusal, find_change, find_item, repo_locations
@@ -51,7 +50,7 @@ _AGENT_ROLES = {assets.IMPLEMENTER: IMPLEMENT, assets.REVIEWER: REVIEW}
 _HANDBACK_TRIES = 2
 """Refused handbacks before the agent is let go and the planner told to record its result."""
 _EVIDENCE_COMMANDS = (
-    "wm tick, wm block, wm gap, wm review, wm verdict, wm reopen or wm resolve; "
+    "wm tick, wm block, wm gap, wm note, wm review, wm verdict, wm reopen or wm resolve; "
     "accepting is for the human, with wm accept"
 )
 
@@ -217,15 +216,13 @@ def _edit(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one re
             "Specs are never edited by hand: they change only when a change is archived or "
             "synced. Write a delta in the change's specs folder instead."
         )
-    before, after = _new_text(RecordFiles(project.record_root), relative, event)
     if event.role is Role.IMPLEMENTER:
-        own_tasks = parts[0] == CHANGES and parts[1:2] != [ARCHIVE] and parts[-1] == TASKS_FILE
-        if not own_tasks or after is None or not only_adds_notes(before, after):
-            return _refuse(
-                'An implementer may add "  - Note: <text>" lines under its own item in the '
-                f"change's {TASKS_FILE}, and nothing else in the record. If the record needs "
-                "to change, end with RESULT: spec-gap and say what is missing."
-            )
+        return _refuse(
+            "An implementer doesn't edit the record. Leave a note on your item with "
+            '"wm note <change> <item> "<text>"", or end with RESULT: partial and a note; '
+            "if the record needs to change, end with RESULT: spec-gap and say what is missing."
+        )
+    before, after = _new_text(RecordFiles(project.record_root), relative, event)
     if after is None:
         return ALLOW
     changed = evidence_changes(relative, before, after)
@@ -299,7 +296,10 @@ def _command(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one
     if event.role is Role.PLANNER:
         return _commit_messages(project, event)
     writing = commands.writing_wm_call(event.command)
-    if writing is not None:
+    note_by_implementer = (
+        writing is not None and writing.subcommand == "note" and event.role is Role.IMPLEMENTER
+    )
+    if writing is not None and not note_by_implementer:
         return _refuse(
             f'"wm {writing.subcommand}" writes the record, and a delegated agent does not. '
             "wm records your result from your final lines. Reading commands such as "
@@ -343,7 +343,7 @@ def _record_verdict(project: Project, message: str, today: datetime.date) -> Don
     name = address[-1]
     word, named, note = outcome[-1]
     findings = _FINDING.findall(message)
-    unreadable = [text for text in findings if parse_finding(text) is None]
+    unreadable = [text for text in findings if parse_finding_argument(text) is None]
     if unreadable:
         raise Refusal(
             f'"FINDING: {unreadable[0]}" is not a finding wm can read. Write each one as '
@@ -351,7 +351,14 @@ def _record_verdict(project: Project, message: str, today: datetime.date) -> Don
         )
     items = re.findall(r"\d+\.\d+", named)
     return lifecycle.verdict(
-        project.root, name, Verdict(word), note, today, items=items, findings=findings
+        project.root,
+        name,
+        Verdict(word),
+        note,
+        today,
+        items=items,
+        findings=findings,
+        by=REVIEWER,
     )
 
 
@@ -368,10 +375,11 @@ def _record(project: Project, role: Role, message: str, today: datetime.date) ->
     if word == "done":
         return lifecycle.tick(root, name, number)
     if word == "blocked":
-        return lifecycle.block(root, name, number, note)
+        return lifecycle.block(root, name, number, note, today, by=IMPLEMENTER)
     if word == "spec-gap":
-        return lifecycle.report_gap(root, name, number, note)
-    return lifecycle.add_note(root, name, number, f"partial: {note}" if note else "partial")
+        return lifecycle.report_gap(root, name, number, note, today, by=IMPLEMENTER)
+    text = f"partial: {note}" if note else "partial"
+    return lifecycle.add_note(root, name, number, text, today, by=IMPLEMENTER)
 
 
 def _gave_up(role: Role, refusal: Refusal) -> Decision:

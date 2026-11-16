@@ -18,6 +18,7 @@ from waymark.services import atlas as atlas_service
 from waymark.services import ci as ci_service
 from waymark.services import context as context_service
 from waymark.services import doctor as doctor_service
+from waymark.services import fix as fix_service
 from waymark.services import instructions as instructions_service
 from waymark.services import integration, lifecycle, references, setup
 from waymark.services import pr as pr_service
@@ -131,7 +132,7 @@ def _new(args: argparse.Namespace) -> int:
 
 
 def _accept(args: argparse.Namespace) -> int:
-    return _report(lifecycle.accept(_here(), args.change, _today()))
+    return _report(lifecycle.accept(_here(), args.change, _today(), by=args.by))
 
 
 def _tick(args: argparse.Namespace) -> int:
@@ -139,16 +140,28 @@ def _tick(args: argparse.Namespace) -> int:
 
 
 def _block(args: argparse.Namespace) -> int:
-    return _report(lifecycle.block(_here(), args.change, args.item, args.reason))
+    done = lifecycle.block(_here(), args.change, args.item, args.reason, _today(), by=args.by)
+    return _report(done)
 
 
 def _gap(args: argparse.Namespace) -> int:
-    return _report(lifecycle.report_gap(_here(), args.change, args.item, args.note))
+    done = lifecycle.report_gap(_here(), args.change, args.item, args.note, _today(), by=args.by)
+    return _report(done)
+
+
+def _note(args: argparse.Namespace) -> int:
+    done = lifecycle.add_note(_here(), args.change, args.item, args.text, _today(), by=args.by)
+    return _report(done)
 
 
 def _review(args: argparse.Namespace) -> int:
     done = lifecycle.self_review(
-        _here(), args.change, args.self_summary, _today(), findings=args.finding or ()
+        _here(),
+        args.change,
+        args.self_summary,
+        _today(),
+        findings=args.finding or (),
+        by=args.by,
     )
     return _report(done)
 
@@ -163,25 +176,32 @@ def _verdict(args: argparse.Namespace) -> int:
         _today(),
         items=args.items or (),
         findings=args.finding or (),
+        by=args.by,
     )
     return _report(done)
 
 
 def _reopen(args: argparse.Namespace) -> int:
-    return _report(lifecycle.reopen(_here(), args.change, args.item, _today()))
+    return _report(lifecycle.reopen(_here(), args.change, args.item, _today(), by=args.by))
 
 
 def _resolve(args: argparse.Namespace) -> int:
-    return _report(lifecycle.resolve(_here(), args.change, args.item, args.decision, _today()))
+    done = lifecycle.resolve(_here(), args.change, args.item, args.decision, _today(), by=args.by)
+    return _report(done)
 
 
 def _sync(args: argparse.Namespace) -> int:
-    return _report(lifecycle.sync(_here(), args.change, _today()))
+    return _report(lifecycle.sync(_here(), args.change, _today(), by=args.by))
 
 
 def _archive(args: argparse.Namespace) -> int:
     done = lifecycle.archive(
-        _here(), args.change, _today(), outcome=args.outcome, override=args.override
+        _here(),
+        args.change,
+        _today(),
+        outcome=args.outcome,
+        override=args.override,
+        by=args.by,
     )
     return _report(done)
 
@@ -249,6 +269,14 @@ def _context(args: argparse.Namespace) -> int:
 
 
 def _check(args: argparse.Namespace) -> int:
+    if args.fix:
+        if args.json:
+            raise Refusal("--fix reports what it changed as text. Run it without --json.")
+        fixed = fix_service.fix_layout(_here())
+        for file in fixed:
+            print(f"Fixed {file.path}: {', '.join(fix.value for fix in file.fixes)}.")
+        if not fixed:
+            print("Nothing to fix: the record is in its standard layout.")
     now = datetime.datetime.now(datetime.UTC)
     payload = payloads.check(open_record(_here()), now)
     _show_payload(payload, args)
@@ -284,6 +312,16 @@ def _item_command(
     parser.add_argument("change", help="the change's name")
     parser.add_argument("item", help="the item's number, for example 1.2")
     parser.set_defaults(handler=handler)
+    return parser
+
+
+def _by(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    """Add --by: who the record names as its writer (default: your git name)."""
+    parser.add_argument(
+        "--by",
+        metavar="NAME",
+        help="who the record names as its writer (default: your git name)",
+    )
     return parser
 
 
@@ -374,15 +412,26 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     summary = "Accept a change, so its items can be applied. For the human to run."
     accept = commands.add_parser("accept", help=summary, description=summary)
     accept.add_argument("change", help="the change's name")
+    _by(accept)
     accept.set_defaults(handler=_accept)
 
     _item_command(commands, "tick", _tick, "Tick an item: it has been applied.")
     block = _item_command(commands, "block", _block, "Record that an item is blocked.")
     block.add_argument("reason", help="why it is blocked")
+    _by(block)
     gap = _item_command(
         commands, "gap", _gap, "Record a spec gap: the record wasn't enough to build an item."
     )
     gap.add_argument("note", help="what is missing from the record")
+    _by(gap)
+    note = _item_command(
+        commands,
+        "note",
+        _note,
+        "Write a note under an item still to be finished, such as a partial result.",
+    )
+    note.add_argument("text", help="the note")
+    _by(note)
     finding_help = "a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable"
     summary = "Record a self-review of a change, once every item is ticked."
     review = commands.add_parser("review", help=summary, description=summary)
@@ -395,6 +444,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         help="what the review checked and found",
     )
     review.add_argument("--finding", action="append", metavar="FINDING", help=finding_help)
+    _by(review)
     review.set_defaults(handler=_review)
     summary = "Record a reviewer's verdict on a change."
     verdict = commands.add_parser("verdict", help=summary, description=summary)
@@ -408,9 +458,15 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         help='the items to rebuild; a "changes" verdict names at least one',
     )
     verdict.add_argument("--finding", action="append", metavar="FINDING", help=finding_help)
+    _by(verdict)
     verdict.set_defaults(handler=_verdict)
-    _item_command(
-        commands, "reopen", _reopen, "Reopen an item that a review of its change named to rebuild."
+    _by(
+        _item_command(
+            commands,
+            "reopen",
+            _reopen,
+            "Reopen an item that a review of its change named to rebuild.",
+        )
     )
     summary = (
         "Record what was decided about an item or a change's review that went to the human, "
@@ -420,11 +476,13 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     resolve.add_argument("change", help="the change's name")
     resolve.add_argument("item", help="the item's number, or \"review\" for the change's review")
     resolve.add_argument("decision", help="what was decided")
+    _by(resolve)
     resolve.set_defaults(handler=_resolve)
 
     summary = "Merge an applied change's deltas into the specs without archiving it."
     sync = commands.add_parser("sync", help=summary, description=summary)
     sync.add_argument("change", help="the change's name")
+    _by(sync)
     sync.set_defaults(handler=_sync)
 
     summary = "Archive an applied change. For the human to run."
@@ -436,6 +494,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         metavar="REASON",
         help="archive although review records are missing; the reason is recorded",
     )
+    _by(archive)
     archive.set_defaults(handler=_archive)
 
     summary = "Close a milestone whose changes are all archived."
@@ -501,8 +560,13 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         choices=list(context_service.ROLES),
         help="the job the pack is for",
     )
-    _view_command(
+    check = _view_command(
         commands, "check", _check, "Check the record's health: format, links, conflicts, evidence."
+    )
+    check.add_argument(
+        "--fix",
+        action="store_true",
+        help="first rewrite the record in its standard layout; wording is never changed",
     )
     return parser
 

@@ -309,11 +309,7 @@ def test_reviewer_pack_holds_the_whole_change_but_not_how_it_was_built(
 ) -> None:
     accepted(project, proposal_text=INDEPENDENT)
     lifecycle.tick(project.root, NAME, "1.1")
-    project.replace(
-        f"{FOLDER}/tasks.md",
-        "fifty-one matches\n",
-        "fifty-one matches\n  - Note: took a shortcut through the cache\n",
-    )
+    lifecycle.add_note(project.root, NAME, "1.2", "took a shortcut through the cache", DAY)
     lifecycle.tick(project.root, NAME, "1.2")
     built = pack(project, "review")
     assert built["change"] == NAME
@@ -367,7 +363,8 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
 def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
     project: Workspace,
 ) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n  - Note: half done\n")
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    lifecycle.add_note(project.root, NAME, "1.1", "half done", DAY)
     lifecycle.block(project.root, NAME, "1.1", "which bound?")
     lifecycle.resolve(project.root, NAME, "1.1", "use an inclusive bound", DAY)
     lifecycle.tick(project.root, NAME, "1.1")
