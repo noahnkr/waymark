@@ -102,9 +102,11 @@ and explains each one as it happens:
 5. **Apply.** The agent builds each item itself, from the record, and records
    the result. An item tagged `build: delegate` goes to a fresh implementer
    agent instead (see [who builds an item](concepts.md#who-builds-an-item)).
+   What `wm` writes about an item is a dated record under it, such as
+   `(blocked) 2026-01-15 by Sam Doe: <reason>` (see [records](concepts.md#records)).
 6. **Review.** Once every item is built, the whole change is checked once at
-   its level, and the review and its findings are written at the end of the task
-   list (see [review](concepts.md#review)).
+   its level, and the review and its findings are written in the `## Log` at the
+   end of the task list (see [review](concepts.md#review)).
 7. **Archive.** Your second approval. Once you agree, the change is archived on
    its branch, before its pull request: its deltas merge into the specs and its
    outcome is written. `/wm-pr` then describes the pull request, outcome included. `wm` refuses while
@@ -125,6 +127,7 @@ and explains each one as it happens:
 | Open a pull request for a change | the `/wm-pr` skill |
 | Archive a finished change | the `/wm-archive` skill |
 | Check the record's health | `wm check` |
+| Tidy the record's layout, never its wording | `wm check --fix` |
 
 When you come back after a break, in a fresh session or on another machine,
 `wm status` and `wm instructions` give the next step from the files alone.
@@ -136,7 +139,10 @@ version installed, reading works and writing is refused, with the command that
 installs the pinned one. To upgrade a project: change the pin, install that
 version, and run `wm update`. When it changes the record, `.gitignore` or the CI
 workflow, it names them and asks you to review and commit the changes. It never
-asks you to commit the agent tool files.
+asks you to commit the agent tool files. A release that changes the record's
+format says in the [changelog](../CHANGELOG.md) what `wm update` migrates; the
+move to record format 2, for example, migrates every change and asks you to
+accept each active change again.
 
 A project set up with `wm` 0.1.0 committed the agent tool files and its git
 hooks. `wm update` adds the `.gitignore` block, but git keeps tracking files it

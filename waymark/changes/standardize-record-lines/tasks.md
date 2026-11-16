@@ -34,6 +34,7 @@
 - [x] 2.2 Update the charter and the docs
   - Criteria: the charter's careful-writes constraint names the exception for `wm check --fix`, which changes layout and never wording; concepts (the records, the Log, the glossary), getting started, the smoke test, architecture and the README describe format 2 and `--fix`; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`
+  - (reopened) 2026-11-16 by Noah Roberts
 
 ## Log
 

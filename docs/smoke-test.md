@@ -102,6 +102,9 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 - [ ] Run `wm pr <change>`: it describes the archived change, with its
       Outcome, and links to the proposal in the archived folder.
 - [ ] `wm check` passes, and `wm status` shows the change as recently archived.
+- [ ] Add trailing spaces and a `*` list marker to the charter, then run
+      `wm check --fix`. It names `charter.md` with its fixes, the wording is
+      unchanged, and a second run says there is nothing to fix.
 
 ## The tiny path
 
