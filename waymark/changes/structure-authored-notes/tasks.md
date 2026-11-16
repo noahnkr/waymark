@@ -83,3 +83,8 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint e01cf817349f38c2 items 1.1 1.2 1.3 1.4 1.5 1.6 1.7 2.1 2.2 by Noah Roberts
+- (review) 2026-11-16 changes 1.1 by wm-reviewer: an empty or non-backticked `- Specs:` value counts as `none` and silently skips the specs step; set `no_spec_changes` only for a literal `none` and report any other `Specs:` value without backticked names as `impact-format`, with tests; every other item's criteria and every scenario hold, and tests, docs check, lint, types, spelling and `wm check` pass
+  - critical `src/waymark/record/proposal.py:parse_proposal`: a `- Specs:` line that is empty or names a spec without backticks (e.g. `- Specs: search (new)`) parses to `()`, so `no_spec_changes` is true, the specs step is skipped without deltas and `wm check` reports nothing; only `- Specs: none` may do that (1.1 criterion, requirement "Structured impact")
+  - warning `src/waymark/record/fingerprint.py:_without_comments`: a `<!--` inside inline code with no closing `-->` strips everything after it to the end of the part, so later edits to that delta or proposal don't withdraw acceptance
+  - suggestion `tests/services/test_check.py:212`: the test is still named `..._is_an_old_layout` but checks for `missing-status`; rename it
+  - suggestion `tests/record/test_authored_formats.py:test_structured_impact`: add cases for `- Specs:` with no value and for a spec named without backticks in a change with no deltas
