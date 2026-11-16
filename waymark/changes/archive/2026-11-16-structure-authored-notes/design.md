@@ -113,5 +113,5 @@ None.
 
 - **Archived changes stay uneven.** Old proposals keep free-text Impact and Outcome, and old designs have no decision status. `wm pr` and the views show them as written.
 - **`--outcome` goes without a deprecation period.** Anyone scripting `wm archive` must switch to `--built`; only this repository uses Waymark today, so the cost is the `wm-archive` skill and the docs.
-- **The `Specs:` check is only as good as the backticks.** A spec named without backticks isn't seen, and gives `impact-mismatch` for its delta, which at least points at the line.
+- **The `Specs:` check is only as good as the backticks.** A spec named without backticks isn't seen. When no spec on the line is in backticks, the line gives `impact-format`; otherwise the unseen spec's delta gives `impact-mismatch`. Either points at the line.
 - **Withdrawn acceptance.** Changing the fingerprint withdraws the acceptance of any active change accepted before it lands. Only this change is active, and it is accepted after the design.
