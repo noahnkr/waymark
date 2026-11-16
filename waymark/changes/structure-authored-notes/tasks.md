@@ -18,7 +18,7 @@
     - a hand-written Outcome without both lines, or `--built` with an Outcome already written, is refused with the form
     - `wm pr` shows both lines
   - Verify: tests in `tests/services/test_archive.py`, `tests/services/test_ci_and_pr.py` and `tests/test_cli.py` for the scenarios "Archived with an outcome" and "Nothing differs"
-- [ ] 1.3 Number the charter's goals and constraints
+- [x] 1.3 Number the charter's goals and constraints
   - Criteria:
     - a top-level line in Goals or Constraints, outside comments and fences, that isn't `<n>. <text>` with `n` counting from 1 gives `numbered-list-format` showing `1. <text>`; indented lines continue the item above
     - the charter template numbers its examples
