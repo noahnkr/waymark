@@ -156,7 +156,7 @@ Sorting every match still costs memory on very large result sets.
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint 94122887ebb08582 items 1.1 1.2 by Alex Example
+- (accepted) 2026-01-15 fingerprint 256fef147180328e items 1.1 1.2 by Alex Example
 - (review) 2026-01-15 pass by Alex Example: cap and order hold; the scenario is covered by the test
 ```
 

@@ -20,10 +20,19 @@ def test_emphasis_and_thematic_breaks_are_not_list_markers() -> None:
     assert fixed(text) == text
 
 
-def test_one_blank_line_around_each_heading() -> None:
+def test_one_blank_line_before_each_heading_and_at_most_one_after() -> None:
     text, fixes = standard_layout("# T\nIntro\n\n\n## A\n\n\n\nBody\n## B\nEnd\n")
-    assert text == "# T\n\nIntro\n\n## A\n\nBody\n\n## B\n\nEnd\n"
+    assert text == "# T\nIntro\n\n## A\n\nBody\n\n## B\nEnd\n"
     assert fixes == (Fix.HEADING_SPACING,)
+
+
+def test_a_requirement_keeps_its_text_directly_under_its_heading() -> None:
+    text = (
+        "## Requirements\n\n"
+        "### Requirement: R\nThe system SHALL cap.\n\n"
+        "#### Scenario: S\n- GIVEN x\n"
+    )
+    assert standard_layout(text) == (text, ())
 
 
 def test_trailing_spaces_go() -> None:
@@ -74,11 +83,11 @@ def test_wording_is_never_changed() -> None:
 
 def test_line_endings_are_kept() -> None:
     text = "# T\r\nIntro  \r\n* a\r\n"
-    assert fixed(text) == "# T\r\n\r\nIntro\r\n- a\r\n"
+    assert fixed(text) == "# T\r\nIntro\r\n- a\r\n"
 
 
 def test_a_byte_order_mark_is_kept() -> None:
-    assert fixed("﻿# T\nText") == "﻿# T\n\nText\n"
+    assert fixed("﻿# T\nText") == "﻿# T\nText\n"
 
 
 @pytest.mark.parametrize(

@@ -343,7 +343,8 @@ wm context [--json] [change] [item] --for ROLE
 Check the record's health: format, links, conflicts, evidence.
 
 ```
-wm check [--json]
+wm check [--json] [--fix]
 ```
 
 - `--json`: print the view as JSON, with its schema version
+- `--fix`: first rewrite the record in its standard layout; wording is never changed

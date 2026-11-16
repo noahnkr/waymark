@@ -8,7 +8,7 @@ from tests.support import TASKS, Workspace
 from waymark.record.records import RecordKind
 from waymark.record.state import AcceptanceState, StepKind
 from waymark.record.terms import Verdict
-from waymark.services import common, lifecycle
+from waymark.services import lifecycle
 from waymark.services.common import Refusal
 from waymark.services.pr import describe
 
@@ -20,15 +20,8 @@ NEXT = datetime.date(2026, 11, 21)
 
 
 @pytest.fixture
-def latest(project: Workspace, monkeypatch: pytest.MonkeyPatch) -> Workspace:
-    """A project whose record is in format 2, with wm writing format 2.
-
-    Until the format is raised for every record, the writing gate is pointed
-    at format 2 here.
-    """
-    monkeypatch.setattr(common, "RECORD_FORMAT", 2)
-    text = project.read("config.toml").replace("record_format = 1", "record_format = 2")
-    project.write("config.toml", text)
+def latest(project: Workspace) -> Workspace:
+    """A project in a git repository; its record is in format 2."""
     return project
 
 

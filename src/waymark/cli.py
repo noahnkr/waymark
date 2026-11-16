@@ -18,6 +18,7 @@ from waymark.services import atlas as atlas_service
 from waymark.services import ci as ci_service
 from waymark.services import context as context_service
 from waymark.services import doctor as doctor_service
+from waymark.services import fix as fix_service
 from waymark.services import instructions as instructions_service
 from waymark.services import integration, lifecycle, references, setup
 from waymark.services import pr as pr_service
@@ -268,6 +269,14 @@ def _context(args: argparse.Namespace) -> int:
 
 
 def _check(args: argparse.Namespace) -> int:
+    if args.fix:
+        if args.json:
+            raise Refusal("--fix reports what it changed as text. Run it without --json.")
+        fixed = fix_service.fix_layout(_here())
+        for file in fixed:
+            print(f"Fixed {file.path}: {', '.join(fix.value for fix in file.fixes)}.")
+        if not fixed:
+            print("Nothing to fix: the record is in its standard layout.")
     now = datetime.datetime.now(datetime.UTC)
     payload = payloads.check(open_record(_here()), now)
     _show_payload(payload, args)
@@ -551,8 +560,13 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         choices=list(context_service.ROLES),
         help="the job the pack is for",
     )
-    _view_command(
+    check = _view_command(
         commands, "check", _check, "Check the record's health: format, links, conflicts, evidence."
+    )
+    check.add_argument(
+        "--fix",
+        action="store_true",
+        help="first rewrite the record in its standard layout; wording is never changed",
     )
     return parser
 

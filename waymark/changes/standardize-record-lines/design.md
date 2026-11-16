@@ -58,7 +58,7 @@
    - `standard_layout(text) -> tuple[str, tuple[Fix, ...]]` is a pure function. It works outside fenced code and comments, and keeps line endings.
    - It does:
      - list markers `*` and `+` to `-`;
-     - one blank line before and after each heading;
+     - one blank line before each heading, and at most one after it (none is added, so requirements and scenarios keep their text directly under the heading, the human chose this);
      - no trailing spaces;
      - one final line break;
      - each line that `records.parse` reads re-rendered with `records.render`.

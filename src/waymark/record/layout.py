@@ -3,7 +3,7 @@
 The layout never touches wording. Outside fenced code and comments it:
 
 - turns the list markers ``*`` and ``+`` into ``-``;
-- leaves one blank line before and after each heading;
+- leaves one blank line before each heading, and at most one after it;
 - takes trailing spaces off every line;
 - re-renders each record and finding wm owns into its standard shape;
 
@@ -99,7 +99,11 @@ def _fix_line(text: str, fixes: set[Fix]) -> str:
 
 
 def _space_headings(lines: list[_Line], newline: str) -> list[_Line]:
-    """One blank line before and after each heading, and none piled up around it."""
+    """One blank line before each heading, and at most one after it.
+
+    No blank line is added after a heading, so a requirement or a scenario
+    keeps its text directly under it.
+    """
     out: list[_Line] = []
     after_heading = False
     for line in lines:
@@ -111,11 +115,10 @@ def _space_headings(lines: list[_Line], newline: str) -> list[_Line]:
             out.append(line)
             after_heading = True
         elif line.blank and after_heading:
-            continue
+            if not out[-1].blank:
+                out.append(line)
         else:
-            if after_heading:
-                out.append(_Line("", newline, protected=False))
-                after_heading = False
+            after_heading = False
             out.append(line)
     return out
 

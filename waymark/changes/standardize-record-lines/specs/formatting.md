@@ -10,7 +10,7 @@ How `wm check --fix` brings the record to its standard layout when the human ask
 `wm check --fix` SHALL rewrite the record into its standard layout, then report what the check still finds. It SHALL rewrite:
 - the records `wm` owns into their standard shape, when the kind, date and text can be read unambiguously;
 - list markers `*` and `+` into `-`;
-- headings to one blank line before and after;
+- one blank line before each heading, and at most one after it, so a heading such as `### Requirement:` may keep its text directly underneath;
 - trailing spaces off every line;
 - the end of each file to exactly one line break.
 

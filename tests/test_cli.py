@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.support import Workspace
+from tests.support import Workspace, proposal
 from waymark import __version__
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
 from waymark.services import common
@@ -189,3 +189,30 @@ def test_wm_note_and_by_write_records(
     assert "(note) " in tasks
     assert "(blocked)" not in tasks
     assert 'holds ": "' in capsys.readouterr().err
+
+
+def test_wm_check_fix_reports_what_it_fixed(
+    project: Workspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """wm check --fix names each fixed file, then reports the check."""
+    project.change(proposal_text=proposal().replace("Paging.", "Paging.   "))
+    monkeypatch.chdir(project.root)
+    assert main(["check", "--fix"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Fixed changes/add-limit/proposal.md: trailing spaces." in out
+    assert main(["check", "--fix"]) == EXIT_OK
+    assert "Nothing to fix" in capsys.readouterr().out
+    assert main(["check", "--fix", "--json"]) == EXIT_REFUSED
+
+
+def test_scenario_error_that_cant_be_fixed(
+    project: Workspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    broken = proposal().replace("Paging.", "Paging, see [the plan](missing.md).  ")
+    project.change(proposal_text=broken)
+    monkeypatch.chdir(project.root)
+    assert main(["check", "--fix"]) == EXIT_REFUSED
+    out = capsys.readouterr().out
+    assert "trailing spaces" in out
+    assert "broken-link" in out
+    assert "[the plan](missing.md)" in project.read("changes/add-limit/proposal.md")
