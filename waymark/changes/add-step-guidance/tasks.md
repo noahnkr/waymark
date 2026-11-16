@@ -25,7 +25,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Point the skills at the shared rules
+- [x] 2.1 Point the skills at the shared rules
   - Criteria:
     - each of the nine skills' `## Rules` drops the rules the shared list covers, keeps the rules particular to it, and says the shared rules from `wm instructions` apply, with `wm instructions explore` when no change is in hand
     - `wm-propose` and `wm-update` say to work through the step's checklist before moving on
