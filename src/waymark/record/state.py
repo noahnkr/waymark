@@ -275,7 +275,7 @@ def acceptance_state(record: Record, change: Change) -> AcceptanceState:
     acceptance = change.proposal.acceptance if change.proposal else None
     if acceptance is None:
         return AcceptanceState.MISSING
-    current = change_fingerprint(change, record.specs, record.default_review)
+    current = change_fingerprint(change, record.specs, record.default_review, acceptance.items)
     return AcceptanceState.VALID if acceptance.fingerprint == current else AcceptanceState.WITHDRAWN
 
 

@@ -2,7 +2,7 @@
 
 import datetime
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from waymark.record.outline import collect_sections, content, parse_facts, require_title
@@ -27,17 +27,25 @@ REQUIRED_SECTIONS = (WHY, WHAT_CHANGES, NON_GOALS, IMPACT)
 
 NO_SPEC_CHANGES = "No spec changes"
 
-_ACCEPTANCE = re.compile(r"^(\d{4}-\d{2}-\d{2}) by (\S.*?) \(fingerprint: ([0-9a-f]{16})\)$")
+_ACCEPTANCE = re.compile(
+    r"^(\d{4}-\d{2}-\d{2}) by (\S.*?) "
+    r"\(fingerprint: ([0-9a-f]{16})(?:; items: (\d+\.\d+(?: \d+\.\d+)*))?\)$"
+)
 
 
 @dataclass(frozen=True)
 class Acceptance:
-    """The acceptance line: when, by whom, and the fingerprint of what was accepted."""
+    """The acceptance line: when, by whom, and the fingerprint of what was accepted.
+
+    ``items`` are the task items the acceptance covers. It is None for a line
+    written before acceptances listed their items, which covers every item.
+    """
 
     date: datetime.date
     who: str
     fingerprint: str
     index: int
+    items: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -76,9 +84,12 @@ def format_synced(date: datetime.date) -> str:
     return f"{SYNCED}: {date.isoformat()}"
 
 
-def format_acceptance(date: datetime.date, who: str, fingerprint: str) -> str:
-    """The acceptance line as wm writes it."""
-    return f"{ACCEPTED}: {date.isoformat()} by {who} (fingerprint: {fingerprint})"
+def format_acceptance(
+    date: datetime.date, who: str, fingerprint: str, items: Sequence[str] | None = None
+) -> str:
+    """The acceptance line as wm writes it, with the items it covers when they are given."""
+    covered = f"; items: {' '.join(items)}" if items else ""
+    return f"{ACCEPTED}: {date.isoformat()} by {who} (fingerprint: {fingerprint}{covered})"
 
 
 def _parse_acceptance(
@@ -102,7 +113,8 @@ def _parse_acceptance(
             )
         )
         return None
-    return Acceptance(date, match.group(2).strip(), match.group(3), index)
+    items = tuple(match.group(4).split()) if match.group(4) else None
+    return Acceptance(date, match.group(2).strip(), match.group(3), index, items)
 
 
 def parse_proposal(doc: Document) -> Proposal:

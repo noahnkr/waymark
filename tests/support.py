@@ -223,8 +223,10 @@ class Workspace:
     def accept(self, name: str = "add-limit") -> None:
         """Write the acceptance line the way the accept command will."""
         record = self.record()
-        fingerprint = change_fingerprint(record.changes[name], record.specs, record.default_review)
-        line = format_acceptance(datetime.date(2026, 1, 15), "Sam Doe", fingerprint)
+        change = record.changes[name]
+        items = [item.number for item in change.tasks.items] if change.tasks else []
+        fingerprint = change_fingerprint(change, record.specs, record.default_review, items)
+        line = format_acceptance(datetime.date(2026, 1, 15), "Sam Doe", fingerprint, items)
         relative = f"changes/{name}/proposal.md"
         lines = [
             line_ for line_ in self.read(relative).split("\n") if not line_.startswith("Accepted:")

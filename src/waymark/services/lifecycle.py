@@ -116,8 +116,10 @@ def accept(start: Path, name: str, today: datetime.date) -> Done:
             'git config user.name "<name>".'
         )
     assert change.proposal is not None
-    fingerprint = change_fingerprint(change, record.specs, record.default_review)
-    text = set_fact(change.proposal, ACCEPTED, format_acceptance(today, who, fingerprint))
+    items = [item.number for item in change.tasks.items] if change.tasks else []
+    fingerprint = change_fingerprint(change, record.specs, record.default_review, items)
+    line = format_acceptance(today, who, fingerprint, items)
+    text = set_fact(change.proposal, ACCEPTED, line)
     transaction = Transaction(record.files)
     transaction.write(change.proposal.doc.path, text)
     return Done(f'Accepted "{name}". Its items can now be applied.', commit(transaction))
@@ -374,11 +376,10 @@ def sync(start: Path, name: str, today: datetime.date) -> Done:
     assert change.proposal.acceptance is not None
     transaction = Transaction(record.files)
     specs = _merge_specs(record, change, transaction)
-    fingerprint = change_fingerprint(change, specs, record.default_review)
     accepted = change.proposal.acceptance
-    proposal = _with_fact(
-        change.proposal, ACCEPTED, format_acceptance(accepted.date, accepted.who, fingerprint)
-    )
+    fingerprint = change_fingerprint(change, specs, record.default_review, accepted.items)
+    line = format_acceptance(accepted.date, accepted.who, fingerprint, accepted.items)
+    proposal = _with_fact(change.proposal, ACCEPTED, line)
     transaction.write(proposal.doc.path, set_fact(proposal, SYNCED, format_synced(today)))
     domains = ", ".join(sorted(change.deltas))
     return Done(
