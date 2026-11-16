@@ -6,6 +6,7 @@ version; removing or changing one bumps it.
 
 from typing import Any
 
+from waymark.record.records import RecordKind
 from waymark.record.state import (
     AcceptanceState,
     ConflictKind,
@@ -13,7 +14,6 @@ from waymark.record.state import (
     RoadmapStatus,
     StepKind,
 )
-from waymark.record.tasks import RecordKind
 from waymark.record.terms import Layout, Phase, ReviewLevel, ReviewSeverity, Verdict
 from waymark.views.payloads import KINDS, VERSIONS
 

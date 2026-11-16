@@ -6,7 +6,8 @@ import pytest
 
 from tests.support import TASKS, document
 from waymark.record.evidence import evidence_changes
-from waymark.record.tasks import RecordKind, Tasks, is_evidence_line, parse_tasks
+from waymark.record.records import RecordKind
+from waymark.record.tasks import Tasks, is_evidence_line, parse_tasks
 from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"

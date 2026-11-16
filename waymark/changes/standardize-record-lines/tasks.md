@@ -5,7 +5,7 @@
 - [x] 1.1 Define every record kind once in `record/records.py`
   - Criteria: `RecordKind`, `Record`, and a table per kind give its argument grammar, whether it has text, whether it is a change-level or item record, and its shape for messages; `render` and `parse` round-trip every kind, with the arguments first and `by <who>` running to `: ` or the end of the line; findings render and parse as ``- <severity> `<place>`: <text>``, with a place that holds `: `; `who_for` gives `--by`, else the git user, else None, and refuses a value with `: `
   - Verify: `uv run --no-sync pytest tests/record/test_records.py`, with tests named after the requirements "One record shape", "Who wrote a record" and "Findings name their place in backticks"
-- [ ] 1.2 Read item records and the Log by the record's format
+- [x] 1.2 Read item records and the Log by the record's format
   - Criteria: `record/tasks.py` reads item records into `Item.records` and the `## Log` section into `Tasks.log` through `records.parse`; `Item.blocked` and `Item.spec_gap` follow from the last `(blocked)` or `(gap)` record with no `(resolved)` after it; the acceptance and the sync come from the latest `(accepted)` and `(synced)` records; a format 1 record and every archived change are read with the format 1 readers; in an active change, `wm check` reports `old-record-format`, `log-section-last`, `misplaced-record` and a malformed record with its expected shape
   - Verify: tests in `tests/record/` for the scenarios "Malformed record" and "Older acceptance line", a resolved blocker, the latest acceptance counting, and an archived format 1 change read as written
 - [ ] 1.3 Write format 2 records from every command, and add `wm note`

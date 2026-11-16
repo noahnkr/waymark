@@ -918,10 +918,16 @@ Printed by `wm show` for a change.
               "properties": {
                 "kind": {
                   "enum": [
-                    "review",
+                    "accepted",
+                    "synced",
+                    "override",
                     "self-review",
+                    "review",
+                    "resolved",
                     "reopened",
-                    "resolved"
+                    "blocked",
+                    "gap",
+                    "note"
                   ]
                 },
                 "date": {
@@ -1037,10 +1043,16 @@ Printed by `wm show` for a change.
             "properties": {
               "kind": {
                 "enum": [
-                  "review",
+                  "accepted",
+                  "synced",
+                  "override",
                   "self-review",
+                  "review",
+                  "resolved",
                   "reopened",
-                  "resolved"
+                  "blocked",
+                  "gap",
+                  "note"
                 ]
               },
               "date": {

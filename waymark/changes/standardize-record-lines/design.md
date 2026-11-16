@@ -37,11 +37,16 @@
 2. **Task list.**
    - `record/tasks.py` reads item records and the `## Log` section through `records.parse`, into `Item.records` and `Tasks.log`.
    - `Item.blocked` and `Item.spec_gap` become properties derived from the records: the last `(blocked)` or `(gap)` record with no `(resolved)` after it.
-   - The format 1 readers (the `## Review` section, the `Blocked:`, `Spec gap:` and `Note:` labels, and the old record regexes) stay. The reader is chosen by the record's stored `record_format`: a format 1 record, and every archived change, is read with them. The migration reads with them too.
+   - The format 1 readers (the `## Review` section, the `Blocked:`, `Spec gap:` and `Note:` labels, and the old record regexes) stay.
+   - Which reader is used:
+     - an active change follows the record's stored `record_format`;
+     - an archived change is read as format 2 when its task list has a `## Log` section, which every accepted format 2 change has, and as format 1 otherwise;
+     - the migration reads with the format 1 readers.
    - In an active change, an old-form line gives `old-record-format` ("run `wm update`"). A `## Log` that isn't last gives `log-section-last`, and a change-level record under an item gives `misplaced-record`.
 3. **Proposal.**
    - `record/proposal.py` stops reading `Accepted:` and `Synced:` for an active change. The acceptance and the sync come from the latest `(accepted)` and `(synced)` records in the Log.
    - For an archived change, the old facts are still read so it shows as written.
+   - In format 2, an `Accepted:`, `Synced:` or `Review override:` line left in an active proposal gives `old-record-format`.
    - `Change.acceptance` and `Change.synced` become the one place `state.py` asks.
 4. **Writes.** `record/edits.py`:
    - `edit_item` gains `add_records` and loses `remove`, since records are never removed;

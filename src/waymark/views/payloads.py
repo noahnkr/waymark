@@ -429,11 +429,11 @@ def show_change(record: Record, change: Change) -> Payload:
         "state": _change_summary(state, _Branches(record).of(change, state)) if state else None,
         "owner": proposal.owner if proposal else None,
         "accepted": (
-            {"date": proposal.acceptance.date.isoformat(), "by": proposal.acceptance.who}
-            if proposal and proposal.acceptance
+            {"date": change.acceptance.date.isoformat(), "by": change.acceptance.who}
+            if change.acceptance
             else None
         ),
-        "synced_on": proposal.synced.isoformat() if proposal and proposal.synced else None,
+        "synced_on": change.synced.isoformat() if change.synced else None,
         "proposal": dict(proposal.sections) if proposal else None,
         "outcome": proposal.outcome if proposal else None,
         "deltas": [

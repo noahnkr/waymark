@@ -363,8 +363,8 @@ def sync(start: Path, name: str, today: datetime.date) -> Done:
     the specs as they now read, and a ``Synced:`` line marks its deltas as merged.
     """
     record, change, state = _open(start, name)
-    if change.proposal is not None and change.proposal.synced is not None:
-        raise Refusal(f'The change "{name}" was already synced on {change.proposal.synced}.')
+    if change.synced is not None:
+        raise Refusal(f'The change "{name}" was already synced on {change.synced}.')
     if not state.applied:
         raise Refusal(
             f'Only an applied change can be synced, and "{name}" is {state.phase}. '
@@ -373,10 +373,10 @@ def sync(start: Path, name: str, today: datetime.date) -> Done:
     if not change.deltas:
         raise Refusal(f'The change "{name}" has no deltas, so there is nothing to sync.')
     assert change.proposal is not None
-    assert change.proposal.acceptance is not None
+    assert change.acceptance is not None
     transaction = Transaction(record.files)
     specs = _merge_specs(record, change, transaction)
-    accepted = change.proposal.acceptance
+    accepted = change.acceptance
     fingerprint = change_fingerprint(change, specs, record.default_review, accepted.items)
     line = format_acceptance(accepted.date, accepted.who, fingerprint, accepted.items)
     proposal = _with_fact(change.proposal, ACCEPTED, line)
@@ -468,7 +468,7 @@ def archive(
         )
 
     transaction = Transaction(record.files)
-    if change.proposal.synced is None:
+    if change.synced is None:
         _merge_specs(record, change, transaction)
     transaction.write(change.proposal.doc.path, set_outcome(change.proposal, final))
     for doc in record.documents():

@@ -1,19 +1,24 @@
-"""Task lists: numbered sections of checkbox items, then the change's review.
+"""Task lists: numbered sections of checkbox items, then the change's Log.
 
 An item's definition is its number, title, build tag, criteria, verification and
-repo. Its evidence is its tick, its blocker, its spec gap and its reopenings. The
-change's review records, with their findings, sit in a ``## Review`` section at
-the end. Archived changes may still carry an item ``review:`` tag and review
-records under items; they are read so the archive shows as it was written.
+repo. Its evidence is its tick and the records under it: blockers, spec gaps,
+notes, reopenings and resolutions. The records about the whole change, with the
+findings under its reviews, sit in a ``## Log`` section at the end.
+
+A task list is read in the record's format. Format 1 kept ``Blocked:``,
+``Spec gap:`` and ``Note:`` lines under items and a ``## Review`` section, and
+its archived changes may still carry an item ``review:`` tag and review records
+under items; they are read so the archive shows as it was written.
 """
 
 import datetime
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from enum import StrEnum
 
+from waymark.record import records
 from waymark.record.problems import Problem
+from waymark.record.records import RecordKind
 from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
 from waymark.record.text import Document, Section
 
@@ -53,13 +58,12 @@ _FORMATS = (
 )
 
 
-class RecordKind(StrEnum):
-    """The kinds of review record under an item."""
+LOG_SECTION = "Log"
+LATEST_FORMAT = 2
+"""The record format whose task lists hold records and a Log section."""
 
-    REVIEW = "review"
-    SELF_REVIEW = "self-review"
-    REOPENED = "reopened"
-    RESOLVED = "resolved"
+_REVIEW_KINDS = (RecordKind.REVIEW, RecordKind.SELF_REVIEW, RecordKind.RESOLVED)
+_OLD_LABELS = (BLOCKED, SPEC_GAP, "Note")
 
 
 @dataclass(frozen=True)
@@ -87,6 +91,10 @@ class ReviewRecord:
     index: int
     items: tuple[str, ...] = ()
     findings: tuple[Finding, ...] = ()
+    who: str | None = None
+    fingerprint: str | None = None
+    covers: tuple[str, ...] | None = None
+    """The items an ``(accepted)`` record covers; None when it names none."""
 
 
 @dataclass(frozen=True)
@@ -138,9 +146,17 @@ class Tasks:
     problems: tuple[Problem, ...]
     review_records: tuple[ReviewRecord, ...] = ()
     review_section: Section | None = None
+    log: tuple[ReviewRecord, ...] = ()
+    """Every record in the Log section, in order; empty in a format 1 task list."""
+    version: int = 1
+    """The record format the task list was read in."""
 
     def item(self, number: str) -> Item | None:
         return next((item for item in self.items if item.number == number), None)
+
+    def latest(self, kind: RecordKind) -> ReviewRecord | None:
+        """The last record of a kind in the Log, or None."""
+        return next((record for record in reversed(self.log) if record.kind is kind), None)
 
 
 @dataclass
@@ -170,10 +186,16 @@ class _Draft:
         if self.open_label is not None:
             self.spans[self.open_label] = (self.spans[self.open_label][0], index + 1)
 
-    def finish(self) -> Item:
+    def finish(self, version: int) -> Item:
         def single(label: str) -> str | None:
             return "\n".join(self.fields[label]).strip() if label in self.fields else None
 
+        if version >= LATEST_FORMAT:
+            blocked, spec_gap = _open_stoppers(self.records)
+            notes = tuple(r.text for r in self.records if r.kind is RecordKind.NOTE)
+        else:
+            blocked, spec_gap = single(BLOCKED), single(SPEC_GAP)
+            notes = tuple("\n".join(note).strip() for note in self.notes)
         return Item(
             number=self.number,
             section=self.section,
@@ -184,9 +206,9 @@ class _Draft:
             criteria=single("Criteria"),
             verify=single("Verify"),
             repo=single("Repo"),
-            blocked=single(BLOCKED),
-            spec_gap=single(SPEC_GAP),
-            notes=tuple("\n".join(note).strip() for note in self.notes),
+            blocked=blocked,
+            spec_gap=spec_gap,
+            notes=notes,
             records=tuple(self.records),
             index=self.index,
             end=self.end,
@@ -194,23 +216,85 @@ class _Draft:
         )
 
 
+def _open_stoppers(records: list[ReviewRecord]) -> tuple[str | None, str | None]:
+    """The blocker and the spec gap that no later ``(resolved)`` record closed."""
+    blocked: str | None = None
+    spec_gap: str | None = None
+    for record in records:
+        if record.kind is RecordKind.BLOCKED:
+            blocked = record.text
+        elif record.kind is RecordKind.GAP:
+            spec_gap = record.text
+        elif record.kind is RecordKind.RESOLVED:
+            blocked = spec_gap = None
+    return blocked, spec_gap
+
+
+def _from_record(record: records.Record, index: int) -> ReviewRecord:
+    """A parsed record, as the task list keeps it."""
+    is_acceptance = record.kind is RecordKind.ACCEPTED
+    return ReviewRecord(
+        kind=record.kind,
+        date=record.date,
+        verdict=record.verdict,
+        text=record.text or "",
+        index=index,
+        items=() if is_acceptance else (record.items or ()),
+        who=record.who,
+        fingerprint=record.fingerprint,
+        covers=record.items if is_acceptance else None,
+    )
+
+
+_OLD_FORMAT = (
+    'This line is in the old record format. Run "wm update" to migrate the record; '
+    'wm writes records as "(<kind>) YYYY-MM-DD [<args>] [by <who>]: <text>".'
+)
+
+
 class _Parser:
-    def __init__(self, doc: Document) -> None:
+    def __init__(self, doc: Document, version: int) -> None:
         self.doc = doc
+        self.version = version
         self.problems: list[Problem] = []
         self.sections: list[TaskSection] = []
         self.items: list[Item] = []
         self.draft: _Draft | None = None
         self.review_records: list[ReviewRecord] = []
         self.review_section: Section | None = None
+        self.log: list[ReviewRecord] = []
+        self.log_section: Section | None = None
+
+    @property
+    def latest(self) -> bool:
+        return self.version >= LATEST_FORMAT
 
     def problem(self, index: int, code: str, message: str) -> None:
         self.problems.append(Problem(self.doc.path, index + 1, code, message))
 
     def close_item(self) -> None:
         if self.draft is not None:
-            self.items.append(self.draft.finish())
+            self.items.append(self.draft.finish(self.version))
             self.draft = None
+
+    def item_record(self, index: int, text: str) -> None:
+        """Read a record under an item, in the latest format."""
+        draft = self.draft
+        assert draft is not None
+        found = records.parse(text)
+        if isinstance(found, records.ParseError):
+            self.problem(index, "malformed-record", found.message)
+            return
+        assert found is not None
+        if records.KINDS[found.kind].level is records.Level.CHANGE:
+            self.problem(
+                index,
+                "misplaced-record",
+                f'A "({found.kind.value})" record is about the whole change, so it goes in '
+                f"the {LOG_SECTION} section at the end of the task list.",
+            )
+            return
+        draft.records.append(_from_record(found, index))
 
     def date(self, index: int, text: str) -> datetime.date | None:
         try:
@@ -275,6 +359,22 @@ class _Parser:
         draft.open_label = None
         draft.end = index + 1
         labeled = _LABELED.match(text)
+        if self.latest:
+            if labeled and labeled.group(1) in _OLD_LABELS:
+                self.problem(index, "old-record-format", _OLD_FORMAT)
+            elif labeled:
+                self.labeled(index, labeled.group(1), (labeled.group(2) or "").strip())
+            elif records.looks_like_record(text):
+                self.item_record(index, text)
+            else:
+                self.problem(
+                    index,
+                    "unrecognized-item-line",
+                    'A line under an item starts with "Criteria:", "Verify:" or "Repo:", or '
+                    "is a record that wm writes. Label this line, or write a note with "
+                    '"wm note".',
+                )
+            return
         if labeled:
             self.labeled(index, labeled.group(1), (labeled.group(2) or "").strip())
         elif _EVIDENCE.match(text):
@@ -537,6 +637,115 @@ class _Parser:
                 )
         self.review_records = records
 
+    def log_record(self, index: int, text: str, found_records: list[ReviewRecord]) -> None:
+        """Read one record line of the Log section."""
+        found = records.parse(text)
+        if found is None or isinstance(found, records.ParseError):
+            message = found.message if found is not None else "This is not a record."
+            self.problem(index, "malformed-record", message)
+            return
+        if records.KINDS[found.kind].level is records.Level.ITEM:
+            self.problem(
+                index,
+                "misplaced-record",
+                f'A "({found.kind.value})" record is about one item, so it goes under that item.',
+            )
+            return
+        if found.kind is RecordKind.REVIEW and found.verdict is Verdict.CHANGES and not found.items:
+            self.problem(
+                index,
+                "changes-without-items",
+                'A "changes" verdict names the items to rebuild: '
+                '"(review) YYYY-MM-DD changes 1.2 2.1 [by <who>]: <reasons>".',
+            )
+        found_records.append(_from_record(found, index))
+
+    def log_finding(self, index: int, text: str, found_records: list[ReviewRecord]) -> None:
+        """Add a finding line to the record above it in the Log."""
+        parsed = records.parse_finding(text)
+        last = found_records[-1] if found_records else None
+        if parsed is None:
+            self.problem(
+                index,
+                "malformed-finding",
+                f'A finding under a review is written "  - {records.FINDING_SHAPE}".',
+            )
+            return
+        if last is None or last.kind not in (RecordKind.REVIEW, RecordKind.SELF_REVIEW):
+            self.problem(
+                index,
+                "misplaced-finding",
+                "A finding goes under a review or a self-review. Move it, or remove it.",
+            )
+            return
+        finding = Finding(parsed.severity, parsed.place, parsed.text, index)
+        found_records[-1] = ReviewRecord(
+            last.kind,
+            last.date,
+            last.verdict,
+            last.text,
+            last.index,
+            last.items,
+            (*last.findings, finding),
+            last.who,
+            last.fingerprint,
+            last.covers,
+        )
+
+    def log_section_body(self, section: Section) -> None:
+        """Read the Log section: the change's records and the findings under them."""
+        self.log_section = section
+        found_records: list[ReviewRecord] = []
+        for index in range(section.body_start, section.end):
+            line = self.doc.lines[index]
+            if line.is_blank or line.in_fence:
+                continue
+            field_match = _FIELD.match(line.text)
+            record_match = _RECORD_LINE.match(line.text)
+            if record_match:
+                self.log_record(index, record_match.group(1).strip(), found_records)
+            elif field_match:
+                self.log_finding(index, field_match.group(1).strip(), found_records)
+            else:
+                self.problem(
+                    index,
+                    "unrecognized-log-line",
+                    f"The {LOG_SECTION} section holds only the records wm writes, each "
+                    '"- (<kind>) YYYY-MM-DD [<args>] [by <who>]: <text>", and findings under '
+                    f'reviews, each "  - {records.FINDING_SHAPE}".',
+                )
+        self.log = found_records
+        self.review_records = [r for r in found_records if r.kind in _REVIEW_KINDS]
+
+    def latest_sections(self, sections: tuple[Section, ...]) -> None:
+        """Read the task sections and the Log section of a task list in the latest format."""
+        for section in sections:
+            title = section.title.strip().casefold()
+            if title == LOG_SECTION.casefold():
+                if self.log_section is not None:
+                    self.problem(
+                        section.start,
+                        "duplicate-log-section",
+                        f"A task list has one {LOG_SECTION} section. Merge them.",
+                    )
+                    continue
+                self.log_section_body(section)
+                continue
+            if title == REVIEW_SECTION.casefold():
+                self.problem(section.start, "old-record-format", _OLD_FORMAT)
+                continue
+            if self.log_section is not None:
+                self.problem(
+                    section.start,
+                    "log-section-last",
+                    f"The {LOG_SECTION} section comes after every task section. Move this "
+                    "section above it.",
+                )
+            task_section = self.section(section)
+            for index in range(section.body_start, section.end):
+                self.body_line(index, task_section)
+            self.close_item()
+
     def check_review_items(self) -> None:
         numbers = {item.number for item in self.items}
         for record in self.review_records:
@@ -556,6 +765,9 @@ class _Parser:
         for index in range(first):
             self.body_line(index, None)
         self.close_item()
+        if self.latest:
+            self.latest_sections(sections)
+            sections = ()
         for section in sections:
             if section.title.strip().casefold() == REVIEW_SECTION.casefold():
                 if self.review_section is not None:
@@ -588,6 +800,8 @@ class _Parser:
             tuple(self.problems),
             tuple(self.review_records),
             self.review_section,
+            tuple(self.log),
+            self.version,
         )
 
 
@@ -602,9 +816,9 @@ def parse_finding(text: str) -> tuple[ReviewSeverity, str, str] | None:
 FINDING_FORMAT = "<critical|warning|suggestion>: <place>: <text>"
 
 
-def parse_tasks(doc: Document) -> Tasks:
-    """Read a task list."""
-    return _Parser(doc).parse()
+def parse_tasks(doc: Document, version: int = 1) -> Tasks:
+    """Read a task list in the given record format."""
+    return _Parser(doc, version).parse()
 
 
 def is_evidence_line(text: str) -> bool:
@@ -614,5 +828,7 @@ def is_evidence_line(text: str) -> bool:
         return False
     content = match.group(1)
     return (
-        content.startswith((f"{BLOCKED}:", f"{SPEC_GAP}:")) or _EVIDENCE.match(content) is not None
+        content.startswith((f"{BLOCKED}:", f"{SPEC_GAP}:"))
+        or _EVIDENCE.match(content) is not None
+        or records.looks_like_record(content)
     )
