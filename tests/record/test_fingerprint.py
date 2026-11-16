@@ -217,6 +217,16 @@ def test_a_comment_edited_after_acceptance_keeps_it(workspace: Workspace) -> Non
     assert acceptance(workspace) is AcceptanceState.WITHDRAWN
 
 
+def test_a_comment_opener_in_inline_code_is_not_a_comment(workspace: Workspace) -> None:
+    mention = "## Why\n\nA spec says `<!--` starts a comment.\n\n"
+    workspace.change(proposal_text=proposal().replace("## Why\n\n", mention))
+    workspace.accept()
+    workspace.replace(
+        "changes/add-limit/proposal.md", "Long result lists", "Very long result lists"
+    )
+    assert acceptance(workspace) is AcceptanceState.WITHDRAWN
+
+
 def test_a_comment_inside_fenced_code_still_counts(workspace: Workspace) -> None:
     fenced = "## Why\n\n```html\n<!-- a -->\n```\n\n"
     workspace.change(proposal_text=proposal().replace("## Why\n\n", fenced))

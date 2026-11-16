@@ -30,7 +30,8 @@ from waymark.record.terms import ReviewLevel
 
 FINGERPRINT_LENGTH = 16
 _ABSENT = "\x00absent"
-_COMMENT = re.compile(r"<!--.*?(?:-->|\Z)", re.DOTALL)
+_COMMENT = re.compile(r"(`[^`\n]*`)|<!--.*?(?:-->|\Z)", re.DOTALL)
+"""A comment, or an inline code span, which is kept so a ``<!--`` written in one isn't a comment."""
 _GONE = "﷐"
 """Marks where a comment was removed: a noncharacter, so never in the text itself."""
 _FENCE = re.compile(r"^[ \t]*(```|~~~)")
@@ -53,7 +54,9 @@ def _without_comments(text: str) -> str:
     fence: str | None = None
 
     def flush() -> None:
-        stripped = _COMMENT.sub(_GONE, "\n".join(prose)) if prose else ""
+        stripped = (
+            _COMMENT.sub(lambda match: match.group(1) or _GONE, "\n".join(prose)) if prose else ""
+        )
         for line in stripped.split("\n") if prose else ():
             if _GONE in line and not line.replace(_GONE, "").strip():
                 continue
