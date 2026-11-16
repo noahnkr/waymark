@@ -57,6 +57,10 @@ def test_structured_impact() -> None:
     none = parse_proposal(document(proposal(impact=NO_SPECS), "p.md"))
     assert none.impact_specs == ()
     assert none.no_spec_changes
+    for value in ("", " search (new)"):
+        text = proposal(impact=NO_SPECS.replace("- Specs: none", f"- Specs:{value}"))
+        unnamed = parse_proposal(document(text, "p.md"))
+        assert (unnamed.impact_specs, unnamed.no_spec_changes) == (None, False)
 
 
 def test_scenario_new_change(project: Workspace) -> None:

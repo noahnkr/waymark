@@ -76,7 +76,8 @@ class Proposal:
     impact: Mapping[str, str]
     """The Impact's labeled lines: ``Specs``, ``User-visible`` and ``Code``, as written."""
     impact_specs: tuple[str, ...] | None
-    """The specs named under ``Specs:``; empty for ``none``, None without the line."""
+    """The specs named under ``Specs:``; empty for ``none``; None without the line, or when
+    it neither says ``none`` nor names a spec in backticks."""
     outcome: str | None
     problems: tuple[Problem, ...]
 
@@ -171,7 +172,8 @@ def parse_proposal(doc: Document) -> Proposal:
     impact_specs: tuple[str, ...] | None = None
     if SPECS in impact:
         text = impact[SPECS]
-        impact_specs = () if text.casefold() == NONE else tuple(_SPEC_NAME.findall(text))
+        names = tuple(_SPEC_NAME.findall(text))
+        impact_specs = () if text.casefold() == NONE else names or None
     return Proposal(
         doc=doc,
         title=title,

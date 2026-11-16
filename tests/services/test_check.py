@@ -4,7 +4,19 @@ import datetime
 import os
 import subprocess
 
-from tests.support import DESIGN, IMPACT, TASKS, Workspace, delta, proposal, requirement, spec
+import pytest
+
+from tests.support import (
+    DESIGN,
+    IMPACT,
+    NO_SPECS,
+    TASKS,
+    Workspace,
+    delta,
+    proposal,
+    requirement,
+    spec,
+)
 from waymark.services import lifecycle
 from waymark.services.check import Finding, Severity, check, has_errors
 from waymark.services.pr import describe
@@ -119,6 +131,19 @@ def test_impact_needs_its_three_lines(project: Workspace) -> None:
     assert '"- User-visible:", "- Code:"' in finding.message
 
 
+@pytest.mark.parametrize("value", ["", " search (new)"])
+def test_only_specs_none_skips_the_specs_step(project: Workspace, value: str) -> None:
+    """Requirement "Structured impact": an empty or unrecognized Specs line is reported."""
+    impact = NO_SPECS.replace("- Specs: none", f"- Specs:{value}")
+    project.change(proposal_text=proposal(impact=impact), deltas={})
+    [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
+    assert (finding.path, finding.code) == ("changes/add-limit/proposal.md", "impact-format")
+    assert "in backticks" in finding.message
+    assert project.change_state().next_step.kind.value == "propose"
+    project.replace("changes/add-limit/proposal.md", f"- Specs:{value}\n", "- Specs: none\n")
+    assert [f for f in check(project.root, NOW) if f.code.startswith("impact")] == []
+
+
 def test_spec_named_without_a_delta_points_at_the_specs_step(project: Workspace) -> None:
     project.change(proposal_text=proposal(impact=IMPACT.replace("`search`", "`search`, `ranking`")))
     [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
@@ -209,7 +234,7 @@ def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> Non
     assert findings(project) == [("warning", "changes/add-limit", "not-archived")]
 
 
-def test_exploration_without_a_status_line_is_an_old_layout(project: Workspace) -> None:
+def test_exploration_without_a_status_line_is_missing_its_status(project: Workspace) -> None:
     project.write(
         "explorations/paging.md",
         "# P\n\n## Context\n\n## Questions\n\n## Approaches\n\n"

@@ -188,6 +188,16 @@ def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -
             )
         )
     if proposal.impact_specs is None:
+        if SPECS in proposal.impact:
+            problems.append(
+                Problem(
+                    proposal.doc.path,
+                    WHOLE_FILE,
+                    "impact-format",
+                    f'The Impact\'s "- {SPECS}:" line names each spec with a delta in backticks, '
+                    f'such as "- {SPECS}: `search`", or says "- {SPECS}: {NONE}".',
+                )
+            )
         return
     named = set(proposal.impact_specs)
     for domain in sorted(set(change.deltas) - named):
