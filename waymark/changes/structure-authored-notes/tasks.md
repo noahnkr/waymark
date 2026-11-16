@@ -48,7 +48,7 @@
   - Verify:
     - tests in `tests/record/test_authored_formats.py` for the scenarios "Missing status" and "Parked in the Conclusion only"
     - the existing tests for "Parked exploration" and "Parked without a reason" still pass
-- [ ] 1.7 Add examples to the templates, show a nested verification, and leave comments out of the fingerprint
+- [x] 1.7 Add examples to the templates, show a nested verification, and leave comments out of the fingerprint
   - Criteria:
     - the proposal, delta, design, tasks, charter and exploration templates each hold a comment with a good and a bad example of their content
     - a new change, charter and exploration from those templates give no `wm check` problem from the comments
