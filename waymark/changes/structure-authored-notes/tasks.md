@@ -61,7 +61,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Show the new layouts in the skills
+- [x] 2.1 Show the new layouts in the skills
   - Criteria:
     - `wm-propose` and `wm-update` show the structured Impact, the decision's `Status:` and `Decided by:` lines and the `## Open questions` section, and say that a proposed decision or an open question blocks acceptance
     - `wm-propose` and `wm-update` say `- Verify:` may be a nested list, one step per bullet, like `- Criteria:`
