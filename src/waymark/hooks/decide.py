@@ -50,7 +50,7 @@ _AGENT_ROLES = {assets.IMPLEMENTER: IMPLEMENT, assets.REVIEWER: REVIEW}
 _HANDBACK_TRIES = 2
 """Refused handbacks before the agent is let go and the planner told to record its result."""
 _EVIDENCE_COMMANDS = (
-    "wm tick, wm block, wm gap, wm review, wm verdict, wm reopen or wm resolve; "
+    "wm tick, wm block, wm gap, wm note, wm review, wm verdict, wm reopen or wm resolve; "
     "accepting is for the human, with wm accept"
 )
 

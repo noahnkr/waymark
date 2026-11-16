@@ -303,6 +303,7 @@ def test_agent_edit_that_adds_evidence_is_refused(
     assert not decision.allow
     assert what in decision.reason
     assert "only wm writes evidence" in decision.reason
+    assert "wm note" in decision.reason
 
 
 def test_agent_edit_that_removes_or_changes_evidence_is_refused(accepted: Workspace) -> None:

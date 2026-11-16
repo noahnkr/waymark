@@ -436,3 +436,12 @@ def test_accepted_again(project: Workspace) -> None:
     lifecycle.accept(project.root, NAME, DAY)
     assert " items 1.1 1.2 1.3 by " in project.read(TASKS_FILE)
     assert project.change_state().acceptance is AcceptanceState.VALID
+
+
+def test_accept_refuses_a_git_name_that_would_break_the_record(workspace: Workspace) -> None:
+    git_init(workspace.root, name="Sam: the owner")
+    workspace.change()
+    with pytest.raises(Refusal, match=r'holds ": "'):
+        lifecycle.accept(workspace.root, NAME, DAY)
+    lifecycle.accept(workspace.root, NAME, DAY, by="Sam Doe")
+    assert " items 1.1 1.2 by Sam Doe\n" in workspace.read(TASKS_FILE)

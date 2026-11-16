@@ -35,6 +35,9 @@
   - Criteria: the charter's careful-writes constraint names the exception for `wm check --fix`, which changes layout and never wording; concepts (the records, the Log, the glossary), getting started, the smoke test, architecture and the README describe format 2 and `--fix`; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`
   - (reopened) 2026-11-16 by Noah Roberts
+- [x] 2.3 Close the review's open warnings
+  - Criteria: `wm accept` without `--by` checks the git name as every other command does, and refuses one that holds `: ` with the reason; `wm pr` lists every review record of the change with its findings, each place in backticks, and the override; the refusal of an agent's edit that touches a record or tick names `wm note` among the commands to use
+  - Verify: tests in `tests/services/test_lifecycle.py`, `tests/services/test_ci_and_pr.py` and `tests/hooks/test_decide.py`
 
 ## Log
 

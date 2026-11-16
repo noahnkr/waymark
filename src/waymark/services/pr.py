@@ -59,9 +59,19 @@ def _review_lines(record: Record, change: Change) -> list[str]:
         text = f"Self-reviewed: {last.text}"
     else:
         text = f"Reviewed (level {review.level})."
-    findings = [f for record in records[-1:] for f in record.findings]
     lines = ["", "## Review", "", text]
-    lines += [f"- {f.severity.value}: {f.place}: {f.text}" for f in findings]
+    if change.tasks is not None:
+        written = change.tasks.doc.lines
+        shown = [
+            record
+            for record in change.tasks.log
+            if record in records or record.kind is RecordKind.OVERRIDE
+        ]
+        if shown:
+            lines.append("")
+        for shown_record in shown:
+            lines.append(written[shown_record.index].text.strip())
+            lines += [f"  {written[f.index].text.strip()}" for f in shown_record.findings]
     override = change.tasks.latest(RecordKind.OVERRIDE) if change.tasks else None
     if override is not None:
         by = f" by {override.who}" if override.who else ""
