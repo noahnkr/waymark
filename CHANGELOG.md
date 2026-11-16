@@ -5,6 +5,34 @@ the record's format says whether `wm update` migrates an older record.
 
 ## [Unreleased]
 
+- **Behavior change: `wm archive --built` and `--differs` replace `--outcome`.**
+  The archived proposal's Outcome holds a `- Built: <text>` line and a
+  `- Differs: <text>` line, `none` when `--differs` is left out. A hand-written
+  Outcome needs both lines. `wm pr` shows them.
+- **Behavior change: a proposal's Impact has three lines,** `- Specs:`,
+  `- User-visible:` and `- Code:`. `Specs:` names each spec the change has a
+  delta for, in backticks, or says `none`, and `wm check` reports a spec named
+  without a delta and a delta whose spec isn't named. `- Specs: none` replaces
+  "No spec changes" as the way to say a change has no deltas.
+- **Behavior change: a design's decisions are settled before acceptance.** Each
+  decision has a `- Status: proposed|decided` line and a
+  `- Decided by: human|planner` line, and the design an `## Open questions`
+  section, holding a list or `None.`. While a decision is proposed or a question
+  is listed, the next step stays at the design, and `wm accept` refuses with a
+  reason that names each one.
+- **The charter's goals and constraints are numbered lists,** `1. <text>`,
+  counted from 1. `wm check` reports a line in another form.
+- **A task item's `- Verify:` may be a nested list,** one step per bullet, like
+  `- Criteria:`.
+- **An exploration's status comes from its `- Status:` line alone.** A
+  Conclusion starting with `Parked:` no longer parks it, and a missing status
+  line is reported as `missing-status` instead of an old layout.
+- **The templates carry a good and a bad example** in a comment. Comments are
+  left out of the acceptance fingerprint, so editing or deleting them keeps an
+  acceptance.
+- These layouts are required of active changes, the charter and explorations.
+  Archived changes are read as they were written, and the record format stays
+  3.
 - **Behavior change: record format 3.** `wm` reads and writes only format 3. It
   doesn't migrate a record in format 1 or 2: `wm update` refuses one, names its
   format, and changes nothing. Waymark's own record was the only one in an older

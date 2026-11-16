@@ -89,7 +89,8 @@ yourself). It takes one real, small change on your own code through every step,
 and explains each one as it happens:
 
 1. **Propose.** The agent drafts a proposal: why, what changes, non-goals,
-   impact, and the change's review level when it isn't the project default. A
+   impact (the specs it touches, what users will see change, and the code), and
+   the change's review level when it isn't the project default. A
    small change takes the short path: proposal and tasks, no design. Work that
    changes no requirement needs no change at all: `/wm-fix` takes it on the
    [tiny path](concepts.md#paths).
@@ -98,7 +99,8 @@ and explains each one as it happens:
 3. **Tasks.** It writes the task list: each item with criteria and how to
    verify it.
 4. **Accept.** You read the change and run `wm accept <change>` yourself. Agents
-   are blocked from running it.
+   are blocked from running it. A design decision still marked `proposed`, or a
+   question listed under its Open questions, has to be settled first.
 5. **Apply.** The agent builds each item itself, from the record, and records
    the result. An item with a `- Build: delegate` line goes to a fresh
    implementer agent instead (see [who builds an item](concepts.md#who-builds-an-item)).
@@ -109,7 +111,8 @@ and explains each one as it happens:
    end of the task list (see [review](concepts.md#review)).
 7. **Archive.** Your second approval. Once you agree, the change is archived on
    its branch, before its pull request: its deltas merge into the specs and its
-   outcome is written. `/wm-pr` then describes the pull request, outcome included. `wm` refuses while
+   outcome is written, what was built and how it differs from the proposal,
+   with `wm archive <change> --built "…" --differs "…"`. `/wm-pr` then describes the pull request, outcome included. `wm` refuses while
    any item is unbuilt or the change is unreviewed; only you can archive past a
    missing review,
    with `wm archive <change> --override "<reason>"`.
