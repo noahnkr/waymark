@@ -5,17 +5,24 @@ description: Build an accepted Waymark change item by item - build each item you
 
 # Apply
 
+## Role
+
 You are the planner. You build each item yourself, from the record, unless the item has a `- Build: delegate` line: then a fresh implementer that sees only the record builds it. Either way the record is the source of truth. Once every item is built, the whole change is reviewed once, at its review level. You build or delegate, record, commit and review.
 
-## Before you start
+## Inputs
 
-1. Find the change. If the human didn't name it, run `wm ls changes` and ask which one.
-2. Run `wm instructions --change <name> --json`. If the step is not `apply`, `review`, `resolve-items` or `archive`, the change isn't ready: say what the step is and stop.
-3. Make sure you are on the change's branch: its name is the branch name. Create it if it doesn't exist. In an atlas, the same branch name is used in the atlas and in every code repo the change's items name; `wm status` shows each one's branch and warns when one differs. If `wm` says a repo isn't on this machine, ask the human to clone it and run `wm atlas register`.
+- The change's name. If the human didn't name it, run `wm ls changes` and ask which one.
+- `wm instructions --change <name> --json`: the step, the item, who builds it, and the commands.
+- For an item you build, `wm context <name> <item> --for implement`.
+
+## Steps
+
+1. Run `wm instructions --change <name> --json`. The step must be `apply`, `review`, `resolve-items` or `archive`; otherwise see When to stop.
+2. Make sure you are on the change's branch: its name is the branch name. Create it if it doesn't exist. In an atlas, the same branch name is used in the atlas and in every code repo the change's items name; `wm status` shows each one's branch and warns when one differs. If `wm` says a repo isn't on this machine, ask the human to clone it and run `wm atlas register`.
+3. Run the loop below until `wm instructions --change <name> --json` says the step is `archive`.
+4. When the step is `archive`, every item is built and the change is reviewed. Tell the human, and offer the `wm-archive` skill, which archives the change on its branch, and then the `wm-pr` skill.
 
 ## The loop
-
-Repeat until `wm instructions --change <name> --json` says the step is `archive`:
 
 ### Step `apply`
 
@@ -46,7 +53,7 @@ A blocked item, or one with a spec gap, waits on the human; go on to the next st
 
 ### After an item is ticked
 
-Commit the item's work, in the repository it belongs to, with a conventional commit message such as `feat(api): add the result limit`. If the project lists commit scopes, use one of them or none. When a git hook stops the commit, fix what it says; don't skip the hooks. Don't push and don't open a pull request unless the human asks.
+Commit the item's work, in the repository it belongs to, with a conventional commit message such as `feat(api): add the result limit`. If the project lists commit scopes, use one of them or none. When a git hook stops the commit, fix what it says; don't skip the hooks.
 
 ### Step `review`
 
@@ -67,6 +74,10 @@ Once every item is ticked, the change is reviewed once, as a whole. `wm instruct
 
 Commit the review record once it is written.
 
+### Step `resolve-items`
+
+Only what waits on the human is left. Run `wm inbox` and bring each one to them: the blocker, the spec gap, or the verdict. A spec gap is fixed by revising the change with the `wm-update` skill. When the fix, or a review, only needs more work and no change to the deltas or the design, add a new item through the `wm-update` skill, with the human's confirmation: it keeps the acceptance, and is built like any other. Once they have decided, run `wm resolve <name> <item> "<what was decided>"` for an item, or `wm resolve <name> review "<what was decided>"` for the change's review.
+
 ### What `wm` writes
 
 Every line `wm` writes is a dated record, `(kind) YYYY-MM-DD [<args>] [by <who>]: <text>`. Records about one item sit under it: `(blocked)`, `(gap)`, `(note)`, `(reopened)` and `(resolved)`. Records about the whole change sit in the `## Log` at the end of the task list: `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)` and `(override)`. Records are never edited or removed; a later one supersedes an earlier one, so `wm resolve` adds a `(resolved)` record and the blocker stays.
@@ -75,13 +86,30 @@ Every line `wm` writes is a dated record, `(kind) YYYY-MM-DD [<args>] [by <who>]
 - `by` is your git name. Pass `--by "<name>"` to any writing command when someone else did the work, such as `--by wm-reviewer` when you record a reviewer's verdict for it.
 - `wm check --fix` puts the record in its standard layout when the human asks; it never changes wording.
 
-### Step `resolve-items`
+## Quality bar
 
-Only what waits on the human is left. Run `wm inbox` and bring each one to them: the blocker, the spec gap, or the verdict. A spec gap is fixed by revising the change with the `wm-update` skill. When the fix, or a review, only needs more work and no change to the deltas or the design, add a new item through the `wm-update` skill, with the human's confirmation: it keeps the acceptance, and is built like any other. Once they have decided, run `wm resolve <name> <item> "<what was decided>"` for an item, or `wm resolve <name> review "<what was decided>"` for the change's review.
+- Each item's criteria hold, and its verification ran and passed.
+- Nothing was built on a fact the record doesn't hold.
+- Each ticked item is committed on its own, with a conventional message.
+- The review checked every scenario, the design and every item's criteria, and recorded each finding.
 
-## When the step is `archive`
+## Show the human
 
-Every item is built and the change is reviewed. Tell the human, and offer the `wm-archive` skill, which archives the change on its branch, and then the `wm-pr` skill.
+After each item:
+
+- **Item:** its number and title.
+- **Built:** what changed, in a sentence or two.
+- **Checks:** what ran, and the result.
+- **Commit:** its hash and message.
+
+After the review: the verdict, and each finding with its severity and place. When the step is `archive`, say so and offer `wm-archive`.
+
+## When to stop
+
+- The step is not `apply`, `review`, `resolve-items` or `archive`: the change isn't ready. Say what the step is and stop.
+- An item is blocked or has a spec gap and nothing else can go on: it waits on the human.
+- A second `changes` verdict, or a `spec-gap` verdict: it goes to the human.
+- The step is `archive`: offer `wm-archive` and stop.
 
 ## Rules
 
