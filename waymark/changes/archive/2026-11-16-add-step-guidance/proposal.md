@@ -34,3 +34,8 @@ This is the fifth change on the `record-format-and-skills` milestone.
   - the skills' Rules sections are shorter and point at the shared rules.
 - Code: `services/instructions.py`, `views/` (the instructions view and its JSON schema), `record/` (tasks, design, changes)
 - Assets and docs: all nine skills; concepts, `docs/json.md` (generated), the changelog.
+
+## Outcome
+
+- Built: wm instructions gives the propose, specs, design and tasks steps a checklist that marks the checks wm check enforces, and every step the five shared rules, in JSON as checklist and shared_rules; the nine skills point at the shared rules instead of repeating them; wm check reports an active item without a Criteria or Verify line (item-incomplete) and a decision with fewer than two options (decision-options).
+- Differs: Don't merge stays in wm-pr and wm-fix because it is stricter than the shared rule. The Item has no criteria refusal in services/context.py is left in place though it can no longer be reached.
