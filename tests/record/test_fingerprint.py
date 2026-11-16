@@ -166,21 +166,25 @@ def test_ticks_blockers_review_records_and_notes_keep_acceptance(workspace: Work
         tasks,
         "  - Verify: a test covers fifty-one matches\n",
         "  - Verify: a test covers fifty-one matches\n"
-        "  - Note: the cap sits after sorting\n"
-        "  - (self-review) 2026-01-16: matches the criteria\n",
+        "  - (note) 2026-01-16 by Sam Doe: the cap sits after sorting\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.replace(
         tasks,
         "1.2 Document the limit\n",
-        "1.2 Document the limit\n  - Blocked: waiting for wording\n",
+        "1.2 Document the limit\n  - (blocked) 2026-01-16 by Sam Doe: waiting for wording\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.write(
         tasks,
-        workspace.read(tasks) + "\n## Review\n\n- (self-review) 2026-01-17: fine\n",
+        workspace.read(tasks) + "- (self-review) 2026-01-17 by Sam Doe: fine\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
+    assert workspace.record().changes["add-limit"].problems == ()
+    assert [r.kind.value for r in workspace.record().changes["add-limit"].tasks.log] == [  # type: ignore[union-attr]
+        "accepted",
+        "self-review",
+    ]
 
 
 def test_writing_the_outcome_keeps_acceptance(workspace: Workspace) -> None:
