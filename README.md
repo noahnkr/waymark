@@ -191,7 +191,7 @@ A search SHALL return at most fifty results.
 ## Why Waymark
 
 - **Agents only know what's written down.** Each task is built from the written
-  change, by your session or, for a task tagged `build: delegate`, by a fresh
+  change, by your session or, for a task with a `- Build: delegate` line, by a fresh
   agent that sees nothing else. When something is missing, the agent writes it
   into the record or reports a spec gap instead of guessing.
 - **Review is recorded.** Each change is checked once, as a whole, against its

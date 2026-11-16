@@ -1,12 +1,30 @@
 # Changelog
 
 All notable changes to Waymark, one entry per release. A release that changes
-the record's format says what `wm update` migrates.
+the record's format says whether `wm update` migrates an older record.
 
 ## [Unreleased]
 
-- **Behavior change: record format 2.** Everything `wm` writes is a dated
-  record, `(kind) YYYY-MM-DD [<args>] [by <who>]: <text>`. `(blocked)`, `(gap)`,
+- **Behavior change: record format 3.** `wm` reads and writes only format 3. It
+  doesn't migrate a record in format 1 or 2: `wm update` refuses one, names its
+  format, and changes nothing. Waymark's own record was the only one in an older
+  format, and was moved by a migration that has since been removed.
+- **The layouts humans write:**
+  - a proposal's facts are bullets: `- Owner: <name>`, `- Review: <level>`,
+    `- Path: short`;
+  - the charter's glossary is a list of `- **<term>**: <meaning>`, and step
+    headings under Rules are capitalized (`### Apply`) and may be left out;
+  - a task item's criteria may be a nested list under `- Criteria:`, and the
+    delegation tag is a `- Build: delegate` line under the item;
+  - a delta's sections are `## ADDED Requirements`, `## MODIFIED Requirements`
+    and `## REMOVED Requirements`, and `## RENAMED Requirements` with `- From:`
+    and `- To:` renames a requirement and keeps its text;
+  - an exploration says where it stands in a `- Status: open|parked|led-to
+    <link>` line under its title.
+
+  `wm check` reports each older layout and says to run `wm update`.
+- **Behavior change: what `wm` writes is a dated record,**
+  `(kind) YYYY-MM-DD [<args>] [by <who>]: <text>`. `(blocked)`, `(gap)`,
   `(note)`, `(reopened)` and `(resolved)` sit under items; `(accepted)`,
   `(synced)`, `(self-review)`, `(review)`, `(resolved)` and `(override)` sit in a
   `## Log` section at the end of the task list, which replaces `## Review`. The
@@ -24,10 +42,6 @@ the record's format says what `wm update` migrates.
 - **Findings** put their place in backticks: ``warning `src/a.py:12`: <text>``.
 - **`wm show --json`**: the `show.change` schema is version 3, with a `log` of
   records, a `by` on every record, and no item `notes` or review `records`.
-- **Upgrading:** run `wm update`. It migrates every change, archived ones too,
-  to format 2: old item reviews become notes and `review:` tags go. Each active
-  change is accepted again afterwards, because an acceptance keeps its old
-  fingerprint.
 
 ## [0.1.1] - 2026-11-15
 

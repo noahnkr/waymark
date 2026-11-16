@@ -21,9 +21,9 @@ design     how it will be built, and the decisions taken (skipped on the short p
 tasks      one checklist; each item has criteria and a way to verify it
 accept     YOU approve the change; nothing is built before this
 apply      each item built from the record: by the planner, or by a fresh
-           implementer agent when the item is tagged `build: delegate`
+           implementer agent when the item has a `- Build: delegate` line
 review     the whole change checked once, at its level, and the review written
-           at the end of the task list
+           in the Log at the end of the task list
 archive    YOU approve finishing it, on the change's branch before its pull request;
            deltas merge into the specs, the outcome is written
 ```
@@ -40,7 +40,7 @@ on how.
 | Path | For | What it takes |
 |---|---|---|
 | **Tiny** | work that adds, changes or removes no requirement: a typo, a docs fix, a bug where the code disagrees with a spec, a refactor, a dependency bump | no change folder: the agent says why it is tiny and builds after your yes, then commits and offers a pull request (`/wm-fix`). Nothing is written to the record; your merge is the second approval |
-| **Short** | a small change | a change with a proposal, deltas and a task list, but no design (a `Path: short` line); review level `self` or `none` |
+| **Short** | a small change | a change with a proposal, deltas and a task list, but no design (a `- Path: short` line); review level `self` or `none` |
 | **Full** | anything bigger | a change with a design, and an independent review when it is risky |
 
 The test for tiny is the specs, not the size: if every requirement still holds
@@ -48,9 +48,9 @@ as written, the work is tiny. If tiny work turns out to change a requirement, it
 stops and becomes a change. Specs can't be edited by hand on any path.
 
 **Changing what was accepted withdraws the acceptance.** That covers the
-proposal (its `Review:` line included), the deltas, the design and the
+proposal (its `- Review:` line included), the deltas, the design and the
 definition of each item the acceptance names (its number, title, criteria,
-verification, repo and build tag), including removing the item. It needs
+verification, repo and `- Build:` line), including removing the item. It needs
 accepting again. Ticks and records, such as blockers, notes and reviews,
 don't count. Neither does layout: the fingerprint is taken over the standard
 layout, so `wm check --fix` never withdraws an acceptance.
@@ -87,10 +87,11 @@ waymark/
 ```
 
 There is no stored status and no frontmatter. What you write uses
-`Capital-Label:` lines, such as `Owner:` in a proposal or `Criteria:` under an
-item. What `wm` writes is a record (see [Records](#records)). Everything else is
-worked out from where files are and what they say. Templates are built into `wm`;
-`wm instructions` hands an agent the right one at each step.
+`- Label:` lines, such as `- Owner:` in a proposal or `- Criteria:` under an
+item (see [What you write](#what-you-write)). What `wm` writes is a record (see
+[Records](#records)). Everything else is worked out from where files are and
+what they say. Templates are built into `wm`; `wm instructions` hands an agent
+the right one at each step.
 
 A spec states what one area of the system does, as requirements, each with at
 least one scenario:
@@ -111,7 +112,9 @@ the end of the task list:
 
 ```markdown
 - [x] 1.1 Cap the result count
-  - Criteria: at most fifty results come back
+  - Criteria:
+    - at most fifty results come back
+    - they are the fifty best matches
   - Verify: a test searches an index with fifty-one matches
   - (note) 2026-01-15 by Sam Doe: the cap sits after sorting
 
@@ -121,6 +124,19 @@ the end of the task list:
 - (review) 2026-01-16 pass by wm-reviewer: the boundary is covered
   - suggestion `docs/search.md`: name the limit in the help text
 ```
+
+### What you write
+
+| File | Layout |
+|---|---|
+| Proposal | `- Owner: <name>`, and optionally `- Review: <level>` and `- Path: short`, as bullets under the title |
+| Charter | the glossary as `- **<term>**: <meaning>` lines; under Rules, one capitalized heading per step, such as `### Apply`, which may be left out when the step has no rules |
+| Task item | `- Criteria:`, `- Verify:` and, in an atlas, `- Repo:` lines under it; criteria may be a nested list, one per bullet; `- Build: delegate` to have an implementer build it |
+| Delta | `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` and `## RENAMED Requirements`; a rename is a `- From: <old name>` line and a `- To: <new name>` line, and keeps the requirement's text |
+| Exploration | `- Status: open`, `- Status: parked` with the reason in the Conclusion, or `- Status: led-to <link>` to the change or milestone it led to |
+
+`wm check` reports a layout of an older record format and says to run
+`wm update`.
 
 ### Records
 
@@ -150,9 +166,9 @@ Every line `wm` writes is a dated record of one shape:
 
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
-| Is | the main agent session, working with you | a fresh agent, started for an item tagged `build: delegate` with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
+| Is | the main agent session, working with you | a fresh agent, started for an item with a `- Build: delegate` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
 | Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules | every item's criteria, the deltas and their scenarios, the design, earlier reviews, the code; **not** how it was built |
-| May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and add notes under its item | read code and the record; run tests and other read-only commands |
+| May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
 
 Only you accept a change. The record is the source of truth: whoever builds an
@@ -165,20 +181,23 @@ By default the planner builds each item itself. It reads the item's context pack
 (`wm context <change> <item> --for implement`), builds the item, runs the checks
 the item touches, and records the result with `wm tick`, `wm block` or `wm gap`.
 
-An item tagged `build: delegate` goes to a fresh implementer instead:
+An item with a `- Build: delegate` line goes to a fresh implementer instead:
 
 ```markdown
-- [ ] 1.2 Rebuild the search index   `build: delegate`
+- [ ] 1.2 Rebuild the search index
+  - Criteria: the index holds every document
+  - Build: delegate
 ```
 
-- **When to tag:** a large item, items that can be built in parallel, or an item
-  where a cold check that the record is enough to build from is worth its cost.
-- **Where:** at the end of the item line. `delegate` is the only value;
-  `wm check` reports any other.
-- **Accepted with the item:** adding, removing or changing the tag withdraws
+- **When to delegate:** a large item, items that can be built in parallel, or an
+  item where a cold check that the record is enough to build from is worth its
+  cost.
+- **Where:** a line under the item. `delegate` is the only value; `wm check`
+  reports any other.
+- **Accepted with the item:** adding, removing or changing the line withdraws
   acceptance.
-- **Guidance, not a gate:** the tag decides what `wm instructions` and the skills
-  say. The hooks don't enforce it.
+- **Guidance, not a gate:** the line decides what `wm instructions` and the
+  skills say. The hooks don't enforce it.
 
 ## Review
 
@@ -186,7 +205,7 @@ A change is reviewed once, as a whole, after every item is ticked. The review
 checks it against its deltas' scenarios, its design and each item's criteria: is
 it complete, correct and coherent?
 
-The change's level is the `Review:` line in its proposal, or the project's
+The change's level is the `- Review:` line in its proposal, or the project's
 `default_review` when the line is absent:
 
 | Level | For | What is recorded |
@@ -248,12 +267,12 @@ and pull request, through the workflow `wm ci` writes.
 | **Atlas** | A separate repository that holds the record for a project whose code spans several repositories. See the [multi-repo guide](multi-repo.md). |
 | **Change** | One unit of work, from idea to archive, in its own folder: proposal, deltas, design and tasks. |
 | **Proposal** | Why a change is wanted, what it changes, its non-goals and impact. Its outcome is added at archive. |
-| **Delta** | A change's edits to one spec: requirements added, modified or removed. Deltas merge into the specs at archive. |
+| **Delta** | A change's edits to one spec: requirements added, modified, removed or renamed. Deltas merge into the specs at archive. |
 | **Design** | How a change will be built, including its decisions: the options, the choice and why. |
-| **Task item** | One checkbox in a change's task list, with its criteria, how to verify it, an optional `build: delegate` tag, and the record of building it. |
+| **Task item** | One checkbox in a change's task list, with its criteria, how to verify it, an optional `- Build: delegate` line, and the records of building it. |
 | **Acceptance** | Your explicit approval of a change before any of it is built. Only you can give it. |
 | **Tiny path** | The route for work that adds, changes or removes no requirement: no change, just your yes, a conventional commit and a pull request. |
-| **Short path** | The light route for a small change: no design, and review level `self` or `none`. Marked by a `Path: short` line in the proposal. |
+| **Short path** | The light route for a small change: no design, and review level `self` or `none`. Marked by a `- Path: short` line in the proposal. |
 | **Conflict** | A delta that no longer applies to its spec (a *mismatch*, which blocks its change), or two active changes that name the same requirement (an *overlap*, which is reported). |
 | **Sync** | Merging an applied change's deltas into the specs without archiving it yet. |
 | **Archive** | Finishing a change: its deltas merged into the specs, its outcome written, and its folder moved to a dated archive. |
@@ -261,9 +280,9 @@ and pull request, through the workflow `wm ci` writes.
 | **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion) that may lead to a change or be parked. |
 | **Milestone** | An optional goal that several changes work toward, with a roadmap listing them. |
 | **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |
-| **Implementer** | A fresh agent that builds one task item tagged `build: delegate`, from the record alone. |
+| **Implementer** | A fresh agent that builds one task item with a `- Build: delegate` line, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one whole change against its scenarios, design and criteria, without seeing how it was built. |
-| **Review level** | How a change is checked: `self`, `independent` or `none`. Set by the `Review:` line in its proposal. |
+| **Review level** | How a change is checked: `self`, `independent` or `none`. Set by the `- Review:` line in its proposal. |
 | **Log** | The last section of a change's task list, where `wm` keeps the dated records about the whole change: its acceptances, sync, reviews and any override. |
 | **Finding** | One thing a review found, with a severity (`critical`, `warning` or `suggestion`), a place and a text. |
 | **Context pack** | The excerpts of the record that `wm` assembles for one job: exploring, implementing or reviewing. |
