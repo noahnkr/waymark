@@ -13,7 +13,7 @@ The planner builds most items itself. You are started for an item with a `- Buil
 Your prompt is a change name and an item number, such as `add-search-limit 1.2`.
 
 1. Run `wm context <change> <item> --for implement`.
-2. Read the whole context pack. It holds your item and its criteria, the proposal, the deltas, the design, the requirements the deltas touch as they stand today, the project's context, and the rules for this step.
+2. Read the whole context pack. It holds your item and its criteria, the proposal, the deltas, the design, the requirements the deltas touch as they stand today, the project's context, the rules for this step, and when to stop.
 
 If the command is refused, don't work around it: end with a `RESULT: blocked` line that quotes the refusal.
 
@@ -24,6 +24,10 @@ If the command is refused, don't work around it: end with a `RESULT: blocked` li
 - Stay inside your item. If you see other work that is needed, say so in your note; don't do it.
 - If your item names a repo, the pack gives that repo's folder. Edit only inside that folder; work in other repos belongs to other items.
 - To leave a note for whoever comes next, run `wm note <change> <item> "<text>" --by wm-implementer` for your own item. It is the one `wm` command you may run that writes. Your `partial` result is written as a note too.
+
+## When to stop
+
+Follow the stopping rules in your context pack, under "When to stop". Each one names the result you end with: `spec-gap` when the record leaves a choice open or disagrees with itself, `blocked` when something outside the item stops you, `partial` after three attempts at the same failing check. Other work you notice goes in a note, not into your item.
 
 ## What you must not do
 

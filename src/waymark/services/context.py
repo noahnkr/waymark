@@ -33,6 +33,7 @@ from waymark.record.tasks import Item, ReviewRecord
 from waymark.record.terms import Layout, ReviewLevel, Step
 from waymark.record.text import Document
 from waymark.services.common import Refusal, find_change, find_item, repo_locations, state_of
+from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
 from waymark.services.references import reference_record
 
 CONTEXT_VERSION = 1
@@ -262,6 +263,7 @@ def _implement_pack(record: Record, change_name: str, number: str) -> dict[str, 
         "deltas": _deltas(change),
         "requirements": _touched_requirements(record, change),
         "design": _text(change.design.doc) if change.design else None,
+        "stopping_rules": list(STOPPING_RULES),
         "ends_with": _ENDINGS[IMPLEMENT],
     }
 
@@ -289,6 +291,7 @@ def _review_pack(record: Record, change_name: str) -> dict[str, Any]:
         "rules": charter.rules.get(Step.REVIEW, "") if charter else "",
         "deltas": _deltas(change),
         "design": _text(change.design.doc) if change.design else None,
+        "severity_rubric": list(SEVERITY_RUBRIC),
         "ends_with": _ENDINGS[REVIEW],
     }
 

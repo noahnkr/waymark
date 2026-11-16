@@ -333,6 +333,7 @@ def _implement_pack() -> Schema:
             "deltas": _DELTAS,
             "requirements": _array(_object({"spec": STRING, "name": STRING, "text": STRING})),
             "design": TEXT_OR_NULL,
+            "stopping_rules": NAMES,
             "ends_with": STRING,
         },
     )
@@ -352,6 +353,7 @@ def _review_pack() -> Schema:
             "rules": STRING,
             "deltas": _DELTAS,
             "design": TEXT_OR_NULL,
+            "severity_rubric": NAMES,
             "ends_with": STRING,
         },
     )
@@ -378,6 +380,7 @@ SCHEMAS.update(
                 "unlocks": STRING,
                 "checklist": _array(_object({"text": STRING, "enforced": BOOLEAN})),
                 "shared_rules": NAMES,
+                "severity_rubric": NAMES,
             },
         ),
         "context.explore": _payload(

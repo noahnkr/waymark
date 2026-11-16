@@ -64,7 +64,7 @@ Once every item is ticked, the change is reviewed once, as a whole. `wm instruct
   - correct: the code does what the requirements say, at the edges too;
   - coherent: it follows the design, and the items fit together.
 
-  Read the code, run each item's verification, and run the project's full checks. Then record it with `wm review <name> --self "<summary>"`, adding a `--finding "<critical|warning|suggestion>: <place>: <text>"` for each thing you found. A critical finding means it isn't done: fix it, or record `wm verdict <name> changes "<reasons>" --items <item>...` to rebuild the items it names.
+  Read the code, run each item's verification, and run the project's full checks. Then record it with `wm review <name> --self "<summary>"`, adding a `--finding "<critical|warning|suggestion>: <place>: <text>"` for each thing you found, graded by the severity rubric `wm instructions` gives at the review step. A critical finding means it isn't done: fix it, or record `wm verdict <name> changes "<reasons>" --items <item>...` to rebuild the items it names.
 - **Independent review.** Start the `wm-reviewer` agent with a prompt of exactly `<name>` and nothing else. It ends with `CHANGE:` and `VERDICT:` lines, and `wm` records the verdict and its findings. When it returns, look at the change with `wm show <name>`:
   - `pass`: the change is reviewed;
   - `changes`: the items it names are reopened and built again, then the change is reviewed again, independently;

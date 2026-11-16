@@ -5,6 +5,15 @@ the record's format says whether `wm update` migrates an older record.
 
 ## [Unreleased]
 
+- **One severity rubric for every review.** `wm context --for review` and
+  `wm instructions` at the review step give it, as "Severity rubric" and, in the
+  JSON, `severity_rubric`: critical when a criterion or scenario doesn't hold,
+  warning when everything holds but something is fragile, suggestion for
+  clarity, and the higher of two when torn. The reviewer and the self-review in
+  `wm-apply` grade by it.
+- **Stopping rules for the implementer.** `wm context --for implement` gives
+  them, as "When to stop" and, in the JSON, `stopping_rules`: `spec-gap`,
+  `blocked`, or `partial` after three attempts at the same failing check.
 - **The skills share one layout:** Role, Inputs, Steps, any sections of their
   own, Quality bar, Show the human, When to stop and Rules. Each says what good
   output looks like, the fixed shape of what it shows you, and when it stops.
