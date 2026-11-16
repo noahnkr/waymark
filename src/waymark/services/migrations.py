@@ -14,6 +14,7 @@ from waymark.record.edits import set_record_format
 from waymark.record.files import RecordFiles
 from waymark.record.store import Transaction
 from waymark.services.common import Refusal, commit
+from waymark.services.format_two import migrate_to_format_2
 
 
 @dataclass(frozen=True)
@@ -29,8 +30,14 @@ class Migration:
     apply: Callable[[RecordFiles, Transaction], None]
 
 
-MIGRATIONS: tuple[Migration, ...] = ()
-"""Every migration this version knows. Format 1 is the first, so there are none yet."""
+MIGRATIONS: tuple[Migration, ...] = (
+    Migration(
+        1,
+        "wm's lines in every change became dated records, kept in each task list's Log",
+        migrate_to_format_2,
+    ),
+)
+"""Every migration this version knows, one per format number."""
 
 
 def stored_format(files: RecordFiles) -> int:

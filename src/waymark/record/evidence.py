@@ -1,54 +1,51 @@
 """Gate evidence in a record file: the lines only wm writes.
 
 Used to tell whether an edit adds, changes or removes evidence. The evidence
-is the ticks, blockers, spec gaps and review records in a task list (every
-line of its Review section counts), and the acceptance, synced and override
-lines in a proposal.
+is every tick in a task list, every record wm writes under an item or in the
+Log, and every finding under a review in the Log.
 """
 
 import re
 from collections import Counter
 
-from waymark.record.changes import PROPOSAL_FILE, TASKS_FILE
-from waymark.record.tasks import REVIEW_SECTION, is_evidence_line
+from waymark.record import records
+from waymark.record.changes import TASKS_FILE
+from waymark.record.tasks import LOG_SECTION
 from waymark.record.text import Document
 
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+\.\d+)\s")
 _HEADING = re.compile(r"^## (.*)$")
-_PROPOSAL_EVIDENCE = re.compile(r"^(Accepted|Synced|Review override):")
+_LIST_LINE = re.compile(r"^\s*[-*] (.*)$")
 _NOTE = re.compile(r"^  [-*] Note: \S")
 
 
 def evidence(relative: str, text: str) -> Counter[str]:
-    """Every piece of evidence in a record file, each named so it can be reported."""
-    name = relative.rsplit("/", 1)[-1]
+    """Every piece of evidence in a task list, each named so it can be reported."""
     found: Counter[str] = Counter()
-    doc = Document.parse(relative, text)
-    if name == TASKS_FILE:
-        number = "?"
-        in_review = False
-        for line in doc.lines:
-            if line.in_fence:
-                continue
-            heading = _HEADING.match(line.text)
-            if heading:
-                in_review = heading.group(1).strip().casefold() == REVIEW_SECTION.casefold()
-                continue
-            if in_review:
-                if not line.is_blank:
-                    found[f'"{line.text.strip()}" in the Review section'] += 1
-                continue
-            item = _ITEM.match(line.text)
-            if item:
-                number = item.group(2)
-                if item.group(1) != " ":
-                    found[f"the tick on item {number}"] += 1
-            elif is_evidence_line(line.text):
-                found[f'"{line.text.strip()[2:]}" under item {number}'] += 1
-    elif name == PROPOSAL_FILE:
-        for line in doc.lines:
-            if not line.in_fence and _PROPOSAL_EVIDENCE.match(line.text):
-                found[f'the "{line.text.strip()}" line'] += 1
+    if relative.rsplit("/", 1)[-1] != TASKS_FILE:
+        return found
+    number = "?"
+    in_log = False
+    for line in Document.parse(relative, text).lines:
+        if line.in_fence:
+            continue
+        heading = _HEADING.match(line.text)
+        if heading:
+            in_log = heading.group(1).strip().casefold() == LOG_SECTION.casefold()
+            continue
+        if in_log:
+            if not line.is_blank:
+                found[f'"{line.text.strip()}" in the {LOG_SECTION} section'] += 1
+            continue
+        item = _ITEM.match(line.text)
+        if item:
+            number = item.group(2)
+            if item.group(1) != " ":
+                found[f"the tick on item {number}"] += 1
+            continue
+        listed = _LIST_LINE.match(line.text)
+        if listed and records.looks_like_record(listed.group(1)):
+            found[f'"{listed.group(1).strip()}" under item {number}'] += 1
     return found
 
 

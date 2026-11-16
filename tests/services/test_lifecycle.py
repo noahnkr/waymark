@@ -17,7 +17,7 @@ PROPOSAL_FILE = f"changes/{NAME}/proposal.md"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n"
-REVIEW = "\n## Review\n\n"
+REVIEW = "\n## Log\n\n"
 
 
 def reviewed_at(level: str) -> str:
@@ -46,17 +46,17 @@ def refused(project: Workspace, action: str, *arguments: object, **options: obje
     return str(refusal.value)
 
 
-def test_accept_writes_the_acceptance_line_with_date_and_person(project: Workspace) -> None:
+def test_accept_writes_the_acceptance_record_with_date_and_person(project: Workspace) -> None:
     project.change()
-    before = project.read(PROPOSAL_FILE).split("\n")
+    before = project.read(PROPOSAL_FILE)
     done = lifecycle.accept(project.root, NAME, DAY)
-    assert done.paths == (PROPOSAL_FILE,)
-    after = project.read(PROPOSAL_FILE).split("\n")
-    added = [line for line in after if line not in before]
-    assert len(added) == 1
-    assert added[0].startswith("Accepted: 2026-01-15 by Sam Doe (fingerprint: ")
-    assert [line for line in after if line != added[0]] == before
-    assert after.index(added[0]) == after.index("Owner: Sam Doe") + 1
+    assert done.paths == (TASKS_FILE,)
+    assert project.read(PROPOSAL_FILE) == before
+    tasks = project.read(TASKS_FILE)
+    assert tasks.startswith(
+        TASKS.rstrip("\n") + "\n\n## Log\n\n- (accepted) 2026-01-15 fingerprint "
+    )
+    assert tasks.endswith(" items 1.1 1.2 by Sam Doe\n")
     state = project.change_state()
     assert state.acceptance is AcceptanceState.VALID
     assert (state.phase, state.next_step.kind) == (Phase.ACCEPTED, StepKind.APPLY)
@@ -67,7 +67,7 @@ def test_accept_is_refused_while_an_artifact_is_missing(project: Workspace) -> N
     project.change(tasks=None)
     with pytest.raises(Refusal, match='next step is "tasks"'):
         lifecycle.accept(project.root, NAME, DAY)
-    assert "Accepted:" not in project.read(PROPOSAL_FILE)
+    assert "(accepted)" not in project.read(PROPOSAL_FILE)
 
 
 def test_accept_is_refused_while_an_artifact_has_format_problems(project: Workspace) -> None:
@@ -99,22 +99,22 @@ def test_accepting_an_accepted_change_changes_nothing(project: Workspace) -> Non
     assert project.read(PROPOSAL_FILE) == before
 
 
-def test_accepting_again_after_an_edit_replaces_the_acceptance_line(project: Workspace) -> None:
+def test_accepting_again_after_an_edit_adds_an_acceptance_record(project: Workspace) -> None:
     accepted(project)
     project.replace(PROPOSAL_FILE, "Paging.", "Paging and sorting.")
     assert project.change_state().acceptance is AcceptanceState.WITHDRAWN
     lifecycle.accept(project.root, NAME, datetime.date(2026, 3, 1))
-    text = project.read(PROPOSAL_FILE)
-    assert text.count("Accepted:") == 1
-    assert "Accepted: 2026-03-01 by Sam Doe" in text
+    text = project.read(TASKS_FILE)
+    assert text.count("(accepted)") == 2
+    assert "- (accepted) 2026-03-01 fingerprint " in text
     assert project.change_state().acceptance is AcceptanceState.VALID
 
 
 def test_accept_keeps_windows_line_endings(project: Workspace) -> None:
     project.change()
-    project.write(PROPOSAL_FILE, project.read(PROPOSAL_FILE).replace("\n", "\r\n"))
+    project.write(TASKS_FILE, project.read(TASKS_FILE).replace("\n", "\r\n"))
     lifecycle.accept(project.root, NAME, DAY)
-    text = project.read(PROPOSAL_FILE)
+    text = project.read(TASKS_FILE)
     assert "\n" not in text.replace("\r\n", "")
     assert project.change_state().acceptance is AcceptanceState.VALID
 
@@ -166,9 +166,12 @@ def test_self_review_with_a_finding(project: Workspace) -> None:
         DAY,
         findings=["warning: src/a.py:12: the name is vague"],
     )
-    assert project.read(TASKS_FILE) == TASKS.replace("- [ ]", "- [x]") + REVIEW + (
-        "- (self-review) 2026-01-15: matches the criteria\n"
-        "  - warning: src/a.py:12: the name is vague\n"
+    text = project.read(TASKS_FILE)
+    assert text.startswith(TASKS.replace("- [ ]", "- [x]") + REVIEW + "- (accepted) ")
+    assert text.endswith(
+        " by Sam Doe\n"
+        "- (self-review) 2026-01-15 by Sam Doe: matches the criteria\n"
+        "  - warning `src/a.py:12`: the name is vague\n"
     )
     assert project.record().problems == ()
     state = project.change_state()
@@ -236,8 +239,8 @@ def test_passing_verdict_counts_as_the_independent_review(project: Workspace) ->
     )
     text = project.read(TASKS_FILE)
     assert text.endswith(
-        "- (review) 2026-01-15 pass: boundary covered\n"
-        "  - suggestion: docs/search.md: say the limit\n"
+        "- (review) 2026-01-15 pass by Sam Doe: boundary covered\n"
+        "  - suggestion `docs/search.md`: say the limit\n"
     )
     state = project.change_state()
     assert state.review.reviewed
@@ -258,14 +261,14 @@ def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Wor
     built(project)
     assert "nothing to reopen" in refused(project, "reopen", "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
-    assert "- (review) 2026-01-15 changes 1.1: off by one" in project.read(TASKS_FILE)
+    assert "- (review) 2026-01-15 changes 1.1 by Sam Doe: off by one" in project.read(TASKS_FILE)
     assert "wm reopen add-limit 1.1" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
     assert "nothing to reopen" in refused(project, "reopen", "1.2", DAY)
 
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     text = project.read(TASKS_FILE)
     assert "- [ ] 1.1 Cap the result count" in text
-    assert "  - (reopened) 2026-01-15\n- [x] 1.2" in text
+    assert "  - (reopened) 2026-01-15 by Sam Doe\n- [x] 1.2" in text
     state = project.change_state()
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
 
@@ -291,7 +294,9 @@ def test_second_changes_verdict_waits_for_the_human_until_resolved(project: Work
     assert "waits on the human" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
 
     lifecycle.resolve(project.root, NAME, "review", "use an inclusive bound", DAY)
-    assert project.read(TASKS_FILE).endswith("- (resolved) 2026-01-15: use an inclusive bound\n")
+    assert project.read(TASKS_FILE).endswith(
+        "- (resolved) 2026-01-15 by Sam Doe: use an inclusive bound\n"
+    )
     state = project.change_state()
     assert state.review.escalated is None
     assert (state.next_step.kind, state.next_step.item) == (StepKind.REVIEW, None)
@@ -319,31 +324,32 @@ def test_resolve_review_is_refused_when_nothing_went_to_the_human(project: Works
     assert "nothing to resolve" in refused(project, "resolve", "review", "fine", DAY)
 
 
-def test_block_writes_a_blocked_line_and_stops_the_item(project: Workspace) -> None:
+def test_block_writes_a_blocked_record_and_stops_the_item(project: Workspace) -> None:
     accepted(project)
-    lifecycle.block(project.root, NAME, "1.1", "waiting for the wording")
+    lifecycle.block(project.root, NAME, "1.1", "waiting for the wording", DAY)
     lines = project.read(TASKS_FILE).split("\n")
-    blocked = "  - Blocked: waiting for the wording"
+    blocked = "  - (blocked) 2026-01-15 by Sam Doe: waiting for the wording"
     assert lines.index(blocked) == lines.index("  - Verify: a test covers fifty-one matches") + 1
     state = project.change_state()
     assert state.items[0].blocked == "waiting for the wording"
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.2")
     assert state.acceptance is AcceptanceState.VALID
     assert "waits on the human" in refused(project, "tick", "1.1")
-    assert 'already has a "Blocked:" line' in refused(project, "block", "1.1", "again")
+    assert 'already has an open "(blocked)" record' in refused(project, "block", "1.1", "again")
 
 
-def test_resolve_clears_a_blocker_and_records_the_decision(project: Workspace) -> None:
+def test_resolve_frees_a_blocked_item_and_keeps_the_blocker(project: Workspace) -> None:
     accepted(project)
     before = project.read(TASKS_FILE)
     assert "nothing to resolve" in refused(project, "resolve", "1.1", "fine", DAY)
-    lifecycle.block(project.root, NAME, "1.1", "waiting for the wording")
+    lifecycle.block(project.root, NAME, "1.1", "waiting for the wording", DAY)
     lifecycle.resolve(project.root, NAME, "1.1", "use the short wording", DAY)
     text = project.read(TASKS_FILE)
-    assert "Blocked:" not in text
     assert text == before.replace(
         "fifty-one matches\n",
-        "fifty-one matches\n  - (resolved) 2026-01-15: use the short wording\n",
+        "fifty-one matches\n"
+        "  - (blocked) 2026-01-15 by Sam Doe: waiting for the wording\n"
+        "  - (resolved) 2026-01-15 by Sam Doe: use the short wording\n",
     )
     state = project.change_state()
     assert state.items[0].blocked is None
@@ -354,8 +360,13 @@ def test_resolve_clears_a_blocker_and_records_the_decision(project: Workspace) -
 
 def test_spec_gap_from_an_implementer_goes_to_the_human(project: Workspace) -> None:
     accepted(project)
-    lifecycle.report_gap(project.root, NAME, "1.1", "the limit for an empty query is not stated")
-    assert "  - Spec gap: the limit for an empty query is not stated" in project.read(TASKS_FILE)
+    lifecycle.report_gap(
+        project.root, NAME, "1.1", "the limit for an empty query is not stated", DAY
+    )
+    assert (
+        "  - (gap) 2026-01-15 by Sam Doe: the limit for an empty query is not stated"
+        in project.read(TASKS_FILE)
+    )
     assert project.record().problems == ()
     state = project.change_state()
     assert state.items[0].escalated == (
@@ -365,7 +376,7 @@ def test_spec_gap_from_an_implementer_goes_to_the_human(project: Workspace) -> N
     assert "waits on the human" in refused(project, "tick", "1.1")
 
     lifecycle.resolve(project.root, NAME, "1.1", "an empty query is refused", DAY)
-    assert "Spec gap:" not in project.read(TASKS_FILE)
+    assert project.change_state().items[0].escalated is None
     assert project.change_state().next_step.item == "1.1"
 
 
@@ -394,9 +405,9 @@ def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Wo
     accepted(project, HEAD + "- [ ] 1.1 Cap it")
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.self_review(project.root, NAME, "fine", DAY)
-    assert project.read(TASKS_FILE) == (
-        HEAD + "- [x] 1.1 Cap it\n" + REVIEW + "- (self-review) 2026-01-15: fine\n"
-    )
+    text = project.read(TASKS_FILE)
+    assert text.startswith(HEAD + "- [x] 1.1 Cap it\n" + REVIEW + "- (accepted) ")
+    assert text.endswith(" by Sam Doe\n- (self-review) 2026-01-15 by Sam Doe: fine\n")
 
 
 def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
@@ -417,11 +428,11 @@ def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
 
 def test_accepted_again(project: Workspace) -> None:
     accepted(project)
-    assert "; items: 1.1 1.2)" in project.read(PROPOSAL_FILE)
-    project.write(TASKS_FILE, project.read(TASKS_FILE) + "- [ ] 1.3 Announce it\n")
+    assert " items 1.1 1.2 by " in project.read(TASKS_FILE)
+    project.replace(TASKS_FILE, "\n## Log\n", "- [ ] 1.3 Announce it\n\n## Log\n")
     assert project.change_state().acceptance is AcceptanceState.VALID
     project.write(f"changes/{NAME}/design.md", DESIGN.replace("after sorting", "after ranking"))
     assert project.change_state().acceptance is AcceptanceState.WITHDRAWN
     lifecycle.accept(project.root, NAME, DAY)
-    assert "; items: 1.1 1.2 1.3)" in project.read(PROPOSAL_FILE)
+    assert " items 1.1 1.2 1.3 by " in project.read(TASKS_FILE)
     assert project.change_state().acceptance is AcceptanceState.VALID

@@ -20,8 +20,8 @@ from waymark.record.evidence import evidence_changes, only_adds_notes
 from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
 from waymark.record.record import ARCHIVE, CHANGES, SPECS, Record, load_record
+from waymark.record.records import parse_finding_argument
 from waymark.record.state import AcceptanceState, StepKind, derive_state
-from waymark.record.tasks import parse_finding
 from waymark.record.terms import Layout, Verdict
 from waymark.services import lifecycle
 from waymark.services.common import Done, Refusal, find_change, find_item, repo_locations
@@ -343,7 +343,7 @@ def _record_verdict(project: Project, message: str, today: datetime.date) -> Don
     name = address[-1]
     word, named, note = outcome[-1]
     findings = _FINDING.findall(message)
-    unreadable = [text for text in findings if parse_finding(text) is None]
+    unreadable = [text for text in findings if parse_finding_argument(text) is None]
     if unreadable:
         raise Refusal(
             f'"FINDING: {unreadable[0]}" is not a finding wm can read. Write each one as '

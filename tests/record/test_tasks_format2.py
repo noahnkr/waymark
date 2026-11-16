@@ -4,7 +4,6 @@ import datetime
 
 from tests.support import CONFIG, Workspace, document
 from waymark.record.fingerprint import change_fingerprint
-from waymark.record.record import load_archived_change
 from waymark.record.records import RecordKind
 from waymark.record.state import AcceptanceState, acceptance_state
 from waymark.record.tasks import Tasks, parse_tasks
@@ -12,11 +11,12 @@ from waymark.record.terms import ReviewSeverity, Verdict
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 ITEM = "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n  - Verify: a test\n"
-FORMAT_2 = CONFIG.replace("record_format = 1", "record_format = 2")
+FORMAT_2 = CONFIG
+FORMAT_1 = CONFIG.replace("record_format = 2", "record_format = 1")
 
 
 def parse(text: str) -> Tasks:
-    return parse_tasks(document(text, "changes/add-limit/tasks.md"), 2)
+    return parse_tasks(document(text, "changes/add-limit/tasks.md"))
 
 
 def codes(text: str) -> list[str]:
@@ -108,9 +108,9 @@ def test_old_lines_in_the_latest_format_say_to_run_update() -> None:
 
 
 def test_records_in_the_wrong_place_are_reported() -> None:
-    assert codes(HEAD + ITEM + "  - (accepted) 2026-11-20 fingerprint 81577cca8ff3ca11\n") == [
-        "misplaced-record"
-    ]
+    assert codes(
+        HEAD + ITEM + "  - (accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 items 1.1\n"
+    ) == ["misplaced-record"]
     assert codes(HEAD + ITEM + "\n## Log\n\n- (blocked) 2026-11-20: the key\n") == [
         "misplaced-record"
     ]
@@ -144,7 +144,6 @@ def test_acceptance_comes_from_the_latest_accepted_record(workspace: Workspace) 
     workspace.change()
     record = workspace.record()
     change = record.changes["add-limit"]
-    assert change.version == 2
     fingerprint = change_fingerprint(change, record.specs, record.default_review, ["1.1", "1.2"])
     _accept_in_log(workspace, ["1.1", "1.2"], "0" * 16)
     workspace.replace(
@@ -159,28 +158,6 @@ def test_acceptance_comes_from_the_latest_accepted_record(workspace: Workspace) 
     assert acceptance_state(record, change) is AcceptanceState.VALID
 
 
-def test_scenario_older_acceptance_line(workspace: Workspace) -> None:
-    """An (accepted) record without items covers every item, so a new item withdraws it."""
-    workspace.write("config.toml", FORMAT_2)
-    workspace.change()
-    record = workspace.record()
-    change = record.changes["add-limit"]
-    fingerprint = change_fingerprint(change, record.specs, record.default_review)
-    _accept_in_log(workspace, [], fingerprint)
-    assert acceptance_state(workspace.record(), workspace.record().changes["add-limit"]) is (
-        AcceptanceState.VALID
-    )
-    workspace.replace(
-        "changes/add-limit/tasks.md",
-        "- [ ] 1.2 Document the limit\n",
-        "- [ ] 1.2 Document the limit\n- [ ] 1.3 Test it\n",
-    )
-    record = workspace.record()
-    change = record.changes["add-limit"]
-    assert acceptance_state(record, change) is AcceptanceState.WITHDRAWN
-    assert [p.code for p in change.problems] == []
-
-
 def test_a_format_2_proposal_holds_no_records(workspace: Workspace) -> None:
     workspace.write("config.toml", FORMAT_2)
     workspace.change()
@@ -189,55 +166,3 @@ def test_a_format_2_proposal_holds_no_records(workspace: Workspace) -> None:
     )
     change = workspace.record().changes["add-limit"]
     assert [p.code for p in change.problems] == ["old-record-format"]
-
-
-def test_a_format_1_record_is_read_as_before(workspace: Workspace) -> None:
-    workspace.change()
-    workspace.replace(
-        "changes/add-limit/tasks.md",
-        "  - Verify: a test covers fifty-one matches\n",
-        "  - Verify: a test covers fifty-one matches\n  - Blocked: the key\n",
-    )
-    workspace.accept()
-    change = workspace.record().changes["add-limit"]
-    assert change.version == 1
-    assert change.tasks is not None
-    assert change.tasks.items[0].blocked == "the key"
-    assert change.acceptance is not None
-    assert change.problems == ()
-
-
-def test_an_archived_change_is_read_in_the_format_it_was_written(workspace: Workspace) -> None:
-    workspace.write("config.toml", FORMAT_2)
-    old = workspace.change("archive/2026-01-20-old-limit")
-    workspace.replace(
-        f"{old}/proposal.md",
-        "Owner: Sam Doe\n",
-        "Owner: Sam Doe\nAccepted: 2026-01-15 by Sam Doe (fingerprint: 0123456789abcdef)\n",
-    )
-    workspace.write(
-        f"{old}/tasks.md",
-        "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n  - Note: done early\n\n"
-        "## Review\n\n- (self-review) 2026-01-16: fine\n",
-    )
-    new = workspace.change("archive/2026-02-20-new-limit")
-    workspace.write(
-        f"{new}/tasks.md",
-        "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n\n## Log\n\n"
-        "- (accepted) 2026-02-15 fingerprint 0123456789abcdef items 1.1 by Sam\n"
-        "- (self-review) 2026-02-16 by Sam: fine\n",
-    )
-    record = workspace.record()
-    by_name = {entry.name: entry for entry in record.archived_changes}
-    old_change = load_archived_change(record, by_name["old-limit"])
-    new_change = load_archived_change(record, by_name["new-limit"])
-    assert (old_change.version, new_change.version) == (1, 2)
-    assert old_change.problems == ()
-    assert new_change.problems == ()
-    assert old_change.tasks is not None
-    assert new_change.tasks is not None
-    assert old_change.tasks.items[0].notes == ("done early",)
-    assert [r.kind for r in old_change.tasks.review_records] == [RecordKind.SELF_REVIEW]
-    assert [r.kind for r in new_change.tasks.review_records] == [RecordKind.SELF_REVIEW]
-    assert new_change.acceptance is not None
-    assert new_change.acceptance.items == ("1.1",)

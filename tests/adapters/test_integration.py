@@ -173,19 +173,18 @@ def test_update_migrates_the_record_before_regenerating(
         del files
         transaction.write("charter.md", "# Migrated\n")  # type: ignore[attr-defined]
 
-    monkeypatch.setattr("waymark.services.migrations.MIGRATIONS", (Migration(1, "mark it", mark),))
-    monkeypatch.setattr("waymark.services.migrations.RECORD_FORMAT", 2)
-    monkeypatch.setattr(
-        "waymark.services.migrations.migrate.__defaults__", ((Migration(1, "mark it", mark),), 2)
-    )
-    monkeypatch.setattr("waymark.record.config.RECORD_FORMAT", 2)
-    monkeypatch.setattr("waymark.services.common.RECORD_FORMAT", 2)
+    step = Migration(2, "mark it", mark)
+    monkeypatch.setattr("waymark.services.migrations.MIGRATIONS", (step,))
+    monkeypatch.setattr("waymark.services.migrations.RECORD_FORMAT", 3)
+    monkeypatch.setattr("waymark.services.migrations.migrate.__defaults__", ((step,), 3))
+    monkeypatch.setattr("waymark.record.config.RECORD_FORMAT", 3)
+    monkeypatch.setattr("waymark.services.common.RECORD_FORMAT", 3)
     with pytest.raises(Refusal, match="wm update"):
         setup.create_change(initialized, "add-limit")
     done = integration.update(initialized)
-    assert "Migrated the record: format 1 to 2: mark it." in done.message
+    assert "Migrated the record: format 2 to 3: mark it." in done.message
     assert (initialized / "waymark/charter.md").read_text(encoding="utf-8") == "# Migrated\n"
-    assert "record_format = 2" in (initialized / "waymark/config.toml").read_text(encoding="utf-8")
+    assert "record_format = 3" in (initialized / "waymark/config.toml").read_text(encoding="utf-8")
     setup.create_change(initialized, "add-limit")
 
 

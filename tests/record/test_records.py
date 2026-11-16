@@ -34,7 +34,6 @@ ONE_OF_EACH = [
         fingerprint="81577cca8ff3ca11",
         items=("1.1", "1.2"),
     ),
-    Record(RecordKind.ACCEPTED, DAY, who="Ada", fingerprint="81577cca8ff3ca11"),
     Record(RecordKind.SYNCED, DAY, who="Ada Lovelace"),
     Record(RecordKind.SYNCED, DAY, who="Ada", fingerprint="0123456789abcdef"),
     Record(RecordKind.OVERRIDE, DAY, who="Ada", text="the reviewer is away"),
@@ -65,15 +64,14 @@ def test_one_record_shape(record: Record) -> None:
 
 
 def test_one_record_shape_puts_the_arguments_before_who_wrote_it() -> None:
-    assert render(ONE_OF_EACH[0]) == (
-        "(accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 items 1.1 1.2 by Ada Lovelace"
-    )
-    assert render(ONE_OF_EACH[7]) == (
-        "(review) 2026-11-20 changes 1.2 2.1 by wm-reviewer: the limit is not checked"
-    )
-    assert render(ONE_OF_EACH[10]) == "(reopened) 2026-11-20 by Ada Lovelace"
-    assert render(ONE_OF_EACH[11]) == "(reopened) 2026-11-20"
-    assert render(ONE_OF_EACH[12]) == "(blocked) 2026-11-20 by Ada: the API key is missing"
+    rendered = {render(record) for record in ONE_OF_EACH}
+    assert {
+        "(accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 items 1.1 1.2 by Ada Lovelace",
+        "(review) 2026-11-20 changes 1.2 2.1 by wm-reviewer: the limit is not checked",
+        "(reopened) 2026-11-20 by Ada Lovelace",
+        "(reopened) 2026-11-20",
+        "(blocked) 2026-11-20 by Ada: the API key is missing",
+    } <= rendered
 
 
 def test_scenario_blocked_item() -> None:
@@ -105,6 +103,7 @@ def test_scenario_malformed_record() -> None:
         "(accepted) 2026-11-20 by Ada",
         "(accepted) 2026-11-20 fingerprint xyz by Ada",
         "(accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 1.1 by Ada",
+        "(accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 by Ada",
         "(someday) 2026-11-20: unknown kind",
         "(synced) 2026-11-20 fingerprint 0123 by Ada",
     ],

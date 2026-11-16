@@ -1,8 +1,11 @@
-"""Proposals: why a change is wanted and what it changes, plus its owner and acceptance."""
+"""Proposals: why a change is wanted and what it changes, plus its owner, path and review level.
+
+The acceptance and the sync are records in the task list's Log; an
+``Accepted:``, ``Synced:`` or ``Review override:`` line here is from format 1.
+"""
 
 import datetime
-import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from waymark.record.outline import collect_sections, content, parse_facts, require_title
@@ -27,25 +30,19 @@ REQUIRED_SECTIONS = (WHY, WHAT_CHANGES, NON_GOALS, IMPACT)
 
 NO_SPEC_CHANGES = "No spec changes"
 
-_ACCEPTANCE = re.compile(
-    r"^(\d{4}-\d{2}-\d{2}) by (\S.*?) "
-    r"\(fingerprint: ([0-9a-f]{16})(?:; items: (\d+\.\d+(?: \d+\.\d+)*))?\)$"
-)
-
 
 @dataclass(frozen=True)
 class Acceptance:
-    """The acceptance line: when, by whom, and the fingerprint of what was accepted.
+    """An acceptance: when, by whom, the fingerprint of what was accepted, and its items.
 
-    ``items`` are the task items the acceptance covers. It is None for a line
-    written before acceptances listed their items, which covers every item.
+    ``index`` is the line of its record in the task list.
     """
 
     date: datetime.date
     who: str
     fingerprint: str
     index: int
-    items: tuple[str, ...] | None = None
+    items: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -57,18 +54,14 @@ class Proposal:
     owner: str | None
     short_path: bool
     review: ReviewLevel | None
-    acceptance: Acceptance | None
-    synced: datetime.date | None
     sections: Mapping[str, str]
     no_spec_changes: bool
     outcome: str | None
     problems: tuple[Problem, ...]
 
     def accepted_text(self) -> str:
-        """The text acceptance covers: everything but the acceptance line and the outcome."""
+        """The text acceptance covers: everything but the outcome."""
         skipped: set[int] = set()
-        facts = parse_facts(self.doc, {ACCEPTED, SYNCED}, [], prose=True)
-        skipped.update(fact.index for fact in facts.values())
         for section in self.doc.sections(2):
             if section.title.casefold() == OUTCOME.casefold():
                 skipped.update(range(section.start, section.end))
@@ -79,53 +72,11 @@ class Proposal:
         return "\n".join(kept)
 
 
-def format_synced(date: datetime.date) -> str:
-    """The synced line as wm writes it."""
-    return f"{SYNCED}: {date.isoformat()}"
-
-
-def format_acceptance(
-    date: datetime.date, who: str, fingerprint: str, items: Sequence[str] | None = None
-) -> str:
-    """The acceptance line as wm writes it, with the items it covers when they are given.
-
-    Without items it is the older form, which covers every item; `wm accept`
-    always names them, since a change is accepted only once it has items.
-    """
-    covered = f"; items: {' '.join(items)}" if items else ""
-    return f"{ACCEPTED}: {date.isoformat()} by {who} (fingerprint: {fingerprint}{covered})"
-
-
-def _parse_acceptance(
-    doc: Document, value: str, index: int, problems: list[Problem]
-) -> Acceptance | None:
-    match = _ACCEPTANCE.match(value)
-    date: datetime.date | None = None
-    if match:
-        try:
-            date = datetime.date.fromisoformat(match.group(1))
-        except ValueError:
-            date = None
-    if match is None or date is None:
-        problems.append(
-            Problem(
-                doc.path,
-                index + 1,
-                "malformed-evidence",
-                f'The "{ACCEPTED}:" line doesn\'t follow the format. It is written by wm; '
-                "remove the line and accept the change again.",
-            )
-        )
-        return None
-    items = tuple(match.group(4).split()) if match.group(4) else None
-    return Acceptance(date, match.group(2).strip(), match.group(3), index, items)
-
-
 def parse_proposal(doc: Document) -> Proposal:
     """Read a proposal."""
     problems: list[Problem] = []
     title = require_title(doc, problems)
-    facts = parse_facts(doc, {OWNER, ACCEPTED, PATH, SYNCED, REVIEW}, problems, prose=True)
+    facts = parse_facts(doc, {OWNER, PATH, REVIEW}, problems, prose=True)
 
     owner = facts[OWNER].value if OWNER in facts else ""
     if not owner:
@@ -170,26 +121,6 @@ def parse_proposal(doc: Document) -> Proposal:
                 )
             )
 
-    acceptance: Acceptance | None = None
-    if ACCEPTED in facts:
-        fact = facts[ACCEPTED]
-        acceptance = _parse_acceptance(doc, fact.value, fact.index, problems)
-
-    synced: datetime.date | None = None
-    if SYNCED in facts:
-        try:
-            synced = datetime.date.fromisoformat(facts[SYNCED].value)
-        except ValueError:
-            problems.append(
-                Problem(
-                    doc.path,
-                    facts[SYNCED].index + 1,
-                    "malformed-evidence",
-                    f'The "{SYNCED}:" line holds a date, YYYY-MM-DD. It is written by wm; '
-                    "remove the line and sync the change again.",
-                )
-            )
-
     found = collect_sections(doc, REQUIRED_SECTIONS, problems, optional=(OUTCOME,))
     sections = {name: content(doc, found, name, problems) for name in REQUIRED_SECTIONS}
     outcome = doc.body(found[OUTCOME]) if OUTCOME in found else None
@@ -199,8 +130,6 @@ def parse_proposal(doc: Document) -> Proposal:
         owner=owner or None,
         short_path=short_path,
         review=review,
-        acceptance=acceptance,
-        synced=synced,
         sections=sections,
         no_spec_changes=NO_SPEC_CHANGES.casefold() in sections[IMPACT].casefold(),
         outcome=outcome or None,

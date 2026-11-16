@@ -258,7 +258,7 @@ def test_planner_never_edits_a_spec_in_an_atlas(atlas: Workspace) -> None:
 def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -> None:
     assert replace(accepted, f"{FOLDER}/proposal.md", "Paging.", "Paging and sorting.").allow
     assert replace(accepted, TASKS_FILE, "Cap the result count", "Cap the results").allow
-    assert edit(accepted, TASKS_FILE, content=TASKS + "- [ ] 1.3 Announce it\n").allow
+    assert replace(accepted, TASKS_FILE, "\n## Log\n", "- [ ] 1.3 Announce it\n\n## Log\n").allow
     assert edit(accepted, "charter.md", content="# New\n").allow
     assert edit(accepted, "changes/add-order/proposal.md", content=proposal()).allow
 
@@ -279,18 +279,18 @@ def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -
         ),
         (
             "1.2 Document the limit\n",
-            "1.2 Document the limit\n  - Blocked: waiting\n",
+            "1.2 Document the limit\n  - (blocked) 2026-01-16: waiting\n",
             "under item 1.2",
         ),
         (
             "1.2 Document the limit\n",
-            "1.2 Document the limit\n  - Spec gap: unclear\n",
+            "1.2 Document the limit\n  - (gap) 2026-01-16: unclear\n",
             "under item 1.2",
         ),
         (
-            "1.2 Document the limit\n",
-            "1.2 Document the limit\n\n## Review\n\n- (self-review) 2026-01-16: fine\n",
-            "in the Review section",
+            "## Log\n\n",
+            "## Log\n\n- (self-review) 2026-01-16: fine\n",
+            "in the Log section",
         ),
     ],
 )
@@ -311,28 +311,23 @@ def test_agent_edit_that_removes_or_changes_evidence_is_refused(accepted: Worksp
         "removes the tick on item 1.1"
         in replace(accepted, TASKS_FILE, "- [x] 1.1", "- [ ] 1.1").reason
     )
-    changed = replace(accepted, TASKS_FILE, "2026-01-15: fine", "2026-01-15: thoroughly checked")
+    changed = replace(accepted, TASKS_FILE, "Sam Doe: fine", "Sam Doe: thoroughly checked")
     assert not changed.allow
     rewritten = edit(accepted, TASKS_FILE, content=TASKS)
     assert not rewritten.allow
 
 
-def test_agent_may_not_write_the_acceptance_line(project: Workspace) -> None:
+def test_agent_may_not_write_the_acceptance_record(project: Workspace) -> None:
     project.change()
-    line = "Accepted: 2026-01-15 by Sam Doe (fingerprint: 0123456789abcdef)"
-    decision = replace(
-        project, f"{FOLDER}/proposal.md", "Owner: Sam Doe\n", f"Owner: Sam Doe\n{line}\n"
-    )
+    line = "- (accepted) 2026-01-15 fingerprint 0123456789abcdef items 1.1 1.2 by Sam Doe"
+    decision = edit(project, TASKS_FILE, content=TASKS + f"\n## Log\n\n{line}\n")
     assert not decision.allow
-    assert 'adds the "Accepted:' in decision.reason
-    whole = edit(project, f"{FOLDER}/proposal.md", content=proposal() + "\nSynced: 2026-01-15\n")
-    assert not whole.allow
+    assert f'adds "{line}" in the Log section' in decision.reason
 
 
 def test_edit_that_keeps_existing_evidence_is_allowed(accepted: Workspace) -> None:
     lifecycle.tick(accepted.root, NAME, "1.1")
-    text = accepted.read(TASKS_FILE)
-    assert edit(accepted, TASKS_FILE, content=text + "- [ ] 1.3 Announce it\n").allow
+    assert replace(accepted, TASKS_FILE, "\n## Log\n", "- [ ] 1.3 Announce it\n\n## Log\n").allow
 
 
 def test_edit_whose_result_cannot_be_known_is_left_to_the_tool(accepted: Workspace) -> None:
@@ -495,20 +490,23 @@ def test_implementer_blocked_writes_the_blocked_line(accepted: Workspace) -> Non
         accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: blocked - the index is down"
     )
     assert decision.allow
-    assert "  - Blocked: the index is down" in accepted.read(TASKS_FILE)
+    assert " by Sam Doe: the index is down\n" in accepted.read(TASKS_FILE)
+    assert "  - (blocked) " in accepted.read(TASKS_FILE)
     assert "- [ ] 1.1" in accepted.read(TASKS_FILE)
 
 
 def test_implementer_spec_gap_writes_the_spec_gap_line(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: spec-gap: empty query?")
-    assert "  - Spec gap: empty query?" in accepted.read(TASKS_FILE)
+    assert " by Sam Doe: empty query?\n" in accepted.read(TASKS_FILE)
+    assert "  - (gap) " in accepted.read(TASKS_FILE)
     assert accepted.change_state().items[0].escalated is not None
 
 
 def test_implementer_partial_leaves_a_note_and_the_item_unticked(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: partial: the test is missing")
     text = accepted.read(TASKS_FILE)
-    assert "  - Note: partial: the test is missing" in text
+    assert " by Sam Doe: partial: the test is missing\n" in text
+    assert "  - (note) " in text
     assert "- [ ] 1.1" in text
     assert accepted.change_state().next_step.item == "1.1"
 
@@ -523,8 +521,8 @@ def test_reviewer_verdict_is_written_from_its_own_words(project: Workspace) -> N
     )
     assert decision.allow
     assert project.read(TASKS_FILE).endswith(
-        "## Review\n\n- (review) 2026-01-15 pass: boundary covered at 50 and 51\n"
-        "  - suggestion: docs/search.md: say the limit\n"
+        "- (review) 2026-01-15 pass by Sam Doe: boundary covered at 50 and 51\n"
+        "  - suggestion `docs/search.md`: say the limit\n"
     )
     assert project.change_state().applied
 
@@ -538,8 +536,8 @@ def test_reviewer_changes_verdict_names_the_items_to_rebuild(project: Workspace)
         "CHANGE: add-limit\nVERDICT: changes 1.1: off by one at 50",
     )
     text = project.read(TASKS_FILE)
-    assert "- (review) 2026-01-15 changes 1.1: off by one at 50" in text
-    assert "  - critical: src/search.py:12: fifty-one come back" in text
+    assert "- (review) 2026-01-15 changes 1.1 by Sam Doe: off by one at 50" in text
+    assert "  - critical `src/search.py:12`: fifty-one come back" in text
     assert project.change_state().review.reopen == ("1.1",)
 
 
@@ -635,7 +633,7 @@ def test_implementer_in_the_background_ticks_the_item(accepted: Workspace) -> No
 
 def test_handback_records_every_result_as_a_final_message_would(accepted: Workspace) -> None:
     handback(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: blocked: no database")
-    assert "  - Blocked: no database" in accepted.read(TASKS_FILE)
+    assert " by Sam Doe: no database\n" in accepted.read(TASKS_FILE)
 
 
 def test_reviewer_in_the_background(project: Workspace) -> None:
@@ -644,7 +642,9 @@ def test_reviewer_in_the_background(project: Workspace) -> None:
         project, Role.REVIEWER, "CHANGE: add-limit\nVERDICT: pass: boundary covered at 50"
     )
     assert decision.allow
-    assert "- (review) 2026-01-15 pass: boundary covered at 50" in project.read(TASKS_FILE)
+    assert "- (review) 2026-01-15 pass by Sam Doe: boundary covered at 50" in project.read(
+        TASKS_FILE
+    )
     assert project.change_state().applied
 
 

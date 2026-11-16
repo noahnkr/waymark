@@ -58,7 +58,7 @@ class Grammar(Enum):
     VERDICT = "verdict"
     """A verdict, then the item numbers a ``changes`` verdict names."""
     ACCEPTANCE = "acceptance"
-    """``fingerprint <hex16>``, then optionally ``items <number> <number>...``."""
+    """``fingerprint <hex16>``, then ``items <number> <number>...``."""
     SYNC = "sync"
     """Optionally ``fingerprint <hex16>``: the acceptance stamped again for the merged specs."""
 
@@ -78,7 +78,7 @@ KINDS: dict[RecordKind, KindSpec] = {
         Grammar.ACCEPTANCE,
         has_text=False,
         level=Level.CHANGE,
-        shape="(accepted) YYYY-MM-DD fingerprint <digest> [items <item> <item>...] [by <who>]",
+        shape="(accepted) YYYY-MM-DD fingerprint <digest> items <item> <item>... [by <who>]",
     ),
     RecordKind.SYNCED: KindSpec(
         Grammar.SYNC,
@@ -215,6 +215,8 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
     start = _START.match(text)
     if start is None:
         return None
+    before_text, colon, after_text = text.partition(_TEXT_SEPARATOR)
+    text = " ".join(before_text.split()) + colon + after_text
     try:
         kind = RecordKind(start.group(1))
     except ValueError:
@@ -313,9 +315,7 @@ def _acceptance_arguments(kind: RecordKind, words: list[str]) -> _Arguments | Pa
     if not _is_fingerprint(words):
         return _fail(kind, "The fingerprint is missing or not 16 hexadecimal digits.")
     rest = words[2:]
-    if not rest:
-        return None, None, words[1]
-    if rest[0] != "items" or any(not _ITEM_NUMBER.match(item) for item in rest[1:]):
+    if not rest[1:] or rest[0] != "items" or any(not _ITEM_NUMBER.match(i) for i in rest[1:]):
         return _fail(kind, 'After the fingerprint come "items" and the item numbers.')
     return None, tuple(rest[1:]), words[1]
 
@@ -332,7 +332,7 @@ class Finding:
 FINDING_SHAPE = "<severity> `<place>`: <text>"
 FINDING_ARGUMENT = "<critical|warning|suggestion>: <place>: <text>"
 
-_FINDING = re.compile(r"^(critical|warning|suggestion) `([^`]+)`: (\S.*)$")
+_FINDING = re.compile(r"^(critical|warning|suggestion)\s+`([^`]+)`:\s+(\S.*)$")
 _FINDING_ARGUMENT_QUOTED = re.compile(r"^(critical|warning|suggestion): `([^`]+)`: (\S.*)$")
 _FINDING_ARGUMENT = re.compile(r"^(critical|warning|suggestion): (\S.*?): (\S.*)$")
 

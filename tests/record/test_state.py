@@ -17,7 +17,7 @@ FOLDER = "changes/add-limit"
 TASKS_FILE = f"{FOLDER}/tasks.md"
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
-REVIEW = "\n## Review\n\n"
+REVIEW = "\n## Log\n\n"
 SELF_REVIEW = REVIEW + "- (self-review) 2026-01-16: matches the criteria\n"
 
 
@@ -38,12 +38,12 @@ def with_tasks(
     bare = "\n".join(
         line.replace("- [x]", "- [ ]")
         for line in tasks.split("\n")
-        if not line.strip().startswith(("- (", "- Blocked:", "- critical", "- warning"))
+        if not line.strip().startswith(("- (", "- critical", "- warning"))
     )
     text = reviewed_at(level, short=short) if level else proposal(short=short)
     workspace.change(proposal_text=text, design=None if short else DESIGN, tasks=bare)
     workspace.accept()
-    workspace.write(TASKS_FILE, tasks)
+    workspace.write_tasks(tasks)
     state = workspace.change_state()
     assert state.acceptance is AcceptanceState.VALID
     return state
@@ -80,7 +80,8 @@ def test_next_step_is_right_at_every_stop_on_the_full_path(workspace: Workspace)
     workspace.replace(TASKS_FILE, "- [ ] 1.2", "- [x] 1.2")
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.REVIEW, None, False)
 
-    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + SELF_REVIEW)
+    record_line = SELF_REVIEW.removeprefix(REVIEW)
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + record_line)
     state = workspace.change_state()
     assert step(state) == (Phase.APPLIED, StepKind.ARCHIVE, None, True)
     assert state.applied
@@ -138,9 +139,9 @@ def test_old_tag(workspace: Workspace) -> None:
         "1.1 Cap the result count", "1.1 Cap the result count   `review: independent`"
     )
     workspace.change(tasks=tasks)
-    assert code_list(workspace) == [(TASKS_FILE, "obsolete-review-tag")]
+    assert code_list(workspace) == [(TASKS_FILE, "old-record-format")]
     (problem,) = workspace.record().changes["add-limit"].problems
-    assert '"Review: <level>"' in problem.message
+    assert "wm update" in problem.message
 
 
 def test_change_with_no_spec_changes_is_specified_without_deltas(workspace: Workspace) -> None:
@@ -302,7 +303,7 @@ def test_spec_gap_verdict_goes_to_the_human(workspace: Workspace) -> None:
 
 def test_spec_gap_from_the_builder_goes_to_the_human(workspace: Workspace) -> None:
     state = with_tasks(
-        workspace, HEAD + "- [ ] 1.1 Cap it\n  - Spec gap: no limit given\n- [ ] 1.2 Next\n"
+        workspace, HEAD + "- [ ] 1.1 Cap it\n  - (gap) 2026-01-16: no limit given\n- [ ] 1.2 Next\n"
     )
     assert state.items[0].escalated == "the builder found a spec gap: no limit given"
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)
@@ -312,7 +313,8 @@ def test_spec_gap_from_the_builder_goes_to_the_human(workspace: Workspace) -> No
 
 def test_blocked_item_is_skipped_until_only_blocked_items_remain(workspace: Workspace) -> None:
     state = with_tasks(
-        workspace, HEAD + "- [ ] 1.1 Cap it\n  - Blocked: waiting for wording\n- [ ] 1.2 Next\n"
+        workspace,
+        HEAD + "- [ ] 1.1 Cap it\n  - (blocked) 2026-01-16: waiting for wording\n- [ ] 1.2 Next\n",
     )
     assert state.items[0].blocked == "waiting for wording"
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)

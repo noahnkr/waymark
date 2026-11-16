@@ -8,15 +8,15 @@ import datetime
 from pathlib import Path
 
 from waymark import __version__
+from waymark.record import records
 from waymark.record.fingerprint import change_fingerprint
 from waymark.record.project import RECORD_DIR, find_project
-from waymark.record.proposal import format_acceptance
 from waymark.record.record import Record, load_record
 from waymark.record.state import ChangeState, RecordState, derive_state
 from waymark.record.text import Document
 
 CONFIG = (
-    f'wm_version = "{__version__}"\nrecord_format = 1\n'
+    f'wm_version = "{__version__}"\nrecord_format = 2\n'
     'default_review = "self"\nagent_tools = ["some-tool"]\n'
 )
 ATLAS_CONFIG = (
@@ -220,17 +220,44 @@ class Workspace:
     def change_state(self, name: str = "add-limit") -> ChangeState:
         return self.state().changes[name]
 
+    def write_tasks(self, tasks: str, name: str = "add-limit") -> None:
+        """Write a task list after acceptance, keeping its (accepted) and (synced) records.
+
+        They go at the top of the new list's Log, which is added when it has none.
+        """
+        relative = f"changes/{name}/tasks.md"
+        kept = [
+            line
+            for line in self.read(relative).split("\n")
+            if line.startswith(("- (accepted)", "- (synced)"))
+        ]
+        lines = tasks.rstrip("\n").split("\n")
+        if "## Log" not in lines:
+            lines += ["", "## Log", ""]
+        at = lines.index("## Log") + 2
+        lines[at:at] = kept
+        self.write(relative, "\n".join(lines) + "\n")
+
     def accept(self, name: str = "add-limit") -> None:
-        """Write the acceptance line the way the accept command will."""
+        """Record the acceptance the way the accept command will, as the Log's only acceptance."""
         record = self.record()
         change = record.changes[name]
         items = [item.number for item in change.tasks.items] if change.tasks else []
         fingerprint = change_fingerprint(change, record.specs, record.default_review, items)
-        line = format_acceptance(datetime.date(2026, 1, 15), "Sam Doe", fingerprint, items)
-        relative = f"changes/{name}/proposal.md"
-        lines = [
-            line_ for line_ in self.read(relative).split("\n") if not line_.startswith("Accepted:")
-        ]
-        owner = next(index for index, text in enumerate(lines) if text.startswith("Owner:"))
-        lines.insert(owner + 1, line)
-        self.write(relative, "\n".join(lines))
+        entry = records.Record(
+            records.RecordKind.ACCEPTED,
+            datetime.date(2026, 1, 15),
+            who="Sam Doe",
+            fingerprint=fingerprint,
+            items=tuple(items),
+        )
+        relative = f"changes/{name}/tasks.md"
+        line = f"- {records.render(entry)}"
+        kept = [text for text in self.read(relative).split("\n") if "(accepted)" not in text]
+        if "## Log" not in kept:
+            while kept and not kept[-1]:
+                kept.pop()
+            kept += ["", "## Log", ""]
+        at = kept.index("## Log") + 2
+        kept[at:at] = [line]
+        self.write(relative, "\n".join(kept).rstrip("\n") + "\n")

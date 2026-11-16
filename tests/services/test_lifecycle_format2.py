@@ -4,7 +4,7 @@ import datetime
 
 import pytest
 
-from tests.support import TASKS, Workspace, proposal
+from tests.support import TASKS, Workspace
 from waymark.record.records import RecordKind
 from waymark.record.state import AcceptanceState, StepKind
 from waymark.record.terms import Verdict
@@ -257,15 +257,6 @@ def test_the_archived_change_reads_as_format_2(latest: Workspace) -> None:
 
     record = latest.record()
     change = load_archived_change(record, record.archived_changes[0])
-    assert change.version == 2
     assert change.problems == ()
     assert change.tasks is not None
     assert [r.kind for r in change.tasks.log] == [RecordKind.ACCEPTED, RecordKind.SELF_REVIEW]
-
-
-def test_a_proposal_for_format_1_still_takes_its_lines(project: Workspace) -> None:
-    """Until the record is migrated, the commands keep writing format 1."""
-    project.change(proposal_text=proposal())
-    lifecycle.accept(project.root, NAME, DAY)
-    assert "Accepted: 2026-11-20 by Sam Doe" in project.read(PROPOSAL_FILE)
-    assert "## Log" not in project.read(TASKS_FILE)
