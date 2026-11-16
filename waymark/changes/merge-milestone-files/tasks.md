@@ -2,7 +2,7 @@
 
 ## 1. One milestone file
 
-- [ ] 1.1 Read, load and write `milestone.md`, and merge this record's milestones
+- [x] 1.1 Read, load and write `milestone.md`, and merge this record's milestones
   - Criteria:
     - `parse_milestone` reads the title and the sections Goal, Done when, Non-goals and Roadmap, in that order, into a `Goal` and a `Roadmap` built from one document; roadmap entries are only the list lines inside `## Roadmap`, outside fenced code
     - `parse_goal`, `parse_roadmap`, `GOAL_FILE`, `ROADMAP_FILE` and the `goal.md` and `roadmap.md` templates are gone
