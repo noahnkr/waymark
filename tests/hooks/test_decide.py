@@ -231,18 +231,28 @@ def atlas(tmp_path: Path) -> Workspace:
     return suite
 
 
-def test_planner_may_edit_the_repo_of_the_item_being_built(atlas: Workspace) -> None:
+def test_repo_of_the_item_being_built(atlas: Workspace) -> None:
     path = atlas.root.parent / "suite-api" / "src" / "app.py"
     assert ask(atlas, EventKind.EDIT, role=Role.PLANNER, path=path, content="x").allow
 
 
-def test_planner_edit_in_another_repo_names_the_repo_it_may_edit(atlas: Workspace) -> None:
+def test_another_repo(atlas: Workspace) -> None:
     path = atlas.root.parent / "web" / "page.html"
-    decision = ask(atlas, EventKind.EDIT, role=Role.PLANNER, path=path, content="x")
+    assert ask(atlas, EventKind.EDIT, role=Role.PLANNER, path=path, content="x").allow
+
+
+def test_implementer_in_another_repo(atlas: Workspace) -> None:
+    path = atlas.root.parent / "web" / "page.html"
+    decision = ask(atlas, EventKind.EDIT, role=Role.IMPLEMENTER, path=path, content="x")
     assert not decision.allow
     assert '"api"' in decision.reason
-    assert '"web"' in decision.reason
     assert f"{NAME} 1.1" in decision.reason
+
+
+def test_planner_never_edits_a_spec_in_an_atlas(atlas: Workspace) -> None:
+    decision = edit(atlas, "specs/search.md", Role.PLANNER, content="# Search\n")
+    assert not decision.allow
+    assert "Specs are never edited by hand" in decision.reason
 
 
 def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -> None:

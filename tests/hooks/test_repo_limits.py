@@ -81,31 +81,18 @@ def test_no_repo_is_open_to_implementers_while_no_item_is_to_apply(
     assert "No accepted change has an item to apply" in decision.reason
 
 
-def test_planner_may_edit_only_the_repo_of_the_item_being_applied(
-    suite: Workspace, tmp_path: Path
-) -> None:
+def test_planner_may_edit_every_code_repo(suite: Workspace, tmp_path: Path) -> None:
     assert edit(suite, tmp_path / "suite-api" / "app.py", Role.PLANNER).allow
-    decision = edit(suite, tmp_path / "web" / "page.html", Role.PLANNER)
-    assert not decision.allow
-    assert '"api"' in decision.reason
-    assert f"{NAME} 1.1" in decision.reason
+    assert edit(suite, tmp_path / "web" / "page.html", Role.PLANNER).allow
     assert edit(suite, suite.root / "README.md", Role.PLANNER).allow
 
 
-def test_planner_follows_the_next_item_to_its_repo(suite: Workspace, tmp_path: Path) -> None:
-    lifecycle.tick(suite.root, NAME, "1.1")
-    assert edit(suite, tmp_path / "web" / "page.html", Role.PLANNER).allow
-    assert not edit(suite, tmp_path / "suite-api" / "app.py", Role.PLANNER).allow
-
-
-def test_no_repo_is_open_to_the_planner_while_no_item_is_to_apply(
+def test_planner_may_edit_a_code_repo_while_no_item_is_to_apply(
     suite: Workspace, tmp_path: Path
 ) -> None:
     suite.replace(f"changes/{NAME}/tasks.md", "fifty at most", "at most fifty")
-    decision = edit(suite, tmp_path / "suite-api" / "app.py", Role.PLANNER)
-    assert not decision.allow
-    assert "the planner may edit" in decision.reason
-    assert edit(suite, suite.root / "README.md", Role.PLANNER).allow
+    assert edit(suite, tmp_path / "suite-api" / "app.py", Role.PLANNER).allow
+    assert edit(suite, tmp_path / "web" / "page.html", Role.PLANNER).allow
 
 
 def test_a_repo_found_through_its_hint_is_checked_the_same_way(tmp_path: Path) -> None:

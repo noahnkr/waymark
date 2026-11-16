@@ -2,7 +2,7 @@
 
 ## 1. The tiny path
 
-- [ ] 1.1 Let the planner edit any code repo in an atlas
+- [x] 1.1 Let the planner edit any code repo in an atlas
   - Criteria: in an atlas, a planner edit in any code repo is allowed, whether or not a change is being built; an implementer's edit outside the repo its item names is refused as before; `editable_repos` is documented as the implementers' limit; edits to specs stay refused for every role
   - Verify: tests in `tests/hooks/test_decide.py` and `tests/hooks/test_repo_limits.py` for the scenarios "Repo of the item being built", "Another repo" and "Implementer in another repo"
 - [ ] 1.2 Test that work outside a change is allowed and leaves no trace, and name the path tests after their scenarios
