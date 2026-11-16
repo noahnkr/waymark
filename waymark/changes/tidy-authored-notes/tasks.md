@@ -17,7 +17,7 @@
 
 ## 2. Templates, skills and docs
 
-- [ ] 2.1 Show the new layouts in the templates and skills
+- [x] 2.1 Show the new layouts in the templates and skills
   - Criteria: the proposal, charter, tasks, delta and exploration templates use the new layouts, with capitalized step headings in the charter; `wm-propose`, `wm-update`, `wm-kickoff`, `wm-explore` and `wm-apply` describe them, including RENAMED and the exploration status; the planner runs `wm update` to regenerate the rendered files
   - Verify: `uv run --no-sync pytest tests/adapters tests/record/test_project.py tests/services/test_setup.py`, where a test checks that each template, filled in as `wm new` fills it, reads with no problem; read each changed skill once through as the planner would
 - [ ] 2.2 Update the docs
