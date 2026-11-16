@@ -70,7 +70,6 @@ The files behind it, all plain markdown in `waymark/`:
 
 Owner: Alex Example
 Review: independent
-Accepted: 2026-01-15 by Alex Example (fingerprint: e87258930fc50aef; items: 1.1 1.2)
 
 ## Why
 
@@ -155,9 +154,10 @@ Sorting every match still costs memory on very large result sets.
 - [x] 1.2 Name the limit in the help text
   - Criteria: the search help says fifty
 
-## Review
+## Log
 
-- (review) 2026-01-15 pass: cap and order hold; the scenario is covered by the test
+- (accepted) 2026-01-15 fingerprint 94122887ebb08582 items 1.1 1.2 by Alex Example
+- (review) 2026-01-15 pass by Alex Example: cap and order hold; the scenario is covered by the test
 ```
 
 </details>
