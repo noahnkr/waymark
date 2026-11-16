@@ -23,7 +23,7 @@
    4. Commit with a conventional message, and offer a pull request, which the planner opens only on the human's yes.
    5. Stop and hand over to `wm-propose` if a requirement turns out to change.
 
-   The skill writes nothing to the record.
+   The skill writes nothing to the record. In an atlas, the session started in the atlas stays the one place work is done from, tiny fixes included. A fix may touch several code repos. It uses a branch of the same name in each repo it touches, commits in each, and offers one pull request per repo, each linking to the others, as changes do.
 3. **`wm-propose` step 1** asks which path fits: tiny (no requirement changes, so hand over to `wm-fix`), short (no design) or full. `wm-explore`'s closing offers gain "fix it on the tiny path", and `wm-onboard` mentions the paths.
 4. **Specs guidance.** The specs step in `wm instructions` gains one line: requirements say what the system does, as a user or another program sees it; files the user doesn't touch, internals and mechanisms go in the design. `wm-propose` says the same, and the charter's `### specs` rules get it for Waymark.
 5. **Tests for the `paths` spec.** Add a hook test for "Code edited outside a change" and "Spec edited outside a change", and a test for "Nothing recorded". Name the existing short-path tests after the scenarios, or point to them.

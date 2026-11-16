@@ -17,7 +17,7 @@ The exploration `lighter-workflow` asked for paths that scale with the size of t
   - Nothing is written to the record. The human's second approval is the merge.
   - If the work turns out to change a requirement, it stops and becomes a change on the short or full path.
 - **A `wm-fix` skill runs the tiny path.** `wm-propose` asks first which path fits (tiny, short or full) and hands tiny work to `wm-fix`.
-- **In an atlas, the planner may edit any code repo.** The hooks no longer limit it to the repo of the item being built, so the tiny path works there too. Implementers keep that limit, and nobody edits a spec by hand.
+- **In an atlas, the planner may edit any code repo.** The session started in the atlas stays the one place work is done from, for changes and tiny fixes alike, across every code repo. The hooks no longer limit the planner to the repo of the item being built. A tiny fix across repos gets a branch of the same name and a pull request in each repo it touches. Implementers keep the one-repo limit, and nobody edits a spec by hand.
 - **Specs stay functional.** This becomes a rule for every project:
   - `wm instructions` at the specs step and the `wm-propose` skill say that requirements describe what the system does, and that files, internals and mechanisms go in the design.
   - Waymark's charter gets the same rule for its specs step.
