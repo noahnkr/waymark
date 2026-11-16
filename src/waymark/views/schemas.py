@@ -376,6 +376,8 @@ SCHEMAS.update(
                 "guidance": NAMES,
                 "commands": NAMES,
                 "unlocks": STRING,
+                "checklist": _array(_object({"text": STRING, "enforced": BOOLEAN})),
+                "shared_rules": NAMES,
             },
         ),
         "context.explore": _payload(

@@ -127,9 +127,40 @@ def _load_deltas(files: RecordFiles, path: str, problems: list[Problem]) -> dict
     return deltas
 
 
+def _check_items(tasks: Tasks, problems: list[Problem]) -> None:
+    """Every item says how it is done: a Criteria line and a Verify line."""
+    for item in tasks.items:
+        missing = [
+            label
+            for label, value in (("Criteria", item.criteria), ("Verify", item.verify))
+            if value is None
+        ]
+        if missing:
+            lines = " and ".join(f'a "- {label}:" line' for label in missing)
+            problems.append(
+                Problem(
+                    tasks.doc.path,
+                    item.index + 1,
+                    "item-incomplete",
+                    f"Item {item.number} says how it is done: add {lines} under it.",
+                )
+            )
+
+
 def _check_decisions(design: Design, problems: list[Problem]) -> None:
-    """Each decision says whether it is settled and who made it; open questions are listed."""
+    """Each decision weighs options, says whether it is settled and who made it; open questions
+    are listed."""
     for decision in design.decisions:
+        if len(decision.options) < 2:  # noqa: PLR2004 - a decision weighs at least two options
+            problems.append(
+                Problem(
+                    design.doc.path,
+                    decision.index + 1,
+                    "decision-options",
+                    f'Decision "{decision.name}" weighs at least two options. List them as '
+                    'bullets under "- Options:", or on the line joined by "or" or ";".',
+                )
+            )
         for label, value, allowed in (
             (STATUS, decision.status, STATUSES),
             (DECIDED_BY, decision.decided_by, DECIDERS),
@@ -228,6 +259,8 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
     default = config.default_review if config else ReviewLevel.SELF
     if proposal is not None:
         _check_impact(change, proposal, problems)
+    if tasks is not None:
+        _check_items(tasks, problems)
     if change.design is not None:
         _check_decisions(change.design, problems)
     if change.short_path and change.design is not None:

@@ -16,8 +16,8 @@ NAME = "add-limit"
 DAY = datetime.date(2026, 1, 15)
 TASKS = (
     "# Tasks\n\n## 1. Limit\n\n"
-    "- [ ] 1.1 Add the endpoint\n  - Criteria: fifty at most\n  - Repo: api\n"
-    "- [ ] 1.2 Show the list\n  - Criteria: fifty rows\n  - Repo: web\n"
+    "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty at most\n  - Repo: api\n"
+    "- [ ] 1.2 Show the list\n  - Verify: a test\n  - Criteria: fifty rows\n  - Repo: web\n"
 )
 
 

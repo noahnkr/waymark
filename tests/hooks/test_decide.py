@@ -18,7 +18,7 @@ FOLDER = f"changes/{NAME}"
 TASKS_FILE = f"{FOLDER}/tasks.md"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n"
+ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n"
 INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
 
 
@@ -122,9 +122,12 @@ def test_delegation_of_an_unaccepted_change_is_refused(project: Workspace) -> No
 
 
 def test_delegation_of_an_item_without_criteria_is_refused(accepted: Workspace) -> None:
+    accepted.replace(
+        "changes/add-limit/tasks.md", "  - Criteria: the help text names the limit\n", ""
+    )
     decision = delegate(accepted, assets.IMPLEMENTER, "add-limit 1.2")
     assert not decision.allow
-    assert "has no criteria" in decision.reason
+    assert 'acceptance of "add-limit" was withdrawn' in decision.reason
 
 
 def test_delegation_is_refused_when_the_record_has_problems(project: Workspace) -> None:
@@ -225,8 +228,13 @@ def atlas(tmp_path: Path) -> Workspace:
     register(suite.root, "web", "../web")
     suite.change(
         tasks=HEAD
-        + "- [ ] 1.1 Add the endpoint\n  - Criteria: fifty at most\n  - Repo: api\n"
-        + "- [ ] 1.2 Show the list\n  - Criteria: fifty rows\n  - Repo: web\n",
+        + (
+            "- [ ] 1.1 Add the endpoint\n"
+            "  - Verify: a test\n"
+            "  - Criteria: fifty at most\n"
+            "  - Repo: api\n"
+        )
+        + "- [ ] 1.2 Show the list\n  - Verify: a test\n  - Criteria: fifty rows\n  - Repo: web\n",
         design=DESIGN,
     )
     lifecycle.accept(suite.root, NAME, DAY)
@@ -260,7 +268,12 @@ def test_planner_never_edits_a_spec_in_an_atlas(atlas: Workspace) -> None:
 def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -> None:
     assert replace(accepted, f"{FOLDER}/proposal.md", "Paging.", "Paging and sorting.").allow
     assert replace(accepted, TASKS_FILE, "Cap the result count", "Cap the results").allow
-    assert replace(accepted, TASKS_FILE, "\n## Log\n", "- [ ] 1.3 Announce it\n\n## Log\n").allow
+    assert replace(
+        accepted,
+        TASKS_FILE,
+        "\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - Criteria: done\n  - Verify: a test\n\n## Log\n",
+    ).allow
     assert edit(accepted, "charter.md", content="# New\n").allow
     assert edit(accepted, "changes/add-order/proposal.md", content=proposal()).allow
 
@@ -330,7 +343,12 @@ def test_agent_may_not_write_the_acceptance_record(project: Workspace) -> None:
 
 def test_edit_that_keeps_existing_evidence_is_allowed(accepted: Workspace) -> None:
     lifecycle.tick(accepted.root, NAME, "1.1")
-    assert replace(accepted, TASKS_FILE, "\n## Log\n", "- [ ] 1.3 Announce it\n\n## Log\n").allow
+    assert replace(
+        accepted,
+        TASKS_FILE,
+        "\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - Criteria: done\n  - Verify: a test\n\n## Log\n",
+    ).allow
 
 
 def test_edit_whose_result_cannot_be_known_is_left_to_the_tool(accepted: Workspace) -> None:

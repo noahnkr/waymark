@@ -25,6 +25,7 @@ NO_QUESTIONS = "None."
 
 _DECISION = re.compile(r"^Decision:\s*(\S.*)$")
 _PART = re.compile(r"^\s*(?:[-*]\s+)?(Options|Choice|Why|Status|Decided by):[ \t]*(.*)$")
+_OPTION_SPLIT = re.compile(r";|\bor\b")
 _LIST_ITEM = re.compile(r"^(?:[-*]|\d+\.)[ \t]+(\S.*)$")
 
 
@@ -39,6 +40,8 @@ class Decision:
     """The ``Status:`` value as written; None without the line."""
     decided_by: str | None = None
     """The ``Decided by:`` value as written; None without the line."""
+    options: tuple[str, ...] = ()
+    """The options: the bullets under ``- Options:``, or else the line split on ";" and "or"."""
 
 
 @dataclass(frozen=True)
@@ -90,9 +93,17 @@ def parse_design(doc: Document) -> Design:
                 continue
             lines = doc.lines[section.body_start : section.end]
             values: dict[str, str] = {}
+            bullets: list[str] = []
+            in_options = False
             for line in lines:
                 if m := _PART.match(line.text):
                     values.setdefault(m.group(1), m.group(2).strip())
+                    in_options = m.group(1) == "Options"
+                elif in_options and line.text.startswith((" ", "\t")):
+                    if bullet := _LIST_ITEM.match(line.text.strip()):
+                        bullets.append(bullet.group(1).strip())
+                elif not line.is_blank:
+                    in_options = False
             parts = set(values)
             missing = [part for part in DECISION_PARTS if part not in parts]
             if missing:
@@ -113,6 +124,7 @@ def parse_design(doc: Document) -> Design:
                     section.start,
                     values.get(STATUS),
                     values.get(DECIDED_BY),
+                    tuple(bullets) or _inline_options(values.get("Options", "")),
                 )
             )
     questions: tuple[str, ...] | None = None
@@ -148,3 +160,9 @@ def _open_questions(doc: Document, start: int, end: int) -> tuple[tuple[str, ...
         else:
             prose.append(index)
     return tuple(questions), prose
+
+
+def _inline_options(text: str) -> tuple[str, ...]:
+    """The options named on one line, split on ";" and on the word "or"."""
+    parts = (part.strip().rstrip(",").strip() for part in _OPTION_SPLIT.split(text))
+    return tuple(part for part in parts if part)

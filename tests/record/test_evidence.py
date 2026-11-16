@@ -14,8 +14,13 @@ LOGGED = TASKS + (
 
 def test_records_and_ticks_are_evidence() -> None:
     text = LOGGED.replace("- [ ] 1.1", "- [x] 1.1").replace(
-        "- [ ] 1.2 Document the limit\n",
-        "- [ ] 1.2 Document the limit\n  - (blocked) 2026-01-16 by Sam Doe: the key\n",
+        "- [ ] 1.2 Document the limit\n"
+        "  - Criteria: the help text names the limit\n"
+        "  - Verify: read the help text\n",
+        "- [ ] 1.2 Document the limit\n"
+        "  - Criteria: the help text names the limit\n"
+        "  - Verify: read the help text\n"
+        "  - (blocked) 2026-01-16 by Sam Doe: the key\n",
     )
     found = evidence(PATH, text)
     assert found["the tick on item 1.1"] == 1
@@ -26,7 +31,9 @@ def test_records_and_ticks_are_evidence() -> None:
 def test_what_a_human_writes_is_not_evidence() -> None:
     edited = LOGGED.replace("at most fifty results", "at most sixty results")
     assert evidence_changes(PATH, LOGGED, edited) == []
-    added = LOGGED.replace("\n## Log\n", "- [ ] 1.3 Announce it\n\n## Log\n")
+    added = LOGGED.replace(
+        "\n## Log\n", "- [ ] 1.3 Announce it\n  - Criteria: done\n  - Verify: a test\n\n## Log\n"
+    )
     assert evidence_changes(PATH, LOGGED, added) == []
 
 

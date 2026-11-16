@@ -6,6 +6,7 @@ read first, the commands to run and what the step unlocks. Everything comes
 from the files; nothing depends on an earlier conversation.
 """
 
+from dataclasses import dataclass
 from typing import Any
 
 from waymark.record import templates
@@ -48,6 +49,86 @@ _UNLOCKS = {
         "request carries both."
     ),
 }
+
+SHARED_RULES = (
+    "Only the human accepts a change, or archives one past a missing review: never run "
+    "wm accept or wm archive --override.",
+    "Only wm writes records and ticks items: use the wm commands, never write them by hand.",
+    "The living specs change only when a change is archived or synced: don't edit "
+    "waymark/specs/ by hand.",
+    "The record is the source of truth: ask the human, or record a gap, for what it doesn't "
+    "say. Never guess.",
+    "Don't push, open a pull request or merge without the human's yes in this session.",
+)
+"""The rules every skill shares, given at every step."""
+
+
+@dataclass(frozen=True)
+class Check:
+    """One check of a drafting step: what must hold, and the codes wm check reports for it.
+
+    A check without codes is for the planner to judge.
+    """
+
+    text: str
+    enforced_by: tuple[str, ...] = ()
+
+
+CHECKLISTS: dict[StepKind, tuple[Check, ...]] = {
+    StepKind.PROPOSE: (
+        Check("Every section is filled in.", ("empty-section",)),
+        Check(
+            "The Impact has its Specs, User-visible and Code lines, and Specs names exactly "
+            "the specs with a delta.",
+            ("impact-format", "impact-mismatch"),
+        ),
+        Check("Why states the problem and why now, not the solution."),
+        Check("Non-goals name what a reader might expect and won't get."),
+        Check("User-visible names everything users will see change, for the changelog."),
+    ),
+    StepKind.SPECS: (
+        Check("Every requirement says SHALL.", ("requirement-without-shall",)),
+        Check(
+            "Every requirement has a scenario with WHEN and THEN.",
+            ("requirement-without-scenario", "scenario-incomplete"),
+        ),
+        Check("A delta that creates a spec has a Purpose.", ("delta-without-purpose",)),
+        Check(
+            "A modified, removed or renamed requirement is in the spec, and an added one isn't.",
+            ("delta-requirement-missing", "delta-requirement-exists"),
+        ),
+        Check("Each THEN can be checked by someone who didn't write it."),
+        Check("No file names, functions or internals in a requirement."),
+    ),
+    StepKind.DESIGN: (
+        Check(
+            "Each decision has Options, Choice, Why, Status and Decided by lines.",
+            ("decision-incomplete", "decision-format"),
+        ),
+        Check("Each decision weighs at least two options.", ("decision-options",)),
+        Check(
+            'Open questions lists what is undecided, or says "None.".',
+            ("missing-section", "open-questions-format"),
+        ),
+        Check("The design says how, not what, and doesn't repeat the deltas."),
+        Check('"Decided by: human" only where the human made the call.'),
+    ),
+    StepKind.TASKS: (
+        Check("Every item has a Criteria line and a Verify line.", ("item-incomplete",)),
+        Check("Items are numbered by section.", ("item-number", "section-number")),
+        Check("Every scenario in the deltas is covered by some item's criteria."),
+        Check("Each criterion can be checked."),
+        Check("Each item can be built from the record alone."),
+    ),
+}
+"""What must hold in the drafted file before the planner moves on, per drafting step."""
+
+
+def checklist(step: StepKind | None) -> list[dict[str, Any]]:
+    """The checklist of a step, as the payload gives it; empty for a step that drafts nothing."""
+    checks = CHECKLISTS.get(step, ()) if step is not None else ()
+    return [{"text": check.text, "enforced": bool(check.enforced_by)} for check in checks]
+
 
 _RISK_SIGNALS = (
     "the change modifies or removes an existing requirement",
@@ -279,6 +360,8 @@ def _explore(record: Record) -> dict[str, Any]:
             "wm new milestone <name>",
         ],
         "unlocks": "A saved exploration, a proposal or a milestone, if the human asks for one.",
+        "checklist": checklist(None),
+        "shared_rules": list(SHARED_RULES),
     }
 
 
@@ -343,4 +426,6 @@ def instructions(record: Record, step: str | None, change_name: str | None) -> d
         "guidance": guidance,
         "commands": commands,
         "unlocks": _UNLOCKS[kind],
+        "checklist": checklist(kind),
+        "shared_rules": list(SHARED_RULES),
     }

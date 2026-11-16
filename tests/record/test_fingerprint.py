@@ -61,8 +61,13 @@ def test_editing_the_design_withdraws_acceptance(workspace: Workspace) -> None:
         ("Verify: a test covers", "Verify: nobody checks"),
         ("1.2 Document the limit", "1.2 Document the limit in the guide"),
         (
-            "- [ ] 1.1 Cap the result count\n",
-            "- [ ] 1.1 Cap the result count\n  - Build: delegate\n",
+            "- [ ] 1.1 Cap the result count\n"
+            "  - Criteria: at most fifty results come back\n"
+            "  - Verify: a test covers fifty-one matches\n",
+            "- [ ] 1.1 Cap the result count\n"
+            "  - Criteria: at most fifty results come back\n"
+            "  - Verify: a test covers fifty-one matches\n"
+            "  - Build: delegate\n",
         ),
     ],
 )
@@ -124,7 +129,9 @@ def test_adding_a_review_line_withdraws_acceptance(
 
 
 def test_item_added(workspace: Workspace) -> None:
-    accepted(workspace).write_tasks(TASKS + "- [ ] 1.3 Announce it\n  - Criteria: posted\n")
+    accepted(workspace).write_tasks(
+        TASKS + "- [ ] 1.3 Announce it\n  - Verify: a test\n  - Criteria: posted\n"
+    )
     assert acceptance(workspace) is AcceptanceState.VALID
     tasks = "changes/add-limit/tasks.md"
     workspace.replace(tasks, "- [ ] 1.1", "- [x] 1.1")

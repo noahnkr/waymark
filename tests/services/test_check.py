@@ -185,15 +185,18 @@ def test_broken_links_are_errors(project: Workspace) -> None:
 
 
 def test_malformed_evidence_is_an_error(project: Workspace) -> None:
-    project.change(tasks=HEAD + "- [x] 1.1 Cap it\n  - (review) approved by me\n")
+    project.change(
+        tasks=HEAD
+        + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - (review) approved by me\n"
+    )
     assert findings(project) == [("error", "changes/add-limit/tasks.md", "malformed-record")]
 
 
 def test_unknown_build_tag_and_repeated_tag_are_errors(project: Workspace) -> None:
     project.change(
         tasks=HEAD
-        + "- [ ] 1.1 Cap it\n  - Build: someone\n"
-        + "- [ ] 1.2 Page it   `build: delegate`\n"
+        + "- [ ] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - Build: someone\n"
+        + "- [ ] 1.2 Page it   `build: delegate`\n  - Criteria: done\n  - Verify: a test\n"
     )
     assert findings(project) == [
         ("error", "changes/add-limit/tasks.md", "unknown-build-tag"),
@@ -227,7 +230,10 @@ def test_overlapping_changes_are_a_warning(project: Workspace) -> None:
 
 
 def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> None:
-    project.change(proposal_text=reviewed_at("none"), tasks=HEAD + "- [ ] 1.1 Rename it\n")
+    project.change(
+        proposal_text=reviewed_at("none"),
+        tasks=HEAD + "- [ ] 1.1 Rename it\n  - Criteria: done\n  - Verify: a test\n",
+    )
     lifecycle.accept(project.root, "add-limit", DAY)
     assert findings(project) == []
     lifecycle.tick(project.root, "add-limit", "1.1")
@@ -296,7 +302,10 @@ def test_risky_change_at_self(project: Workspace) -> None:
 
 
 def test_not_archived_warning_says_to_archive_before_the_pull_request(project: Workspace) -> None:
-    project.change(proposal_text=reviewed_at("none"), tasks=HEAD + "- [ ] 1.1 Rename it\n")
+    project.change(
+        proposal_text=reviewed_at("none"),
+        tasks=HEAD + "- [ ] 1.1 Rename it\n  - Criteria: done\n  - Verify: a test\n",
+    )
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
     (finding,) = check(project.root, NOW)

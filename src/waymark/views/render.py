@@ -376,9 +376,18 @@ def instructions(payload: Payload, style: Style) -> str:
         )
     elif payload["reason"]:
         lines.append(f"  {payload['reason']}")
+    if payload["shared_rules"]:
+        lines += ["", style.paint("Shared rules", BOLD)]
+        lines += [f"  {style.symbol('bullet')} {text}" for text in payload["shared_rules"]]
     if payload["guidance"]:
         lines += ["", style.paint("What to do", BOLD)]
         lines += [f"  {style.symbol('bullet')} {text}" for text in payload["guidance"]]
+    if payload["checklist"]:
+        lines += ["", style.paint("Checklist", BOLD)]
+        lines += [
+            f"  {'wm ' if check['enforced'] else '[ ]'} {check['text']}"
+            for check in payload["checklist"]
+        ]
     if payload["commands"]:
         lines += ["", style.paint("Commands", BOLD)]
         lines += [style.paint(f"  {command}", CYAN) for command in payload["commands"]]

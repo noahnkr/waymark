@@ -214,44 +214,115 @@ def test_withdrawn_acceptance_sends_the_change_back_to_accept(workspace: Workspa
 
 
 def test_progress_is_ticked_items_out_of_all_items(workspace: Workspace) -> None:
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 A\n- [ ] 1.2 B\n- [x] 1.3 C\n")
+    state = with_tasks(
+        workspace,
+        HEAD
+        + (
+            "- [x] 1.1 A\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "- [ ] 1.2 B\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "- [x] 1.3 C\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+        ),
+    )
     assert (state.ticked, state.total) == (2, 3)
 
 
 def test_change_at_level_none_needs_no_review(workspace: Workspace) -> None:
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Rename a file\n", level="none")
+    state = with_tasks(
+        workspace,
+        HEAD + "- [x] 1.1 Rename a file\n  - Criteria: done\n  - Verify: a test\n",
+        level="none",
+    )
     assert state.review.reviewed
     assert step(state) == (Phase.APPLIED, StepKind.ARCHIVE, None, True)
 
 
 def test_all_items_ticked(workspace: Workspace) -> None:
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n- [x] 1.2 Tidy up\n")
+    state = with_tasks(
+        workspace,
+        HEAD
+        + (
+            "- [x] 1.1 Cap it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "- [x] 1.2 Tidy up\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+        ),
+    )
     assert state.review.level is ReviewLevel.SELF
     assert not state.review.reviewed
     assert step(state) == (Phase.APPLYING, StepKind.REVIEW, None, False)
     assert state.next_step.reason == "Review level: self."
     shutil.rmtree(workspace.path(FOLDER))
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n- [x] 1.2 Tidy up\n" + SELF_REVIEW)
+    state = with_tasks(
+        workspace,
+        HEAD
+        + (
+            "- [x] 1.1 Cap it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "- [x] 1.2 Tidy up\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+        )
+        + SELF_REVIEW,
+    )
     assert state.review.reviewed
     assert state.applied
 
 
 def test_an_item_still_to_build(workspace: Workspace) -> None:
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n- [ ] 1.2 Tidy up\n")
+    state = with_tasks(
+        workspace,
+        HEAD
+        + (
+            "- [x] 1.1 Cap it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "- [ ] 1.2 Tidy up\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+        ),
+    )
     assert step(state) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n- [ ] 1.2 Tidy up\n" + SELF_REVIEW)
+    state = with_tasks(
+        workspace,
+        HEAD
+        + (
+            "- [x] 1.1 Cap it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "- [ ] 1.2 Tidy up\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+        )
+        + SELF_REVIEW,
+    )
     assert not state.review.reviewed
 
 
 def test_independent_change_needs_a_passing_review(workspace: Workspace) -> None:
-    state = with_tasks(workspace, HEAD + "- [x] 1.1 Cap it\n" + SELF_REVIEW, level="independent")
+    state = with_tasks(
+        workspace,
+        HEAD + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n" + SELF_REVIEW,
+        level="independent",
+    )
     assert state.review.level is ReviewLevel.INDEPENDENT
     assert not state.review.reviewed
     assert step(state) == (Phase.APPLYING, StepKind.REVIEW, None, False)
     shutil.rmtree(workspace.path(FOLDER))
     state = with_tasks(
         workspace,
-        HEAD + "- [x] 1.1 Cap it\n" + REVIEW + "- (review) 2026-01-16 pass: boundary covered\n",
+        HEAD
+        + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n"
+        + REVIEW
+        + "- (review) 2026-01-16 pass: boundary covered\n",
         level="independent",
     )
     assert state.review.reviewed
@@ -259,7 +330,20 @@ def test_independent_change_needs_a_passing_review(workspace: Workspace) -> None
 
 
 def test_two_items_named(workspace: Workspace) -> None:
-    items = HEAD + "- [x] 1.1 Cap it\n- [x] 1.2 Page it\n\n## 2. Docs\n\n- [x] 2.1 Explain\n"
+    items = HEAD + (
+        "- [x] 1.1 Cap it\n"
+        "  - Criteria: done\n"
+        "  - Verify: a test\n"
+        "- [x] 1.2 Page it\n"
+        "  - Criteria: done\n"
+        "  - Verify: a test\n"
+        "\n"
+        "## 2. Docs\n"
+        "\n"
+        "- [x] 2.1 Explain\n"
+        "  - Criteria: done\n"
+        "  - Verify: a test\n"
+    )
     verdict = REVIEW + "- (review) 2026-01-16 changes 1.2 2.1: off by one\n"
     state = with_tasks(workspace, items + verdict)
     assert state.review.reopen == ("1.2", "2.1")
@@ -268,14 +352,18 @@ def test_two_items_named(workspace: Workspace) -> None:
     assert "Reopen" in state.next_step.reason
 
     workspace.replace(
-        TASKS_FILE, "- [x] 1.2 Page it\n", "- [ ] 1.2 Page it\n  - (reopened) 2026-01-17\n"
+        TASKS_FILE,
+        "- [x] 1.2 Page it\n  - Criteria: done\n  - Verify: a test\n",
+        "- [ ] 1.2 Page it\n  - Criteria: done\n  - Verify: a test\n  - (reopened) 2026-01-17\n",
     )
     state = workspace.change_state()
     assert state.review.reopen == ("2.1",)
     assert step(state) == (Phase.APPLYING, StepKind.APPLY, "2.1", False)
 
     workspace.replace(
-        TASKS_FILE, "- [x] 2.1 Explain\n", "- [ ] 2.1 Explain\n  - (reopened) 2026-01-17\n"
+        TASKS_FILE,
+        "- [x] 2.1 Explain\n  - Criteria: done\n  - Verify: a test\n",
+        "- [ ] 2.1 Explain\n  - Criteria: done\n  - Verify: a test\n  - (reopened) 2026-01-17\n",
     )
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
 
@@ -295,7 +383,7 @@ def test_second_request_for_changes(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
         HEAD
-        + "- [x] 1.1 Cap it\n  - (reopened) 2026-01-17\n"
+        + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - (reopened) 2026-01-17\n"
         + REVIEW
         + "- (review) 2026-01-16 changes 1.1: off by one\n"
         + "- (review) 2026-01-18 changes 1.1: still off by one\n",
@@ -316,7 +404,7 @@ def test_spec_gap_verdict_goes_to_the_human(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
         HEAD
-        + "- [x] 1.1 Cap it\n"
+        + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n"
         + REVIEW
         + "- (review) 2026-01-16 spec-gap: no scenario for zero results\n",
     )
@@ -326,22 +414,49 @@ def test_spec_gap_verdict_goes_to_the_human(workspace: Workspace) -> None:
 
 def test_spec_gap_from_the_builder_goes_to_the_human(workspace: Workspace) -> None:
     state = with_tasks(
-        workspace, HEAD + "- [ ] 1.1 Cap it\n  - (gap) 2026-01-16: no limit given\n- [ ] 1.2 Next\n"
+        workspace,
+        HEAD
+        + (
+            "- [ ] 1.1 Cap it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "  - (gap) 2026-01-16: no limit given\n"
+            "- [ ] 1.2 Next\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+        ),
     )
     assert state.items[0].escalated == "the builder found a spec gap: no limit given"
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)
-    workspace.replace(TASKS_FILE, "- [ ] 1.2 Next\n", "- [x] 1.2 Next\n")
+    workspace.replace(
+        TASKS_FILE,
+        "- [ ] 1.2 Next\n  - Criteria: done\n  - Verify: a test\n",
+        "- [x] 1.2 Next\n  - Criteria: done\n  - Verify: a test\n",
+    )
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)
 
 
 def test_blocked_item_is_skipped_until_only_blocked_items_remain(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
-        HEAD + "- [ ] 1.1 Cap it\n  - (blocked) 2026-01-16: waiting for wording\n- [ ] 1.2 Next\n",
+        HEAD
+        + (
+            "- [ ] 1.1 Cap it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "  - (blocked) 2026-01-16: waiting for wording\n"
+            "- [ ] 1.2 Next\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+        ),
     )
     assert state.items[0].blocked == "waiting for wording"
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)
-    workspace.replace(TASKS_FILE, "- [ ] 1.2 Next\n", "- [x] 1.2 Next\n")
+    workspace.replace(
+        TASKS_FILE,
+        "- [ ] 1.2 Next\n  - Criteria: done\n  - Verify: a test\n",
+        "- [x] 1.2 Next\n  - Criteria: done\n  - Verify: a test\n",
+    )
     state = workspace.change_state()
     assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)
     assert state.next_step.reason == "blocked: waiting for wording"
@@ -365,7 +480,7 @@ def test_delta_that_no_longer_matches_its_spec_is_a_conflict(workspace: Workspac
 
 def test_change_with_a_mismatch_is_not_applied(workspace: Workspace) -> None:
     workspace.write("specs/search.md", spec())
-    tasks = HEAD + "- [ ] 1.1 Cap it\n"
+    tasks = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n"
     workspace.change(
         "fix-limit",
         proposal_text=reviewed_at("none"),
@@ -409,7 +524,7 @@ def test_two_changes_touching_the_same_requirement_overlap(workspace: Workspace)
 
 def test_overlap_blocks_neither_change(workspace: Workspace) -> None:
     workspace.write("specs/search.md", spec())
-    tasks = HEAD + "- [x] 1.1 Cap it\n"
+    tasks = HEAD + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n"
     for name, limit in (("fix-limit", "twenty"), ("cut-limit", "ten")):
         changed = requirement(statement=f"A search SHALL return at most {limit} results.")
         workspace.change(
@@ -440,7 +555,19 @@ def test_changes_in_different_specs_or_requirements_do_not_overlap(workspace: Wo
 def test_item_in_an_atlas_names_a_configured_repo(atlas: Workspace) -> None:
     atlas.change(
         tasks=HEAD
-        + "- [ ] 1.1 Cap it\n- [ ] 1.2 Show it\n  - Repo: docs\n- [ ] 1.3 Ok\n  - Repo: api\n"
+        + (
+            "- [ ] 1.1 Cap it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "- [ ] 1.2 Show it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "  - Repo: docs\n"
+            "- [ ] 1.3 Ok\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "  - Repo: api\n"
+        )
     )
     assert code_list(atlas) == [
         (TASKS_FILE, "item-without-repo"),
@@ -451,14 +578,26 @@ def test_item_in_an_atlas_names_a_configured_repo(atlas: Workspace) -> None:
 
 def test_change_can_span_the_repos_of_an_atlas(atlas: Workspace) -> None:
     atlas.change(
-        tasks=HEAD + "- [ ] 1.1 Add the endpoint\n  - Repo: api\n- [ ] 1.2 Show it\n  - Repo: web\n"
+        tasks=HEAD
+        + (
+            "- [ ] 1.1 Add the endpoint\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "  - Repo: api\n"
+            "- [ ] 1.2 Show it\n"
+            "  - Criteria: done\n"
+            "  - Verify: a test\n"
+            "  - Repo: web\n"
+        )
     )
     assert atlas.record().problems == ()
     assert step(atlas.change_state()) == (Phase.PLANNED, StepKind.ACCEPT, None, True)
 
 
 def test_repo_line_outside_an_atlas_is_a_problem(workspace: Workspace) -> None:
-    workspace.change(tasks=HEAD + "- [ ] 1.1 Cap it\n  - Repo: api\n")
+    workspace.change(
+        tasks=HEAD + "- [ ] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - Repo: api\n"
+    )
     assert code_list(workspace) == [(TASKS_FILE, "unknown-repo")]
 
 
