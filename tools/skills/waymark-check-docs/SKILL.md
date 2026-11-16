@@ -13,7 +13,7 @@ argument-hint: page, section, or "all"
    - `uv run --no-sync python -m tools.docs --check` (generated docs current);
    - `uv run --no-sync pytest tests/test_docs.py` (required files, glossary, links, release checks);
    - `uv run --no-sync codespell`.
-3. Start one fresh subagent per page or section, in parallel. Subagents don't inherit skills or this conversation, so give each one: the absolute path of the page and section, the absolute paths of `src/waymark/`, `docs/concepts.md` and `.agents/skills/waymark-write-docs/SKILL.md`, and the checks below.
+3. Start one fresh subagent per page or section, in parallel. Subagents don't inherit skills or this conversation, so give each one: the absolute path of the page and section, the absolute paths of `src/waymark/`, `docs/concepts.md` and `tools/skills/waymark-write-docs/SKILL.md`, and the checks below.
 4. Each checker works in this order:
    1. **Facts.** Every command, flag, path, file name, default and line of output is true of the code. Read-only commands (`wm --help`, `wm status`, `wm check`, `wm ls`) may run anywhere; anything that writes runs only in a scratch git repository made for the check.
    2. **Examples.** Record snippets (specs, tasks, proposals) are in a shape `wm check` accepts.
