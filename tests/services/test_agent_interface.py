@@ -29,6 +29,7 @@ from waymark.record.text import Document
 from waymark.services import lifecycle
 from waymark.services.common import Refusal
 from waymark.services.context import RESULT_LINE, VERDICT_LINE, context_pack, delegation_problems
+from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
 from waymark.services.instructions import (
     CHECKLISTS,
     SHARED_RULES,
@@ -196,6 +197,56 @@ def test_scenario_tasks_step(project: Workspace) -> None:
     assert any("run past about five bullets" in line for line in guidance)
     assert not set(WRITING_RULES) & set(guidance)
     assert not set(WRITING_RULES + SIZING_RULES) & set(at(project, "design")["guidance"])
+
+
+ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n  - Verify: a test\n"
+
+
+def reviewable(project: Workspace, level: str = "independent") -> None:
+    """A change with every item ticked, at the given review level."""
+    project.change(
+        proposal_text=proposal().replace(
+            "Owner: Sam Doe\n", f"Owner: Sam Doe\n- Review: {level}\n"
+        ),
+        tasks=ONE_ITEM,
+    )
+    lifecycle.accept(project.root, NAME, DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+
+
+def test_scenario_review_pack(project: Workspace) -> None:
+    """Requirement "Severity rubric": the review pack gives it."""
+    reviewable(project)
+    payload = pack(project, "review")
+    assert payload["severity_rubric"] == list(SEVERITY_RUBRIC)
+    assert payload["severity_rubric"][0].startswith(
+        "critical: a criterion or scenario doesn't hold"
+    )
+    text = render.to_text(payload, PLAIN)
+    assert text.index("## Severity rubric") < text.index("## How to finish")
+
+
+def test_scenario_self_review(project: Workspace) -> None:
+    reviewable(project, "self")
+    payload = valid(at(project))
+    assert payload["step"] == "review"
+    assert payload["severity_rubric"] == list(SEVERITY_RUBRIC)
+    assert "Severity rubric" in render.to_text(payload, PLAIN)
+    assert at(project, "tasks")["severity_rubric"] == []
+
+
+def test_scenario_implement_pack(project: Workspace) -> None:
+    """Requirement "Stopping rules": the implement pack gives them."""
+    accepted(project)
+    payload = pack(project, "implement")
+    assert payload["stopping_rules"] == list(STOPPING_RULES)
+    assert any(
+        "three attempts" in rule and "end with partial" in rule
+        for rule in payload["stopping_rules"]
+    )
+    text = render.to_text(payload, PLAIN)
+    assert text.index("## When to stop") < text.index("## How to finish")
+    assert "severity_rubric" not in payload
 
 
 def test_scenario_apply_has_no_checklist(project: Workspace) -> None:

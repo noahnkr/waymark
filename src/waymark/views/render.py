@@ -388,6 +388,9 @@ def instructions(payload: Payload, style: Style) -> str:
             f"  {'wm ' if check['enforced'] else '[ ]'} {check['text']}"
             for check in payload["checklist"]
         ]
+    if payload["severity_rubric"]:
+        lines += ["", style.paint("Severity rubric", BOLD)]
+        lines += [f"  {style.symbol('bullet')} {rule}" for rule in payload["severity_rubric"]]
     if payload["commands"]:
         lines += ["", style.paint("Commands", BOLD)]
         lines += [style.paint(f"  {command}", CYAN) for command in payload["commands"]]
@@ -450,6 +453,11 @@ def _review_head(payload: Payload) -> list[str]:
     return lines
 
 
+def _listed(title: str, rules: list[str]) -> list[str]:
+    """A markdown section holding a list of rules, or nothing when there are none."""
+    return ["", f"## {title}", "", *(f"- {rule}" for rule in rules)] if rules else []
+
+
 def context_delegated(payload: Payload, _: Style) -> str:
     """An implementer's or reviewer's context pack, as markdown."""
     role = payload["for"]
@@ -478,6 +486,8 @@ def context_delegated(payload: Payload, _: Style) -> str:
             lines += ["", title, "", *_fenced(requirement["text"])]
     if payload["design"]:
         lines += ["", "## Design", "", *_fenced(payload["design"])]
+    lines += _listed("Severity rubric", payload.get("severity_rubric", []))
+    lines += _listed("When to stop", payload.get("stopping_rules", []))
     lines += ["", "## How to finish", "", payload["ends_with"]]
     return "\n".join(lines)
 

@@ -17,6 +17,7 @@ from waymark.record.record import SPECS, Record
 from waymark.record.state import AcceptanceState, ChangeState, StepKind
 from waymark.record.terms import Layout, ReviewLevel, Step
 from waymark.services.common import Refusal, find_change, state_of
+from waymark.services.guidance import SEVERITY_RUBRIC
 
 INSTRUCTIONS_VERSION = 1
 EXPLORE = "explore"
@@ -384,6 +385,7 @@ def _explore(record: Record) -> dict[str, Any]:
         "unlocks": "A saved exploration, a proposal or a milestone, if the human asks for one.",
         "checklist": checklist(None),
         "shared_rules": list(SHARED_RULES),
+        "severity_rubric": [],
     }
 
 
@@ -450,4 +452,5 @@ def instructions(record: Record, step: str | None, change_name: str | None) -> d
         "unlocks": _UNLOCKS[kind],
         "checklist": checklist(kind),
         "shared_rules": list(SHARED_RULES),
+        "severity_rubric": list(SEVERITY_RUBRIC) if kind is StepKind.REVIEW else [],
     }

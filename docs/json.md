@@ -1627,6 +1627,12 @@ Printed by `wm instructions`.
       "items": {
         "type": "string"
       }
+    },
+    "severity_rubric": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
@@ -1645,7 +1651,8 @@ Printed by `wm instructions`.
     "commands",
     "unlocks",
     "checklist",
-    "shared_rules"
+    "shared_rules",
+    "severity_rubric"
   ],
   "additionalProperties": false
 }
@@ -2070,6 +2077,12 @@ Printed by `wm context <change> <item> --for implement`.
         "null"
       ]
     },
+    "stopping_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "ends_with": {
       "type": "string"
     }
@@ -2086,6 +2099,7 @@ Printed by `wm context <change> <item> --for implement`.
     "deltas",
     "requirements",
     "design",
+    "stopping_rules",
     "ends_with"
   ],
   "additionalProperties": false
@@ -2269,6 +2283,12 @@ Printed by `wm context <change> --for review`.
         "null"
       ]
     },
+    "severity_rubric": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "ends_with": {
       "type": "string"
     }
@@ -2286,6 +2306,7 @@ Printed by `wm context <change> --for review`.
     "rules",
     "deltas",
     "design",
+    "severity_rubric",
     "ends_with"
   ],
   "additionalProperties": false
