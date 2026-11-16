@@ -121,7 +121,8 @@ def _drafting(
         guidance = [
             "Write one delta file per spec the change touches, named after the spec.",
             "A modified requirement is written out in full under its existing heading; "
-            "a removed one gives a reason; a rename is a removal plus an addition.",
+            "a removed one gives a reason; a rename is a '- From: <old name>' line and a "
+            "'- To: <new name>' line under '## RENAMED Requirements', and keeps the text.",
             "A delta that creates a spec needs a Purpose section.",
             "Every requirement states what the system SHALL do and has at least one scenario.",
             "Requirements describe what the system does, as a user or another program sees it. "
