@@ -45,3 +45,6 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint 1c162917de45e705 items 1.1 1.2 2.1 2.2 by Noah Roberts
+- (self-review) 2026-11-16 by Noah Roberts: Checked against the six scenarios, the design and each item's criteria. Specs checklist, Apply has no checklist, Shared rules at every step, Item without verification, One option and Options as a list each have a test, and a test holds that every code a checklist names exists. Each skill's Rules were read against the old text: every rule is kept or covered by the shared list, and Don't merge stays in wm-pr and wm-fix because the shared rule only asks for a yes. Full checks pass: pytest (1108), ruff, mypy, codespell, tools.docs --check, wm check.
+  - suggestion `src/waymark/services/context.py:115`: the 'Item has no criteria' refusal can no longer be reached, since an item without criteria can't be accepted and removing criteria withdraws acceptance first; three tests now assert the withdrawn-acceptance refusal instead; the branch could go in a later cleanup
+  - suggestion `tests/`: about a hundred inline test items gained Criteria and Verify lines by script; their wording (done, a test) is placeholder text
