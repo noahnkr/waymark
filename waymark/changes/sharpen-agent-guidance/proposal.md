@@ -11,7 +11,7 @@ This is the last change on the `record-format-and-skills` milestone, split from 
 ## What changes
 
 - **Severity rubric:** `wm context --for review` and `wm instructions` at the review step give one rubric: a finding is critical when a criterion or scenario doesn't hold, the code does what a requirement forbids, or a check fails; a warning when everything holds but an edge is untested, a requirement is met by accident, or a likely next change breaks it; a suggestion for clarity, naming or duplication that no user would notice. When torn between two, pick the higher; every critical names the item to rebuild.
-- **Stopping rules:** `wm context --for implement` gives the implementer five rules for when to stop and which result to end with.
+- **Stopping rules:** `wm context --for implement` gives the implementer the rules for when to stop and which result to end with: a spec gap, something outside the item, three failed attempts at the same check, and work the item doesn't ask for.
 - **Agent definitions:** `wm-reviewer` and `wm-implementer` point at the pack for the rubric and the stopping rules instead of carrying their own versions. `wm-apply`'s self-review points at the rubric.
 
 ## Non-goals
