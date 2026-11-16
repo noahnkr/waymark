@@ -8,7 +8,7 @@ from waymark.record.atlas import Found, Location, locate_repo
 from waymark.record.changes import Change
 from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.project import RECORD_DIR, ProjectNotFoundError, find_project
-from waymark.record.record import Record, load_record
+from waymark.record.record import Record, load_archived_change, load_record
 from waymark.record.registry import Registry, load_registry
 from waymark.record.state import ChangeState, change_state, overlaps
 from waymark.record.store import StoreError, Transaction
@@ -119,6 +119,17 @@ def find_change(record: Record, name: str) -> Change:
         active = ", ".join(sorted(record.changes)) or "none"
         raise Refusal(f'There is no active change "{name}". Active changes: {active}.')
     return change
+
+
+def find_active_or_archived(record: Record, name: str) -> Change:
+    """An active change by name, or else the latest archived change of that name."""
+    change = record.changes.get(name)
+    if change is not None:
+        return change
+    entries = [entry for entry in record.archived_changes if entry.name == name]
+    if entries:
+        return load_archived_change(record, entries[-1])
+    return find_change(record, name)
 
 
 def find_item(change: Change, number: str) -> Item:

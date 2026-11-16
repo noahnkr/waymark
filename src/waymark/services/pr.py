@@ -15,11 +15,11 @@ from waymark.record import git
 from waymark.record.changes import Change
 from waymark.record.config import RECORD_DIR
 from waymark.record.proposal import WHAT_CHANGES, WHY
-from waymark.record.record import CHANGES, Record
-from waymark.record.state import ChangeState
+from waymark.record.record import Record
+from waymark.record.state import review_state
 from waymark.record.tasks import RecordKind
 from waymark.record.terms import Layout, ReviewLevel
-from waymark.services.common import Refusal, find_change, repo_locations, state_of
+from waymark.services.common import Refusal, find_active_or_archived, repo_locations
 
 PR_VERSION = 1
 
@@ -44,9 +44,9 @@ def _web(folder: Path | None) -> str | None:
     return web_url(git.remote_url(folder)) if folder is not None else None
 
 
-def _review_lines(change: Change, state: ChangeState) -> list[str]:
+def _review_lines(record: Record, change: Change) -> list[str]:
     """One line on the change's review: its level, and how it came out."""
-    review = state.review
+    review = review_state(change, record.default_review)
     records = change.tasks.review_records if change.tasks else ()
     last = records[-1] if records else None
     if review.level is ReviewLevel.NONE and review.reviewed:
@@ -97,15 +97,21 @@ def _places(record: Record, change: Change) -> dict[str, Path | None]:
     return places
 
 
+def _proposal_path(change: Change) -> str:
+    """The change's proposal from the top of the repository: active or archived."""
+    return f"{RECORD_DIR}/{change.path}/proposal.md"
+
+
 def _links(
-    record: Record, name: str, places: dict[str, Path | None], here: str | None
+    record: Record, change: Change, places: dict[str, Path | None], here: str | None
 ) -> list[dict[str, str]]:
+    name = change.name
     """The change's proposal on its branch, and the other repos' pull requests from it."""
     record_web = _web(record.project.root)
     home = next(iter(places), None)
     links: list[dict[str, str]] = []
     if record_web:
-        proposal = f"{RECORD_DIR}/{CHANGES}/{name}/proposal.md"
+        proposal = _proposal_path(change)
         links.append({"name": "change", "url": f"{record_web}/blob/{quote(name)}/{proposal}"})
     for other, folder in places.items():
         web = record_web if other == home else _web(folder)
@@ -129,10 +135,11 @@ def _item_lines(change: Change, repo: str | None) -> list[str]:
 
 
 def _link_lines(
-    name: str, places: dict[str, Path | None], here: str | None, links: list[dict[str, str]]
+    change: Change, places: dict[str, Path | None], here: str | None, links: list[dict[str, str]]
 ) -> list[str]:
+    name = change.name
     urls = {link["name"]: link["url"] for link in links}
-    proposal = f"{RECORD_DIR}/{CHANGES}/{name}/proposal.md"
+    proposal = _proposal_path(change)
     home = next(iter(places), None)
     if "change" in urls:
         lines = [f"- The change: [{proposal}]({urls['change']})"]
@@ -152,7 +159,7 @@ def describe(record: Record, name: str, repo: str | None = None) -> dict[str, An
     In an atlas, ``repo`` names the code repo; without it the pull request is
     the atlas's own, which carries the record.
     """
-    change = find_change(record, name)
+    change = find_active_or_archived(record, name)
     proposal = change.proposal
     if proposal is None:
         raise Refusal(f'The change "{name}" has no proposal yet, so there is nothing to describe.')
@@ -165,14 +172,16 @@ def describe(record: Record, name: str, repo: str | None = None) -> dict[str, An
         touched = ", ".join(code_repos) or "none"
         raise Refusal(f'The change "{name}" has no items in the repo "{repo}" (repos: {touched}).')
     here = repo or next(iter(places), None)
-    links = _links(record, name, places, here)
+    links = _links(record, change, places, here)
     body = [proposal.sections.get(WHY, "").strip()]
     body += ["", f"## {WHAT_CHANGES}", "", proposal.sections.get(WHAT_CHANGES, "").strip()]
     body += ["", "## Specs", "", *_spec_lines(change)]
     body += _item_lines(change, repo)
     if repo is None:
-        body += _review_lines(change, state_of(record, change))
-    body += _link_lines(name, places, here, links)
+        body += _review_lines(record, change)
+    if proposal.outcome:
+        body += ["", "## Outcome", "", proposal.outcome.strip()]
+    body += _link_lines(change, places, here, links)
     return {
         "schema": "wm.pr",
         "version": PR_VERSION,

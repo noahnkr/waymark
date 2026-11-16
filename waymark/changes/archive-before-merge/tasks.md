@@ -2,7 +2,7 @@
 
 ## 1. Archive before the pull request
 
-- [ ] 1.1 Describe an archived change with `wm pr`
+- [x] 1.1 Describe an archived change with `wm pr`
   - Criteria: `wm pr <change>` (text and `--json`) describes an active change as before, and otherwise the latest archived change of that name, with the same title, why, what changes, specs, items and review, plus an `## Outcome` section and a link to the proposal in the archived folder; a name that is neither active nor archived is refused with the active changes listed; in an atlas, `--repo` works the same for an archived change
   - Verify: tests in `tests/services/test_ci_and_pr.py` for the scenarios "Archived on its branch" and "Neither active nor archived", and one with two archived changes of the same name
 - [ ] 1.2 Move the archive before the pull request in the guidance
