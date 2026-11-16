@@ -149,6 +149,27 @@ def test_scenario_parked_exploration(workspace: Workspace) -> None:
     assert built["explorations"][0]["status"] == "parked"
 
 
+def test_scenario_missing_status() -> None:
+    [problem] = parse_exploration("paging", document(explore(""), "e.md")).problems
+    assert problem.code == "missing-status"
+    assert '"- Status: open"' in problem.message
+    assert "wm update" not in problem.message
+
+
+def test_scenario_parked_in_the_conclusion_only(workspace: Workspace) -> None:
+    workspace.write("explorations/paging.md", explore("open", "Parked: waits for a second user."))
+    state = derive_state(workspace.record()).explorations["paging"]
+    assert state.status is ExplorationStatus.OPEN
+    built = context_pack(workspace.record(), "explore")
+    assert built["explorations"][0]["status"] == "open"
+    assert codes(explore("open", "Parked:")) == []
+
+
+def test_parked_reason_is_the_conclusion() -> None:
+    parsed = parse_exploration("paging", document(explore("parked", "Waits."), "e.md"))
+    assert parsed.parked == "Waits."
+
+
 def test_scenario_parked_without_a_reason() -> None:
     assert codes(explore("parked")) == ["parked-without-reason"]
 

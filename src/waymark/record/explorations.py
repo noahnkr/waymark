@@ -5,7 +5,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from waymark.record.outline import (
-    OLD_LAYOUT,
     Fact,
     collect_sections,
     parse_facts,
@@ -21,7 +20,6 @@ CONCLUSION = "Conclusion"
 RELATED = "Related"
 REQUIRED_SECTIONS = (CONTEXT, QUESTIONS, APPROACHES, CONCLUSION, RELATED)
 
-_PARKED = re.compile(r"^Parked:\s*(.*)$")
 STATUS = "Status"
 OPEN = "open"
 PARKED = "parked"
@@ -33,7 +31,7 @@ _STATUS = re.compile(r"^(open|parked|led-to)(?:\s+(\S.*))?$")
 class Exploration:
     """A saved exploration.
 
-    ``parked`` is the reason from a ``Parked:`` conclusion. ``conclusion_links``
+    ``parked`` is the reason, the Conclusion's text, when the status is parked. ``conclusion_links``
     are the link targets in the conclusion, in order.
     """
 
@@ -68,9 +66,8 @@ def parse_exploration(name: str, doc: Document) -> Exploration:
         links = tuple(
             link.target for link in doc.links() if section.body_start <= link.index < section.end
         )
-        match = _PARKED.match(conclusion)
         if status == PARKED:
-            parked = match.group(1).strip() if match else conclusion
+            parked = conclusion.strip()
             if not parked:
                 problems.append(
                     Problem(
@@ -78,17 +75,6 @@ def parse_exploration(name: str, doc: Document) -> Exploration:
                         section.start + 1,
                         "parked-without-reason",
                         "A parked exploration says why. Write the reason in the Conclusion.",
-                    )
-                )
-        elif match:
-            parked = match.group(1).strip()
-            if not parked:
-                problems.append(
-                    Problem(
-                        doc.path,
-                        section.start + 1,
-                        "parked-without-reason",
-                        'A parked exploration says why. Write "Parked: <reason>".',
                     )
                 )
     return Exploration(
@@ -114,9 +100,9 @@ def _status(
             Problem(
                 doc.path,
                 1,
-                "old-layout",
-                f'{OLD_LAYOUT} An exploration says where it stands in a "- Status:" line '
-                "under its title.",
+                "missing-status",
+                "An exploration says where it stands in a line under its title: "
+                '"- Status: open", "- Status: parked" or "- Status: led-to <link>".',
             )
         )
         return None, ()

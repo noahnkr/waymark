@@ -215,7 +215,7 @@ def test_exploration_without_a_status_line_is_an_old_layout(project: Workspace) 
         "# P\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
         "## Conclusion\n\nWe should think more.\n\n## Related\n",
     )
-    assert findings(project) == [("error", "explorations/paging.md", "old-layout")]
+    assert findings(project) == [("error", "explorations/paging.md", "missing-status")]
 
 
 def test_change_untouched_for_a_while_is_a_warning(project: Workspace) -> None:
