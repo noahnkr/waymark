@@ -37,6 +37,7 @@
 7. **Template examples** (`record/templates/`, `record/fingerprint.py`).
    - Each of the six templates gains a comment with a short good and bad example of its content, such as an Impact with the three lines next to one that only says "Some code".
    - The fingerprint hashes each part without its comments, so the planner can delete the examples without withdrawing acceptance.
+   - `Verify:` bullets are already read like `Criteria:` bullets (`record/tasks.py` keeps every indented line under an open field), so a nested verification needs no new reader. The tasks template shows one, and the tasks step's guidance in `wm instructions` says `- Verify:` may be a nested list too.
 8. **Assets and docs.** `wm-propose`, `wm-update`, `wm-kickoff` and `wm-archive` show the new layouts and the `--built` and `--differs` options. Concepts, getting started and the changelog are updated; the generated docs are regenerated.
 
 ## Decisions

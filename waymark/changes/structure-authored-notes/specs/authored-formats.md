@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The layouts of what humans and the planner write in the record: the proposal's facts, Impact and Outcome, the charter's glossary, goals, constraints and rule headings, a task item's criteria and build line, a delta's sections, a design's decisions and open questions, an exploration's status, and the examples the templates carry. What `wm` writes is in the `records` spec.
+The layouts of what humans and the planner write in the record: the proposal's facts, Impact and Outcome, the charter's glossary, goals, constraints and rule headings, a task item's criteria, verification and build line, a delta's sections, a design's decisions and open questions, an exploration's status, and the examples the templates carry. What `wm` writes is in the `records` spec.
 
 ## ADDED Requirements
 
@@ -68,7 +68,25 @@ Each template `wm` writes for a proposal, delta, design, task list, charter or e
 - WHEN `wm check` runs
 - THEN it reports no problem in that change
 
+## RENAMED Requirements
+
+- From: Criteria as a nested list
+- To: Criteria and verification as nested lists
+
 ## MODIFIED Requirements
+
+### Requirement: Criteria and verification as nested lists
+A task item's `- Criteria:` and `- Verify:` lines MAY each be followed by a nested list, one criterion or one verification step per bullet, indented under it. The item's criteria SHALL be the `Criteria:` line's own text and every bullet under it, in order, and its verification SHALL be the `Verify:` line's own text and every bullet under it, in order. Both SHALL be part of the definition the human accepts.
+
+#### Scenario: Nested criteria
+- GIVEN an item with `- Criteria:` and, under it, the bullets `fifty at most` and `sorted by score`
+- WHEN the planner runs `wm context <change> <item> --for implement`
+- THEN the item's criteria in the pack list both bullets
+
+#### Scenario: Nested verification
+- GIVEN an item with `- Verify:` and, under it, the bullets `a test for the limit` and `wm check here`
+- WHEN the planner runs `wm context <change> <item> --for implement`
+- THEN the item's verification in the pack lists both bullets
 
 ### Requirement: Exploration status
 An exploration SHALL say where it stands in a `- Status:` line under its title: `open`, `parked`, or `led-to` followed by a link to the change or milestone it led to. The `- Status:` line alone SHALL say whether it is parked. A parked exploration SHALL say why in its Conclusion. `wm check` SHALL report a missing status as `missing-status`, an unknown status, a parked exploration with an empty Conclusion, and a `led-to` link that doesn't resolve.

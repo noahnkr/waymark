@@ -21,6 +21,7 @@ This is the third change on the `record-format-and-skills` milestone.
 - **Outcome:** `wm archive` takes `--built` and `--differs` and writes them as `- Built:` and `- Differs:` lines under `## Outcome`.
 - **Charter:** goals and constraints are numbered lists.
 - **Design:** each decision has a `- Status: proposed|decided` and a `- Decided by: human|planner` line, and the design has an `## Open questions` section. `wm accept` refuses a change while a decision is proposed or an open question is listed.
+- **Task items:** `- Verify:` may be a nested list, one step per bullet, like `- Criteria:`. The reader already keeps such bullets; the requirement, the template and the guidance now say so, and the requirement is renamed "Criteria and verification as nested lists".
 - **Templates:** each template `wm` writes carries a good and a bad example in a comment.
 - **Exploration leftovers from `tidy-authored-notes`:** an exploration without a `- Status:` line gives `missing-status`, as the requirement "Exploration status" says, instead of `old-layout` and its advice to run `wm update`, which can't fix it. The old `Parked:` reader in the Conclusion goes, so only the `- Status:` line says an exploration is parked.
 - **New work only:** active changes, the charter and open explorations are held to the new layouts. Archived changes are read as they were written, and the record format stays 3.
