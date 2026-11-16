@@ -21,6 +21,7 @@ GLOSSARY = (
     "Design",
     "Task item",
     "Acceptance",
+    "Tiny path",
     "Short path",
     "Conflict",
     "Sync",

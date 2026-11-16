@@ -19,8 +19,8 @@ atlas).
 - Agents work only from what is written down; a missing fact is written into the record or becomes a spec gap, not a guess.
 - Every review is recorded with its change, and evidence is written only by `wm`.
 - Anyone can pick up the work from the files and git alone, in any session, on any machine.
-- The human approves each change twice: at accept and at archive.
-- Small changes stay light (the short path); big ones get a design, and risky ones an independent review.
+- The human approves each change twice: at accept and at archive. Tiny work, which changes no requirement, is approved with a yes in the session and at the merge.
+- Work takes the path its size needs: tiny work (no requirement changes) needs no change, small changes take the short path, big ones get a design, and risky ones an independent review.
 - Waymark is developed with Waymark: this record is the source of truth for its own work.
 
 ## Non-goals
@@ -67,6 +67,8 @@ Smoke test: the manual run of one change through Claude Code before each release
 - A change that alters what users see (commands, output, files written, the record format) says so under Impact, for the changelog.
 
 ### specs
+
+- Requirements describe what `wm` does as a user or an agent sees it: its commands, their output, and the record's files and formats. Modules, functions and other internals go in the design.
 
 ### design
 

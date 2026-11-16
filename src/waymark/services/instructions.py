@@ -123,6 +123,8 @@ def _drafting(
             "a removed one gives a reason; a rename is a removal plus an addition.",
             "A delta that creates a spec needs a Purpose section.",
             "Every requirement states what the system SHALL do and has at least one scenario.",
+            "Requirements describe what the system does, as a user or another program sees it. "
+            "Files the user doesn't touch, internals and mechanisms go in the design.",
         ]
         return (
             outputs,

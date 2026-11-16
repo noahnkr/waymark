@@ -181,3 +181,31 @@ def test_not_archived_warning_says_to_archive_before_the_pull_request(project: W
     assert "on its branch" in finding.message
     assert "before its pull request" in finding.message
     assert "merged" not in finding.message
+
+
+def test_nothing_recorded(project: Workspace) -> None:
+    source = project.root / "src" / "search.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("LIMIT = 50  # the most results a search returns\n", encoding="utf-8")
+    commit_all(project, "2026-01-15T12:00:00")
+    before = snapshot(project)
+    source.write_text("LIMIT = 50  # the most results a search returns.\n", encoding="utf-8")
+    commit_all(project, "2026-01-16T12:00:00")
+    assert snapshot(project) == before
+    assert check(project.root, NOW) == ()
+    assert status_changes(project) == []
+
+
+def snapshot(project: Workspace) -> dict[str, bytes]:
+    root = project.path("")
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
+
+
+def status_changes(project: Workspace) -> list[object]:
+    from waymark.views import payloads  # noqa: PLC0415 - only this test needs it
+
+    return list(payloads.status(project.record())["changes"])

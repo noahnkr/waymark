@@ -77,8 +77,8 @@ Claude Code runs `wm hook claude-code <Event>` with its JSON on standard input.
    `RESULT:` lines, or a reviewer's `FINDING:`, `CHANGE:` and `VERDICT:` lines,
    and writes the tick, blocker, spec gap, note or review record through the
    same lifecycle service the commands use. In an atlas, it lets the
-   planner and implementers edit a code repo only while an accepted change's
-   item being built names it (`editable_repos`). An agent's ending is
+   planner edit any code repo, and an implementer only the repo an accepted
+   change's item being built names (`editable_repos`). An agent's ending is
    recorded once: a per-agent marker in the clone's git folder
    (`record/agents.py`) lets the stop after a recorded handback through without
    asking for the ending again.

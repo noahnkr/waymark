@@ -7,7 +7,7 @@ How `wm` keeps a project's commit messages conventional: the format it accepts, 
 ## Requirements
 
 ### Requirement: Commit messages checked in agent commands
-In an agent tool with hooks, a shell command that runs `git commit` with a message that isn't a conventional commit SHALL be refused before it runs, with the reason and an example. The check SHALL accept the commit types `wm` knows and, when the settings list commit scopes, only those scopes. It SHALL read the message from `-m` or `--message`, including a message built with a here-document, and from `-F` or `--file` when the file exists. A commit whose message it can't read, such as one written in an editor, SHALL be allowed.
+In an agent tool with hooks, a `git commit` whose message isn't a conventional commit SHALL be refused before it runs, with the reason and an example. The check SHALL accept the commit types `wm` knows and, when the settings list commit scopes, only those scopes. It SHALL check a message given on the command line, however it is written there, and a message read from a file the command names. A commit whose message can't be seen before it runs, such as one written in an editor, SHALL be allowed.
 
 #### Scenario: Not conventional
 - GIVEN a project in an agent tool with hooks
@@ -26,10 +26,10 @@ In an agent tool with hooks, a shell command that runs `git commit` with a messa
 
 #### Scenario: Message from a here-document
 - GIVEN a project in an agent tool with hooks
-- WHEN the planner runs `git commit` with `-m` and a here-document whose first line is `wip`
+- WHEN the planner runs `git commit` with a message built from a here-document whose first line is `wip`
 - THEN the command is refused
 
 #### Scenario: Message written in an editor
 - GIVEN a project in an agent tool with hooks
-- WHEN the planner runs `git commit` with no message option
+- WHEN the planner runs `git commit` with no message on the command line or in a file
 - THEN the command is allowed

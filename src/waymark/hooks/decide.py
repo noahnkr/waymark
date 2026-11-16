@@ -137,11 +137,12 @@ def _new_text(files: RecordFiles, relative: str, event: Event) -> tuple[str, str
 
 
 def editable_repos(record: Record) -> dict[str, list[str]]:
-    """The code repos that may be edited now, each with the items that name it.
+    """The code repos an implementer may edit now, each with the items that name it.
 
-    The hook can't see which item an edit belongs to, so the record answers: in
-    each accepted change, the next item to apply is the one being built, and its
-    repo is the one the planner or an implementer may edit.
+    The hook can't see which item an implementer was started on, so the record
+    answers: in each accepted change, the next item to apply is the one being
+    built, and its repo is the one an implementer may edit. The planner may edit
+    any code repo.
     """
     repos: dict[str, list[str]] = {}
     for name, state in sorted(derive_state(record).changes.items()):
@@ -168,7 +169,13 @@ def _places(record: Record, allowed: dict[str, list[str]]) -> str:
 
 
 def _outside_record(project: Project, event: Event) -> Decision:
-    """Edit limits across an atlas's code repos; elsewhere every role but the reviewer may edit."""
+    """An implementer's edit limit across an atlas's code repos.
+
+    The planner, working from the atlas, may edit any code repo; elsewhere every
+    role but the reviewer may edit.
+    """
+    if event.role is Role.PLANNER:
+        return ALLOW
     record = load_record(project)
     if event.path is None or record.layout is not Layout.ATLAS:
         return ALLOW
@@ -180,24 +187,13 @@ def _outside_record(project: Project, event: Event) -> Decision:
         ),
         None,
     )
-    planner = event.role is Role.PLANNER
-    if planner and inside is None:
-        return ALLOW
     allowed = editable_repos(record)
     if inside is not None and inside in allowed:
         return ALLOW
-    who = "the planner" if planner else "an implementer"
     if not allowed:
         return _refuse(
             "No accepted change has an item to apply right now, so there is no code repo "
-            f"{who} may edit. Check the item with wm show <change>."
-        )
-    if planner:
-        return _refuse(
-            f'This file is in the code repo "{inside}", and the planner edits a code repo only '
-            f"while an accepted change's item being built names it. The repos it may edit now: "
-            f"{_places(record, allowed)}. If the item needs changes elsewhere, revise the "
-            "change first."
+            "an implementer may edit. Check the item with wm show <change>."
         )
     return _refuse(
         "An implementer edits only inside the code repo its item names: "

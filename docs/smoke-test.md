@@ -103,6 +103,15 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       Outcome, and links to the proposal in the archived folder.
 - [ ] `wm check` passes, and `wm status` shows the change as recently archived.
 
+## The tiny path
+
+- [ ] Ask for a typo fix in the scratch code with `/wm-fix`. The planner says
+      why it changes no requirement and waits for your yes. It creates no change
+      folder, commits with a conventional message, and offers a pull request.
+      `wm status` shows no change in flight.
+- [ ] Ask `/wm-fix` for something that changes a requirement. It says the work
+      isn't tiny and hands over to `/wm-propose`.
+
 ## Atlas (when the release touches multi-repo)
 
 - [ ] Make a scratch atlas and two code repos beside it. Run `wm init --atlas`,
