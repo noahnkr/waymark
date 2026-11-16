@@ -1,6 +1,6 @@
 # Keep agent setup local
 
-Owner: Noah Roberts
+- Owner: Noah Roberts
 
 ## Why
 

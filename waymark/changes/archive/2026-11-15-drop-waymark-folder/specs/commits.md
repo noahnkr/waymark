@@ -4,7 +4,7 @@
 
 How `wm` keeps a project's commit messages conventional: the format it accepts, and where the check runs.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Commit messages checked in agent commands
 In an agent tool with hooks, a shell command that runs `git commit` with a message that isn't a conventional commit SHALL be refused before it runs, with the reason and an example. The check SHALL accept the commit types `wm` knows and, when the settings list commit scopes, only those scopes. It SHALL read the message from `-m` or `--message`, including a message built with a here-document, and from `-F` or `--file` when the file exists. A commit whose message it can't read, such as one written in an editor, SHALL be allowed.

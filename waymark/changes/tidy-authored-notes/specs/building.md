@@ -1,6 +1,6 @@
 # Building
 
-## Modified requirements
+## MODIFIED Requirements
 
 ### Requirement: Delegation tag
 A task item MAY carry the line `- Build: delegate` under it. When the next step applies an item with that line, `wm instructions` SHALL tell the planner to start an implementer with the change and item and nothing else. `wm check` SHALL report any other value of `Build:` as an error, and a build tag at the end of an item's title as an old layout that names `wm update`.

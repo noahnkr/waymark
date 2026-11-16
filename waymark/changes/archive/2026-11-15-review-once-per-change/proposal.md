@@ -1,7 +1,7 @@
 # Review once per change
 
-Owner: Noah Roberts
-Review: independent
+- Owner: Noah Roberts
+- Review: independent
 
 ## Why
 

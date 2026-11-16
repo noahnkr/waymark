@@ -4,7 +4,7 @@
 
 The routes work takes, sized by what it changes in the specs. Tiny work changes no requirement and needs no change. The short path is a change with no design. The full path is a change with a design.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Tiny path
 Work that adds, changes or removes no requirement MAY be done without a change, once the human agrees in the session. Outside any change, the planner SHALL be able to edit and commit code and docs, and SHALL NOT be able to edit a spec by hand. Tiny work SHALL leave nothing in the record.

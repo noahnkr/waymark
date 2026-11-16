@@ -1,8 +1,8 @@
 # Archive before merge
 
-Owner: Noah Roberts
-Path: short
-Review: self
+- Owner: Noah Roberts
+- Path: short
+- Review: self
 
 ## Why
 

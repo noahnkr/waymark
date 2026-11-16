@@ -1,6 +1,6 @@
 # Let planner build
 
-Owner: Noah Roberts
+- Owner: Noah Roberts
 
 ## Why
 

@@ -4,7 +4,7 @@
 
 How a change is checked before it is archived: one review of the whole change at the change's review level, how it is recorded with its findings, what a request for changes reopens, and what goes to the human.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Review level per change
 A change's review level SHALL be the value of the `Review:` line in its proposal (`self`, `independent` or `none`), or the project's `default_review` when the line is absent. On the short path it SHALL be `self` or `none`. `wm check` SHALL report an unknown value, or `independent` on the short path, as an error. It SHALL warn when the change's deltas modify or remove a requirement and the level isn't `independent`.

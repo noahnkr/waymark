@@ -4,7 +4,7 @@
 
 When a change is archived, and how its pull request is described once it is. The archive goes on the change's own branch, before the pull request, so the code, the merged specs and the archived change are reviewed and merged together.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Archive before the pull request
 When every item of a change is built and the change is reviewed, `wm instructions` SHALL make the next step the archive, and SHALL say that it is taken on the change's branch before the pull request is opened, when the human decides. It SHALL NOT say that the archive waits for a merge.

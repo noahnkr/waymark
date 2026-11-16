@@ -4,7 +4,7 @@
 
 The layouts of what humans and the planner write in the record: the proposal's facts, the charter's glossary and rule headings, a task item's criteria and build line, a delta's sections, and an exploration's status. What `wm` writes is in the `records` spec.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Proposal facts as a list
 A proposal's facts SHALL be bullet lines between its title and its first section: `- Owner: <name>`, and optionally `- Review: <level>` and `- Path: short`. `wm new change` SHALL write them so. `wm check` SHALL report a fact written without the bullet as an old layout, naming `wm update`.

@@ -4,7 +4,7 @@
 
 How `wm` records the result of an implementer or reviewer from the agent's own words: its ending, the lines `ITEM: <change> <item>` then `RESULT: …` or `VERDICT: …`, whether the agent ends with a final message or hands its report back through its tool.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Ending recorded from a final message
 When an implementer or reviewer stops and its final message ends with its two ending lines, `wm` SHALL record what they report: a tick, a blocker, a spec gap, a note or a review record.

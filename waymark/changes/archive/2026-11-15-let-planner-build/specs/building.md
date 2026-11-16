@@ -4,7 +4,7 @@
 
 Who builds a task item of an accepted change. By default the planner builds it, working with the human in the session. An item tagged for delegation is built by a fresh implementer instead, from the record alone.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Planner builds by default
 When the next step of an accepted change is to apply an item that isn't tagged for delegation, `wm instructions` SHALL tell the planner to build the item itself from the item's context pack. It SHALL also tell the planner to run the checks the item touches, and to record the result with `wm tick`, `wm block` or `wm gap`.
