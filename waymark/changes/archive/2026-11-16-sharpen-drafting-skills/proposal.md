@@ -31,3 +31,8 @@ This is the sixth change on the `record-format-and-skills` milestone. The review
   - `wm instructions` for the specs and tasks steps gives writing and sizing rules.
 - Code: `services/instructions.py`; the layout test in `tests/`
 - Assets and docs: all nine skills; concepts and the changelog.
+
+## Outcome
+
+- Built: All nine skills share one layout (Role, Inputs, Steps, their own sections, Quality bar, Show the human, When to stop, Rules), held by a test; wm-propose gains a Questions step, a Consistency check and a fixed acceptance summary; wm-kickoff has an ordered interview and wm-explore a fuller method; wm instructions gives the specs and tasks steps the writing and sizing rules.
+- Differs: The reviewer's severity rubric and the implementer's stopping rules moved to sharpen-agent-guidance, as the human chose.
