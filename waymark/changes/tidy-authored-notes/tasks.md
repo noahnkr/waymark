@@ -5,7 +5,7 @@
 - [x] 1.1 Read proposal facts and exploration status as bullets, and check the glossary
   - Criteria: `parse_facts` reads `- Key: value` lines as well as bare ones; `wm new change` writes `- Owner:` and `- Path: short`; an exploration's `- Status:` line gives its state (`open`, `parked`, `led-to <link>`) when present, with `missing-status`, `unknown-status` and `parked-without-reason` reported for a status line that is wrong; a glossary line that is neither `- **<term>**: <meaning>` nor the old `<term>: <meaning>` gives `glossary-format`
   - Verify: tests in `tests/record/` and `tests/services/test_setup.py` for the scenarios "New change", "Parked exploration" and "Parked without a reason"
-- [ ] 1.2 Read the `Build:` line and criteria as a nested list
+- [x] 1.2 Read the `Build:` line and criteria as a nested list
   - Criteria: `- Build: delegate` under an item sets `Item.delegate`, and another value gives `unknown-build-tag` naming `delegate`; the trailing tag is still read; bullets under `- Criteria:` are kept as `- <text>` lines in `Item.criteria`, which the fingerprint covers; adding, removing or changing `Build:` withdraws acceptance
   - Verify: tests in `tests/record/test_tasks.py`, `tests/record/test_fingerprint.py` and `tests/services/test_agent_interface.py` for the scenarios "Tagged item", "Unknown build value", "Tag added after acceptance" and "Nested criteria"
 - [ ] 1.3 Read the new delta sections and rename requirements

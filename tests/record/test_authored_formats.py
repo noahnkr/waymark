@@ -4,9 +4,11 @@ from tests.support import CHARTER, Workspace, document, proposal
 from waymark.record.charter import parse_charter
 from waymark.record.explorations import parse_exploration
 from waymark.record.proposal import parse_proposal
-from waymark.record.state import ExplorationStatus, derive_state
+from waymark.record.state import AcceptanceState, ExplorationStatus, derive_state
+from waymark.record.tasks import parse_tasks
 from waymark.services import setup
 from waymark.services.context import context_pack
+from waymark.services.instructions import instructions
 
 EXPLORATION = (
     "# Paging\n\n{status}"
@@ -90,3 +92,52 @@ def test_led_to_status_points_at_its_change(workspace: Workspace) -> None:
     )
     state = derive_state(workspace.record()).explorations["paging"]
     assert (state.status, state.detail) == (ExplorationStatus.LED_TO, "change add-limit")
+
+
+BUILT = (
+    "# Tasks\n\n## 1. Limit\n\n"
+    "- [ ] 1.1 Cap it\n"
+    "  - Criteria:\n"
+    "    - fifty at most\n"
+    "    - sorted by score\n"
+    "  - Verify: a test\n"
+    "- [ ] 1.2 Rebuild the index\n"
+    "  - Criteria: rebuilt\n"
+    "  - Build: delegate\n"
+)
+
+
+def test_scenario_nested_criteria(workspace: Workspace) -> None:
+    workspace.change(tasks=BUILT)
+    workspace.accept()
+    item = context_pack(workspace.record(), "implement", "add-limit", "1.1")["item"]
+    assert item["criteria"] == "- fifty at most\n- sorted by score"
+
+
+def test_scenario_tagged_item(workspace: Workspace) -> None:
+    workspace.change(tasks=BUILT)
+    workspace.accept()
+    workspace.replace("changes/add-limit/tasks.md", "- [ ] 1.1", "- [x] 1.1")
+    guide = instructions(workspace.record(), "apply", "add-limit")
+    assert guide["item"] == "1.2"
+    assert any("implementer" in line for line in guide["guidance"])
+
+
+def test_scenario_unknown_build_value() -> None:
+    tasks = parse_tasks(document(BUILT.replace("Build: delegate", "Build: someone"), "t.md"))
+    [problem] = tasks.problems
+    assert problem.code == "unknown-build-tag"
+    assert "delegate" in problem.message
+    assert not tasks.items[1].delegate
+
+
+def test_scenario_tag_added_after_acceptance(workspace: Workspace) -> None:
+    workspace.change(tasks=BUILT.replace("  - Build: delegate\n", ""))
+    workspace.accept()
+    assert workspace.change_state().acceptance is AcceptanceState.VALID
+    workspace.replace(
+        "changes/add-limit/tasks.md",
+        "  - Criteria: rebuilt\n",
+        "  - Criteria: rebuilt\n  - Build: delegate\n",
+    )
+    assert workspace.change_state().acceptance is AcceptanceState.WITHDRAWN

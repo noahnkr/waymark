@@ -25,7 +25,8 @@ _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
 _TAG = re.compile(r"\s+`(review|build):\s*([A-Za-z-]+)`$")
 _LIST_LINE = re.compile(r"^(?:[-*+]|\d+[.)])(?:\s|$)")
 _FIELD = re.compile(r"^  [-*] (\S.*)$")
-_LABELED = re.compile(r"^(Criteria|Verify|Repo):(?:\s+(.*))?$")
+_LABELED = re.compile(r"^(Criteria|Verify|Repo|Build):(?:\s+(.*))?$")
+BUILD = "Build"
 _OLD_LABELED = re.compile(r"^(Blocked|Spec gap|Note):")
 _RECORD_LINE = re.compile(r"^[-*] (\(.*)$")
 _OLD_SECTION = "Review"
@@ -235,6 +236,21 @@ class _Parser:
                 index, "duplicate-field", f'"{label}:" appears twice under this item. Keep one.'
             )
             return
+        if label == BUILD:
+            if draft.delegate:
+                self.problem(
+                    index, "repeated-tag", 'The item says "build" twice. Keep the "Build:" line.'
+                )
+            elif value == DELEGATE:
+                draft.delegate = True
+            else:
+                self.problem(
+                    index,
+                    "unknown-build-tag",
+                    f'"{value}" is not a build value. The only value is: {DELEGATE}.',
+                )
+            draft.fields[label] = [value]
+            return
         draft.fields[label] = [value]
         draft.open_text = draft.fields[label]
 
@@ -254,8 +270,8 @@ class _Parser:
             self.problem(
                 index,
                 "unrecognized-item-line",
-                'A line under an item starts with "Criteria:", "Verify:" or "Repo:", or is '
-                'a record that wm writes. Label this line, or write a note with "wm note".',
+                'A line under an item starts with "Criteria:", "Verify:", "Repo:" or "Build:", '
+                'or is a record that wm writes. Label this line, or write a note with "wm note".',
             )
 
     def tags(self, index: int, title: str) -> tuple[str, bool]:
