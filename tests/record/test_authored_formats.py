@@ -112,6 +112,46 @@ def test_numbered_goals_and_constraints() -> None:
     assert charter_problems(commented) == []
 
 
+def test_scenario_item_without_verification(workspace: Workspace) -> None:
+    tasks = BUILT.replace("  - Verify: the index answers\n", "")
+    workspace.change(tasks=tasks)
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert (problem.code, problem.line) == (
+        "item-incomplete",
+        tasks.split("\n").index("- [ ] 1.2 Rebuild the index") + 1,
+    )
+    assert '"- Verify:"' in problem.message
+    assert '"- Criteria:"' not in problem.message
+
+
+def test_scenario_one_option(workspace: Workspace) -> None:
+    workspace.change(design=DESIGN.replace("in the query, or after sorting", "cut after sorting"))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert problem.code == "decision-options"
+    assert "at least two options" in problem.message
+
+
+def test_scenario_options_as_a_list(workspace: Workspace) -> None:
+    listed = DESIGN.replace(
+        "- Options: in the query, or after sorting",
+        "- Options:\n  - cut in the query\n  - cut after sorting",
+    )
+    workspace.change(design=listed)
+    assert workspace.record().changes["add-limit"].problems == ()
+    design = parse_design(document(listed, "changes/add-limit/design.md"))
+    assert design.decisions[0].options == ("cut in the query", "cut after sorting")
+    inline = parse_design(document(DESIGN, "changes/add-limit/design.md"))
+    assert inline.decisions[0].options == ("in the query", "after sorting")
+
+
+def test_archived_changes_are_not_held_to_items_and_options(workspace: Workspace) -> None:
+    folder = "changes/archive/2026-01-20-add-limit"
+    workspace.write(f"{folder}/proposal.md", proposal(outcome="- Built: x\n- Differs: none"))
+    workspace.write(f"{folder}/design.md", DESIGN.replace("in the query, or after sorting", "one"))
+    workspace.write(f"{folder}/tasks.md", "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n")
+    assert workspace.record().problems == ()
+
+
 def test_settled_decisions_are_checked(workspace: Workspace) -> None:
     """Requirement "Settled decisions": the two lines and the section are required."""
     workspace.change(design=DESIGN.replace("- Decided by: planner\n", "- Decided by: Sam\n"))
@@ -196,6 +236,7 @@ BUILT = (
     "  - Verify: a test\n"
     "- [ ] 1.2 Rebuild the index\n"
     "  - Criteria: rebuilt\n"
+    "  - Verify: the index answers\n"
     "  - Build: delegate\n"
 )
 

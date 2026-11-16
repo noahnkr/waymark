@@ -13,6 +13,7 @@ from waymark import __version__
 from waymark.record.terms import Verdict
 from waymark.services import lifecycle
 from waymark.services.common import Refusal
+from waymark.services.instructions import instructions
 from waymark.views import payloads, render
 from waymark.views.payloads import VERSIONS
 from waymark.views.schemas import SCHEMAS
@@ -47,10 +48,15 @@ def busy(project: Workspace) -> Workspace:
         "add-order",
         deltas={"search": delta(added=(requirement("Result order"),))},
         tasks=HEAD
-        + "- [ ] 1.1 Sort it\n  - Criteria: newest first\n"
-        + "- [ ] 1.2 Explain it\n  - Criteria: documented\n"
-        + "- [ ] 1.3 Announce it\n  - Criteria: posted\n"
-        + "- [ ] 1.4 Translate it\n  - Build: delegate\n  - Criteria: two languages\n",
+        + "- [ ] 1.1 Sort it\n  - Verify: a test\n  - Criteria: newest first\n"
+        + "- [ ] 1.2 Explain it\n  - Verify: a test\n  - Criteria: documented\n"
+        + "- [ ] 1.3 Announce it\n  - Verify: a test\n  - Criteria: posted\n"
+        + (
+            "- [ ] 1.4 Translate it\n"
+            "  - Verify: a test\n"
+            "  - Build: delegate\n"
+            "  - Criteria: two languages\n"
+        ),
     )
     lifecycle.accept(project.root, "add-order", DAY)
     lifecycle.tick(project.root, "add-order", "1.1")
@@ -62,7 +68,7 @@ def busy(project: Workspace) -> Workspace:
             "Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n"
         ),
         deltas={"search": delta(modified=(requirement(scenario="Edge"),))},
-        tasks=HEAD + "- [ ] 1.1 Fix it\n",
+        tasks=HEAD + "- [ ] 1.1 Fix it\n  - Criteria: done\n  - Verify: a test\n",
     )
     lifecycle.accept(project.root, "fix-limit", DAY)
     lifecycle.tick(project.root, "fix-limit", "1.1")
@@ -207,7 +213,9 @@ def test_inbox_lists_everything_only_the_human_can_resolve(project: Workspace) -
 
 
 def test_inbox_lists_a_verdict_that_came_back_to_the_human(project: Workspace) -> None:
-    project.change(tasks=HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n")
+    project.change(
+        tasks=HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n"
+    )
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
     lifecycle.verdict(project.root, "add-limit", Verdict.CHANGES, "one", DAY, items=["1.1"])
@@ -222,7 +230,9 @@ def test_inbox_lists_a_verdict_that_came_back_to_the_human(project: Workspace) -
 
 
 def test_inbox_lists_a_reviewers_spec_gap(project: Workspace) -> None:
-    project.change(tasks=HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n")
+    project.change(
+        tasks=HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n"
+    )
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
     lifecycle.verdict(project.root, "add-limit", Verdict.SPEC_GAP, "ties?", DAY)
@@ -444,7 +454,9 @@ def test_views_answer_in_about_a_second_on_a_large_record(workspace: Workspace) 
         folder = f"changes/archive/2025-{index % 12 + 1:02d}-15-add-{name}"
         workspace.write(f"{folder}/proposal.md", proposal(outcome="Done."))
         workspace.write(f"{folder}/specs/area-{name}.md", delta(added=(requirement(),)))
-        workspace.write(f"{folder}/tasks.md", HEAD + "- [x] 1.1 Do it\n")
+        workspace.write(
+            f"{folder}/tasks.md", HEAD + "- [x] 1.1 Do it\n  - Criteria: done\n  - Verify: a test\n"
+        )
         if index < 20:
             workspace.change(
                 f"fix-{name}",
@@ -461,3 +473,12 @@ def test_views_answer_in_about_a_second_on_a_large_record(workspace: Workspace) 
     assert len(status["changes"]) == 20
     assert len(record.archived_changes) == 300
     assert min(timings) < 1.5, f"status took {min(timings):.2f}s on a large record"
+
+
+def test_instructions_text_shows_shared_rules_guidance_then_checklist(project: Workspace) -> None:
+    """Requirement "Checklist per drafting step": the text output's order and marks."""
+    project.change(deltas={}, design=None, tasks=None)
+    text = render.instructions(instructions(project.record(), None, "add-limit"), PLAIN)
+    assert text.index("Shared rules") < text.index("What to do") < text.index("Checklist")
+    assert "  wm  Every requirement says SHALL." in text
+    assert "  [ ] Each THEN can be checked by someone who didn't write it." in text

@@ -5,6 +5,17 @@ the record's format says whether `wm update` migrates an older record.
 
 ## [Unreleased]
 
+- **`wm instructions` gives each drafting step a checklist** (propose, specs,
+  design, tasks): what must hold before moving on, each check marked when
+  `wm check` enforces it. The JSON gains `checklist`, a list of `text` and
+  `enforced`.
+- **`wm instructions` gives every step the shared rules** that every skill
+  follows, as "Shared rules" and, in the JSON, `shared_rules`. The skills no
+  longer repeat them.
+- **Behavior change: two new checks for active changes.** A task item needs a
+  `- Criteria:` and a `- Verify:` line (`item-incomplete`), and a design
+  decision needs at least two options under `- Options:` (`decision-options`),
+  as bullets or on the line joined by "or" or ";".
 - **Behavior change: a milestone is one `milestone.md`,** with `## Goal`,
   `## Done when`, `## Non-goals` and `## Roadmap` in that order, instead of
   `goal.md` and `roadmap.md`. `wm new milestone` writes it, only the list lines

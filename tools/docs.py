@@ -261,6 +261,7 @@ TASKS = """# Tasks
   - Verify: a test searches an index with fifty-one matches
 - [ ] 1.2 Name the limit in the help text
   - Criteria: the search help says fifty
+  - Verify: read `wm search --help`
 """
 
 REVIEWER_REASONS = "cap and order hold; the scenario is covered by the test"

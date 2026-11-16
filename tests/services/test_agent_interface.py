@@ -2,10 +2,12 @@
 
 import datetime
 import json
+from pathlib import Path
 from typing import Any
 
 import pytest
 
+import waymark
 from tests.support import (
     ATLAS_CONFIG,
     CHARTER,
@@ -20,13 +22,14 @@ from tests.support import (
 from tests.views.validator import errors
 from waymark.record.deltas import parse_delta
 from waymark.record.design import parse_design
+from waymark.record.state import StepKind
 from waymark.record.tasks import parse_tasks
 from waymark.record.terms import Verdict
 from waymark.record.text import Document
 from waymark.services import lifecycle
 from waymark.services.common import Refusal
 from waymark.services.context import RESULT_LINE, VERDICT_LINE, context_pack, delegation_problems
-from waymark.services.instructions import instructions
+from waymark.services.instructions import CHECKLISTS, SHARED_RULES, instructions
 from waymark.views import render
 from waymark.views.schemas import SCHEMAS
 from waymark.views.style import Style
@@ -159,6 +162,51 @@ def test_instructions_warn_that_editing_an_accepted_change_withdraws_acceptance(
     assert "withdraws its acceptance" in earlier["reason"]
 
 
+def test_scenario_specs_checklist(project: Workspace) -> None:
+    project.change(deltas={}, design=None, tasks=None)
+    checklist = valid(at(project))["checklist"]
+    assert at(project)["step"] == "specs"
+    assert {"text": "Every requirement says SHALL.", "enforced": True} in checklist
+    assert {
+        "text": "Each THEN can be checked by someone who didn't write it.",
+        "enforced": False,
+    } in checklist
+
+
+def test_scenario_apply_has_no_checklist(project: Workspace) -> None:
+    accepted(project)
+    payload = valid(at(project))
+    assert payload["step"] == "apply"
+    assert payload["checklist"] == []
+
+
+def test_scenario_shared_rules_at_every_step(project: Workspace) -> None:
+    project.change("add-order", design=None, tasks=None)
+    project.change(design=None, tasks=None)
+    proposing = at(project, "propose")
+    archiving = valid(instructions(project.record(), "archive", "add-order"))
+    assert proposing["shared_rules"] == archiving["shared_rules"] == list(SHARED_RULES)
+    assert any("Only the human accepts a change" in rule for rule in archiving["shared_rules"])
+    explore = valid(instructions(project.record(), "explore", None))
+    assert explore["shared_rules"] == list(SHARED_RULES)
+    assert explore["checklist"] == []
+
+
+def test_every_drafting_step_has_a_checklist_and_its_codes_exist() -> None:
+    """Requirement "Checklist per drafting step": an enforced check names real codes."""
+    source = "".join(
+        path.read_text(encoding="utf-8")
+        for path in Path(waymark.__file__).parent.joinpath("record").glob("*.py")
+    )
+    assert set(CHECKLISTS) == {StepKind.PROPOSE, StepKind.SPECS, StepKind.DESIGN, StepKind.TASKS}
+    for checks in CHECKLISTS.values():
+        assert any(check.enforced_by for check in checks)
+        assert any(not check.enforced_by for check in checks)
+        for check in checks:
+            for code in check.enforced_by:
+                assert f'"{code}"' in source, code
+
+
 def test_instructions_carry_only_the_rules_of_their_step(project: Workspace) -> None:
     project.write("charter.md", RULES)
     accepted(project)
@@ -207,7 +255,7 @@ def test_review_instructions_follow_the_changes_review_level(project: Workspace)
         proposal_text=proposal().replace(
             "Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n"
         ),
-        tasks=HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n",
+        tasks=HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n",
     )
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
@@ -224,7 +272,7 @@ def mentions_an_implementer(step: dict[str, Any]) -> bool:
 
 
 def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"] == [
@@ -239,7 +287,10 @@ def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Wor
 
 
 def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Build: delegate\n  - Criteria: fifty\n")
+    accepted(
+        project,
+        HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Build: delegate\n  - Criteria: fifty\n",
+    )
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"] == [f"wm context {NAME} 1.1 --for implement"]
@@ -252,7 +303,7 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
 def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     project: Workspace, tag: str
 ) -> None:
-    accepted(project, HEAD + f"- [ ] 1.1 Cap it{tag}\n  - Criteria: fifty\n")
+    accepted(project, HEAD + f"- [ ] 1.1 Cap it{tag}\n  - Verify: a test\n  - Criteria: fifty\n")
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     step = at(project)
@@ -263,7 +314,7 @@ def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
 
 
 def test_instructions_for_items_waiting_on_the_human_point_to_resolve(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
     lifecycle.block(project.root, NAME, "1.1", "waiting")
     step = at(project)
     assert (step["step"], step["item"]) == ("resolve-items", "1.1")
@@ -333,7 +384,7 @@ def test_reviewer_pack_holds_the_whole_change_but_not_how_it_was_built(
 
 
 def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(
         project.root,
@@ -365,7 +416,7 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
 def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
     project: Workspace,
 ) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
     lifecycle.add_note(project.root, NAME, "1.1", "half done", DAY)
     lifecycle.block(project.root, NAME, "1.1", "which bound?")
     lifecycle.resolve(project.root, NAME, "1.1", "use an inclusive bound", DAY)
@@ -398,7 +449,8 @@ def test_context_pack_for_an_unaccepted_change_is_refused(project: Workspace) ->
 
 def test_context_pack_for_an_item_without_criteria_is_refused(project: Workspace) -> None:
     accepted(project)
-    assert "Item 1.2 has no criteria" in refused(project, "implement", "1.2")
+    project.replace(f"{FOLDER}/tasks.md", "  - Criteria: the help text names the limit\n", "")
+    assert 'acceptance of "add-limit" was withdrawn' in refused(project, "implement", "1.2")
 
 
 def test_context_pack_is_refused_when_a_link_in_the_change_is_broken(project: Workspace) -> None:
@@ -436,7 +488,18 @@ def test_context_pack_names_exactly_one_change_and_item(project: Workspace) -> N
 def test_implementer_pack_is_refused_for_an_item_that_is_done_or_waiting(
     project: Workspace,
 ) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 A\n  - Criteria: a\n- [ ] 1.2 B\n  - Criteria: b\n")
+    accepted(
+        project,
+        HEAD
+        + (
+            "- [ ] 1.1 A\n"
+            "  - Verify: a test\n"
+            "  - Criteria: a\n"
+            "- [ ] 1.2 B\n"
+            "  - Verify: a test\n"
+            "  - Criteria: b\n"
+        ),
+    )
     lifecycle.block(project.root, NAME, "1.1", "waiting for wording")
     assert "waits on the human" in refused(project, "implement")
     lifecycle.tick(project.root, NAME, "1.2")
@@ -479,7 +542,10 @@ def test_pack_in_an_atlas_resolves_the_items_repo_to_its_folder_in_text_only(
     atlas = Workspace(tmp_path / "atlas", ATLAS_CONFIG)
     git_init(atlas.root)
     git_init(tmp_path / "suite-api")
-    atlas.change(tasks=HEAD + "- [ ] 1.1 Add the endpoint\n  - Criteria: fifty\n  - Repo: api\n")
+    atlas.change(
+        tasks=HEAD
+        + "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty\n  - Repo: api\n"
+    )
     lifecycle.accept(atlas.root, NAME, DAY)
     built = valid(context_pack(atlas.record(), "implement", NAME, "1.1"))
     assert built["item"]["repo"] == "api"
@@ -497,7 +563,10 @@ def test_delegation_gate_refuses_an_item_whose_repo_is_not_on_this_machine(
 
     atlas = Workspace(tmp_path / "atlas", ATLAS_CONFIG)
     git_init(atlas.root)
-    atlas.change(tasks=HEAD + "- [ ] 1.1 Add the endpoint\n  - Criteria: fifty\n  - Repo: api\n")
+    atlas.change(
+        tasks=HEAD
+        + "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty\n  - Repo: api\n"
+    )
     lifecycle.accept(atlas.root, NAME, DAY)
     with pytest.raises(Refusal, match=r'works in a repo that isn.t here.*"api"'):
         context_pack(atlas.record(), "implement", NAME, "1.1")
@@ -548,7 +617,7 @@ def test_context_packs_are_the_same_on_every_machine(project: Workspace) -> None
 def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
     project: Workspace,
 ) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n")
+    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(project.root, NAME, Verdict.SPEC_GAP, "no scenario for zero", DAY)
     step = at(project)

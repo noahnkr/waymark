@@ -32,7 +32,7 @@ DAY = datetime.date(2026, 1, 15)
 LATER = datetime.date(2026, 2, 1)
 ARCHIVED = f"changes/archive/2026-02-01-{NAME}"
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n"
+ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n"
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 
 
@@ -446,7 +446,11 @@ def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
     project.change()
     lifecycle.accept(project.root, NAME, DAY)
     tasks = f"changes/{NAME}/tasks.md"
-    project.replace(tasks, "\n## Log\n", "- [ ] 1.3 Announce it\n\n## Log\n")
+    project.replace(
+        tasks,
+        "\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - Criteria: done\n  - Verify: a test\n\n## Log\n",
+    )
     for number in ("1.1", "1.2", "1.3"):
         lifecycle.tick(project.root, NAME, number)
     lifecycle.self_review(project.root, NAME, "fine", DAY)

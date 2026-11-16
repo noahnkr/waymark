@@ -30,6 +30,6 @@ When the idea is clear enough, or the human wants to stop, offer exactly these:
 
 ## Rules
 
+- The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
 - Don't write to the record before the human picks an offer.
-- Don't edit specs; they change only when a change is archived.
-- Say plainly when the record doesn't answer a question. Don't fill the gap with a guess.
+- Say plainly when the record doesn't answer a question.

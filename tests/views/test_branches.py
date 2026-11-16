@@ -17,7 +17,10 @@ from waymark.views.style import Style
 
 NAME = "add-limit"
 DAY = datetime.date(2026, 1, 15)
-TASKS = "# Tasks\n\n## 1. Limit\n\n- [ ] 1.1 Add the endpoint\n  - Criteria: fifty\n  - Repo: api\n"
+TASKS = (
+    "# Tasks\n\n## 1. Limit\n\n"
+    "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty\n  - Repo: api\n"
+)
 
 
 def switch(folder: Path, branch: str) -> None:

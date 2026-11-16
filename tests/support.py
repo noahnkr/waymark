@@ -98,6 +98,8 @@ TASKS = """# Tasks
   - Criteria: at most fifty results come back
   - Verify: a test covers fifty-one matches
 - [ ] 1.2 Document the limit
+  - Criteria: the help text names the limit
+  - Verify: read the help text
 """
 
 

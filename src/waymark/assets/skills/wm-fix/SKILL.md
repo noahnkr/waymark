@@ -24,6 +24,7 @@ You are the planner. The tiny path is for work that changes nothing the specs sa
 
 ## Rules
 
+- The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
+- Don't merge; the human merges.
 - Never write to the record on the tiny path: no change folder, no tick, no review line.
 - Never call work tiny to skip a proposal. When in doubt, it isn't tiny.
-- Don't push and don't open a pull request without the human's yes in this conversation. Don't merge.

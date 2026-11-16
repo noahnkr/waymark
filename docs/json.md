@@ -1602,6 +1602,31 @@ Printed by `wm instructions`.
     },
     "unlocks": {
       "type": "string"
+    },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "enforced": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "text",
+          "enforced"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "shared_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
@@ -1618,7 +1643,9 @@ Printed by `wm instructions`.
     "read",
     "guidance",
     "commands",
-    "unlocks"
+    "unlocks",
+    "checklist",
+    "shared_rules"
   ],
   "additionalProperties": false
 }

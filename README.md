@@ -161,10 +161,11 @@ Sorting every match still costs memory on very large result sets.
   - Verify: a test searches an index with fifty-one matches
 - [x] 1.2 Name the limit in the help text
   - Criteria: the search help says fifty
+  - Verify: read `wm search --help`
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint b919ac9a1d099d10 items 1.1 1.2 by Alex Example
+- (accepted) 2026-01-15 fingerprint 7dd9e82ade3d2aa1 items 1.1 1.2 by Alex Example
 - (review) 2026-01-15 pass by Alex Example: cap and order hold; the scenario is covered by the test
 ```
 

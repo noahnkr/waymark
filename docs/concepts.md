@@ -93,6 +93,14 @@ item (see [What you write](#what-you-write)). What `wm` writes is a record (see
 what they say. Templates are built into `wm`; `wm instructions` hands an agent
 the right one at each step.
 
+`wm instructions` also gives every step the rules all the skills share: only
+you accept a change or archive one past a missing review, only `wm` writes
+records, the specs change only by archiving or syncing, the record is never
+filled in by guessing, and nothing is pushed, opened as a pull request or merged
+without your yes. Each drafting step (propose, specs, design, tasks) also gets a
+checklist of what must hold before moving on; a check marked `wm` is one that
+`wm check` enforces, and the agent judges the rest.
+
 A spec states what one area of the system does, as requirements, each with at
 least one scenario:
 

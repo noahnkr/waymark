@@ -85,8 +85,8 @@ Every item is built and the change is reviewed. Tell the human, and offer the `w
 
 ## Rules
 
-- Never run `wm accept` or `wm archive --override`.
-- The record is the source of truth. Whoever builds an item builds it from the record; what isn't written there gets written there first.
+- The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
+- Whoever builds an item builds it from the record; what isn't written there gets written there first.
 - Start an implementer with the change and item only, and a reviewer with the change only. Don't explain the task in the prompt: what they need is in the record, and if it isn't, that is a spec gap.
 - Record a reviewer's verdict in the reviewer's words, never your retelling.
 - If your tool has no isolated agents, build a tagged item yourself as you would an untagged one. A change that needs an independent review then needs the human, or another session that didn't build it, to review it.

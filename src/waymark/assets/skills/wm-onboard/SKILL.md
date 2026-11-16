@@ -22,6 +22,7 @@ You are the planner, and this once also a guide. You run one real, small change 
 
 ## Rules
 
+- The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
 - Keep each explanation to a sentence or two, given just before the step it explains.
-- Every rule of the skills you follow applies here too. In particular, never run `wm accept`.
+- Every rule of the skills you follow applies here too.
 - If the human wants to stop partway, stop. `wm status` will show where to resume.
