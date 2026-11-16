@@ -47,11 +47,21 @@ The test for tiny is the specs, not the size: if every requirement still holds
 as written, the work is tiny. If tiny work turns out to change a requirement, it
 stops and becomes a change. Specs can't be edited by hand on any path.
 
-**Changing an accepted change withdraws its acceptance.** That covers the
-proposal (its `Review:` line included), the deltas, the design and each task
-item's definition (its number, title, criteria, verification, repo and build
-tag). It needs accepting again.
-Ticks, blockers, review records and notes don't count.
+**Changing what was accepted withdraws the acceptance.** That covers the
+proposal (its `Review:` line included), the deltas, the design and the
+definition of each item the acceptance names (its number, title, criteria,
+verification, repo and build tag), including removing the item. It needs
+accepting again. Ticks, blockers, review records and notes don't count.
+
+**Adding an item keeps the acceptance.** The acceptance line names the items
+it covers, and an item added later is built like any other:
+
+```
+Accepted: 2026-01-15 by Sam Doe (fingerprint: 6cec39a287bf99f2; items: 1.1 1.2)
+```
+
+An acceptance line without `items:`, written by an older `wm`, covers every
+item, so adding one withdraws it.
 
 **Several changes can be in flight at once.** Two changes that name the same
 requirement *overlap*: `wm check` reports it and neither is blocked. Whichever

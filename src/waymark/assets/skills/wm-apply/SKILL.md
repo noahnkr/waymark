@@ -69,7 +69,7 @@ Commit the review record once it is written.
 
 ### Step `resolve-items`
 
-Only what waits on the human is left. Run `wm inbox` and bring each one to them: the blocker, the spec gap, or the verdict. A spec gap is fixed by revising the change with the `wm-update` skill. Once they have decided, run `wm resolve <name> <item> "<what was decided>"` for an item, or `wm resolve <name> review "<what was decided>"` for the change's review.
+Only what waits on the human is left. Run `wm inbox` and bring each one to them: the blocker, the spec gap, or the verdict. A spec gap is fixed by revising the change with the `wm-update` skill. When the fix, or a review, only needs more work and no change to the deltas or the design, add a new item: it keeps the acceptance, and is built like any other. Once they have decided, run `wm resolve <name> <item> "<what was decided>"` for an item, or `wm resolve <name> review "<what was decided>"` for the change's review.
 
 ## When the step is `archive`
 

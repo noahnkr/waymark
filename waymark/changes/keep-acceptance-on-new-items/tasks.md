@@ -8,6 +8,6 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Say that only an added item keeps acceptance
+- [x] 2.1 Say that only an added item keeps acceptance
   - Criteria: `wm-update` says adding an item keeps acceptance and any other edit to what was accepted withdraws it; `wm-apply` says a spec gap or a review that needs new work may add an item without a new acceptance; concepts states the rule and shows an acceptance line with its item list; the planner runs `wm update`; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync pytest tests/adapters tests/test_docs.py`, `uv run --no-sync codespell` and `wm check`
