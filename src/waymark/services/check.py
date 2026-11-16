@@ -48,8 +48,8 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
         )
         if change.applied:
             message = (
-                f'The change "{name}" is applied but not archived. Once its code is merged, '
-                f'the human archives it with "wm archive {name}".'
+                f'The change "{name}" is applied but not archived. The human archives it on '
+                f'its branch with "wm archive {name}", before its pull request.'
             )
             found.append(Finding(Severity.WARNING, path, WHOLE_FILE, "not-archived", message))
         found.extend(_review_level_findings(record, name))

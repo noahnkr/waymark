@@ -170,3 +170,14 @@ def test_risky_change_at_self(project: Workspace) -> None:
         deltas={"search": delta(modified=(CHANGED,))},
     )
     assert findings(project) == []
+
+
+def test_not_archived_warning_says_to_archive_before_the_pull_request(project: Workspace) -> None:
+    project.change(proposal_text=reviewed_at("none"), tasks=HEAD + "- [ ] 1.1 Rename it\n")
+    lifecycle.accept(project.root, "add-limit", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.1")
+    (finding,) = check(project.root, NOW)
+    assert finding.code == "not-archived"
+    assert "on its branch" in finding.message
+    assert "before its pull request" in finding.message
+    assert "merged" not in finding.message

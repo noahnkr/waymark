@@ -43,7 +43,10 @@ _UNLOCKS = {
     StepKind.APPLY: "The next item; after the last one, the review of the change.",
     StepKind.REVIEW: "Archiving, or rebuilding the items a review names.",
     StepKind.RESOLVE_ITEMS: "Applying or reviewing again.",
-    StepKind.ARCHIVE: "The living specs take the deltas, and the change moves to the archive.",
+    StepKind.ARCHIVE: (
+        "The living specs take the deltas, the change moves to the archive, and its pull "
+        "request carries both."
+    ),
 }
 
 _RISK_SIGNALS = (
@@ -214,8 +217,10 @@ def _working(  # noqa: PLR0911 - one return per step
         ]
     if step is StepKind.ARCHIVE:
         guidance = [
-            "Archiving is the human's call: it comes after the code is merged.",
+            "Archiving is the human's call. Ask them, then archive on the change's branch, "
+            "before the pull request, so the code and the archive are reviewed together.",
             "Say in the outcome what was built and anything that differs from the proposal.",
+            "Commit the record on the branch, then describe the pull request with wm pr.",
         ]
         return guidance, [f'wm archive {name} --outcome "<what came of it>"']
     if step is StepKind.ACCEPT:

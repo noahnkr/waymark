@@ -73,7 +73,7 @@ Only what waits on the human is left. Run `wm inbox` and bring each one to them:
 
 ## When the step is `archive`
 
-Every item is built and the change is reviewed. Tell the human, and offer the `wm-pr` skill and then the `wm-archive` skill.
+Every item is built and the change is reviewed. Tell the human, and offer the `wm-archive` skill, which archives the change on its branch, and then the `wm-pr` skill.
 
 ## Rules
 

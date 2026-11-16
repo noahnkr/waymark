@@ -1,29 +1,34 @@
 ---
 name: wm-archive
-description: Archive an applied Waymark change - check it is applied, write its outcome, merge its deltas into the specs and move it to the archive. Use when a change is built, reviewed and merged.
+description: Archive an applied Waymark change on its branch, before its pull request - check it is applied, write its outcome, merge its deltas into the specs and move it to the archive. Use when a change is built and reviewed.
 ---
 
 # Archive
 
-You are the planner. Archiving completes a change: its deltas become part of the living specs, its outcome is written down, and its folder moves to the dated archive. It is the human's decision, and it comes after the code is merged.
+You are the planner. Archiving completes a change: its deltas become part of the living specs, its outcome is written down, and its folder moves to the dated archive. It is the human's decision. It happens on the change's branch, before the pull request, so the code, the merged specs and the archived change are reviewed and merged together.
 
 ## Steps
 
 1. Find the change. If the human didn't name it, run `wm ls changes` and ask which one.
 2. Run `wm instructions --change <name> --json`. If the step is not `archive`, the change isn't applied: say what is still missing and stop.
-3. Confirm with the human that the code is merged. `wm` can't see a remote merge.
+3. Make sure you are on the change's branch and its work is committed. Ask the human whether to archive now.
 4. Draft the outcome with the human: what was built, and anything that differs from the proposal. Two or three sentences.
 5. Ask the human to run `wm archive <name> --outcome "<the outcome>"`, or run it when they tell you to.
 6. Run `wm check` and `wm status`.
-7. If the change belongs to a milestone, ask whether the milestone's path changed: does the roadmap still fit, and is the milestone ready to close with `wm close <milestone>`?
-8. Commit the record: the specs, the archived change and anything else `wm` rewrote.
+7. If the change belongs to a milestone, link the archived change on its roadmap, and ask whether the milestone's path changed: does the roadmap still fit, and is the milestone ready to close with `wm close <milestone>`?
+8. Commit the record on the change's branch: the specs, the archived change and anything else `wm` rewrote.
+9. Offer the `wm-pr` skill. `wm pr` describes the archived change, with its outcome.
+
+## If the pull request needs more work
+
+Revert the archive commit on the branch with `git revert`, so the change is active again. Do the work with the `wm-apply` or `wm-update` skill, and archive again when it is done.
 
 ## If the archive is refused
 
 `wm` says why:
 
 - **Not accepted, items not ticked, or a conflict.** These can't be overridden. Go back to the `wm-apply` or `wm-update` skill.
-- **A review record is missing.** Review the item. Only the human may archive anyway, with `wm archive <name> --override "<reason>"`; the reason is written into the outcome. Never run the override yourself.
+- **The review is missing.** Review the change. Only the human may archive anyway, with `wm archive <name> --override "<reason>"`; the reason is written into the outcome. Never run the override yourself.
 
 ## Rules
 
