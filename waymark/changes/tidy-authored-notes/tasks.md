@@ -8,7 +8,7 @@
 - [x] 1.2 Read the `Build:` line and criteria as a nested list
   - Criteria: `- Build: delegate` under an item sets `Item.delegate`, and another value gives `unknown-build-tag` naming `delegate`; the trailing tag is still read; bullets under `- Criteria:` are kept as `- <text>` lines in `Item.criteria`, which the fingerprint covers; adding, removing or changing `Build:` withdraws acceptance
   - Verify: tests in `tests/record/test_tasks.py`, `tests/record/test_fingerprint.py` and `tests/services/test_agent_interface.py` for the scenarios "Tagged item", "Unknown build value", "Tag added after acceptance" and "Nested criteria"
-- [ ] 1.3 Read the new delta sections and rename requirements
+- [x] 1.3 Read the new delta sections and rename requirements
   - Criteria: `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` and `## RENAMED Requirements` are read, and the old headings still are; RENAMED holds `- From:`/`- To:` pairs, with a problem for an unpaired line or a name renamed twice; archiving or syncing renames the requirement's heading and keeps its block, before any modification; a missing old name or an existing new name is a conflict; the fingerprint covers the living text of a renamed requirement
   - Verify: tests in `tests/record/test_deltas.py`, `tests/record/test_state.py` and `tests/services/test_archive.py` for the scenarios "Requirement renamed" and "Rename of a missing requirement"
 - [ ] 1.4 Migrate to format 3 and drop the old layouts

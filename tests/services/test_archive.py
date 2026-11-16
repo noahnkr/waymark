@@ -384,3 +384,13 @@ def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
     assert " items 1.1 1.2 by " in text
     assert "- (synced) 2026-01-15 fingerprint " in text
     assert project.change_state(NAME).acceptance is AcceptanceState.VALID
+
+
+def test_archiving_a_rename_renames_the_requirement_in_the_spec(project: Workspace) -> None:
+    project.write("specs/search.md", spec(requirement("Result cap")))
+    rename = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+    applied(project, deltas={"search": rename})
+    lifecycle.archive(project.root, NAME, LATER, outcome="Renamed.")
+    living = project.record().specs["search"]
+    assert [item.name for item in living.requirements] == ["Result limit"]
+    assert living.requirements[0].scenarios

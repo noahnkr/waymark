@@ -55,7 +55,7 @@ def fingerprint_parts(
         delta = change.deltas[domain]
         spec = specs.get(domain)
         parts.append((f"delta:{domain}", delta.doc.text))
-        names = [item.name for item in delta.modified] + [item.name for item in delta.removed]
+        names = list(delta.based_on())
         for name in sorted(names):
             living = spec.requirement(name) if spec else None
             text = "\n".join(living.block) if living else _ABSENT

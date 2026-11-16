@@ -241,3 +241,16 @@ def test_a_spec_changing_elsewhere_keeps_acceptance(workspace: Workspace) -> Non
         "### Requirement: Empty query\nEvery search",
     )
     assert acceptance(workspace, "fix-limit") is AcceptanceState.VALID
+
+
+def test_the_spec_text_of_a_renamed_requirement_is_covered(workspace: Workspace) -> None:
+    workspace.write("specs/search.md", spec(requirement("Result cap")))
+    rename = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+    workspace.change(deltas={"search": rename})
+    workspace.accept()
+    assert acceptance(workspace) is AcceptanceState.VALID
+    workspace.write(
+        "specs/search.md",
+        spec(requirement("Result cap", statement="A search SHALL return at most ten results.")),
+    )
+    assert acceptance(workspace) is AcceptanceState.WITHDRAWN

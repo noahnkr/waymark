@@ -515,3 +515,12 @@ def test_same_files_give_the_same_state(workspace: Workspace, atlas: Workspace) 
     shutil.copytree(workspace.path(""), copy.path(""), dirs_exist_ok=True)
     assert copy.state() == workspace.state()
     assert copy.record().problems == workspace.record().problems
+
+
+def test_rename_of_a_missing_requirement_is_a_conflict(workspace: Workspace) -> None:
+    workspace.write("specs/search.md", spec())
+    rename = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result size\n"
+    workspace.change("rename-cap", deltas={"search": rename})
+    (conflict,) = workspace.change_state("rename-cap").conflicts
+    assert conflict.kind is ConflictKind.MISMATCH
+    assert "Result cap" in conflict.message
