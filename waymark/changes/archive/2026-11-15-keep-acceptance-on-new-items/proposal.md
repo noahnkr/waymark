@@ -37,3 +37,7 @@ Items get added for ordinary reasons: a spec gap that needs one more step, a rev
 - Code: `record/proposal.py` (the line's format), `record/fingerprint.py` (the accepted items), `record/state.py`, `services/lifecycle.py` (accept and sync), and the test support.
 - Assets: `wm-update` and `wm-apply`.
 - Docs: concepts.
+
+## Outcome
+
+The acceptance line now names the items it covers, (fingerprint: <digest>; items: 1.1 1.2), and the fingerprint covers only those, so an item added after acceptance keeps it and is built like any other, while editing or removing an accepted item, or changing the proposal, deltas or design, still withdraws it. wm accept lists every item and wm sync keeps the list; an older line without a list covers every item as before, with an unchanged fingerprint, so no migration was needed. wm-update, wm-apply and concepts describe the rule, and new items are added through wm-update with the human's confirmation.
