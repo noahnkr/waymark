@@ -2,7 +2,7 @@
 
 import pytest
 
-from tests.support import Workspace, document
+from tests.support import GOAL_TEXT, Workspace, document, milestone
 from waymark.record.files import RecordFiles
 from waymark.record.moves import rewrite_links, tick_roadmap_lines
 from waymark.record.store import StoreError, Transaction
@@ -131,12 +131,10 @@ def test_link_rewriting_keeps_line_endings_a_byte_order_mark_and_escapes() -> No
 
 
 def test_roadmap_lines_linking_into_a_folder_are_ticked() -> None:
-    doc = document(
-        "# Roadmap\n\n- [ ] [Limit](../../changes/add-limit/proposal.md)\n"
-        "- [ ] [Order](../../changes/add-order/proposal.md)\n- [ ] Later\n",
-        "milestones/faster-search/roadmap.md",
-    )
-    assert tick_roadmap_lines(doc, SOURCE) == (
-        "# Roadmap\n\n- [x] [Limit](../../changes/add-limit/proposal.md)\n"
-        "- [ ] [Order](../../changes/add-order/proposal.md)\n- [ ] Later\n"
+    limit = "[Limit](../../changes/add-limit/proposal.md)"
+    goal = GOAL_TEXT.replace("- P95 is low.", f"- [ ] {limit} ships")
+    roadmap = f"- [ ] {limit}\n- [ ] [Order](../../changes/add-order/proposal.md)\n- [ ] Later\n"
+    doc = document(milestone(roadmap, goal=goal), "milestones/faster-search/milestone.md")
+    assert tick_roadmap_lines(doc, SOURCE) == milestone(
+        roadmap.replace("- [ ]", "- [x]", 1), goal=goal
     )

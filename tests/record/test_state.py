@@ -2,7 +2,17 @@
 
 import shutil
 
-from tests.support import DESIGN, NO_SPECS, TASKS, Workspace, delta, proposal, requirement, spec
+from tests.support import (
+    DESIGN,
+    NO_SPECS,
+    TASKS,
+    Workspace,
+    delta,
+    milestone,
+    proposal,
+    requirement,
+    spec,
+)
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -461,27 +471,24 @@ def test_milestone_progress_follows_its_roadmap_links(workspace: Workspace) -> N
     workspace.change("add-order")
     workspace.write("changes/archive/2026-01-20-add-limit/proposal.md", proposal(outcome="Done."))
     workspace.write(
-        "milestones/faster-search/goal.md",
-        "# G\n\n## Goal\n\na\n\n## Done when\n\nb\n\n## Non-goals\n\nc\n",
+        "milestones/faster-search/milestone.md",
+        milestone(
+            "- [x] [Limit](../../changes/archive/2026-01-20-add-limit/proposal.md)\n"
+            "- [ ] [Order](../../changes/add-order/)\n"
+            "- [ ] [Gone](../../changes/add-cache/proposal.md)\n"
+            "- [x] [Lost](../../changes/archive/2026-01-21-add-index/)\n"
+            "- [ ] Paging, not proposed yet\n"
+        ),
     )
-    workspace.write(
-        "milestones/faster-search/roadmap.md",
-        "# Roadmap\n\n"
-        "- [x] [Limit](../../changes/archive/2026-01-20-add-limit/proposal.md)\n"
-        "- [ ] [Order](../../changes/add-order/)\n"
-        "- [ ] [Gone](../../changes/add-cache/proposal.md)\n"
-        "- [x] [Lost](../../changes/archive/2026-01-21-add-index/)\n"
-        "- [ ] Paging, not proposed yet\n",
-    )
-    milestone = workspace.state().milestones["faster-search"]
-    assert [(line.change, line.status) for line in milestone.lines] == [
+    milestone_state = workspace.state().milestones["faster-search"]
+    assert [(line.change, line.status) for line in milestone_state.lines] == [
         ("add-limit", RoadmapStatus.ARCHIVED),
         ("add-order", RoadmapStatus.ACTIVE),
         ("add-cache", RoadmapStatus.MISSING),
         ("add-index", RoadmapStatus.MISSING),
         (None, RoadmapStatus.PLANNED),
     ]
-    assert (milestone.archived, milestone.total) == (1, 4)
+    assert (milestone_state.archived, milestone_state.total) == (1, 4)
 
 
 def explore(workspace: Workspace, name: str, status: str, conclusion: str = "") -> None:
@@ -494,15 +501,11 @@ def explore(workspace: Workspace, name: str, status: str, conclusion: str = "") 
 
 def test_exploration_state_comes_from_its_status_line(workspace: Workspace) -> None:
     workspace.change("add-paging")
-    workspace.write("milestones/faster-search/roadmap.md", "# Roadmap\n")
-    workspace.write(
-        "milestones/faster-search/goal.md",
-        "# G\n\n## Goal\n\na\n\n## Done when\n\nb\n\n## Non-goals\n\nc\n",
-    )
+    workspace.write("milestones/faster-search/milestone.md", milestone())
     explore(workspace, "caching", "open")
     explore(workspace, "ranking", "parked", "nobody asked for it")
     explore(workspace, "paging", "led-to [add-paging](../changes/add-paging/proposal.md)")
-    explore(workspace, "speed", "led-to [Faster search](../milestones/faster-search/goal.md)")
+    explore(workspace, "speed", "led-to [Faster search](../milestones/faster-search/milestone.md)")
     explore(workspace, "old", "led-to [done](../changes/archive/2026-01-20-add-limit/proposal.md)")
     explore(workspace, "vague", "open", "We should think about it more.")
     states = workspace.state().explorations

@@ -5,6 +5,7 @@ import datetime
 import pytest
 
 from tests.support import Workspace, proposal
+from tests.support import milestone as milestone_text
 from waymark.record.record import link_problems
 from waymark.record.state import ExplorationStatus
 from waymark.services import lifecycle
@@ -12,20 +13,18 @@ from waymark.services.common import Refusal
 
 DAY = datetime.date(2026, 2, 1)
 NAME = "faster-search"
-GOAL = "# G\n\n## Goal\n\na\n\n## Done when\n\nb\n\n## Non-goals\n\nc\n"
 ARCHIVED_CHANGE = "changes/archive/2026-01-20-add-limit"
 
 
 def milestone(project: Workspace, *lines: str) -> Workspace:
-    project.write(f"milestones/{NAME}/goal.md", GOAL)
-    project.write(f"milestones/{NAME}/roadmap.md", "# Roadmap\n\n" + "".join(lines))
+    project.write(f"milestones/{NAME}/milestone.md", milestone_text("".join(lines)))
     return project
 
 
 def refused(project: Workspace) -> str:
     with pytest.raises(Refusal) as refusal:
         lifecycle.close_milestone(project.root, NAME, DAY)
-    assert project.path(f"milestones/{NAME}/goal.md").is_file()
+    assert project.path(f"milestones/{NAME}/milestone.md").is_file()
     return str(refusal.value)
 
 
@@ -55,23 +54,21 @@ def test_closing_moves_the_milestone_to_the_dated_archive(project: Workspace) ->
     assert record.problems == ()
     assert record.milestones == {}
     assert [(entry.name, entry.date) for entry in record.archived_milestones] == [(NAME, DAY)]
-    assert project.read(f"{target}/roadmap.md") == (
-        f"# Roadmap\n\n- [x] [Limit](../../../{ARCHIVED_CHANGE}/proposal.md)\n"
-        "- [ ] Paging, never proposed\n"
+    assert project.read(f"{target}/milestone.md") == milestone_text(
+        f"- [x] [Limit](../../../{ARCHIVED_CHANGE}/proposal.md)\n- [ ] Paging, never proposed\n"
     )
-    assert project.read(f"{target}/goal.md") == GOAL
 
 
 def test_closing_rewrites_links_to_the_milestone(project: Workspace) -> None:
     milestone(project)
     project.write(
         "explorations/speed.md",
-        f"# Speed\n\n- Status: led-to [Faster search](../milestones/{NAME}/goal.md)\n\n"
+        f"# Speed\n\n- Status: led-to [Faster search](../milestones/{NAME}/milestone.md)\n\n"
         "## Context\n\n## Questions\n\n## Approaches\n\n"
-        f"## Conclusion\n\n[Faster search](../milestones/{NAME}/goal.md)\n\n## Related\n",
+        f"## Conclusion\n\n[Faster search](../milestones/{NAME}/milestone.md)\n\n## Related\n",
     )
     lifecycle.close_milestone(project.root, NAME, DAY)
-    assert f"(../milestones/archive/2026-02-01-{NAME}/goal.md)" in project.read(
+    assert f"(../milestones/archive/2026-02-01-{NAME}/milestone.md)" in project.read(
         "explorations/speed.md"
     )
     assert link_problems(project.record()) == ()
@@ -87,5 +84,5 @@ def test_unknown_milestone_is_refused_with_the_open_ones(project: Workspace) -> 
 
 def test_milestone_cannot_be_closed_twice_in_a_day_under_one_name(project: Workspace) -> None:
     milestone(project)
-    project.write(f"milestones/archive/2026-02-01-{NAME}/goal.md", GOAL)
+    project.write(f"milestones/archive/2026-02-01-{NAME}/milestone.md", milestone_text())
     assert "already closed today" in refused(project)

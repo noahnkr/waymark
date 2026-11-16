@@ -13,7 +13,7 @@ from waymark.record.changes import Change
 from waymark.record.deltas import merge_delta
 from waymark.record.edits import append_log, edit_item, set_outcome
 from waymark.record.fingerprint import change_fingerprint
-from waymark.record.milestones import ROADMAP_FILE
+from waymark.record.milestones import MILESTONE_FILE
 from waymark.record.moves import rewrite_links, tick_roadmap_lines
 from waymark.record.names import ArchiveName
 from waymark.record.proposal import BUILT, DIFFERS, NONE, Proposal
@@ -576,7 +576,7 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
         staged = transaction.staged(doc.path)
         current = Document.parse(doc.path, staged) if staged is not None else doc
         text = current.text
-        if doc.path.endswith(f"/{ROADMAP_FILE}"):
+        if doc.path.endswith(f"/{MILESTONE_FILE}"):
             text = tick_roadmap_lines(current, source)
             current = Document.parse(doc.path, text)
         text = rewrite_links(current, source, target)

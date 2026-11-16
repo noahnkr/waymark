@@ -82,7 +82,7 @@ waymark/
   specs/<area>.md      one living spec per area of the system
   changes/<change>/    proposal.md, specs/<area>.md (deltas), design.md, tasks.md
   changes/archive/     archived changes, each in a dated folder
-  milestones/          optional: a goal and a roadmap of changes
+  milestones/<name>/   optional: milestone.md, a goal and a roadmap of changes
   explorations/        saved thinking
 ```
 
@@ -136,6 +136,7 @@ the end of the task list:
 | Task item | `- Criteria:`, `- Verify:` and, in an atlas, `- Repo:` lines under it; criteria and verification may each be a nested list, one per bullet; `- Build: delegate` to have an implementer build it |
 | Design | each `### Decision:` with `- Status: proposed` or `decided` and `- Decided by: human` or `planner` lines; an `## Open questions` section with a list or `None.`. A proposed decision or a listed question keeps the change from acceptance |
 | Delta | `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` and `## RENAMED Requirements`; a rename is a `- From: <old name>` line and a `- To: <new name>` line, and keeps the requirement's text |
+| Milestone | one `milestone.md`: the title, then `## Goal`, `## Done when`, `## Non-goals` and `## Roadmap`; only the list lines under `## Roadmap` are its changes, and archiving a change ticks its line there |
 | Exploration | `- Status: open`, `- Status: parked` with the reason in the Conclusion, or `- Status: led-to <link>` to the change or milestone it led to |
 
 `wm check` reports a layout of an older record format and says to run
@@ -282,7 +283,7 @@ and pull request, through the workflow `wm ci` writes.
 | **Archive** | Finishing a change: its deltas merged into the specs, its outcome written, and its folder moved to a dated archive. |
 | **Owner** | The one person responsible for a change. |
 | **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion) that may lead to a change or be parked. |
-| **Milestone** | An optional goal that several changes work toward, with a roadmap listing them. |
+| **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. |
 | **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |
 | **Implementer** | A fresh agent that builds one task item with a `- Build: delegate` line, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one whole change against its scenarios, design and criteria, without seeing how it was built. |

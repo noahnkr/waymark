@@ -4,7 +4,17 @@ import datetime
 
 import pytest
 
-from tests.support import NO_SPECS, TASKS, Workspace, delta, proposal, requirement, spec
+from tests.support import (
+    GOAL_TEXT,
+    NO_SPECS,
+    TASKS,
+    Workspace,
+    delta,
+    milestone,
+    proposal,
+    requirement,
+    spec,
+)
 from waymark.record.record import link_problems
 from waymark.record.state import (
     AcceptanceState,
@@ -270,26 +280,48 @@ def test_archive_rewrites_links_inside_the_moved_files(project: Workspace) -> No
     assert "[the web](https://example.com/a.md)" in text
 
 
+def test_scenario_roadmap_ticked_at_archive(project: Workspace) -> None:
+    applied(project)
+    goal = GOAL_TEXT.replace("- P95 is low.", "- [ ] P95 is low.")
+    project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- [ ] [Limit](../../changes/add-limit/proposal.md)\n", goal=goal),
+    )
+    lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    text = project.read("milestones/faster-search/milestone.md")
+    assert text == milestone(f"- [x] [Limit](../../{ARCHIVED}/proposal.md)\n", goal=goal)
+    state = project.state().milestones["faster-search"]
+    assert (state.archived, state.total) == (1, 1)
+    assert [line.status for line in state.lines] == [RoadmapStatus.ARCHIVED]
+
+
+def test_a_link_outside_the_roadmap_is_rewritten_but_not_ticked(project: Workspace) -> None:
+    applied(project)
+    goal = GOAL_TEXT.replace(
+        "- P95 is low.", "- [ ] [Limit](../../changes/add-limit/proposal.md) ships"
+    )
+    project.write("milestones/faster-search/milestone.md", milestone("- [ ] Paging\n", goal=goal))
+    lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    text = project.read("milestones/faster-search/milestone.md")
+    assert f"- [ ] [Limit](../../{ARCHIVED}/proposal.md) ships" in text
+
+
 def test_archive_ticks_the_roadmap_line_and_the_milestone_moves_on(project: Workspace) -> None:
     applied(project)
     project.write(
-        "milestones/faster-search/goal.md",
-        "# G\n\n## Goal\n\na\n\n## Done when\n\nb\n\n## Non-goals\n\nc\n",
-    )
-    project.write(
-        "milestones/faster-search/roadmap.md",
-        "# Roadmap\n\n- [ ] [Limit](../../changes/add-limit/proposal.md)\n- [ ] Paging later\n",
+        "milestones/faster-search/milestone.md",
+        milestone("- [ ] [Limit](../../changes/add-limit/proposal.md)\n- [ ] Paging later\n"),
     )
     lifecycle.archive(project.root, NAME, LATER, built="Done.")
-    assert project.read("milestones/faster-search/roadmap.md") == (
-        f"# Roadmap\n\n- [x] [Limit](../../{ARCHIVED}/proposal.md)\n- [ ] Paging later\n"
+    assert project.read("milestones/faster-search/milestone.md") == milestone(
+        f"- [x] [Limit](../../{ARCHIVED}/proposal.md)\n- [ ] Paging later\n"
     )
-    milestone = project.state().milestones["faster-search"]
-    assert [line.status for line in milestone.lines] == [
+    state = project.state().milestones["faster-search"]
+    assert [line.status for line in state.lines] == [
         RoadmapStatus.ARCHIVED,
         RoadmapStatus.PLANNED,
     ]
-    assert (milestone.archived, milestone.total) == (1, 1)
+    assert (state.archived, state.total) == (1, 1)
     assert link_problems(project.record()) == ()
 
 

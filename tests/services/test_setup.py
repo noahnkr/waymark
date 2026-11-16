@@ -530,12 +530,15 @@ def test_new_change_refuses_a_name_already_in_use(project: Workspace) -> None:
         setup.create_change(project.root, "add-limit")
 
 
-def test_new_milestone_writes_a_goal_and_a_roadmap(project: Workspace) -> None:
+def test_scenario_new_milestone(project: Workspace) -> None:
     done = setup.create_milestone(project.root, "faster-search")
-    assert done.paths == (
-        "milestones/faster-search/goal.md",
-        "milestones/faster-search/roadmap.md",
-    )
+    assert done.paths == ("milestones/faster-search/milestone.md",)
+    assert sorted(p.name for p in project.path("milestones/faster-search").iterdir()) == [
+        "milestone.md"
+    ]
+    text = project.read("milestones/faster-search/milestone.md")
+    headings = [line for line in text.splitlines() if line.startswith("## ")]
+    assert headings == ["## Goal", "## Done when", "## Non-goals", "## Roadmap"]
     record = project.record()
     milestone = record.milestones["faster-search"]
     assert milestone.goal is not None

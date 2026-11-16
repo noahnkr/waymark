@@ -5,6 +5,13 @@ the record's format says whether `wm update` migrates an older record.
 
 ## [Unreleased]
 
+- **Behavior change: a milestone is one `milestone.md`,** with `## Goal`,
+  `## Done when`, `## Non-goals` and `## Roadmap` in that order, instead of
+  `goal.md` and `roadmap.md`. `wm new milestone` writes it, only the list lines
+  under `## Roadmap` count as the milestone's changes, and archiving a change
+  ticks its line there. `wm check` reports a `goal.md` or `roadmap.md` in a
+  milestone folder, active or archived; merge the two files into `milestone.md`
+  by hand, goal first, then the roadmap's lines under `## Roadmap`.
 - **Behavior change: `wm archive --built` and `--differs` replace `--outcome`.**
   The archived proposal's Outcome holds a `- Built: <text>` line and a
   `- Differs: <text>` line, `none` when `--differs` is left out. A hand-written
