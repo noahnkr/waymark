@@ -44,7 +44,7 @@ Fast search for everyone.
 
 ## Glossary
 
-- Match: a document that satisfies the query.
+- **Match**: a document that satisfies the query.
 
 ## Context
 

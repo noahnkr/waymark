@@ -154,7 +154,7 @@ def create_change(start: Path, name: str, *, short: bool = False, owner: str | N
             "Every change has one owner. Pass --owner <name>, or set your name in git: "
             'git config user.name "<name>".'
         )
-    facts = f"{OWNER}: {who}\n" + (f"{PATH}: {SHORT}\n" if short else "")
+    facts = f"- {OWNER}: {who}\n" + (f"- {PATH}: {SHORT}\n" if short else "")
     text = templates.render(templates.PROPOSAL, title=templates.title_from_name(name), facts=facts)
     transaction = Transaction(record.files)
     transaction.write(f"{folder}/{PROPOSAL_FILE}", text)

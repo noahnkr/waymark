@@ -2,7 +2,7 @@
 
 ## 1. Readers, migration and format 3
 
-- [ ] 1.1 Read proposal facts and exploration status as bullets, and check the glossary
+- [x] 1.1 Read proposal facts and exploration status as bullets, and check the glossary
   - Criteria: `parse_facts` reads `- Key: value` lines as well as bare ones; `wm new change` writes `- Owner:` and `- Path: short`; an exploration's `- Status:` line gives its state (`open`, `parked`, `led-to <link>`) when present, with `missing-status`, `unknown-status` and `parked-without-reason` reported for a status line that is wrong; a glossary line that is neither `- **<term>**: <meaning>` nor the old `<term>: <meaning>` gives `glossary-format`
   - Verify: tests in `tests/record/` and `tests/services/test_setup.py` for the scenarios "New change", "Parked exploration" and "Parked without a reason"
 - [ ] 1.2 Read the `Build:` line and criteria as a nested list
@@ -23,3 +23,7 @@
 - [ ] 2.2 Update the docs
   - Criteria: concepts (the files, the formats, the glossary), getting started and the README example show the new layouts; the changelog's unreleased entry has the format 3 change and how to upgrade; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py`, codespell and `wm check`
+
+## Log
+
+- (accepted) 2026-11-16 fingerprint 55bd85a27436cea8 items 1.1 1.2 1.3 1.4 2.1 2.2 by Noah Roberts

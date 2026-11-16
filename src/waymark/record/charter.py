@@ -1,5 +1,6 @@
 """The charter: what the project is, the context every agent gets, and rules per step."""
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -18,6 +19,10 @@ GLOSSARY = "Glossary"
 CONTEXT = "Context"
 RULES = "Rules"
 REQUIRED_SECTIONS = (VISION, GOALS, NON_GOALS, CONSTRAINTS, GLOSSARY, CONTEXT, RULES)
+
+GLOSSARY_LINE = re.compile(r"^- \*\*(\S[^*]*?)\*\*: \S")
+"""A glossary entry: ``- **<term>**: <meaning>``."""
+_OLD_GLOSSARY_LINE = re.compile(r"^[A-Z][^:]*: \S")
 
 
 @dataclass(frozen=True)
@@ -72,4 +77,29 @@ def parse_charter(doc: Document) -> Charter:
                 text = doc.body(section)
                 if text:
                     rules[Step(name)] = text
+    if GLOSSARY in found:
+        _check_glossary(doc, found[GLOSSARY].body_start, found[GLOSSARY].end, problems)
     return Charter(doc, title, sections, sections[CONTEXT], rules, tuple(problems))
+
+
+def _check_glossary(doc: Document, start: int, end: int, problems: list[Problem]) -> None:
+    """Every glossary line is an entry: ``- **<term>**: <meaning>``."""
+    in_comment = False
+    for index in range(start, end):
+        line = doc.lines[index]
+        text = line.text.strip()
+        if in_comment or text.startswith("<!--"):
+            in_comment = "-->" not in text
+            continue
+        if line.is_blank or line.in_fence or line.text.startswith(" "):
+            continue
+        if GLOSSARY_LINE.match(text) or _OLD_GLOSSARY_LINE.match(text):
+            continue
+        problems.append(
+            Problem(
+                doc.path,
+                index + 1,
+                "glossary-format",
+                'A glossary entry is written "- **<term>**: <meaning>", one per line.',
+            )
+        )

@@ -7,15 +7,19 @@ from dataclasses import dataclass
 from waymark.record.problems import Problem
 from waymark.record.text import Document, Section
 
-_FACT = re.compile(r"^([A-Z][A-Za-z-]*):(?:[ \t]+(.*))?$")
+_FACT = re.compile(r"^([-*][ \t]+)?([A-Z][A-Za-z-]*):(?:[ \t]+(.*))?$")
 
 
 @dataclass(frozen=True)
 class Fact:
-    """A plain ``Key: value`` line under an artifact's title."""
+    """A ``- Key: value`` line under an artifact's title.
+
+    ``bullet`` is False for the older bare ``Key: value`` form.
+    """
 
     value: str
     index: int
+    bullet: bool = True
 
 
 def require_title(doc: Document, problems: list[Problem]) -> str:
@@ -47,8 +51,8 @@ def parse_facts(
         if line.is_blank:
             continue
         match = _FACT.match(line.text)
-        if match and match.group(1) in keys:
-            key = match.group(1)
+        if match and match.group(2) in keys:
+            key = match.group(2)
             if key in facts:
                 problems.append(
                     Problem(
@@ -59,7 +63,7 @@ def parse_facts(
                     )
                 )
             else:
-                facts[key] = Fact((match.group(2) or "").strip(), index)
+                facts[key] = Fact((match.group(3) or "").strip(), index, bool(match.group(1)))
         elif not prose:
             allowed = ", ".join(f'"{key}:"' for key in sorted(keys)) or "nothing"
             problems.append(

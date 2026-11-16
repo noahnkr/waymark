@@ -481,7 +481,9 @@ def milestone_state(record: Record, milestone: Milestone) -> MilestoneState:
 
 
 def exploration_state(record: Record, exploration: Exploration) -> ExplorationState:
-    """Derive an exploration's state from its conclusion."""
+    """Derive an exploration's state from its status line, or else from its conclusion."""
+    if exploration.status is not None:
+        return _state_from_status(exploration)
     if not exploration.conclusion:
         return ExplorationState(exploration.name, ExplorationStatus.OPEN, None)
     if exploration.parked is not None:
@@ -499,6 +501,26 @@ def exploration_state(record: Record, exploration: Exploration) -> ExplorationSt
         ExplorationStatus.UNREADABLE,
         'The conclusion must be empty, "Parked: <reason>", or a link to a change or milestone.',
     )
+
+
+def _state_from_status(exploration: Exploration) -> ExplorationState:
+    if exploration.status == "parked":
+        return ExplorationState(exploration.name, ExplorationStatus.PARKED, exploration.parked)
+    if exploration.status == "led-to":
+        for target in exploration.status_links:
+            for folder in (CHANGES, MILESTONES):
+                member = _member(exploration.doc.path, target, folder)
+                if member is not None:
+                    kind = "change" if folder == CHANGES else "milestone"
+                    return ExplorationState(
+                        exploration.name, ExplorationStatus.LED_TO, f"{kind} {member.name}"
+                    )
+        return ExplorationState(
+            exploration.name,
+            ExplorationStatus.UNREADABLE,
+            'A "led-to" status links to a change or milestone in the record.',
+        )
+    return ExplorationState(exploration.name, ExplorationStatus.OPEN, None)
 
 
 def derive_state(record: Record) -> RecordState:

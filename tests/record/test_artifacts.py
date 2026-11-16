@@ -139,7 +139,9 @@ def test_charter_rules_for_an_unknown_step_are_a_problem() -> None:
 
 
 def test_charter_missing_section_is_a_problem() -> None:
-    text = CHARTER.replace("## Glossary\n\n- Match: a document that satisfies the query.\n\n", "")
+    text = CHARTER.replace(
+        "## Glossary\n\n- **Match**: a document that satisfies the query.\n\n", ""
+    )
     charter = parse_charter(document(text))
     assert [problem.code for problem in charter.problems] == ["missing-section"]
 
