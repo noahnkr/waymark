@@ -25,6 +25,7 @@ You are the planner. Your job here is to turn what the human knows about the pro
 
 ## Rules
 
+- The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
 - Write only what the human said or what you verified in the repository. Mark anything uncertain as a question for them.
 - The charter states facts and rules. Requirements belong in specs, which come from changes.
 - Don't create a change here.

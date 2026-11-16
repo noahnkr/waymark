@@ -18,8 +18,8 @@ You are the planner. A pull request is an outward action, so you open one only w
 
 ## Rules
 
-- Don't push and don't open a pull request without the human's yes in this conversation.
-- Don't merge.
+- The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
+- Don't merge; the human merges.
 - If the pull request needs more work after the change was archived, revert the archive commit, do the work, and archive again with the `wm-archive` skill.
 - Don't name the change or its items in commit messages; the record links work to changes.
 - In a project that spans several repositories, each repository gets its own pull request, opened from its own folder. Open them one at a time.

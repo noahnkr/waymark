@@ -31,8 +31,7 @@ You are the planner. You draft every artifact of a change; the human reads them 
 
 ## Rules
 
-- Only the human accepts a change. Never run `wm accept`.
-- Don't tick items, and don't write records such as `(accepted)`, `(blocked)` or `(review)`, or a `## Log` section. `wm` writes those.
-- Don't edit files under `waymark/specs/`. Write deltas in the change instead.
-- If the record doesn't say enough to draft something, ask the human. Don't guess.
+- The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
+- Work through the step's checklist from `wm instructions` before moving on: `wm check` holds the checks marked `wm`, and you judge the rest.
+- Write deltas in the change, never in `waymark/specs/`.
 - Write no code in this skill.

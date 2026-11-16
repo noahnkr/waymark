@@ -32,6 +32,5 @@ Revert the archive commit on the branch with `git revert`, so the change is acti
 
 ## Rules
 
-- Never run `wm archive --override`.
-- Don't edit files under `waymark/specs/` by hand; the archive merges the deltas.
-- To put the deltas into the specs before the change can be archived, use `wm sync <name>`.
+- The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
+- The archive merges the deltas into the specs. To put them there before the change can be archived, use `wm sync <name>`.
