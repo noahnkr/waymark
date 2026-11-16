@@ -23,7 +23,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Show the one file in the skills
+- [x] 2.1 Show the one file in the skills
   - Criteria:
     - `wm-explore` says to draft the goal and list the likely changes under `## Roadmap` in `milestone.md`
     - `wm-archive` says to link the archived change in the milestone's Roadmap section
