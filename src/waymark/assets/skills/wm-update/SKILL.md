@@ -28,5 +28,5 @@ You are the planner. You revise a change that already exists. Every edit is conf
 ## Rules
 
 - Never run `wm accept`. Only the human accepts.
-- Don't tick items or write records by hand, under an item or in the `## Log`; use the `wm` commands. A note goes in with `wm note <name> <item> "<text>"`.
+- Don't tick items or write records by hand, under an item or in the `## Log`; use the `wm` commands. Every line `wm` writes is a dated record, `(kind) YYYY-MM-DD [<args>] [by <who>]: <text>`, and none is edited or removed: `wm resolve` adds a `(resolved)` record after the blocker or spec gap it settles. A note goes in with `wm note <name> <item> "<text>"`. Records name your git name; pass `--by "<name>"` to a writing command when the decision or the work was someone else's, such as `--by "<the human's name>"` when you record what the human decided.
 - Don't edit files under `waymark/specs/`.

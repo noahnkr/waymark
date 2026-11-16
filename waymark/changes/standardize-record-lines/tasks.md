@@ -30,6 +30,7 @@
 - [x] 2.1 Rewrite the skills and agent definitions for records and the Log
   - Criteria: `wm-apply` and `wm-update` name the item records, `wm note`, `--by` and the Log; `wm-propose` and `wm-archive` no longer name `Accepted:` or `Blocked:` lines; `wm-implementer` writes notes with `wm note` or its ending and never edits the record; `wm-reviewer` matches the finding format; the planner runs `wm update` to regenerate the rendered files
   - Verify: `uv run --no-sync pytest tests/adapters`; read each changed skill once through as the planner would
+  - (reopened) 2026-11-16 by Noah Roberts
 - [x] 2.2 Update the charter and the docs
   - Criteria: the charter's careful-writes constraint names the exception for `wm check --fix`, which changes layout and never wording; concepts (the records, the Log, the glossary), getting started, the smoke test, architecture and the README describe format 2 and `--fix`; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`
