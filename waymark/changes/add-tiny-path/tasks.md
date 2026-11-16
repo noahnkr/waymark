@@ -11,7 +11,7 @@
 - [x] 1.3 Add the `wm-fix` skill, and offer the three paths in the other skills
   - Criteria: `assets/skills/wm-fix/SKILL.md` runs the tiny path as the design describes (confirm no requirement changes, say why and wait for the human's yes, build on a branch, run the checks, conventional commit, offer a pull request, hand over to `wm-propose` if a requirement changes) and writes nothing to the record; in an atlas it is run from the atlas session, uses a branch of the same name in each code repo the fix touches, commits in each and offers one pull request per repo; it is listed in `assets/__init__.py` and copied by every adapter; `wm-propose` step 1 asks which path fits and hands tiny work to `wm-fix`; `wm-explore`'s closing offers include fixing on the tiny path; `wm-onboard` mentions the three paths; the planner runs `wm update`
   - Verify: `uv run --no-sync pytest tests/adapters`; read the new skill once through as the planner would
-- [ ] 1.4 Ask for functional requirements at the specs step
+- [x] 1.4 Ask for functional requirements at the specs step
   - Criteria: `wm instructions` at the specs step says that requirements describe what the system does as a user or another program sees it, and that files the user doesn't touch, internals and mechanisms go in the design; `wm-propose` says the same; the charter's `### specs` rules hold the same rule for Waymark
   - Verify: a test in `tests/services/test_agent_interface.py` for the specs guidance; `wm instructions specs`
 

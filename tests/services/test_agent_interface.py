@@ -575,3 +575,14 @@ def test_built_and_reviewed(project: Workspace) -> None:
     assert "archive on the change's branch, before the pull request" in guidance
     assert "merge" not in guidance.lower()
     assert "merge" not in step["unlocks"].lower()
+
+
+def test_specs_instructions_ask_for_functional_requirements(project: Workspace) -> None:
+    project.write(f"{FOLDER}/proposal.md", proposal())
+    step = at(project)
+    assert step["step"] == "specs"
+    assert any(
+        "as a user or another program sees it" in line
+        and "internals and mechanisms go in the design" in line
+        for line in step["guidance"]
+    )

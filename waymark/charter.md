@@ -68,6 +68,8 @@ Smoke test: the manual run of one change through Claude Code before each release
 
 ### specs
 
+- Requirements describe what `wm` does as a user or an agent sees it: its commands, their output, and the record's files and formats. Modules, functions and other internals go in the design.
+
 ### design
 
 ### tasks
