@@ -30,7 +30,7 @@
   - Verify:
     - the assets tests in `tests/`
     - read both skills against the delta
-- [ ] 2.2 Update the docs and the changelog
+- [x] 2.2 Update the docs and the changelog
   - Criteria:
     - `docs/concepts.md` shows `milestones/<name>/milestone.md` and its four sections
     - the changelog says a milestone is one `milestone.md`, that `wm check` reports a `goal.md` or `roadmap.md`, and that such a record is merged by hand
