@@ -31,3 +31,7 @@ Nothing in `wm` needs the merge first. Only the guidance says so: the `wm-archiv
 - Code: `services/pr.py` and `services/common.py` (finding an archived change), `services/instructions.py` and `services/check.py` (the wording).
 - Assets: the `wm-archive`, `wm-apply` and `wm-pr` skills.
 - Docs: concepts, getting started and the smoke test, with `docs/cli.md` regenerated if the help text changes.
+
+## Outcome
+
+wm pr now describes an archived change: the latest archived change of a name, with its outcome and a link to the archived proposal, also with --repo in an atlas. wm instructions, the wm check warning, the wm-archive, wm-apply and wm-pr skills and the docs now put the archive on the change's branch, before its pull request; if the pull request needs more work, the archive commit is reverted and the change archived again. This change was the first archived on its own branch before its pull request.
