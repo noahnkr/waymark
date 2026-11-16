@@ -221,7 +221,7 @@ def test_pr_for_a_name_archived_twice_describes_the_latest(project: Workspace) -
 
 def test_neither_active_nor_archived(project: Workspace) -> None:
     project.change()
-    with pytest.raises(Refusal, match='no active change "add-order". Active changes: add-limit'):
+    with pytest.raises(Refusal, match=r'no active change "add-order"\. Active changes: add-limit'):
         describe(project.record(), "add-order")
 
 
