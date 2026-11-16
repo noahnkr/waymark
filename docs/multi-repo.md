@@ -161,8 +161,11 @@ wm pr add-sharing --repo web   # the frontend's
 Each description links to the change and to the other repositories' pull
 requests from the same branch.
 
-**Archiving** comes after the code pull requests are merged. `wm` can't see a
-merge on the git host (it never uses the network), so that call is yours.
+**Archiving** goes on the atlas's change branch, before the atlas's pull request,
+once every item is built and the change is reviewed. The atlas's pull request
+then carries the merged specs and the archived change. Merge the code pull
+requests first, or together with it; `wm` can't see a merge on the git host (it
+never uses the network), so that call is yours.
 
 ## CI
 

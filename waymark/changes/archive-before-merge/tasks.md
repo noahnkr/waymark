@@ -8,6 +8,6 @@
 - [x] 1.2 Move the archive before the pull request in the guidance
   - Criteria: at the archive step, `wm instructions` says to archive on the change's branch before the pull request, when the human decides, and doesn't mention a merge; `wm check`'s "not archived" warning says the same; `wm-archive` asks the human whether to archive now, on the change's branch, commits the record there and then offers `wm-pr`; `wm-apply` offers `wm-archive` before `wm-pr`; `wm-pr` works on a change archived on its branch; both skills say that if the pull request needs more work, the archive commit is reverted and the change archived again; the planner runs `wm update`
   - Verify: tests in `tests/services/test_agent_interface.py` for the scenario "Built and reviewed", and in `tests/services/test_check.py` for the warning; `uv run --no-sync pytest tests/adapters`
-- [ ] 1.3 Update the docs
+- [x] 1.3 Update the docs
   - Criteria: concepts (the workflow and the archive gate), getting started and the smoke test say the archive is taken on the change's branch before the pull request; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`

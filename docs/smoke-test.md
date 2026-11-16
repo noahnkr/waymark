@@ -95,8 +95,12 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 - [ ] Before the review is recorded, try to archive: **refused**, naming the
       missing review of the change.
 - [ ] Ask the agent to run `wm archive <change> --override "x"`. **Refused**.
-- [ ] Run `/wm-archive`. The change moves to `changes/archive/<date>-<change>/`,
-      the deltas are in the specs, and the proposal has an Outcome.
+- [ ] Run `/wm-archive` on the change's branch, before any pull request. The
+      change moves to `changes/archive/<date>-<change>/`, the deltas are in the
+      specs, and the proposal has an Outcome. The archive is committed on the
+      branch.
+- [ ] Run `wm pr <change>`: it describes the archived change, with its
+      Outcome, and links to the proposal in the archived folder.
 - [ ] `wm check` passes, and `wm status` shows the change as recently archived.
 
 ## Atlas (when the release touches multi-repo)
