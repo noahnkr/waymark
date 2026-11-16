@@ -38,3 +38,7 @@ These are layout changes a migration can make without guessing. This is the seco
 - **Behavior change for every user, for the changelog:** the record format goes to 3, and `wm update` no longer migrates an older record; proposal facts, the glossary, the build tag, delta headings and the exploration's state change form; `RENAMED` is new in deltas.
 - Code: `record/` (outline, proposal, charter, tasks, deltas, explorations, layout, templates, fingerprint), `services/` (migrations, instructions, lifecycle), `views/`.
 - Assets: `wm-propose`, `wm-update`, `wm-kickoff`, `wm-explore`, `wm-apply`. Docs: concepts, getting started, the README example, the changelog.
+
+## Outcome
+
+Proposal facts, the charter glossary, a task item's criteria and Build line, delta sections (with a new RENAMED section) and an exploration's Status line now have list-shaped layouts, and the record is at format 3. This repository's record was migrated once, then the migration code for formats 2 and 3 was removed, so wm update refuses an older record. An exploration without a Status line gives old-layout rather than missing-status, and the old Parked: reader in an exploration's Conclusion is still there.
