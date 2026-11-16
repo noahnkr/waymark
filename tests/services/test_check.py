@@ -4,9 +4,11 @@ import datetime
 import os
 import subprocess
 
-from tests.support import IMPACT, Workspace, delta, proposal, requirement, spec
+from tests.support import DESIGN, IMPACT, TASKS, Workspace, delta, proposal, requirement, spec
 from waymark.services import lifecycle
 from waymark.services.check import Finding, Severity, check, has_errors
+from waymark.services.pr import describe
+from waymark.views import payloads
 
 NOW = datetime.datetime(2026, 3, 1, 12, tzinfo=datetime.UTC)
 DAY = datetime.date(2026, 1, 15)
@@ -122,6 +124,34 @@ def test_spec_named_without_a_delta_points_at_the_specs_step(project: Workspace)
     [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
     assert (finding.path, finding.code) == ("changes/add-limit/specs", "impact-mismatch")
     assert project.change_state().next_step.kind.value == "specs"
+
+
+OLD_DESIGN = (
+    DESIGN.replace("- Status: decided\n", "")
+    .replace("- Decided by: planner\n", "")
+    .replace("## Open questions\n\nNone.\n\n", "")
+)
+
+
+def test_scenario_archived_change_in_an_older_layout(project: Workspace) -> None:
+    """Requirement "New work only": archived changes are read as they were written."""
+    folder = "changes/archive/2026-01-20-add-limit"
+    project.write(f"{folder}/proposal.md", proposal(impact="Specs: search.", outcome="Done."))
+    project.write(f"{folder}/specs/search.md", delta(added=(requirement(),), purpose="Search."))
+    project.write(f"{folder}/design.md", OLD_DESIGN)
+    project.write(f"{folder}/tasks.md", TASKS.replace("- [ ]", "- [x]"))
+    assert "- Status:" not in OLD_DESIGN
+    assert "Open questions" not in OLD_DESIGN
+    assert check(project.root, NOW) == ()
+    record = project.record()
+    shown = payloads.show(record, "add-limit")
+    assert shown["name"] == "add-limit"
+    body = describe(record, "add-limit")["body"]
+    assert "## Outcome\n\nDone." in body
+    for name in ("proposal.md", "specs/search.md", "design.md", "tasks.md"):
+        project.write(f"changes/add-order/{name}", project.read(f"{folder}/{name}"))
+    active = {f.code for f in check(project.root, NOW) if f.path.startswith("changes/add-order")}
+    assert {"impact-format", "decision-format", "missing-section"} <= active
 
 
 def test_broken_links_are_errors(project: Workspace) -> None:
