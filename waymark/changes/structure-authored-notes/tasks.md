@@ -33,7 +33,7 @@
     - while a decision is `proposed` or a question is listed, the next step stays `design`, with a reason that names each one, so `wm accept` refuses
     - the design template shows both lines and the section
   - Verify: tests in `tests/record/test_authored_formats.py`, `tests/record/test_state.py` and `tests/services/test_lifecycle.py` for the scenarios "Proposed decision" and "Open question"
-- [ ] 1.5 Keep the new checks to active work
+- [x] 1.5 Keep the new checks to active work
   - Criteria:
     - an archived change with a free-text Impact and Outcome and decisions without `Status:` or `Decided by:` and no `## Open questions` is read without a problem
     - `wm pr` and `wm show` still show such a change
