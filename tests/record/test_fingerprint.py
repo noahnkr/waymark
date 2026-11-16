@@ -60,7 +60,10 @@ def test_editing_the_design_withdraws_acceptance(workspace: Workspace) -> None:
         ("Criteria: at most fifty", "Criteria: at most forty"),
         ("Verify: a test covers", "Verify: nobody checks"),
         ("1.2 Document the limit", "1.2 Document the limit in the guide"),
-        ("- [ ] 1.1 Cap the result count", "- [ ] 1.1 Cap the result count   `build: delegate`"),
+        (
+            "- [ ] 1.1 Cap the result count\n",
+            "- [ ] 1.1 Cap the result count\n  - Build: delegate\n",
+        ),
     ],
 )
 def test_changing_an_item_definition_withdraws_acceptance(
@@ -73,8 +76,8 @@ def test_changing_an_item_definition_withdraws_acceptance(
 def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
     accepted(workspace).replace(
         "changes/add-limit/tasks.md",
-        "1.2 Document the limit",
-        "1.2 Document the limit   `build: delegate`",
+        "1.2 Document the limit\n",
+        "1.2 Document the limit\n  - Build: delegate\n",
     )
     state = workspace.change_state()
     assert state.acceptance is AcceptanceState.WITHDRAWN
@@ -84,11 +87,13 @@ def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
 
 def test_removing_the_build_tag_withdraws_acceptance(workspace: Workspace) -> None:
     workspace.change(
-        tasks=TASKS.replace("1.2 Document the limit", "1.2 Document the limit   `build: delegate`")
+        tasks=TASKS.replace(
+            "1.2 Document the limit\n", "1.2 Document the limit\n  - Build: delegate\n"
+        )
     )
     workspace.accept()
     assert acceptance(workspace) is AcceptanceState.VALID
-    workspace.replace("changes/add-limit/tasks.md", "   `build: delegate`", "")
+    workspace.replace("changes/add-limit/tasks.md", "  - Build: delegate\n", "")
     assert acceptance(workspace) is AcceptanceState.WITHDRAWN
 
 
@@ -107,8 +112,8 @@ def test_fingerprint_of_a_plain_change_is_stable(workspace: Workspace) -> None:
 @pytest.mark.parametrize(
     ("old", "new"),
     [
-        ("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n"),
-        ("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: self\n"),
+        ("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n"),
+        ("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: self\n"),
     ],
 )
 def test_adding_a_review_line_withdraws_acceptance(

@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass, field
 
 from waymark.record import records
+from waymark.record.outline import OLD_LAYOUT
 from waymark.record.problems import Problem
 from waymark.record.records import RecordKind
 from waymark.record.terms import ReviewSeverity, Verdict
@@ -284,22 +285,10 @@ class _Parser:
             if name == "review":
                 self.problem(index, "old-record-format", _OLD_FORMAT)
                 continue
-            if name in seen:
-                self.problem(
-                    index,
-                    "repeated-tag",
-                    f'The "{name}:" tag appears twice on this item. Keep one.',
-                )
-                continue
+            if name not in seen:
+                self.problem(index, "old-layout", OLD_LAYOUT)
             seen.add(name)
-            if value == DELEGATE:
-                delegate = True
-            else:
-                self.problem(
-                    index,
-                    "unknown-build-tag",
-                    f'"{value}" is not a build tag. The only value is: {DELEGATE}.',
-                )
+            del value
         return title, delegate
 
     def item_line(self, index: int, section: TaskSection | None, text: str) -> bool:

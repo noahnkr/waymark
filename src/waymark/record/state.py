@@ -481,26 +481,10 @@ def milestone_state(record: Record, milestone: Milestone) -> MilestoneState:
 
 
 def exploration_state(record: Record, exploration: Exploration) -> ExplorationState:
-    """Derive an exploration's state from its status line, or else from its conclusion."""
-    if exploration.status is not None:
-        return _state_from_status(exploration)
-    if not exploration.conclusion:
+    """Derive an exploration's state from its status line."""
+    if exploration.status is None:
         return ExplorationState(exploration.name, ExplorationStatus.OPEN, None)
-    if exploration.parked is not None:
-        return ExplorationState(exploration.name, ExplorationStatus.PARKED, exploration.parked)
-    for target in exploration.conclusion_links:
-        for folder in (CHANGES, MILESTONES):
-            member = _member(exploration.doc.path, target, folder)
-            if member is not None:
-                kind = "change" if folder == CHANGES else "milestone"
-                return ExplorationState(
-                    exploration.name, ExplorationStatus.LED_TO, f"{kind} {member.name}"
-                )
-    return ExplorationState(
-        exploration.name,
-        ExplorationStatus.UNREADABLE,
-        'The conclusion must be empty, "Parked: <reason>", or a link to a change or milestone.',
-    )
+    return _state_from_status(exploration)
 
 
 def _state_from_status(exploration: Exploration) -> ExplorationState:

@@ -197,7 +197,8 @@ def test_archive_rewrites_links_that_point_into_the_moved_folder(project: Worksp
     applied(project)
     project.write(
         "explorations/paging.md",
-        "# Paging\n\n## Context\n\nSee the [tasks](../changes/add-limit/tasks.md#limit).\n\n"
+        "# Paging\n\n- Status: led-to [add-limit](../changes/add-limit/)\n\n"
+        "## Context\n\nSee the [tasks](../changes/add-limit/tasks.md#limit).\n\n"
         "## Questions\n\n## Approaches\n\n"
         "## Conclusion\n\n[add-limit](../changes/add-limit/)\n\n## Related\n",
     )

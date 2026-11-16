@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from waymark.record.problems import Problem
 from waymark.record.text import Document, Section
 
+OLD_LAYOUT = 'This is the layout of an older record format. Run "wm update" to migrate the record.'
+"""What wm says about a layout of an older record format."""
+
 _FACT = re.compile(r"^([-*][ \t]+)?([A-Z][A-Za-z-]*):(?:[ \t]+(.*))?$")
 
 

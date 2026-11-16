@@ -32,7 +32,7 @@ def codes(text: str) -> list[str]:
 
 def test_proposal_facts_as_a_list() -> None:
     """Requirement "Proposal facts as a list": bulleted facts are read."""
-    text = proposal().replace("Owner: Sam Doe\n", "- Owner: Sam Doe\n- Review: independent\n")
+    text = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
     parsed = parse_proposal(document(text, "changes/add-limit/proposal.md"))
     assert parsed.problems == ()
     assert parsed.owner == "Sam Doe"

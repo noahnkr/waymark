@@ -214,7 +214,7 @@ RENAME = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Resul
 def test_delta_sections_take_the_new_headings() -> None:
     """Requirement "Delta sections": the upper-case headings read like the old ones."""
     text = (
-        delta(added=(LIMIT,)).replace("## Added requirements", "## ADDED Requirements")
+        delta(added=(LIMIT,)).replace("## ADDED Requirements", "## ADDED Requirements")
         + "\n## REMOVED Requirements\n\n### Requirement: Old\nReason: gone\n"
     )
     parsed = parse(text)

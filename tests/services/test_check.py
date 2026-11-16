@@ -15,7 +15,7 @@ CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 
 
 def reviewed_at(level: str) -> str:
-    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\nReview: {level}\n")
+    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n- Review: {level}\n")
 
 
 def findings(project: Workspace) -> list[tuple[str, str, str]]:
@@ -70,12 +70,12 @@ def test_malformed_evidence_is_an_error(project: Workspace) -> None:
 def test_unknown_build_tag_and_repeated_tag_are_errors(project: Workspace) -> None:
     project.change(
         tasks=HEAD
-        + "- [ ] 1.1 Cap it   `build: someone`\n"
-        + "- [ ] 1.2 Page it   `build: delegate`   `build: delegate`\n"
+        + "- [ ] 1.1 Cap it\n  - Build: someone\n"
+        + "- [ ] 1.2 Page it   `build: delegate`\n"
     )
     assert findings(project) == [
         ("error", "changes/add-limit/tasks.md", "unknown-build-tag"),
-        ("error", "changes/add-limit/tasks.md", "repeated-tag"),
+        ("error", "changes/add-limit/tasks.md", "old-layout"),
     ]
 
 
@@ -112,13 +112,13 @@ def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> Non
     assert findings(project) == [("warning", "changes/add-limit", "not-archived")]
 
 
-def test_unreadable_exploration_conclusion_is_an_error(project: Workspace) -> None:
+def test_exploration_without_a_status_line_is_an_old_layout(project: Workspace) -> None:
     project.write(
         "explorations/paging.md",
         "# P\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
         "## Conclusion\n\nWe should think more.\n\n## Related\n",
     )
-    assert findings(project) == [("error", "explorations/paging.md", "conclusion-unreadable")]
+    assert findings(project) == [("error", "explorations/paging.md", "old-layout")]
 
 
 def test_change_untouched_for_a_while_is_a_warning(project: Workspace) -> None:

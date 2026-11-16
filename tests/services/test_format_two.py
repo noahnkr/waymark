@@ -6,7 +6,7 @@ from tests.support import TASKS, Workspace, proposal
 from waymark.record.files import RecordFiles
 from waymark.record.record import load_archived_change
 from waymark.record.state import AcceptanceState
-from waymark.services.migrations import migrate
+from waymark.services.migrations import MIGRATIONS, migrate
 
 ACTIVE = "changes/add-limit"
 ARCHIVED = "changes/archive/2026-01-20-old-limit"
@@ -30,12 +30,12 @@ OLD_TASKS = """# Tasks
 
 
 def at_format_1(workspace: Workspace) -> Workspace:
-    workspace.replace("config.toml", "record_format = 2", "record_format = 1")
+    workspace.replace("config.toml", "record_format = 3", "record_format = 1")
     return workspace
 
 
 def migrated(workspace: Workspace) -> tuple[str, ...]:
-    return migrate(RecordFiles(workspace.path("")))
+    return migrate(RecordFiles(workspace.path("")), MIGRATIONS[:1], target=2)
 
 
 def test_scenario_accepted_change_migrated(workspace: Workspace) -> None:
@@ -93,6 +93,7 @@ def test_scenario_archived_change_migrated(workspace: Workspace) -> None:
         "  - suggestion `docs/search.md`: say the limit\n"
         "- (override) 2026-01-20: reviewed by hand\n"
     )
+    migrate(RecordFiles(workspace.path("")))
     record = workspace.record()
     change = load_archived_change(record, record.archived_changes[0])
     assert change.problems == ()
@@ -103,7 +104,7 @@ def test_scenario_archived_change_migrated(workspace: Workspace) -> None:
 def test_a_record_already_in_format_2_is_not_migrated(workspace: Workspace) -> None:
     workspace.change()
     before = workspace.read(f"{ACTIVE}/tasks.md")
-    assert migrated(workspace) == ()
+    assert migrate(RecordFiles(workspace.path(""))) == ()
     assert workspace.read(f"{ACTIVE}/tasks.md") == before
 
 

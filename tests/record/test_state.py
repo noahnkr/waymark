@@ -12,6 +12,7 @@ from waymark.record.state import (
     StepKind,
 )
 from waymark.record.terms import Phase, ReviewLevel
+from waymark.services.format_three import _exploration  # the migration's own rule
 
 FOLDER = "changes/add-limit"
 TASKS_FILE = f"{FOLDER}/tasks.md"
@@ -24,7 +25,7 @@ SELF_REVIEW = REVIEW + "- (self-review) 2026-01-16: matches the criteria\n"
 def reviewed_at(level: str, *, short: bool = False) -> str:
     """A proposal with a Review line."""
     facts = "Owner: Sam Doe\n" + ("Path: short\n" if short else "")
-    return proposal(short=short).replace(facts, facts + f"Review: {level}\n")
+    return proposal(short=short).replace(facts, facts + f"- Review: {level}\n")
 
 
 def step(state: ChangeState) -> tuple[Phase, StepKind, str | None, bool]:
@@ -109,7 +110,7 @@ def test_design_on_the_short_path(workspace: Workspace) -> None:
 
 
 def test_short_path_allows_no_independent_review(workspace: Workspace) -> None:
-    text = proposal(short=True).replace("Path: short\n", "Path: short\nReview: independent\n")
+    text = proposal(short=True).replace("Path: short\n", "Path: short\n- Review: independent\n")
     workspace.change(proposal_text=text, design=None)
     assert code_list(workspace) == [(f"{FOLDER}/proposal.md", "short-path-review")]
 
@@ -128,7 +129,7 @@ def test_review_level_comes_from_the_proposal_or_the_project_default(
     workspace.change()
     change = workspace.record().changes["add-limit"]
     assert change.review_level(ReviewLevel.NONE) is ReviewLevel.NONE
-    text = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n")
+    text = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
     workspace.change(proposal_text=text)
     change = workspace.record().changes["add-limit"]
     assert change.review_level(ReviewLevel.NONE) is ReviewLevel.INDEPENDENT
@@ -472,14 +473,17 @@ def test_milestone_progress_follows_its_roadmap_links(workspace: Workspace) -> N
 
 
 def explore(workspace: Workspace, name: str, conclusion: str) -> None:
+    """An exploration with the status the format 3 migration gives its conclusion."""
     workspace.write(
         f"explorations/{name}.md",
-        f"# T\n\n## Context\n\n## Questions\n\n## Approaches\n\n## Conclusion\n\n{conclusion}\n\n"
-        "## Related\n",
+        _exploration(
+            f"# T\n\n## Context\n\n## Questions\n\n## Approaches\n\n## Conclusion\n\n"
+            f"{conclusion}\n\n## Related\n"
+        ),
     )
 
 
-def test_exploration_state_comes_from_its_conclusion(workspace: Workspace) -> None:
+def test_exploration_state_comes_from_its_status_line(workspace: Workspace) -> None:
     workspace.change("add-paging")
     workspace.write("milestones/faster-search/roadmap.md", "# Roadmap\n")
     workspace.write(
@@ -502,7 +506,7 @@ def test_exploration_state_comes_from_its_conclusion(workspace: Workspace) -> No
         "speed": (ExplorationStatus.LED_TO, "milestone faster-search"),
         "old": (ExplorationStatus.LED_TO, "change add-limit"),
     }
-    assert states["vague"].status is ExplorationStatus.UNREADABLE
+    assert states["vague"].status is ExplorationStatus.OPEN
 
 
 def test_same_files_give_the_same_state(workspace: Workspace, atlas: Workspace) -> None:

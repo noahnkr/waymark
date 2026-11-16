@@ -10,7 +10,6 @@ import pytest
 from tests.support import Workspace, proposal
 from waymark import __version__
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
-from waymark.services import common
 
 
 def run_module(*args: str) -> subprocess.CompletedProcess[str]:
@@ -172,10 +171,9 @@ def test_wm_note_and_by_write_records(
     project: Workspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """wm note writes a (note) record, and --by names who wrote a record."""
-    monkeypatch.setattr(common, "RECORD_FORMAT", 2)
     project.write(
         "config.toml",
-        project.read("config.toml").replace("record_format = 1", "record_format = 2"),
+        project.read("config.toml"),
     )
     project.change()
     monkeypatch.chdir(project.root)

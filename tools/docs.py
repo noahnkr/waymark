@@ -183,8 +183,8 @@ def json_reference() -> str:
 
 PROPOSAL = """# Add a result limit
 
-Owner: {owner}
-Review: independent
+- Owner: {owner}
+- Review: independent
 
 ## Why
 
@@ -210,7 +210,7 @@ DELTA = """# Search
 
 How a search finds and returns documents.
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: Result limit
 A search SHALL return at most fifty results.

@@ -22,7 +22,6 @@ REQUIRED_SECTIONS = (VISION, GOALS, NON_GOALS, CONSTRAINTS, GLOSSARY, CONTEXT, R
 
 GLOSSARY_LINE = re.compile(r"^- \*\*(\S[^*]*?)\*\*: \S")
 """A glossary entry: ``- **<term>**: <meaning>``."""
-_OLD_GLOSSARY_LINE = re.compile(r"^[A-Z][^:]*: \S")
 
 
 @dataclass(frozen=True)
@@ -93,7 +92,7 @@ def _check_glossary(doc: Document, start: int, end: int, problems: list[Problem]
             continue
         if line.is_blank or line.in_fence or line.text.startswith(" "):
             continue
-        if GLOSSARY_LINE.match(text) or _OLD_GLOSSARY_LINE.match(text):
+        if GLOSSARY_LINE.match(text):
             continue
         problems.append(
             Problem(

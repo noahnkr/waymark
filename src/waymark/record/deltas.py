@@ -9,7 +9,13 @@ may also modify the requirement under its new name.
 import re
 from dataclasses import dataclass
 
-from waymark.record.outline import collect_sections, parse_facts, require_title, split_names
+from waymark.record.outline import (
+    OLD_LAYOUT,
+    collect_sections,
+    parse_facts,
+    require_title,
+    split_names,
+)
 from waymark.record.problems import Problem
 from waymark.record.specs import (
     PURPOSE,
@@ -189,6 +195,11 @@ def parse_delta(domain: str, doc: Document) -> Delta:
                     f'"{REPOS_FACT}:" names no repo. List the repos, or remove the line.',
                 )
             )
+    for section in doc.sections(2):
+        heading = section.title.strip()
+        for name in (ADDED, MODIFIED, REMOVED, RENAMED):
+            if heading.casefold() == name.casefold() and heading != name:
+                problems.append(Problem(doc.path, section.start + 1, "old-layout", OLD_LAYOUT))
     sections = collect_sections(
         doc, (), problems, optional=(PURPOSE, ADDED, MODIFIED, REMOVED, RENAMED), strict=True
     )

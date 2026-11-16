@@ -10,6 +10,8 @@ from waymark.record.terms import ReviewLevel, Step
 
 EXPLORATION = """# Paging
 
+- Status: {status}
+
 ## Context
 
 Lists are long.
@@ -40,8 +42,8 @@ def proposal_codes(text: str) -> list[str]:
     return [problem.code for problem in parse(text).problems]
 
 
-def explore(conclusion: str) -> Exploration:
-    text = EXPLORATION.format(conclusion=conclusion)
+def explore(conclusion: str, status: str = "open") -> Exploration:
+    text = EXPLORATION.format(conclusion=conclusion, status=status)
     return parse_exploration("paging", document(text, "explorations/paging.md"))
 
 
@@ -75,10 +77,10 @@ def test_proposal_outcome_is_optional_until_archive() -> None:
 def test_proposal_marks_the_short_path_with_a_path_line() -> None:
     assert parse(proposal(short=True)).short_path
     assert not parse(
-        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nPath: full\n")
+        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Path: full\n")
     ).short_path
     assert proposal_codes(
-        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nPath: quick\n")
+        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Path: quick\n")
     ) == ["invalid-path"]
 
 
@@ -198,8 +200,8 @@ def test_exploration_with_an_empty_conclusion_is_open() -> None:
 
 
 def test_exploration_parked_conclusion_gives_a_reason() -> None:
-    assert explore("Parked: not needed this year").parked == "not needed this year"
-    assert [problem.code for problem in explore("Parked:").problems] == ["parked-without-reason"]
+    assert explore("not needed this year", "parked").parked == "not needed this year"
+    assert [problem.code for problem in explore("", "parked").problems] == ["parked-without-reason"]
 
 
 def test_exploration_conclusion_links_are_collected() -> None:
@@ -208,15 +210,17 @@ def test_exploration_conclusion_links_are_collected() -> None:
 
 
 def test_exploration_missing_section_is_a_problem() -> None:
-    text = EXPLORATION.format(conclusion="").replace("## Related\n\nNothing yet.\n", "")
+    text = EXPLORATION.format(conclusion="", status="open").replace(
+        "## Related\n\nNothing yet.\n", ""
+    )
     exploration = parse_exploration("paging", document(text))
     assert [problem.code for problem in exploration.problems] == ["missing-section"]
 
 
 def test_proposal_review_line_sets_the_change_review_level() -> None:
     assert parse(proposal()).review is None
-    reviewed = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n")
+    reviewed = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
     assert parse(reviewed).review is ReviewLevel.INDEPENDENT
     assert proposal_codes(
-        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\nReview: strict\n")
+        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: strict\n")
     ) == ["invalid-review-level"]

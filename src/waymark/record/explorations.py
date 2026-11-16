@@ -4,7 +4,13 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from waymark.record.outline import Fact, collect_sections, parse_facts, require_title
+from waymark.record.outline import (
+    OLD_LAYOUT,
+    Fact,
+    collect_sections,
+    parse_facts,
+    require_title,
+)
 from waymark.record.problems import Problem
 from waymark.record.text import Document
 
@@ -104,6 +110,15 @@ def _status(
 ) -> tuple[str | None, tuple[str, ...]]:
     """The exploration's status and, for ``led-to``, the links on its line."""
     if fact is None:
+        problems.append(
+            Problem(
+                doc.path,
+                1,
+                "old-layout",
+                f'{OLD_LAYOUT} An exploration says where it stands in a "- Status:" line '
+                "under its title.",
+            )
+        )
         return None, ()
     match = _STATUS.match(fact.value)
     if match is None:

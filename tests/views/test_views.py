@@ -51,7 +51,7 @@ def busy(project: Workspace) -> Workspace:
         + "- [ ] 1.1 Sort it\n  - Criteria: newest first\n"
         + "- [ ] 1.2 Explain it\n  - Criteria: documented\n"
         + "- [ ] 1.3 Announce it\n  - Criteria: posted\n"
-        + "- [ ] 1.4 Translate it   `build: delegate`\n  - Criteria: two languages\n",
+        + "- [ ] 1.4 Translate it\n  - Build: delegate\n  - Criteria: two languages\n",
     )
     lifecycle.accept(project.root, "add-order", DAY)
     lifecycle.tick(project.root, "add-order", "1.1")
@@ -60,7 +60,7 @@ def busy(project: Workspace) -> Workspace:
     project.change(
         "fix-limit",
         proposal_text=proposal().replace(
-            "Owner: Sam Doe\n", "Owner: Sam Doe\nReview: independent\n"
+            "Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n"
         ),
         deltas={"search": delta(modified=(requirement(scenario="Edge"),))},
         tasks=HEAD + "- [ ] 1.1 Fix it\n",
@@ -86,7 +86,8 @@ def busy(project: Workspace) -> Workspace:
     )
     project.write(
         "explorations/caching.md",
-        "# Caching\n\n## Context\n\nSlow.\n\n## Questions\n\n- Where to cache?\n\n"
+        "# Caching\n\n- Status: open\n\n"
+        "## Context\n\nSlow.\n\n## Questions\n\n- Where to cache?\n\n"
         "## Approaches\n\n## Conclusion\n\n## Related\n",
     )
     return project

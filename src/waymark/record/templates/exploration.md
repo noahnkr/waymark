@@ -1,5 +1,10 @@
 # {{title}}
 
+- Status: open
+
+<!-- open while thinking; "parked" with the reason in the Conclusion; or
+     "led-to <link>" to the change or milestone this led to. -->
+
 ## Context
 
 <!-- What prompted this, and what is already known. -->
@@ -14,8 +19,8 @@
 
 ## Conclusion
 
-<!-- Leave empty while open. Otherwise "Parked: <reason>", or a link to the change or
-     milestone this led to. -->
+<!-- Leave empty while open. When parked, why; when it led somewhere, what was
+     decided. -->
 
 ## Related
 

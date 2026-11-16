@@ -8,7 +8,7 @@
 <!-- Only when this delta creates the spec, or changes what the spec is for.
      Otherwise remove this section. -->
 
-## Added requirements
+## ADDED Requirements
 
 ### Requirement: <name>
 <What the system SHALL do, in one statement.>
@@ -18,12 +18,17 @@
 - WHEN <something happens>
 - THEN <the outcome that can be checked>
 
-## Modified requirements
+## MODIFIED Requirements
 
 <!-- Write each requirement out in full, as it should read afterwards, under the
      same heading it has in the spec. -->
 
-## Removed requirements
+## REMOVED Requirements
 
 ### Requirement: <name>
 Reason: <why it goes>
+
+## RENAMED Requirements
+
+- From: <old name>
+- To: <new name>
