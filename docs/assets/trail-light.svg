@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="270" viewBox="0 0 1100 270" role="img" aria-label="Explore, propose, accept, apply, review, archive, merge. You approve at accept, archive and merge; an agent does the rest.">
+  <title>Explore, propose, accept, apply, review, archive, merge.</title>
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000"/><stop offset="0.35" stop-color="#000"/>
+      <stop offset="0.85" stop-color="#fff"/><stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+    <mask id="map" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="270">
+      <rect width="1100" height="270" fill="url(#fade)"/>
+    </mask>
+  </defs>
+  <g fill="none" stroke="#d5d9dc" stroke-width="1.3" mask="url(#map)">
+    <path d="M0 30.0 L20 32.1 L40 34.1 L60 35.9 L80 37.6 L100 39.1 L120 40.4 L140 41.3 L160 42.0 L180 42.4 L200 42.4 L220 42.2 L240 41.7 L260 41.0 L280 40.1 L300 39.1 L320 37.9 L340 36.7 L360 35.5 L380 34.3 L400 33.2 L420 32.2 L440 31.3 L460 30.5 L480 29.9 L500 29.3 L520 28.9 L540 28.5 L560 28.2 L580 28.0 L600 27.7 L620 27.4 L640 27.1 L660 26.7 L680 26.3 L700 25.7 L720 25.1 L740 24.4 L760 23.6 L780 22.8 L800 22.0 L820 21.3 L840 20.6 L860 20.1 L880 19.7 L900 19.5 L920 19.5 L940 19.7 L960 20.3 L980 21.1 L1000 22.1 L1020 23.4 L1040 25.0 L1060 26.7 L1080 28.6 L1100 30.5"/>
+    <path d="M0 84.9 L20 86.4 L40 87.5 L60 88.2 L80 88.6 L100 88.6 L120 88.1 L140 87.4 L160 86.2 L180 84.8 L200 83.2 L220 81.4 L240 79.4 L260 77.4 L280 75.3 L300 73.3 L320 71.4 L340 69.6 L360 67.9 L380 66.4 L400 65.1 L420 64.0 L440 63.0 L460 62.2 L480 61.6 L500 61.0 L520 60.6 L540 60.2 L560 59.9 L580 59.7 L600 59.4 L620 59.2 L640 59.0 L660 58.8 L680 58.6 L700 58.4 L720 58.3 L740 58.3 L760 58.5 L780 58.7 L800 59.2 L820 59.8 L840 60.7 L860 61.8 L880 63.1 L900 64.7 L920 66.5 L940 68.4 L960 70.5 L980 72.8 L1000 75.1 L1020 77.4 L1040 79.6 L1060 81.7 L1080 83.7 L1100 85.4"/>
+    <path d="M0 133.4 L20 132.4 L40 131.0 L60 129.2 L80 127.0 L100 124.6 L120 121.9 L140 119.1 L160 116.1 L180 113.1 L200 110.2 L220 107.4 L240 104.7 L260 102.3 L280 100.1 L300 98.1 L320 96.5 L340 95.2 L360 94.1 L380 93.4 L400 92.9 L420 92.7 L440 92.6 L460 92.8 L480 93.1 L500 93.5 L520 94.1 L540 94.7 L560 95.4 L580 96.1 L600 97.0 L620 97.8 L640 98.8 L660 99.8 L680 101.0 L700 102.2 L720 103.6 L740 105.2 L760 106.8 L780 108.6 L800 110.6 L820 112.7 L840 114.9 L860 117.1 L880 119.4 L900 121.7 L920 123.9 L940 126.0 L960 128.0 L980 129.7 L1000 131.1 L1020 132.1 L1040 132.8 L1060 133.1 L1080 132.9 L1100 132.3"/>
+    <path d="M0 156.0 L20 154.1 L40 152.0 L60 150.0 L80 148.0 L100 146.1 L120 144.3 L140 142.7 L160 141.3 L180 140.2 L200 139.4 L220 138.8 L240 138.6 L260 138.6 L280 138.8 L300 139.3 L320 140.0 L340 140.8 L360 141.7 L380 142.6 L400 143.6 L420 144.6 L440 145.5 L460 146.3 L480 147.0 L500 147.7 L520 148.2 L540 148.7 L560 149.1 L580 149.4 L600 149.7 L620 150.0 L640 150.3 L660 150.7 L680 151.1 L700 151.6 L720 152.2 L740 153.0 L760 153.8 L780 154.7 L800 155.7 L820 156.7 L840 157.7 L860 158.7 L880 159.6 L900 160.4 L920 161.1 L940 161.5 L960 161.7 L980 161.6 L1000 161.3 L1020 160.6 L1040 159.7 L1060 158.5 L1080 157.0 L1100 155.3"/>
+    <path d="M0 181.6 L20 179.3 L40 177.3 L60 175.5 L80 174.1 L100 173.0 L120 172.3 L140 172.0 L160 172.1 L180 172.5 L200 173.3 L220 174.3 L240 175.6 L260 177.1 L280 178.8 L300 180.5 L320 182.3 L340 184.1 L360 185.8 L380 187.5 L400 189.1 L420 190.5 L440 191.8 L460 193.0 L480 194.0 L500 194.9 L520 195.7 L540 196.4 L560 197.1 L580 197.7 L600 198.2 L620 198.8 L640 199.4 L660 200.0 L680 200.6 L700 201.1 L720 201.7 L740 202.2 L760 202.7 L780 203.0 L800 203.2 L820 203.2 L840 203.0 L860 202.6 L880 202.0 L900 201.0 L920 199.8 L940 198.3 L960 196.6 L980 194.7 L1000 192.5 L1020 190.2 L1040 187.8 L1060 185.3 L1080 182.9 L1100 180.5"/>
+    <path d="M0 206.5 L20 206.1 L40 206.1 L60 206.6 L80 207.5 L100 208.9 L120 210.6 L140 212.7 L160 215.1 L180 217.6 L200 220.3 L220 223.1 L240 225.8 L260 228.6 L280 231.2 L300 233.6 L320 235.9 L340 237.9 L360 239.8 L380 241.3 L400 242.6 L420 243.7 L440 244.6 L460 245.2 L480 245.7 L500 246.0 L520 246.1 L540 246.2 L560 246.1 L580 246.0 L600 245.8 L620 245.5 L640 245.1 L660 244.6 L680 244.0 L700 243.3 L720 242.5 L740 241.4 L760 240.3 L780 238.9 L800 237.3 L820 235.5 L840 233.5 L860 231.3 L880 229.0 L900 226.5 L920 224.0 L940 221.4 L960 218.8 L980 216.4 L1000 214.0 L1020 211.9 L1040 210.0 L1060 208.5 L1080 207.4 L1100 206.6"/>
+  </g>
+  <path d="M30 112 C166.5 96, 166.5 128, 243 112 C319.5 96, 319.5 128, 396 112 C472.5 96, 472.5 128, 549 112 C625.5 96, 625.5 128, 702 112 C778.5 96, 778.5 128, 855 112 C931.5 96, 931.5 128, 1008 112 L1068 112" fill="none" stroke="#c9ced2" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+  <text x="90" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1c1f22">Explore</text>
+  <circle cx="90" cy="112" r="9" fill="#ffffff" stroke="#1c1f22" stroke-width="2.5"/>
+  <text x="90" y="154" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">Talk the idea</text>
+  <text x="90" y="175" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">through first</text>
+  <text x="243" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1c1f22">Propose</text>
+  <circle cx="243" cy="112" r="9" fill="#ffffff" stroke="#1c1f22" stroke-width="2.5"/>
+  <text x="243" y="154" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">The agent writes</text>
+  <text x="243" y="175" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">up the plan</text>
+  <text x="396" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1c1f22">Accept</text>
+  <path d="M396 99 L409 112 L396 125 L383 112 Z" fill="#1c1f22"/>
+  <text x="396" y="154" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">You read the plan</text>
+  <text x="396" y="175" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">and approve it</text>
+  <text x="549" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1c1f22">Apply</text>
+  <circle cx="549" cy="112" r="9" fill="#ffffff" stroke="#1c1f22" stroke-width="2.5"/>
+  <text x="549" y="154" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">The agent builds</text>
+  <text x="549" y="175" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">it, task by task</text>
+  <text x="702" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1c1f22">Review</text>
+  <circle cx="702" cy="112" r="9" fill="#ffffff" stroke="#1c1f22" stroke-width="2.5"/>
+  <text x="702" y="154" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">The work is checked</text>
+  <text x="702" y="175" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">against the plan</text>
+  <text x="855" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1c1f22">Archive</text>
+  <path d="M855 99 L868 112 L855 125 L842 112 Z" fill="#1c1f22"/>
+  <text x="855" y="154" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">You sign off, and</text>
+  <text x="855" y="175" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">the specs update</text>
+  <text x="1008" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1c1f22">Merge</text>
+  <path d="M1008 99 L1021 112 L1008 125 L995 112 Z" fill="#1c1f22"/>
+  <text x="1008" y="154" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">You merge the</text>
+  <text x="1008" y="175" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">pull request</text>
+  <path d="M800 235 L809 244 L800 253 L791 244 Z" fill="#1c1f22"/>
+  <text x="818" y="249" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">You decide</text>
+  <circle cx="940" cy="244" r="7" fill="#ffffff" stroke="#1c1f22" stroke-width="2"/>
+  <text x="956" y="249" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#5b6268">An agent works</text>
+</svg>
