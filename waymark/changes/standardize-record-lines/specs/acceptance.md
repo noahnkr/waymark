@@ -33,10 +33,7 @@ An acceptance SHALL cover the change's proposal, its deltas, its design, the liv
 - WHEN the human runs `wm accept <change>`
 - THEN the Log holds a second `(accepted)` record that names items 1.1, 1.2 and 1.3, after the first
 
-### Requirement: Acceptance without an item list
-An acceptance without an item list, written by an older `wm` and carried into the Log by the format 2 migration, SHALL cover every item the change has, so adding an item withdraws it as before. `wm check` SHALL NOT report such a record as malformed.
+## Removed requirements
 
-#### Scenario: Older acceptance line
-- GIVEN an accepted change whose `(accepted)` record has a fingerprint and no item list
-- WHEN an item is appended to its task list
-- THEN the change is no longer accepted, and `wm check` reports no malformed evidence
+### Requirement: Acceptance without an item list
+Reason: Every `(accepted)` record names its items. The format 2 migration writes every item of the change into an old acceptance that named none, and keeps its fingerprint, so the change is accepted again in format 2 anyway.

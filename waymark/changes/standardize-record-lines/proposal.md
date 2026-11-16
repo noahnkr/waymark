@@ -2,7 +2,6 @@
 
 Owner: Noah Roberts
 Review: independent
-Accepted: 2026-11-15 by Noah Roberts (fingerprint: 3fc3fc068d5f1065; items: 1.1 1.2 1.3 1.4 1.5 1.6 1.7 2.1 2.2)
 
 ## Why
 
@@ -25,25 +24,24 @@ This is the first change on the `record-format-and-skills` milestone. The later 
 - **Findings** put the place in backticks: ``- critical `src/a.py:12`: <text>``, so a place that contains ": " is read correctly.
 - **One definition per record kind.** A single module renders and parses every record, and every command that writes one goes through it.
 - **`wm check --fix`** rewrites the record into its standard layout: the records `wm` owns, and the layout of human-written text (list markers, blank lines around headings, trailing spaces, the final newline). It never changes wording. It reports what it changed. The charter's careful-writes constraint gains this exception, for a fix the human asks for.
-- **Record format 2.** `wm update` migrates an active change's records to the new shapes and moves its acceptance, sync and override into the Log, keeping its acceptance valid. Archived changes are read and shown as they were written.
+- **Record format 2, and nothing older.** `wm update` migrates every change, active and archived, to the new shapes and moves its acceptance, sync and override into the Log. Old per-item reviews become `(note)` records, and old `review:` tags go. `wm` then reads only format 2, so the format 1 readers, the old acceptance line without items and the old fingerprint are removed (the human chose this). An acceptance keeps its fingerprint, so an active change is accepted again after the migration.
 - **Skills, agent definitions and docs** name the new records and the Log.
 
 ## Non-goals
 
 - The human-written formats: proposal lines as a list, the glossary, criteria as nested lists, the `Build:` sub-line, delta headings. They are the next change on the milestone, `tidy-authored-notes`, which extends `--fix`.
 - Rewriting the wording of anything a human wrote.
-- Migrating archived changes.
 - Dating the tick on an item. A tick stays a checkbox.
 
 ## Impact
 
 - New spec `records`: the record shape, the item records, the Log section, keeping resolved records, findings with a backticked place, and the format 2 migration.
 - New spec `formatting`: what `wm check --fix` rewrites, what it leaves alone, and what it reports.
-- Spec `acceptance`: the acceptance is an `(accepted)` record in the Log, with its items; the requirements that name the acceptance line are modified.
-- Spec `review`: the review records and the override are written in the Log, with backticked places in findings; the requirements "Review recorded in the task list" and "Archive needs the change's review" are modified.
+- Spec `acceptance`: the acceptance is an `(accepted)` record in the Log, with its items; the requirements that name the acceptance line are modified, and "Acceptance without an item list" is removed.
+- Spec `review`: the review records and the override are written in the Log, with backticked places in findings; the requirements "Review recorded in the task list" and "Archive needs the change's review" are modified, and "No review tag on items" is removed.
 - Spec `agent-results`: the reviewer's verdict is written in the Log, with `by wm-reviewer`; the scenario that names the `## Review` section is modified.
 - **Behavior change for every user, for the changelog:**
-  - the record format goes to 2, and `wm update` migrates active changes;
+  - the record format goes to 2, `wm update` migrates every change, archived ones too, and active changes are accepted again;
   - the `## Review` section becomes `## Log`, and the acceptance, sync and override move there from the proposal;
   - `Blocked:`, `Spec gap:` and `Note:` become dated `(blocked)`, `(gap)` and `(note)` records, and `wm resolve` keeps them;
   - every record carries a date and who wrote it, and the writing commands take `--by`;

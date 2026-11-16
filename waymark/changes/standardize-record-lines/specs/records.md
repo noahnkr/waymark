@@ -78,20 +78,21 @@ An agent's edit to the record that adds, changes or removes a record or a tick S
 - THEN the finding is written as ``- warning `src/a.py:12`: the limit is not checked`` under the `(self-review)` record
 
 ### Requirement: Record format 2
-This version of `wm` SHALL write record format 2. `wm update` SHALL migrate an active change from format 1:
-- its `Accepted:`, `Synced:` and `Review override:` lines move from the proposal into the Log as `(accepted)`, `(synced)` and `(override)` records;
-- its `## Review` section becomes the `## Log`;
+This version of `wm` SHALL write and read only record format 2. `wm update` SHALL migrate every change from format 1, active and archived:
+- its `Accepted:`, `Synced:` and `Review override:` lines, in the proposal or its outcome, move into the Log as `(accepted)`, `(synced)` and `(override)` records;
+- an `(accepted)` record names every item of the change when the old line named none;
+- its `## Review` section becomes the `## Log`, and its findings take the backticked place;
 - its `Blocked:`, `Spec gap:` and `Note:` lines become `(blocked)`, `(gap)` and `(note)` records;
-- its findings take the backticked place.
+- a review record under an item becomes a `(note)` record that keeps its date, verdict and text, and a `review:` tag on an item is removed.
 
-A change accepted before the migration SHALL still be accepted after it. A line that had no date SHALL take the date of the last commit that touched its file, or the day of the migration when the file isn't committed. Archived changes SHALL NOT be migrated, and SHALL be shown as they were written.
+An acceptance keeps its fingerprint, so an active change accepted before the migration SHALL need to be accepted again after it. A line that had no date SHALL take the date of the last commit that touched its file, or the day of the migration when the file isn't committed.
 
 #### Scenario: Accepted change migrated
 - GIVEN a format 1 record with an accepted change whose proposal has an `Accepted:` line and whose item 1.2 has a `Blocked:` line
 - WHEN `wm update` runs
-- THEN the proposal has no `Accepted:` line, the task list's Log holds the `(accepted)` record, item 1.2 has a dated `(blocked)` record, the change is still accepted, and `record_format` is 2
+- THEN the proposal has no `Accepted:` line, the task list's Log holds the `(accepted)` record, item 1.2 has a dated `(blocked)` record, `record_format` is 2, and `wm status` asks the human to accept the change again
 
-#### Scenario: Archived change left as written
-- GIVEN a format 1 record with an archived change whose task list has a `## Review` section
+#### Scenario: Archived change migrated
+- GIVEN a format 1 record with an archived change whose task list has a `## Review` section and an item with `` `review: independent` `` and a `(review)` record under it
 - WHEN `wm update` runs and then `wm show <archived change>`
-- THEN the archived change's files are unchanged, and its review records are shown
+- THEN its task list has a `## Log` with its review records, the item has no tag and a `(note)` record with the old review, and `wm check` reports no problem in it

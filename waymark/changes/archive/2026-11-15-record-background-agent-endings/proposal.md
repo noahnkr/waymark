@@ -1,7 +1,6 @@
 # Record background agent endings
 
 Owner: Noah Roberts
-Accepted: 2026-11-15 by Noah Roberts (fingerprint: 3945bf0e680754f1)
 
 ## Why
 

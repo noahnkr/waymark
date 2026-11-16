@@ -27,3 +27,8 @@
 - GIVEN a change at review level `self` with every item ticked and no review
 - WHEN the human runs `wm archive <change> --override "<reason>"`
 - THEN the archived change's Log holds an `(override)` record with the reason, and `wm pr` shows it
+
+## Removed requirements
+
+### Requirement: No review tag on items
+Reason: The format 2 migration removes every `review:` tag from items and turns the review records under items into `(note)` records, in active and archived changes alike, so no change carries them any more. A tag left by hand is reported like any other text that doesn't belong on an item line.

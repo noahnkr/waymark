@@ -1,7 +1,6 @@
 # Drop waymark folder
 
 Owner: Noah Roberts
-Accepted: 2026-11-15 by Noah Roberts (fingerprint: 9dd80fac7b4f576c)
 
 ## Why
 
