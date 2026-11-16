@@ -11,7 +11,7 @@
 - [x] 1.3 Read the new delta sections and rename requirements
   - Criteria: `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` and `## RENAMED Requirements` are read, and the old headings still are; RENAMED holds `- From:`/`- To:` pairs, with a problem for an unpaired line or a name renamed twice; archiving or syncing renames the requirement's heading and keeps its block, before any modification; a missing old name or an existing new name is a conflict; the fingerprint covers the living text of a renamed requirement
   - Verify: tests in `tests/record/test_deltas.py`, `tests/record/test_state.py` and `tests/services/test_archive.py` for the scenarios "Requirement renamed" and "Rename of a missing requirement"
-- [ ] 1.4 Move to format 3, drop the old layouts and the migrations
+- [x] 1.4 Move to format 3, drop the old layouts and the migrations
   - Criteria: a one-off `services/format_three.py` moves this repository's record to the new layouts, for every change, active and archived, the charter and the explorations, without changing wording; `RECORD_FORMAT` is 3; once it has run here, `format_two.py`, `format_three.py` and their tests are removed, `MIGRATIONS` is empty, and `wm update` refuses an older record with a reason that names its format; the old layouts (bare facts, the old glossary line, the trailing tag, the old delta headings, an exploration without `- Status:`) give `old-layout` naming `wm update`, and their readers go; the tests move to the new layouts; `wm check` is healthy here, and the human accepts this change again
   - Verify: tests in `tests/record/` and `tests/services/test_migrations.py` for the scenarios "Older record", "Old fact line", "Old glossary line" and the old delta headings; then `wm check` and `wm status` here
 
@@ -27,3 +27,4 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint 55bd85a27436cea8 items 1.1 1.2 1.3 1.4 2.1 2.2 by Noah Roberts
+- (accepted) 2026-11-16 fingerprint bae055bd98891d65 items 1.1 1.2 1.3 1.4 2.1 2.2 by Noah Roberts
