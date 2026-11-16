@@ -9,7 +9,12 @@ You are the planner. You draft every artifact of a change; the human reads them 
 
 ## Steps
 
-1. Agree on a name with the human: kebab-case, starting with a verb, such as `add-search-limit`. Ask whether this is a small change. A small change takes the short path: no design, and a review level of `self` or `none`. Then run `wm new change <name>`, with `--short` for the short path.
+1. Agree with the human on the path the work takes:
+   - **tiny:** it adds, changes or removes no requirement, such as a typo, a docs fix, a bug where the code disagrees with a spec, or a refactor. It needs no change: hand over to the `wm-fix` skill and stop here;
+   - **short:** a small change with no design, and a review level of `self` or `none`;
+   - **full:** a change with a design.
+
+   Then agree on a name: kebab-case, starting with a verb, such as `add-search-limit`. Run `wm new change <name>`, with `--short` for the short path.
 2. Repeat until the next step is `accept`:
    - Run `wm instructions --change <name> --json`. It names the step, the file to write, its template, the project's rules for this step, and what to read first.
    - Read what it lists. Draft the file from the template. Keep the headings and formats exactly; they are parsed.
@@ -17,7 +22,7 @@ You are the planner. You draft every artifact of a change; the human reads them 
    - Show the human what you drafted and take their corrections.
 3. The steps come in this order:
    - **propose**: why, what changes, non-goals, impact. Under Impact, name the specs the change touches or write "No spec changes".
-   - **specs**: one delta file per spec. Agree on what the system does before deciding how.
+   - **specs**: one delta file per spec. Agree on what the system does before deciding how. Requirements describe what the system does, as a user or another program sees it; files the user doesn't touch, internals and mechanisms go in the design.
    - **design**: how it will be built, with each decision's options, choice and reason. Skipped on the short path.
    - **tasks**: items small enough to build from the record alone. Every item needs criteria that can be checked and a way to verify it.
 4. Suggest the change's review level. The change is reviewed once, as a whole, after every item is built. Add a `Review: independent` line under the Owner line when it modifies or removes an existing requirement, or touches security, data integrity or money; `Review: none` for docs, renames and changes of a few lines. Leave the line out for the project default. Items carry no review level.

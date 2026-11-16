@@ -16,6 +16,7 @@ SKILLS = (
     "wm-archive",
     "wm-onboard",
     "wm-pr",
+    "wm-fix",
 )
 """Every skill, by the name it is installed under."""
 

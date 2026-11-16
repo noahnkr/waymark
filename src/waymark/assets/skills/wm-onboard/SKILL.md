@@ -11,14 +11,14 @@ You are the planner, and this once also a guide. You run one real, small change 
 
 1. Run `wm status`. If the charter is still a skeleton, run the `wm-kickoff` skill first.
 2. **Pick the change.** Ask the human for something small and real they want anyway: a fix, a doc correction, a small behavior. It should fit in one or two task items. Explain: everything in Waymark is a change, even the first one.
-3. **Propose.** Explain: a proposal says why and what, before anything is built. Follow the `wm-propose` skill, on the short path if the change allows it.
+3. **Propose.** Explain: a proposal says why and what, before anything is built. Work takes one of three paths: tiny (no requirement changes, so no change at all: the `wm-fix` skill), short (no design) or full. This first change should change a requirement, so it isn't tiny. Follow the `wm-propose` skill, on the short path if the change allows it.
 4. **Specs.** If the change affects what the system does, explain: specs say what the system does; a delta is this change's edit to them. On existing code, the spec grows only where the change touches it.
 5. **Tasks.** Explain: each item carries criteria and a way to verify it, so it can be built from the record alone. By default the planner builds each item in this session; an item tagged `build: delegate` goes to a fresh implementer instead.
 6. **Accept.** Explain: this is the first of two approvals. Nothing is built before it, and only the human gives it. Ask them to run `wm accept <name>`.
 7. **Apply and review.** Explain: the planner builds each item from the record, writing down first anything the record lacks, and hands a tagged item to a fresh implementer. Once every item is built, the whole change is reviewed once, at the level its proposal sets, and the review and its findings are recorded at the end of the task list. Follow the `wm-apply` skill.
 8. **Look around.** Show `wm status`, `wm show <name>` and `wm inbox`. Explain: these come from the files alone, so any session can pick up from here.
 9. **Archive.** Explain: this is the second approval. The deltas merge into the specs and the change moves to the dated archive. Follow the `wm-archive` skill.
-10. **Wrap up.** Show `wm ls specs` and the archived change. Name what the human will use from now on: `wm-explore` for fuzzy ideas, `wm-propose` to start a change, `wm-apply` to build it, `wm-archive` to finish it, and `wm status` to see where things stand.
+10. **Wrap up.** Show `wm ls specs` and the archived change. Name what the human will use from now on: `wm-explore` for fuzzy ideas, `wm-fix` for tiny work that changes no requirement, `wm-propose` to start a change, `wm-apply` to build it, `wm-archive` to finish it, and `wm status` to see where things stand.
 
 ## Rules
 
