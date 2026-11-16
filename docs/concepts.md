@@ -22,11 +22,15 @@ apply      each item built from the record: by the planner, or by a fresh
            implementer agent when the item is tagged `build: delegate`
 review     the whole change checked once, at its level, and the review written
            at the end of the task list
-archive    YOU approve finishing it; deltas merge into the specs, the outcome is written
+archive    YOU approve finishing it, on the change's branch before its pull request;
+           deltas merge into the specs, the outcome is written
 ```
 
 Agents draft every artifact; you approve at the two gates, **accept** and
-**archive**. Specs come before design: first agree on what the system does, then
+**archive**. The archive goes on the change's branch before its pull request, so the
+code, the merged specs and the archived change are reviewed and merged together.
+If the pull request needs more work, the archive commit is reverted and the
+change archived again. Specs come before design: first agree on what the system does, then
 on how.
 
 **Changing an accepted change withdraws its acceptance.** That covers the

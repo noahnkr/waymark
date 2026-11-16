@@ -562,3 +562,16 @@ def test_proposal_instructions_explain_the_review_line(project: Workspace) -> No
     guidance = " ".join(at(project)["guidance"])
     assert '"Review: self|independent|none"' in guidance
     assert "modifies or removes an existing requirement" in guidance
+
+
+def test_built_and_reviewed(project: Workspace) -> None:
+    accepted(project)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(project.root, NAME, number)
+    lifecycle.self_review(project.root, NAME, "fine", DAY)
+    step = at(project)
+    assert step["step"] == "archive"
+    guidance = " ".join(step["guidance"])
+    assert "archive on the change's branch, before the pull request" in guidance
+    assert "merge" not in guidance.lower()
+    assert "merge" not in step["unlocks"].lower()

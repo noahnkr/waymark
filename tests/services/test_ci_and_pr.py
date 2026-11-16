@@ -173,3 +173,62 @@ def test_pr_text_gives_the_changes_review_and_its_findings(project: Workspace) -
     )
     body = describe(project.record(), NAME)["body"]
     assert "## Review\n\nSelf-reviewed: fine\n- warning: src/a.py:3: the name is vague" in body
+
+
+def archived(project: Workspace, outcome: str, day: datetime.date = DAY) -> None:
+    """Take the default change from accept to archive, as on its branch."""
+    lifecycle.accept(project.root, NAME, day)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(project.root, NAME, number)
+    lifecycle.self_review(project.root, NAME, "fine", day)
+    lifecycle.archive(project.root, NAME, day, outcome=outcome)
+
+
+def test_archived_on_its_branch(project: Workspace) -> None:
+    project.change()
+    remote(project.root, "git@github.com:someone/shop.git")
+    archived(project, "Searches return the fifty best matches.")
+    payload = describe(project.record(), NAME)
+    assert errors(payload, SCHEMAS["pr"]) == []
+    assert (payload["title"], payload["branch"]) == ("Limit the results", NAME)
+    body = payload["body"]
+    assert body.startswith("Long result lists are slow.")
+    assert "- search: adds Result limit" in body
+    assert "- [x] 1.1 Cap the result count\n" in body
+    assert "## Review\n\nSelf-reviewed: fine" in body
+    assert "## Outcome\n\nSearches return the fifty best matches." in body
+    folder = f"waymark/changes/archive/{DAY.isoformat()}-{NAME}"
+    url = f"https://github.com/someone/shop/blob/{NAME}/{folder}/proposal.md"
+    assert payload["links"] == [{"name": "change", "url": url}]
+    assert f"- The change: [{folder}/proposal.md]({url})" in body
+
+
+def test_pr_for_a_name_archived_twice_describes_the_latest(project: Workspace) -> None:
+    project.change()
+    archived(project, "First.")
+    project.change(
+        deltas={
+            "search": delta(
+                modified=(requirement(statement="A search SHALL return at most twenty results."),)
+            )
+        }
+    )
+    archived(project, "Second.", datetime.date(2026, 2, 1))
+    body = describe(project.record(), NAME)["body"]
+    assert "## Outcome\n\nSecond." in body
+    assert "archive/2026-02-01-add-limit/proposal.md" in body
+
+
+def test_neither_active_nor_archived(project: Workspace) -> None:
+    project.change()
+    with pytest.raises(Refusal, match=r'no active change "add-order"\. Active changes: add-limit'):
+        describe(project.record(), "add-order")
+
+
+def test_pr_in_a_code_repo_for_an_archived_change(suite: Workspace) -> None:
+    archived(suite, "Capped in the API and shown in the web app.")
+    payload = describe(suite.record(), NAME, "api")
+    assert "## Items in api" in payload["body"]
+    assert "- [x] 1.1 Add the endpoint" in payload["body"]
+    assert "1.2" not in payload["body"]
+    assert [link["name"] for link in payload["links"]] == ["change", "suite"]
