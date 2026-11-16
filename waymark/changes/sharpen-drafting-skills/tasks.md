@@ -21,7 +21,7 @@
   - Verify:
     - the assets tests in `tests/`
     - read each of the four skills against its old text
-- [ ] 1.3 Rewrite the working skills to the layout, and hold it with a test
+- [x] 1.3 Rewrite the working skills to the layout, and hold it with a test
   - Criteria:
     - `wm-apply`, `wm-archive`, `wm-pr`, `wm-fix` and `wm-onboard` follow the same layout, each with its fixed Show the human and its When to stop
     - every step and rule of the five skills' old text is kept, moved into the layout, or covered by the shared rules
