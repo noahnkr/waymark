@@ -445,3 +445,13 @@ def test_accept_refuses_a_git_name_that_would_break_the_record(workspace: Worksp
         lifecycle.accept(workspace.root, NAME, DAY)
     lifecycle.accept(workspace.root, NAME, DAY, by="Sam Doe")
     assert " items 1.1 1.2 by Sam Doe\n" in workspace.read(TASKS_FILE)
+
+
+def test_accept_refuses_a_bad_by_name_without_blaming_git(project: Workspace) -> None:
+    project.change()
+    with pytest.raises(Refusal) as refusal:
+        lifecycle.accept(project.root, NAME, DAY, by="Sam: the owner")
+    assert 'holds ": "' in str(refusal.value)
+    assert "git" not in str(refusal.value)
+    with pytest.raises(Refusal, match="empty"):
+        lifecycle.accept(project.root, NAME, DAY, by="")

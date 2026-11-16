@@ -240,6 +240,7 @@ def test_scenario_overridden(latest: Workspace) -> None:
     assert "override" not in latest.read(f"{folder}/proposal.md").casefold()
     body = describe(latest.record(), NAME)["body"]
     assert "Archived without its review by Sam Doe: the reviewer is away" in body
+    assert body.count("the reviewer is away") == 1
 
 
 def test_the_archived_change_reads_as_format_2(latest: Workspace) -> None:

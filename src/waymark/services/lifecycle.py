@@ -115,12 +115,15 @@ def accept(start: Path, name: str, today: datetime.date, *, by: str | None = Non
         raise Refusal(f'The change "{name}" has a conflict to resolve first. {step.reason}')
     if state.acceptance is AcceptanceState.VALID:
         return Done(f'The change "{name}" is already accepted as it stands.')
-    who = by if by is not None else git.user_name(record.project.root)
-    if who:
-        try:
-            who = records.check_who(who)
-        except RecordError as error:
-            raise Refusal(f"{error} Set another name in git, or pass --by.") from error
+    if by is not None:
+        who: str | None = _who(record, by)
+    else:
+        who = git.user_name(record.project.root)
+        if who:
+            try:
+                who = records.check_who(who)
+            except RecordError as error:
+                raise Refusal(f"{error} Set another name in git, or pass --by.") from error
     if not who:
         raise Refusal(
             "The acceptance records who accepted. Set your name in git: "

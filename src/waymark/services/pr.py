@@ -45,7 +45,10 @@ def _web(folder: Path | None) -> str | None:
 
 
 def _review_lines(record: Record, change: Change) -> list[str]:
-    """One line on the change's review: its level, and how it came out."""
+    """The change's review: how it came out, then every review record with its findings.
+
+    An override is said once, after the list.
+    """
     review = review_state(change, record.default_review)
     records = change.tasks.review_records if change.tasks else ()
     last = records[-1] if records else None
@@ -62,11 +65,7 @@ def _review_lines(record: Record, change: Change) -> list[str]:
     lines = ["", "## Review", "", text]
     if change.tasks is not None:
         written = change.tasks.doc.lines
-        shown = [
-            record
-            for record in change.tasks.log
-            if record in records or record.kind is RecordKind.OVERRIDE
-        ]
+        shown = [record for record in change.tasks.log if record in records]
         if shown:
             lines.append("")
         for shown_record in shown:
