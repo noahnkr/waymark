@@ -83,8 +83,12 @@ def parse_milestone(doc: Document) -> tuple[Goal, Roadmap]:
         targets: dict[int, str] = {}
         for link in doc.links():
             targets.setdefault(link.index, link.target)
+        in_comment = False
         for index in range(section.body_start, section.end):
             line = doc.lines[index]
+            if in_comment or line.text.lstrip().startswith("<!--"):
+                in_comment = "-->" not in line.text
+                continue
             match = None if line.in_fence else _ENTRY.match(line.text)
             if match:
                 checked = match.group(1) is not None and match.group(1) != " "

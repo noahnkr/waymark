@@ -203,6 +203,9 @@ def test_only_roadmap_lines_are_entries() -> None:
     """Requirement "Milestone as one file": Done when bullets aren't roadmap entries."""
     _, roadmap = parse_milestone(document(milestone("- Cache hot queries\n")))
     assert [entry.text for entry in roadmap.entries] == ["Cache hot queries"]
+    commented = milestone("<!-- An example:\n- not a change -->\n- Cache hot queries\n")
+    _, roadmap = parse_milestone(document(commented))
+    assert [entry.text for entry in roadmap.entries] == ["Cache hot queries"]
 
 
 def test_exploration_with_an_empty_conclusion_is_open() -> None:
