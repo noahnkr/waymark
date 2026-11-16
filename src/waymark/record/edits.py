@@ -9,8 +9,8 @@ from collections.abc import Sequence
 
 from waymark.record.outline import parse_facts
 from waymark.record.proposal import ACCEPTED, OUTCOME, OWNER, PATH, REVIEW, SYNCED, Proposal
-from waymark.record.tasks import REVIEW_SECTION, Tasks
-from waymark.record.text import Document
+from waymark.record.tasks import LOG_SECTION, REVIEW_SECTION, Tasks
+from waymark.record.text import Document, Section
 
 _BOX = re.compile(r"^- \[[ xX]\]")
 _FORMAT_LINE = re.compile(r"^record_format\s*=\s*\d+", re.MULTILINE)
@@ -48,18 +48,31 @@ def edit_item(
 
 
 def add_review(tasks: Tasks, record: str, findings: Sequence[str] = ()) -> str:
-    """Append a record, and the findings under it, to the change's Review section.
+    """Append a record, and the findings under it, to a format 1 change's Review section.
 
     The section is created at the end of the task list when it isn't there yet.
     """
+    return _append_to_section(tasks, tasks.review_section, REVIEW_SECTION, record, findings)
+
+
+def append_log(tasks: Tasks, record: str, findings: Sequence[str] = ()) -> str:
+    """Append a record, and the findings under it, to the change's Log section.
+
+    The section is created at the end of the task list when it isn't there yet.
+    """
+    return _append_to_section(tasks, tasks.log_section, LOG_SECTION, record, findings)
+
+
+def _append_to_section(
+    tasks: Tasks, section: Section | None, title: str, record: str, findings: Sequence[str]
+) -> str:
     newline = tasks.doc.newline
     lines = _lines(tasks.doc)
     added = [f"- {record}{newline}", *(f"  - {finding}{newline}" for finding in findings)]
-    section = tasks.review_section
     if section is None:
         while lines and not lines[-1].strip():
             lines.pop()
-        return "".join([*lines, newline, f"## {REVIEW_SECTION}{newline}", newline, *added])
+        return "".join([*lines, newline, f"## {title}{newline}", newline, *added])
     end = section.end
     while end > section.body_start and not lines[end - 1].strip():
         end -= 1

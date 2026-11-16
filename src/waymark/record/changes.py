@@ -55,12 +55,16 @@ class Change:
         """The acceptance that counts: the latest ``(accepted)`` record, or the old line."""
         if self.version < LATEST_FORMAT:
             return self.proposal.acceptance if self.proposal else None
-        record = self.tasks.latest(RecordKind.ACCEPTED) if self.tasks else None
+        if self.tasks is None:
+            return None
+        record = self.tasks.latest(RecordKind.ACCEPTED)
         if record is None or record.fingerprint is None:
             return None
-        return Acceptance(
-            record.date, record.who or "", record.fingerprint, record.index, record.covers
-        )
+        fingerprint = record.fingerprint
+        synced = self.tasks.latest(RecordKind.SYNCED)
+        if synced is not None and synced.fingerprint and synced.index > record.index:
+            fingerprint = synced.fingerprint
+        return Acceptance(record.date, record.who or "", fingerprint, record.index, record.covers)
 
     @property
     def synced(self) -> datetime.date | None:

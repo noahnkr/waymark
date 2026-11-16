@@ -59,6 +59,8 @@ class Grammar(Enum):
     """A verdict, then the item numbers a ``changes`` verdict names."""
     ACCEPTANCE = "acceptance"
     """``fingerprint <hex16>``, then optionally ``items <number> <number>...``."""
+    SYNC = "sync"
+    """Optionally ``fingerprint <hex16>``: the acceptance stamped again for the merged specs."""
 
 
 @dataclass(frozen=True)
@@ -79,7 +81,10 @@ KINDS: dict[RecordKind, KindSpec] = {
         shape="(accepted) YYYY-MM-DD fingerprint <digest> [items <item> <item>...] [by <who>]",
     ),
     RecordKind.SYNCED: KindSpec(
-        Grammar.NONE, has_text=False, level=Level.CHANGE, shape="(synced) YYYY-MM-DD [by <who>]"
+        Grammar.SYNC,
+        has_text=False,
+        level=Level.CHANGE,
+        shape="(synced) YYYY-MM-DD [fingerprint <digest>] [by <who>]",
     ),
     RecordKind.OVERRIDE: KindSpec(
         Grammar.NONE,
@@ -169,6 +174,8 @@ def _arguments(record: Record) -> list[str]:
     if grammar is Grammar.VERDICT:
         assert record.verdict is not None
         return [record.verdict.value, *(record.items or ())]
+    if grammar is Grammar.SYNC:
+        return ["fingerprint", record.fingerprint] if record.fingerprint else []
     if grammar is Grammar.ACCEPTANCE:
         assert record.fingerprint is not None
         parts = ["fingerprint", record.fingerprint]
@@ -256,27 +263,54 @@ def _split_who(body: str) -> tuple[list[str], str | None]:
     return words[:at], " ".join(words[at + 1 :])
 
 
-def _read_arguments(  # noqa: PLR0911 - one return per refusal
+_Arguments = tuple[Verdict | None, tuple[str, ...] | None, str | None]
+
+
+def _read_arguments(
     kind: RecordKind, grammar: Grammar, words: list[str]
-) -> tuple[Verdict | None, tuple[str, ...] | None, str | None] | ParseError:
-    if grammar is Grammar.NONE:
-        if words:
-            return _fail(kind, f'"{" ".join(words)}" is not expected before "by" or the colon.')
-        return None, None, None
+) -> _Arguments | ParseError:
+    """The arguments before ``by``, read by the kind's grammar."""
     if grammar is Grammar.VERDICT:
-        if not words:
-            return _fail(kind, "The verdict is missing.")
-        try:
-            verdict = Verdict(words[0])
-        except ValueError:
-            return _fail(kind, f'"{words[0]}" is not a verdict.')
-        items = tuple(words[1:])
-        if any(not _ITEM_NUMBER.match(item) for item in items):
-            return _fail(kind, "Only item numbers such as 1.2 may follow the verdict.")
-        if items and verdict is not Verdict.CHANGES:
-            return _fail(kind, f'Only a "changes" verdict names items, not "{verdict.value}".')
-        return verdict, items if verdict is Verdict.CHANGES else None, None
-    if len(words) < 2 or words[0] != "fingerprint" or not _DIGEST.match(words[1]):  # noqa: PLR2004
+        return _verdict_arguments(kind, words)
+    if grammar is Grammar.SYNC:
+        return _sync_arguments(kind, words)
+    if grammar is Grammar.ACCEPTANCE:
+        return _acceptance_arguments(kind, words)
+    if words:
+        return _fail(kind, f'"{" ".join(words)}" is not expected before "by" or the colon.')
+    return None, None, None
+
+
+def _verdict_arguments(kind: RecordKind, words: list[str]) -> _Arguments | ParseError:
+    if not words:
+        return _fail(kind, "The verdict is missing.")
+    try:
+        verdict = Verdict(words[0])
+    except ValueError:
+        return _fail(kind, f'"{words[0]}" is not a verdict.')
+    items = tuple(words[1:])
+    if any(not _ITEM_NUMBER.match(item) for item in items):
+        return _fail(kind, "Only item numbers such as 1.2 may follow the verdict.")
+    if items and verdict is not Verdict.CHANGES:
+        return _fail(kind, f'Only a "changes" verdict names items, not "{verdict.value}".')
+    return verdict, items if verdict is Verdict.CHANGES else None, None
+
+
+def _is_fingerprint(words: list[str]) -> bool:
+    """Whether the words start with ``fingerprint <hex16>``."""
+    return len(words) >= 2 and words[0] == "fingerprint" and bool(_DIGEST.match(words[1]))  # noqa: PLR2004
+
+
+def _sync_arguments(kind: RecordKind, words: list[str]) -> _Arguments | ParseError:
+    if not words:
+        return None, None, None
+    if len(words) != 2 or not _is_fingerprint(words):  # noqa: PLR2004
+        return _fail(kind, "Only a fingerprint of 16 hexadecimal digits may follow the date.")
+    return None, None, words[1]
+
+
+def _acceptance_arguments(kind: RecordKind, words: list[str]) -> _Arguments | ParseError:
+    if not _is_fingerprint(words):
         return _fail(kind, "The fingerprint is missing or not 16 hexadecimal digits.")
     rest = words[2:]
     if not rest:

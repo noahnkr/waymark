@@ -55,6 +55,7 @@
 
    In `services/lifecycle.py`, every command builds a `Record` and renders it, and each takes `by: str | None`:
    - `accept`, `sync` and `archive --override` append to the Log;
+   - `sync` stamps the acceptance again for the merged specs without rewriting the `(accepted)` record. It writes the new fingerprint on its own record, `(synced) <date> fingerprint <digest> by <who>`, and a `(synced)` record after the latest `(accepted)` supplies the fingerprint that acceptance is checked against. A `(synced)` record without a fingerprint, from the migration, changes nothing;
    - `wm block` and `wm gap` add item records;
    - `wm resolve` adds `(resolved)` and keeps what it resolves;
    - the new `note` command, `wm note <change> <item> "<text>"`, writes a `(note)`.
@@ -146,8 +147,8 @@
 
 - **The format changes under this change.** This change is drafted, accepted and partly built in format 1, with `wm` running this checkout.
   - Since the reader follows the stored `record_format`, items 1.1 to 1.3 leave this repository's record read as format 1.
-  - Until 1.4, only `wm tick` is used here, because the writers from 1.3 already write format 2.
-  - Item 1.4 changes the fingerprint, adds the migration and raises `RECORD_FORMAT` together, since the fingerprint alone would withdraw this change's own acceptance.
+  - Until 1.4, each command writes in its change's format (the human chose this). Item 1.3 adds the format 2 path and tests it on a format 2 record, while the format 1 path and the tests built on it keep working, here too.
+  - Item 1.4 changes the fingerprint, adds the migration and raises `RECORD_FORMAT` together, since the fingerprint alone would withdraw this change's own acceptance. Once writing needs the latest format, the format 1 writing path is dead: 1.4 removes it and moves the tests that wrote format 1 to format 2. Tests of reading format 1 stay.
   - After 1.4, the planner runs `wm update` on this repository. That re-stamps the acceptance, and the rest is built in format 2.
 - **`--fix` touches human text.** It changes layout only, never wording, and the charter says so. `standard_layout` is idempotent and keeps fenced code and comments, which the tests check. Its result is checked against acceptance and evidence before anything is written.
 - **Format 1 readers stay.** That is more code to keep, but archived changes must show as they were written, as with the old item review tags.

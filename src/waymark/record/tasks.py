@@ -150,6 +150,7 @@ class Tasks:
     """Every record in the Log section, in order; empty in a format 1 task list."""
     version: int = 1
     """The record format the task list was read in."""
+    log_section: Section | None = None
 
     def item(self, number: str) -> Item | None:
         return next((item for item in self.items if item.number == number), None)
@@ -802,6 +803,7 @@ class _Parser:
             self.review_section,
             tuple(self.log),
             self.version,
+            self.log_section,
         )
 
 

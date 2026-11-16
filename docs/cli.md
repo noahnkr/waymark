@@ -124,10 +124,11 @@ wm new <change|milestone|exploration> <name> [--short] [--owner NAME]
 Accept a change, so its items can be applied. For the human to run.
 
 ```
-wm accept <change>
+wm accept <change> [--by NAME]
 ```
 
 - `change`: the change's name
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm tick
 
@@ -145,43 +146,59 @@ wm tick <change> <item>
 Record that an item is blocked.
 
 ```
-wm block <change> <item> <reason>
+wm block <change> <item> <reason> [--by NAME]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
 - `reason`: why it is blocked
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm gap
 
 Record a spec gap: the record wasn't enough to build an item.
 
 ```
-wm gap <change> <item> <note>
+wm gap <change> <item> <note> [--by NAME]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
 - `note`: what is missing from the record
+- `--by`: who the record names as its writer (default: your git name)
+
+## wm note
+
+Write a note under an item still to be finished, such as a partial result.
+
+```
+wm note <change> <item> <text> [--by NAME]
+```
+
+- `change`: the change's name
+- `item`: the item's number, for example 1.2
+- `text`: the note
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm review
 
 Record a self-review of a change, once every item is ticked.
 
 ```
-wm review <change> --self SUMMARY [--finding FINDING]
+wm review <change> --self SUMMARY [--finding FINDING] [--by NAME]
 ```
 
 - `change`: the change's name
 - `--self`: what the review checked and found (required)
 - `--finding`: a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm verdict
 
 Record a reviewer's verdict on a change.
 
 ```
-wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding FINDING]
+wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding FINDING] [--by NAME]
 ```
 
 - `change`: the change's name
@@ -189,51 +206,56 @@ wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding 
 - `reasons`: the reviewer's reasons
 - `--items`: the items to rebuild; a "changes" verdict names at least one
 - `--finding`: a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm reopen
 
 Reopen an item that a review of its change named to rebuild.
 
 ```
-wm reopen <change> <item>
+wm reopen <change> <item> [--by NAME]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm resolve
 
 Record what was decided about an item or a change's review that went to the human, and free it.
 
 ```
-wm resolve <change> <item> <decision>
+wm resolve <change> <item> <decision> [--by NAME]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, or "review" for the change's review
 - `decision`: what was decided
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm sync
 
 Merge an applied change's deltas into the specs without archiving it.
 
 ```
-wm sync <change>
+wm sync <change> [--by NAME]
 ```
 
 - `change`: the change's name
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm archive
 
 Archive an applied change. For the human to run.
 
 ```
-wm archive <change> [--outcome TEXT] [--override REASON]
+wm archive <change> [--outcome TEXT] [--override REASON] [--by NAME]
 ```
 
 - `change`: the change's name
 - `--outcome`: what came of the change
 - `--override`: archive although review records are missing; the reason is recorded
+- `--by`: who the record names as its writer (default: your git name)
 
 ## wm close
 

@@ -62,6 +62,10 @@ def _review_lines(record: Record, change: Change) -> list[str]:
     findings = [f for record in records[-1:] for f in record.findings]
     lines = ["", "## Review", "", text]
     lines += [f"- {f.severity.value}: {f.place}: {f.text}" for f in findings]
+    override = change.tasks.latest(RecordKind.OVERRIDE) if change.tasks else None
+    if override is not None:
+        by = f" by {override.who}" if override.who else ""
+        lines += ["", f"Archived without its review{by}: {override.text}"]
     return lines
 
 
