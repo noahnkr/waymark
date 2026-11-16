@@ -5,6 +5,11 @@ the record's format says whether `wm update` migrates an older record.
 
 ## [Unreleased]
 
+- **A new README and two new references.** The README opens with a diagram of
+  a change's trail and serves as an index: how it works, a quick start for each
+  setup, the record and the skills in brief, and the real-output walkthrough in a
+  collapsible section. [The record](docs/record.md) covers every note and
+  [Skills and agents](docs/skills.md) every skill and agent.
 - **One severity rubric for every review.** `wm context --for review` and
   `wm instructions` at the review step give it, as "Severity rubric" and, in the
   JSON, `severity_rubric`: critical when a criterion or scenario doesn't hold,

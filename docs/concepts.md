@@ -145,19 +145,16 @@ the end of the task list:
 
 ### What you write
 
-| File | Layout |
-|---|---|
-| Proposal | `- Owner: <name>`, and optionally `- Review: <level>` and `- Path: short`, as bullets under the title; under `## Impact`, a `- Specs:` line naming each spec with a delta in backticks, or `none`, a `- User-visible:` line and a `- Code:` line; at archive, `- Built:` and `- Differs:` lines under `## Outcome` |
-| Charter | goals and constraints as numbered lists, `1. <text>`; the glossary as `- **<term>**: <meaning>` lines; under Rules, one capitalized heading per step, such as `### Apply`, which may be left out when the step has no rules |
-| Task item | `- Criteria:`, `- Verify:` and, in an atlas, `- Repo:` lines under it; criteria and verification may each be a nested list, one per bullet; `- Build: delegate` to have an implementer build it |
-| Design | each `### Decision:` with `- Status: proposed` or `decided` and `- Decided by: human` or `planner` lines; an `## Open questions` section with a list or `None.`. A proposed decision or a listed question keeps the change from acceptance |
-| Delta | `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` and `## RENAMED Requirements`; a rename is a `- From: <old name>` line and a `- To: <new name>` line, and keeps the requirement's text |
-| Milestone | one `milestone.md`: the title, then `## Goal`, `## Done when`, `## Non-goals` and `## Roadmap`; only the list lines under `## Roadmap` are its changes, and archiving a change ticks its line there |
-| Exploration | `- Status: open`, `- Status: parked` with the reason in the Conclusion, or `- Status: led-to <link>` to the change or milestone it led to |
+You and your agents write sections of prose and `- Label:` lines: a proposal's
+`- Owner:` and its Impact's `- Specs:`, `- User-visible:` and `- Code:`; an
+item's `- Criteria:`, `- Verify:` and `- Build: delegate`; a decision's
+`- Status:` and `- Decided by:`; an exploration's `- Status:`. Each note has a
+fixed set of sections, and `wm check` holds it to them.
+[The record](record.md) covers every note in detail: its sections, the lines it
+can hold, who writes and updates it, and its checks.
 
-`wm check` reports a layout of an older record format and says to run
-`wm update`. Archived changes are read as they were written, without the
-Impact, Outcome and decision lines.
+The layout rules for the Impact, the decisions and the charter's numbered lists
+hold for active work. Archived changes are read as they were written.
 
 ### Records
 
@@ -191,6 +188,8 @@ Every line `wm` writes is a dated record of one shape:
 | Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules, and when to stop | every item's criteria, the deltas and their scenarios, the design, earlier reviews, the severity rubric, the code; **not** how it was built |
 | May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
+
+[Skills and agents](skills.md) covers each skill and agent in detail.
 
 Only you accept a change. The record is the source of truth: whoever builds an
 item builds it from the record. A fact the record lacks is written into it

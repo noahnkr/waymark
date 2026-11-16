@@ -163,5 +163,7 @@ settings.
 ## Next
 
 - [Concepts and glossary](concepts.md): what every file and rule is for.
+- [The record](record.md): every note, its sections and lines, and its checks.
+- [Skills and agents](skills.md): what each skill and agent does, reads and writes.
 - [Multi-repo guide](multi-repo.md): when your project spans several repositories.
 - [CLI reference](cli.md): every command.

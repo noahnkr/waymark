@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="470" viewBox="0 0 1280 470" role="img" aria-label="The trail of a change: explore, propose, accept, apply, review, archive, merge. You pass the three gates; agents do the rest.">
+  <title>The trail of a change: explore, propose, accept, apply, review, archive, merge.</title>
+  <g fill="none" stroke="#2a2f34" stroke-width="1.5">
+    <path d="M34 60 h12 M40 54 v12"/>
+    <path d="M34 300 h12 M40 294 v12"/>
+    <path d="M194 60 h12 M200 54 v12"/>
+    <path d="M194 300 h12 M200 294 v12"/>
+    <path d="M354 60 h12 M360 54 v12"/>
+    <path d="M354 300 h12 M360 294 v12"/>
+    <path d="M514 60 h12 M520 54 v12"/>
+    <path d="M514 300 h12 M520 294 v12"/>
+    <path d="M674 60 h12 M680 54 v12"/>
+    <path d="M674 300 h12 M680 294 v12"/>
+    <path d="M834 60 h12 M840 54 v12"/>
+    <path d="M834 300 h12 M840 294 v12"/>
+    <path d="M994 60 h12 M1000 54 v12"/>
+    <path d="M994 300 h12 M1000 294 v12"/>
+    <path d="M1154 60 h12 M1160 54 v12"/>
+    <path d="M1154 300 h12 M1160 294 v12"/>
+  </g>
+  <text x="40" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" letter-spacing="2" fill="#a3aab0">THE TRAIL OF A CHANGE</text>
+  <path d="M950 40 L958 48 L950 56 L942 48 Z" fill="#f2efe8"/>
+  <text x="966" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#a3aab0">a gate only you pass</text>
+  <circle cx="1140" cy="48" r="6" fill="#23272b" stroke="#f2efe8" stroke-width="2"/>
+  <text x="1154" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#a3aab0">an agent works</text>
+  <path d="M54 190 C193.0 176, 193.0 204, 282 190 C371.0 176, 371.0 204, 460 190 C549.0 176, 549.0 204, 638 190 C727.0 176, 727.0 204, 816 190 C905.0 176, 905.0 204, 994 190 C1083.0 176, 1083.0 204, 1172 190 L1222 190" fill="none" stroke="#3a4046" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+  <text x="104" y="140" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#f2efe8">Explore</text>
+  <text x="104" y="162" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">/wm-explore</text>
+  <circle cx="104" cy="190" r="9" fill="#23272b" stroke="#f2efe8" stroke-width="2.5"/>
+  <text x="104" y="234" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">reads the record</text>
+  <text x="104" y="253" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">explorations/</text>
+  <text x="282" y="140" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#f2efe8">Propose</text>
+  <text x="282" y="162" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">/wm-propose</text>
+  <circle cx="282" cy="190" r="9" fill="#23272b" stroke="#f2efe8" stroke-width="2.5"/>
+  <text x="282" y="234" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">proposal.md</text>
+  <text x="282" y="253" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">specs/*.md  (deltas)</text>
+  <text x="282" y="272" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">design.md</text>
+  <text x="282" y="291" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">tasks.md</text>
+  <text x="460" y="140" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#f2efe8">Accept</text>
+  <text x="460" y="162" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">wm accept</text>
+  <path d="M460 175 L475 190 L460 205 L445 190 Z" fill="#f2efe8"/>
+  <text x="460" y="194" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="0.5" fill="#1c1f22">YOU</text>
+  <text x="460" y="234" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">(accepted) in the Log</text>
+  <text x="460" y="253" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">nothing built before</text>
+  <text x="638" y="140" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#f2efe8">Apply</text>
+  <text x="638" y="162" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">/wm-apply</text>
+  <circle cx="638" cy="190" r="9" fill="#23272b" stroke="#f2efe8" stroke-width="2.5"/>
+  <text x="638" y="234" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">code, one commit</text>
+  <text x="638" y="253" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">  per item</text>
+  <text x="638" y="272" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">ticks, (note), (gap)</text>
+  <text x="816" y="140" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#f2efe8">Review</text>
+  <text x="816" y="162" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">self or reviewer</text>
+  <circle cx="816" cy="190" r="9" fill="#23272b" stroke="#f2efe8" stroke-width="2.5"/>
+  <text x="816" y="234" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">(review) + findings</text>
+  <text x="816" y="253" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">graded by the rubric</text>
+  <text x="994" y="140" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#f2efe8">Archive</text>
+  <text x="994" y="162" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">/wm-archive</text>
+  <path d="M994 175 L1009 190 L994 205 L979 190 Z" fill="#f2efe8"/>
+  <text x="994" y="194" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="0.5" fill="#1c1f22">YOU</text>
+  <text x="994" y="234" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">deltas → specs/</text>
+  <text x="994" y="253" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">## Outcome</text>
+  <text x="994" y="272" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">roadmap ticked</text>
+  <text x="1172" y="140" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#f2efe8">Merge</text>
+  <text x="1172" y="162" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">/wm-pr</text>
+  <path d="M1172 175 L1187 190 L1172 205 L1157 190 Z" fill="#f2efe8"/>
+  <text x="1172" y="194" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="0.5" fill="#1c1f22">YOU</text>
+  <text x="1172" y="234" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">one PR per repo</text>
+  <text x="1172" y="253" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" fill="#a3aab0">agents never merge</text>
+  <line x1="40" y1="322" x2="1240" y2="322" stroke="#3a4046" stroke-width="1"/>
+  <text x="40" y="348" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" letter-spacing="2" fill="#a3aab0">THREE PATHS</text>
+  <rect x="40" y="362" width="10" height="18" rx="2" fill="#48c49c"/>
+  <text x="62" y="376" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#f2efe8">Tiny</text>
+  <text x="128" y="376" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">/wm-fix</text>
+  <text x="320" y="376" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14.5" fill="#f2efe8">no requirement changes: your yes, a commit, a PR. Nothing in the record.</text>
+  <rect x="40" y="392" width="10" height="18" rx="2" fill="#e6b43c"/>
+  <text x="62" y="406" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#f2efe8">Short</text>
+  <text x="128" y="406" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">/wm-propose</text>
+  <text x="320" y="406" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14.5" fill="#f2efe8">wm new change --short: proposal, deltas, tasks. No design; a self-review.</text>
+  <rect x="40" y="422" width="10" height="18" rx="2" fill="#ee7158"/>
+  <text x="62" y="436" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#f2efe8">Full</text>
+  <text x="128" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#a3aab0">/wm-propose</text>
+  <text x="320" y="436" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14.5" fill="#f2efe8">adds a design with settled decisions; an independent review when risky.</text>
+</svg>
