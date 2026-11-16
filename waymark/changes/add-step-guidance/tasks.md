@@ -32,7 +32,7 @@
   - Verify:
     - the assets tests in `tests/`
     - read each skill: no rule it used to state is lost, either kept or covered by the shared list
-- [ ] 2.2 Update the docs and the changelog
+- [x] 2.2 Update the docs and the changelog
   - Criteria:
     - concepts says `wm instructions` gives each drafting step a checklist and every step the shared rules
     - the changelog lists the checklist, the shared rules, `checklist` and `shared_rules` in the JSON, and the two new checks
