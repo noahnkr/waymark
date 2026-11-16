@@ -4,7 +4,7 @@ import datetime
 import os
 import subprocess
 
-from tests.support import Workspace, delta, proposal, requirement, spec
+from tests.support import IMPACT, Workspace, delta, proposal, requirement, spec
 from waymark.services import lifecycle
 from waymark.services.check import Finding, Severity, check, has_errors
 
@@ -92,6 +92,38 @@ def test_old_delta_headings_are_old_layouts(project: Workspace) -> None:
     assert [path for path, _ in old_layouts(project)] == ["changes/add-order/specs/search.md"]
 
 
+def test_scenario_impact_matches_the_deltas(project: Workspace) -> None:
+    project.change(proposal_text=proposal(impact=IMPACT.replace("`search`", "`search` (modified)")))
+    assert [f for f in check(project.root, NOW) if f.code.startswith("impact")] == []
+
+
+def test_scenario_delta_not_named_in_the_impact(project: Workspace) -> None:
+    ranking = delta(title="Ranking", added=(requirement("Score"),), purpose="How ranks work.")
+    project.change(deltas={"search": delta(added=(requirement(),)), "ranking": ranking})
+    project.write("specs/search.md", spec())
+    [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
+    assert (finding.severity, finding.path, finding.code) == (
+        Severity.ERROR,
+        "changes/add-limit/proposal.md",
+        "impact-mismatch",
+    )
+    assert "`ranking`" in finding.message
+
+
+def test_impact_needs_its_three_lines(project: Workspace) -> None:
+    project.change(proposal_text=proposal(impact="- Specs: `search`"))
+    [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
+    assert finding.code == "impact-format"
+    assert '"- User-visible:", "- Code:"' in finding.message
+
+
+def test_spec_named_without_a_delta_points_at_the_specs_step(project: Workspace) -> None:
+    project.change(proposal_text=proposal(impact=IMPACT.replace("`search`", "`search`, `ranking`")))
+    [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
+    assert (finding.path, finding.code) == ("changes/add-limit/specs", "impact-mismatch")
+    assert project.change_state().next_step.kind.value == "specs"
+
+
 def test_broken_links_are_errors(project: Workspace) -> None:
     project.replace("charter.md", "rebuilt nightly.", "rebuilt [nightly](jobs.md).")
     assert findings(project) == [("error", "charter.md", "broken-link")]
@@ -158,7 +190,8 @@ def test_exploration_without_a_status_line_is_an_old_layout(project: Workspace) 
 
 def test_change_untouched_for_a_while_is_a_warning(project: Workspace) -> None:
     order = delta(title="Order", added=(requirement("Result order"),), purpose="How order works.")
-    project.change("add-order", deltas={"order": order})
+    impact = IMPACT.replace("`search`", "`order`")
+    project.change("add-order", proposal_text=proposal(impact=impact), deltas={"order": order})
     commit_all(project, "2026-01-01T09:00:00+00:00")
     project.change("add-limit")
     commit_all(project, "2026-02-20T09:00:00+00:00")

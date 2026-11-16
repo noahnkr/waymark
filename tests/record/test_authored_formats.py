@@ -1,6 +1,6 @@
 """The layouts humans and the planner write: facts, the glossary, the exploration status."""
 
-from tests.support import CHARTER, Workspace, document, proposal
+from tests.support import CHARTER, NO_SPECS, Workspace, document, proposal
 from waymark.record.charter import parse_charter
 from waymark.record.explorations import parse_exploration
 from waymark.record.proposal import parse_proposal
@@ -38,6 +38,24 @@ def test_proposal_facts_as_a_list() -> None:
     assert parsed.owner == "Sam Doe"
     assert parsed.review is not None
     assert parsed.review.value == "independent"
+
+
+def test_structured_impact() -> None:
+    """Requirement "Structured impact": the three lines are read, with nested bullets."""
+    impact = (
+        "- Specs: `search` (modified), `ranking` (new)\n"
+        "- User-visible:\n  - at most fifty results\n  - a new flag\n"
+        "- Code: `record/search.py`\n"
+        "- Assets: the skills\n"
+    )
+    parsed = parse_proposal(document(proposal(impact=impact), "changes/add-limit/proposal.md"))
+    assert parsed.problems == ()
+    assert parsed.impact_specs == ("search", "ranking")
+    assert parsed.impact["User-visible"] == "- at most fifty results\n- a new flag"
+    assert not parsed.no_spec_changes
+    none = parse_proposal(document(proposal(impact=NO_SPECS), "p.md"))
+    assert none.impact_specs == ()
+    assert none.no_spec_changes
 
 
 def test_scenario_new_change(project: Workspace) -> None:

@@ -1,6 +1,6 @@
 """Proposals, designs, the charter, milestones and explorations."""
 
-from tests.support import CHARTER, DESIGN, document, proposal
+from tests.support import CHARTER, DESIGN, NO_SPECS, document, proposal
 from waymark.record.charter import parse_charter
 from waymark.record.design import parse_design
 from waymark.record.explorations import Exploration, parse_exploration
@@ -85,7 +85,7 @@ def test_proposal_marks_the_short_path_with_a_path_line() -> None:
 
 
 def test_proposal_impact_can_state_no_spec_changes() -> None:
-    assert parse(proposal(impact="No spec changes.")).no_spec_changes
+    assert parse(proposal(impact=NO_SPECS)).no_spec_changes
     assert not parse(proposal()).no_spec_changes
 
 

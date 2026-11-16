@@ -5,7 +5,7 @@ import datetime
 import pytest
 
 from tests.conftest import git_init
-from tests.support import DESIGN, TASKS, Workspace, delta, proposal, requirement, spec
+from tests.support import DESIGN, NO_SPECS, TASKS, Workspace, delta, proposal, requirement, spec
 from waymark.record.state import AcceptanceState, StepKind
 from waymark.record.terms import Phase, ReviewLevel, Verdict
 from waymark.services import lifecycle
@@ -411,7 +411,7 @@ def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Wo
 
 
 def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
-    short = proposal(short=True, impact="No spec changes.")
+    short = proposal(short=True, impact=NO_SPECS)
     project.change(
         proposal_text=short.replace("Path: short\n", "Path: short\n- Review: none\n"),
         deltas={},

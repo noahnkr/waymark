@@ -201,7 +201,9 @@ Paging through the rest.
 
 ## Impact
 
-Specs: search.
+- Specs: `search` (new)
+- User-visible: `wm search` returns at most fifty results
+- Code: the search module
 """
 
 DELTA = """# Search

@@ -103,7 +103,8 @@ def _drafting(
         outputs = [_output(record, f"{folder}/{PROPOSAL_FILE}", None)]
         guidance = [
             "Fill in every section of the proposal; leave the '- Owner:' line as it is.",
-            'Under Impact, name the specs the change touches, or write "No spec changes".',
+            'Under Impact, write a "- Specs:" line naming each spec with a delta in backticks, '
+            'or "- Specs: none"; a "- User-visible:" line; and a "- Code:" line.',
             "Don't write records such as (accepted), a Log section or the Outcome section; wm "
             "writes the records in the task list's Log, and the outcome comes at archive.",
             f"The change is reviewed once, as a whole, at the project's default level ({default}) "

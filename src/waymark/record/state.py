@@ -343,7 +343,7 @@ def _artifact_step(change: Change) -> tuple[Phase, NextStep] | None:
 
     no_deltas_needed = proposal.no_spec_changes and not change.deltas
     if change.problems_in(SPECS_DIR) or not (change.deltas or no_deltas_needed):
-        missing = 'Draft the deltas, or state "No spec changes" under the proposal\'s impact.'
+        missing = 'Draft the deltas, or write "- Specs: none" under the proposal\'s Impact.'
         return Phase.PROPOSED, NextStep(StepKind.SPECS, reason=reason(SPECS_DIR, missing))
 
     reached = Phase.SPECIFIED

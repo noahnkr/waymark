@@ -4,7 +4,7 @@ import datetime
 
 import pytest
 
-from tests.support import TASKS, Workspace, delta, proposal, requirement, spec
+from tests.support import NO_SPECS, TASKS, Workspace, delta, proposal, requirement, spec
 from waymark.record.record import link_problems
 from waymark.record.state import (
     AcceptanceState,
@@ -357,7 +357,7 @@ def test_synced_change_is_in_conflict_when_its_spec_moves_on(project: Workspace)
 
 
 def test_sync_of_a_change_without_deltas_is_refused(project: Workspace) -> None:
-    applied(project, proposal_text=proposal(impact="No spec changes."), deltas={})
+    applied(project, proposal_text=proposal(impact=NO_SPECS), deltas={})
     with pytest.raises(Refusal, match="nothing to sync"):
         lifecycle.sync(project.root, NAME, LATER)
 

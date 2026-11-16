@@ -144,11 +144,15 @@ def delta(
     return "\n".join(parts)
 
 
+IMPACT = "- Specs: `search`\n- User-visible: at most fifty results\n- Code: the search module"
+NO_SPECS = "- Specs: none\n- User-visible: at most fifty results\n- Code: the search module"
+
+
 def proposal(
     *,
     owner: str = "Sam Doe",
     short: bool = False,
-    impact: str = "Specs: search.",
+    impact: str = IMPACT,
     outcome: str | None = None,
 ) -> str:
     facts = f"- Owner: {owner}\n" + ("- Path: short\n" if short else "")

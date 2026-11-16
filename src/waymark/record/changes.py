@@ -12,9 +12,13 @@ from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.problems import WHOLE_FILE, Problem
 from waymark.record.proposal import (
     ACCEPTED,
+    IMPACT,
+    IMPACT_LINES,
+    NONE,
     PATH,
     REVIEW,
     SHORT,
+    SPECS,
     SYNCED,
     Acceptance,
     Proposal,
@@ -114,20 +118,57 @@ def _load_deltas(files: RecordFiles, path: str, problems: list[Problem]) -> dict
     return deltas
 
 
-def _check_against_config(change: Change, config: Config | None, problems: list[Problem]) -> None:
-    """Rules that span files: the short path's limits, and repos in an atlas."""
-    proposal, tasks = change.proposal, change.tasks
-    default = config.default_review if config else ReviewLevel.SELF
-    if proposal and proposal.no_spec_changes and change.deltas:
+def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -> None:
+    """The Impact has its three lines, and ``Specs:`` names exactly the specs with a delta.
+
+    A spec named without a delta is reported on the specs folder, so the next step is
+    to draft that delta; a delta whose spec isn't named is reported on the proposal.
+    """
+    if IMPACT not in proposal.sections or not proposal.sections[IMPACT]:
+        return  # An empty Impact is already reported as an empty section.
+    missing = [label for label in IMPACT_LINES if label not in proposal.impact]
+    if missing:
+        wanted = ", ".join(f'"- {label}:"' for label in missing)
+        problems.append(
+            Problem(
+                proposal.doc.path,
+                WHOLE_FILE,
+                "impact-format",
+                f"The Impact holds a {wanted} line. Under Specs, name each spec with a delta "
+                f'in backticks, or write "- {SPECS}: {NONE}".',
+            )
+        )
+    if proposal.impact_specs is None:
+        return
+    named = set(proposal.impact_specs)
+    for domain in sorted(set(change.deltas) - named):
         problems.append(
             Problem(
                 proposal.doc.path,
                 WHOLE_FILE,
                 "impact-mismatch",
-                'The impact says "No spec changes", but the change has deltas. '
-                "List the specs it touches, or remove the deltas.",
+                f'The change has a delta for `{domain}`, but the Impact\'s "{SPECS}:" line '
+                "doesn't name it. Add it there, or remove the delta.",
             )
         )
+    for domain in sorted(named - set(change.deltas), key=proposal.impact_specs.index):
+        problems.append(
+            Problem(
+                f"{change.path}/{SPECS_DIR}",
+                WHOLE_FILE,
+                "impact-mismatch",
+                f'The Impact\'s "{SPECS}:" line names `{domain}`, but the change has no delta '
+                f"for it. Draft {SPECS_DIR}/{domain}.md, or take it off the line.",
+            )
+        )
+
+
+def _check_against_config(change: Change, config: Config | None, problems: list[Problem]) -> None:
+    """Rules that span files: the short path's limits, and repos in an atlas."""
+    proposal, tasks = change.proposal, change.tasks
+    default = config.default_review if config else ReviewLevel.SELF
+    if proposal is not None:
+        _check_impact(change, proposal, problems)
     if change.short_path and change.design is not None:
         problems.append(
             Problem(

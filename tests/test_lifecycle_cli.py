@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from tests.conftest import git_init
-from tests.support import DESIGN, delta, requirement
+from tests.support import DESIGN, IMPACT, NO_SPECS, delta, requirement
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
 from waymark.record.pointer import is_pointer
 from waymark.record.project import find_project
@@ -46,9 +46,7 @@ class Session:
     def read(self, relative: str) -> str:
         return (self.root / "waymark" / relative).read_bytes().decode("utf-8")
 
-    def fill_proposal(
-        self, name: str, impact: str = "Specs: search.", review: str | None = None
-    ) -> None:
+    def fill_proposal(self, name: str, impact: str = IMPACT, review: str | None = None) -> None:
         """Draft the proposal the way an agent would: by editing the skeleton."""
         text = self.read(f"changes/{name}/proposal.md")
         if review is not None:
@@ -62,7 +60,7 @@ class Session:
         ):
             assert hint in text
             text = text.replace(hint, body)
-        start = text.index("<!-- The specs this change touches")
+        start = text.index("<!-- Three lines, each with text or nested bullets:")
         self.write(f"changes/{name}/proposal.md", text[:start] + impact + "\n")
 
     def step(self, name: str) -> tuple[Phase, StepKind, str | None]:
@@ -178,7 +176,9 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     monkeypatch.chdir(session.root)
 
     session.run("new", "change", name, "--owner", "Robin Roe")
-    session.fill_proposal(name, "Specs: search. Repos: api, web.")
+    session.fill_proposal(
+        name, IMPACT.replace("search module", "search module in the api and web repos")
+    )
     session.write(
         f"changes/{name}/specs/search.md",
         delta(added=(requirement(),), purpose="How search behaves.", repos="api, web"),
@@ -222,7 +222,7 @@ def test_small_change_takes_the_short_path_with_two_approvals(session: Session) 
     name = "fix-typo"
     session.run("init")
     session.run("new", "change", name, "--short")
-    session.fill_proposal(name, "No spec changes.", review="none")
+    session.fill_proposal(name, NO_SPECS, review="none")
     assert session.step(name) == (Phase.SPECIFIED, StepKind.TASKS, None)
     session.write(
         f"changes/{name}/tasks.md",
@@ -241,7 +241,7 @@ def test_override_archives_a_change_whose_review_is_missing(session: Session) ->
     name = "add-limit"
     session.run("init")
     session.run("new", "change", name, "--short")
-    session.fill_proposal(name, "No spec changes.")
+    session.fill_proposal(name, NO_SPECS)
     session.write(
         f"changes/{name}/tasks.md", HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n"
     )
@@ -263,7 +263,7 @@ def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:
     session.run("new", "milestone", "tidy-docs")
     session.run("new", "exploration", "wording")
     session.run("new", "change", name, "--short")
-    session.fill_proposal(name, "No spec changes.", review="none")
+    session.fill_proposal(name, NO_SPECS, review="none")
     session.write(
         "milestones/tidy-docs/roadmap.md",
         f"# Tidy docs: roadmap\n\n- [ ] [Fix the typo](../../changes/{name}/proposal.md)\n",

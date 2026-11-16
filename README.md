@@ -86,7 +86,9 @@ Paging through the rest.
 
 ## Impact
 
-Specs: search.
+- Specs: `search` (new)
+- User-visible: `wm search` returns at most fifty results
+- Code: the search module
 ```
 
 </details>
@@ -156,7 +158,7 @@ Sorting every match still costs memory on very large result sets.
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint bc8b3077fd573128 items 1.1 1.2 by Alex Example
+- (accepted) 2026-01-15 fingerprint fbed840ba6707a13 items 1.1 1.2 by Alex Example
 - (review) 2026-01-15 pass by Alex Example: cap and order hold; the scenario is covered by the test
 ```
 
