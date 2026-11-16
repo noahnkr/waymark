@@ -32,7 +32,7 @@ Fast search for everyone.
 
 ## Goals
 
-- Answers in one step.
+1. Answers in one step.
 
 ## Non-goals
 
@@ -40,7 +40,7 @@ Fast search for everyone.
 
 ## Constraints
 
-- Runs offline.
+1. Runs offline.
 
 ## Glossary
 

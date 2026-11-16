@@ -6,7 +6,8 @@
 
 ## Goals
 
-<!-- What it must achieve. -->
+<!-- What it must achieve, as a numbered list, such as:
+1. Answers come back in one step. -->
 
 ## Non-goals
 
@@ -14,7 +15,9 @@
 
 ## Constraints
 
-<!-- Limits every change must respect: platforms, dependencies, budgets. -->
+<!-- Limits every change must respect: platforms, dependencies, budgets. A numbered
+list, such as:
+1. Runs offline. -->
 
 ## Glossary
 

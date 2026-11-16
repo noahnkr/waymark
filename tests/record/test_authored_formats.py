@@ -83,6 +83,30 @@ def test_glossary_as_a_list() -> None:
     assert parse_charter(document(capitalized, "charter.md")).problems == ()
 
 
+def charter_problems(text: str) -> list[tuple[int, str]]:
+    return [(p.line, p.code) for p in parse_charter(document(text, "charter.md")).problems]
+
+
+def test_scenario_bulleted_goal() -> None:
+    bulleted = CHARTER.replace("1. Answers in one step.", "- Answers in one step.")
+    [problem] = parse_charter(document(bulleted, "charter.md")).problems
+    assert problem.code == "numbered-list-format"
+    assert "1. <text>" in problem.message
+
+
+def test_numbered_goals_and_constraints() -> None:
+    """Requirement "Numbered goals and constraints": counted from 1, indented lines continue."""
+    two = CHARTER.replace(
+        "1. Answers in one step.\n",
+        "1. Answers in one step.\n   Even for long queries.\n2. Works offline.\n",
+    )
+    assert charter_problems(two) == []
+    skipped = CHARTER.replace("1. Answers in one step.\n", "1. One.\n3. Three.\n4. Four.\n")
+    assert [code for _, code in charter_problems(skipped)] == ["numbered-list-format"]
+    commented = CHARTER.replace("1. Runs offline.\n", "<!-- - a note -->\n1. Runs offline.\n")
+    assert charter_problems(commented) == []
+
+
 def test_exploration_status() -> None:
     """Requirement "Exploration status": the line is read and checked."""
     assert codes(explore("open")) == []
