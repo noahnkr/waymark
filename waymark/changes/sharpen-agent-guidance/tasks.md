@@ -2,7 +2,7 @@
 
 ## 1. Guidance in the packs
 
-- [ ] 1.1 Give the review pack and step the severity rubric, and the implement pack the stopping rules
+- [x] 1.1 Give the review pack and step the severity rubric, and the implement pack the stopping rules
   - Criteria:
     - a new `services/guidance.py` holds `SEVERITY_RUBRIC` and `STOPPING_RULES`, worded as in the requirements "Severity rubric" and "Stopping rules"
     - the review pack holds `severity_rubric`, and the implement pack `stopping_rules`; their markdown shows "## Severity rubric" and "## When to stop" just before the ending
