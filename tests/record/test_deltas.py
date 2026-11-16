@@ -236,6 +236,20 @@ def test_scenario_requirement_renamed() -> None:
     assert renamed.requirement("Result cap") is None
 
 
+def test_rename_matches_the_heading_in_any_case_or_spacing() -> None:
+    """Requirement "Delta sections": the heading is rebuilt, not edited in place."""
+    spec_text = spec(requirement("result   CAP"))
+    renamed = living(merged(spec_text, RENAME))
+    assert [r.name for r in renamed.requirements] == ["Result limit"]
+    assert "### Requirement: Result limit\n" in merged(spec_text, RENAME)
+
+
+def test_rename_of_a_name_inside_the_heading_prefix() -> None:
+    text = "# Search\n\n## RENAMED Requirements\n\n- From: Re\n- To: Query\n"
+    renamed = living(merged(spec(requirement("Re")), text))
+    assert [r.name for r in renamed.requirements] == ["Query"]
+
+
 def test_a_rename_and_a_modification_in_one_delta() -> None:
     text = RENAME + "\n## MODIFIED Requirements\n\n" + LIMIT_CHANGED
     renamed = living(merged(spec(CAP), text))

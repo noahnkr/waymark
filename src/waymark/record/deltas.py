@@ -361,7 +361,10 @@ def _replace_and_remove(spec: Spec, delta: Delta, lines: list[str], newline: str
             continue
         target = spec.requirement(rename.old)
         assert target is not None
-        heading = target.block[0].replace(rename.old, rename.new, 1)
+        # Rebuilt rather than edited: the spec's heading may spell the old name in
+        # another case or spacing, which the lookup ignores.
+        hashes = target.block[0].split(maxsplit=1)[0]
+        heading = f"{hashes} Requirement: {rename.new}"
         edits.append((target.start, target.start + 1, [heading + newline]))
     for requirement in delta.modified:
         target = spec.requirement(renamed.get(requirement.key, requirement.name))
