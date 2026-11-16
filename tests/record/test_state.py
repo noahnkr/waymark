@@ -96,12 +96,12 @@ def test_short_path_skips_the_designed_phase(workspace: Workspace) -> None:
     assert step(workspace.change_state()) == (Phase.PLANNED, StepKind.ACCEPT, None, True)
 
 
-def test_full_path_needs_a_design_before_tasks(workspace: Workspace) -> None:
+def test_full_path_without_a_design(workspace: Workspace) -> None:
     workspace.change(design=None)
     assert step(workspace.change_state()) == (Phase.SPECIFIED, StepKind.DESIGN, None, False)
 
 
-def test_short_path_change_with_a_design_is_a_problem(workspace: Workspace) -> None:
+def test_design_on_the_short_path(workspace: Workspace) -> None:
     workspace.change(proposal_text=proposal(short=True))
     assert code_list(workspace) == [(f"{FOLDER}/design.md", "short-path-design")]
     assert workspace.change_state().next_step.kind is StepKind.DESIGN

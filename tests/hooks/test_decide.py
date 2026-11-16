@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from tests.conftest import git_init
-from tests.support import ATLAS_CONFIG, CONFIG, DESIGN, TASKS, Workspace, proposal
+from tests.support import ATLAS_CONFIG, CONFIG, DESIGN, TASKS, Workspace, proposal, spec
 from waymark import assets
 from waymark.hooks.decide import decide
 from waymark.hooks.events import Decision, Event, EventKind, Replacement, Role
@@ -714,3 +714,17 @@ def test_main_session_handing_back_is_not_wm_business(accepted: Workspace) -> No
     assert handback(accepted, Role.PLANNER, "nothing special") == Decision()
     assert accepted.read(TASKS_FILE) == before
     assert markers(accepted) == []
+
+
+def test_code_edited_outside_a_change(project: Workspace) -> None:
+    assert project.record().changes == {}
+    path = project.root / "src" / "search.py"
+    assert ask(project, EventKind.EDIT, role=Role.PLANNER, path=path, content="x").allow
+
+
+def test_spec_edited_outside_a_change(project: Workspace) -> None:
+    project.write("specs/search.md", spec())
+    assert project.record().changes == {}
+    decision = edit(project, "specs/search.md", Role.PLANNER, content="# Search\n")
+    assert not decision.allow
+    assert "they change only when a change is archived or synced" in decision.reason

@@ -5,7 +5,7 @@
 - [x] 1.1 Let the planner edit any code repo in an atlas
   - Criteria: in an atlas, a planner edit in any code repo is allowed, whether or not a change is being built; an implementer's edit outside the repo its item names is refused as before; `editable_repos` is documented as the implementers' limit; edits to specs stay refused for every role
   - Verify: tests in `tests/hooks/test_decide.py` and `tests/hooks/test_repo_limits.py` for the scenarios "Repo of the item being built", "Another repo" and "Implementer in another repo"
-- [ ] 1.2 Test that work outside a change is allowed and leaves no trace, and name the path tests after their scenarios
+- [x] 1.2 Test that work outside a change is allowed and leaves no trace, and name the path tests after their scenarios
   - Criteria: tests cover the `paths` scenarios "Code edited outside a change", "Spec edited outside a change" and "Nothing recorded" with no change in flight; the existing short and full path tests cover "Design on the short path" and "Full path without a design", named after them
   - Verify: `uv run --no-sync pytest tests/hooks tests/record/test_state.py`
 - [ ] 1.3 Add the `wm-fix` skill, and offer the three paths in the other skills
