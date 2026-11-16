@@ -80,9 +80,9 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       with a prompt of exactly `<change>`. Ask it to start one with
       `<change> <item>` first: **the hook refuses it**.
 - [ ] The reviewer reads `wm context <change> --for review`. Its verdict is
-      written in the `## Review` section at the end of `tasks.md` as a
-      `(review)` line in the reviewer's own words, with any `FINDING:` lines
-      under it. The reviewer can't edit files (ask it to fix something; it is
+      written in the `## Log` section at the end of `tasks.md` as a
+      `(review) <date> <verdict> by wm-reviewer` record in the reviewer's own
+      words, with any `FINDING:` lines under it. The reviewer can't edit files (ask it to fix something; it is
       refused).
 - [ ] **A request for changes.** If the reviewer asked for changes, the items
       it named are reopened, rebuilt and ticked, and the reviewer is started

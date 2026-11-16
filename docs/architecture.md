@@ -16,7 +16,10 @@ adapter for another agent tool, and how to work on the code.
   second on a record with a few hundred changes and specs (a test holds this).
 - **Careful writes.** `wm` edits only the lines it owns, leaves everything else
   byte for byte, and a multi-file operation such as archive either completes or
-  leaves the record as it was.
+  leaves the record as it was. The one exception is `wm check --fix`, run when
+  the human asks: it changes the layout of the active record, never its wording,
+  and refuses, writing nothing, if a fix would change a record, a tick or an
+  acceptance.
 
 ## Components
 
@@ -49,7 +52,7 @@ adapter for another agent tool, and how to work on the code.
 
 | Folder under `src/waymark/` | Holds |
 |---|---|
-| `record/` | The only code that reads or writes the record's files: parsers, state derivation, delta merging, the acceptance fingerprint, the transactional writer, templates, the registry, git queries. |
+| `record/` | The only code that reads or writes the record's files: parsers, the record lines (`records.py`, the one place each record's shape is defined), the standard layout (`layout.py`), state derivation, delta merging, the acceptance fingerprint, the transactional writer, templates, the registry, git queries. |
 | `services/` | What the commands do, and every gate. A refused command raises `Refusal` with what is wrong and what to do next. |
 | `views/` | Payloads, their JSON schemas, and the text and JSON renderers. One payload feeds both renderings. |
 | `hooks/` | Tool-neutral hook decisions on six neutral events. |

@@ -351,7 +351,7 @@ def evidence() -> str:
         "# A reviewer agent that never saw the build checks the whole change and",
         f"# ends with CHANGE: {CHANGE}, then",
         f"#   VERDICT: pass: {REVIEWER_REASONS}",
-        "# wm writes the verdict in the task list's Review section.",
+        "# wm writes the verdict as a record in the task list's Log.",
         "",
         "$ wm status",
         built,

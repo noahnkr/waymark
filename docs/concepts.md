@@ -51,17 +51,19 @@ stops and becomes a change. Specs can't be edited by hand on any path.
 proposal (its `Review:` line included), the deltas, the design and the
 definition of each item the acceptance names (its number, title, criteria,
 verification, repo and build tag), including removing the item. It needs
-accepting again. Ticks, blockers, review records and notes don't count.
+accepting again. Ticks and records, such as blockers, notes and reviews,
+don't count. Neither does layout: the fingerprint is taken over the standard
+layout, so `wm check --fix` never withdraws an acceptance.
 
-**Adding an item keeps the acceptance.** The acceptance line names the items
-it covers, and an item added later is built like any other:
+**Adding an item keeps the acceptance.** The acceptance is a record in the task
+list's Log that names the items it covers, and an item added later is built like
+any other:
 
 ```
-Accepted: 2026-01-15 by Sam Doe (fingerprint: 6cec39a287bf99f2; items: 1.1 1.2)
+- (accepted) 2026-01-15 fingerprint 6cec39a287bf99f2 items 1.1 1.2 by Sam Doe
 ```
 
-An acceptance line without `items:`, written by an older `wm`, covers every
-item, so adding one withdraws it.
+Accepting again adds a new `(accepted)` record; the latest one counts.
 
 **Several changes can be in flight at once.** Two changes that name the same
 requirement *overlap*: `wm check` reports it and neither is blocked. Whichever
@@ -84,9 +86,10 @@ waymark/
   explorations/        saved thinking
 ```
 
-There is no stored status and no frontmatter. Facts are plain lines, such as
-`Owner:` and `Accepted:` in a proposal, and everything else is worked out from
-where files are and what they say. Templates are built into `wm`;
+There is no stored status and no frontmatter. What you write uses
+`Capital-Label:` lines, such as `Owner:` in a proposal or `Criteria:` under an
+item. What `wm` writes is a record (see [Records](#records)). Everything else is
+worked out from where files are and what they say. Templates are built into `wm`;
 `wm instructions` hands an agent the right one at each step.
 
 A spec states what one area of the system does, as requirements, each with at
@@ -102,20 +105,46 @@ A search SHALL return at most fifty results.
 - THEN fifty results come back
 ```
 
-A task item carries what an agent needs to build it, and what `wm` writes about
-it. The change's review sits in a `## Review` section at the end of the task
-list:
+A task item carries what an agent needs to build it, and the records `wm`
+writes about it. The records about the whole change sit in a `## Log` section at
+the end of the task list:
 
 ```markdown
 - [x] 1.1 Cap the result count
   - Criteria: at most fifty results come back
   - Verify: a test searches an index with fifty-one matches
+  - (note) 2026-01-15 by Sam Doe: the cap sits after sorting
 
-## Review
+## Log
 
-- (review) 2026-01-15 pass: the boundary is covered
-  - suggestion: docs/search.md: name the limit in the help text
+- (accepted) 2026-01-15 fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
+- (review) 2026-01-16 pass by wm-reviewer: the boundary is covered
+  - suggestion `docs/search.md`: name the limit in the help text
 ```
+
+### Records
+
+Every line `wm` writes is a dated record of one shape:
+
+```
+(<kind>) YYYY-MM-DD [<args>] [by <who>]: <text>
+```
+
+| Where | Kinds |
+|---|---|
+| Under an item | `(blocked)`, `(gap)`, `(note)`, `(reopened)`, `(resolved)` |
+| In the `## Log` | `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)`, `(override)` |
+
+- **Who:** your git name, `wm-implementer` or `wm-reviewer` for an agent's
+  result, or the `--by` value that every writing command takes.
+- **Never edited:** a later record supersedes an earlier one. `wm resolve` adds
+  a `(resolved)` record and the blocker stays.
+- **Notes:** `wm note <change> <item> "<text>"` writes one under an unticked
+  item.
+- **Layout:** `wm check --fix` puts the record in its standard layout: list
+  markers, blank lines before headings, trailing spaces, the final line break
+  and the records' own shape. It never changes wording, fenced code, comments
+  or links, and never touches the archive.
 
 ## Who does what
 
@@ -166,11 +195,12 @@ The change's level is the `Review:` line in its proposal, or the project's
 | `independent` | risky work: a change that modifies or removes an existing requirement, or touches security, data integrity or money | a reviewer agent's verdict, written by `wm` from the reviewer's own words |
 | `none` | docs, renames, changes of a few lines | nothing |
 
-- **Findings:** each review can carry findings, written under it as
-  `<critical | warning | suggestion>: <place>: <text>`. A `pass` or a
-  self-review with a critical finding is refused.
+- **Findings:** each review can carry findings, given as
+  `<critical | warning | suggestion>: <place>: <text>` and written under it as
+  ``<severity> `<place>`: <text>``. A place that holds `: ` is given in
+  backticks. A `pass` or a self-review with a critical finding is refused.
 - **Changes:** a `changes` verdict names the items to rebuild, such as
-  `(review) 2026-01-15 changes 1.2 2.1: <reasons>`. Those items are reopened
+  `(review) 2026-01-15 changes 1.2 2.1 by wm-reviewer: <reasons>`. Those items are reopened
   and built again, and the change then needs an independent review.
 - **To you:** a second `changes` verdict, or a `spec-gap`, goes to you. You
   record your decision with `wm resolve <change> review "<what was decided>"`.
@@ -186,10 +216,11 @@ The change's level is the `Review:` line in its proposal, or the project's
 | **Delegation** | starting an implementer unless the prompt names exactly one item that has criteria; starting a reviewer unless the prompt names one change whose items are all ticked and which needs an independent review it lacks; either while the record around it isn't sound | no one; fix the record |
 | **Archive** | archiving a change that isn't accepted, has unbuilt items, isn't reviewed, or has a delta that no longer applies | only a missing review can be overridden, by you, with a reason that is recorded |
 
-**Evidence is written only by `wm`**: acceptance, ticks, blockers, spec gaps and
-review records. The planner records its own results with `wm tick`, `wm block`,
-`wm gap` and `wm review`. Implementers and reviewers report theirs in their last
-lines, and `wm`'s hooks write the evidence from them. Agents that try to write evidence by hand are
+**Evidence is written only by `wm`**: ticks and records. The planner records
+its own results with `wm tick`, `wm block`, `wm gap`, `wm note` and
+`wm review`. Implementers and reviewers report theirs in their last lines, and
+`wm`'s hooks write the records from them. An implementer edits nothing in the
+record; the one writing command it may run is `wm note`. Agents that try to write evidence by hand are
 refused, and `wm check` flags evidence that doesn't follow the format. These are
 guard rails against mistakes and shortcuts, not security against someone set on
 getting around them. In Claude Code the agent-side rules are enforced by its
@@ -233,6 +264,7 @@ and pull request, through the workflow `wm ci` writes.
 | **Implementer** | A fresh agent that builds one task item tagged `build: delegate`, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one whole change against its scenarios, design and criteria, without seeing how it was built. |
 | **Review level** | How a change is checked: `self`, `independent` or `none`. Set by the `Review:` line in its proposal. |
+| **Log** | The last section of a change's task list, where `wm` keeps the dated records about the whole change: its acceptances, sync, reviews and any override. |
 | **Finding** | One thing a review found, with a severity (`critical`, `warning` or `suggestion`), a place and a text. |
 | **Context pack** | The excerpts of the record that `wm` assembles for one job: exploring, implementing or reviewing. |
 | **Spec gap** | What an agent reports when the record isn't enough to do its job, instead of guessing. It goes to you. |

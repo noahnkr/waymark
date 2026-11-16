@@ -48,7 +48,7 @@ Accepted "add-result-limit". Its items can now be applied.
 # A reviewer agent that never saw the build checks the whole change and
 # ends with CHANGE: add-result-limit, then
 #   VERDICT: pass: cap and order hold; the scenario is covered by the test
-# wm writes the verdict in the task list's Review section.
+# wm writes the verdict as a record in the task list's Log.
 
 $ wm status
 ── Changes in flight ───────────────────────────────────────────────────

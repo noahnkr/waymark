@@ -3,6 +3,32 @@
 All notable changes to Waymark, one entry per release. A release that changes
 the record's format says what `wm update` migrates.
 
+## [Unreleased]
+
+- **Behavior change: record format 2.** Everything `wm` writes is a dated
+  record, `(kind) YYYY-MM-DD [<args>] [by <who>]: <text>`. `(blocked)`, `(gap)`,
+  `(note)`, `(reopened)` and `(resolved)` sit under items; `(accepted)`,
+  `(synced)`, `(self-review)`, `(review)`, `(resolved)` and `(override)` sit in a
+  `## Log` section at the end of the task list, which replaces `## Review`. The
+  proposal no longer holds `Accepted:` or `Synced:` lines.
+- **Records are never removed.** `wm resolve` adds a `(resolved)` record and
+  keeps the blocker or spec gap it resolves. Accepting again adds a new
+  `(accepted)` record; the latest counts.
+- **Every writing command takes `--by`**; records name your git name by default,
+  and `wm-implementer` or `wm-reviewer` for an agent's result.
+- **`wm note <change> <item> "<text>"`** writes a note. An implementer no longer
+  edits the task list; `wm note` is the one writing command it may run.
+- **`wm check --fix`** puts the active record in its standard layout and never
+  changes wording. The acceptance fingerprint is taken over that layout, so a
+  fix never withdraws an acceptance.
+- **Findings** put their place in backticks: ``warning `src/a.py:12`: <text>``.
+- **`wm show --json`**: the `show.change` schema is version 3, with a `log` of
+  records, a `by` on every record, and no item `notes` or review `records`.
+- **Upgrading:** run `wm update`. It migrates every change, archived ones too,
+  to format 2: old item reviews become notes and `review:` tags go. Each active
+  change is accepted again afterwards, because an acceptance keeps its old
+  fingerprint.
+
 ## [0.1.1] - 2026-11-15
 
 Each machine sets itself up, and background agents' results are recorded.

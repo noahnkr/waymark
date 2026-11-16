@@ -36,7 +36,7 @@ atlas).
 - Deterministic and offline: `wm` never calls a model and never clones, pulls or pushes; it runs only local git commands.
 - Windows, macOS and Linux alike: portable paths, UTF-8 files, existing line endings kept, no symlinks.
 - No cache: every command reads the files fresh; views stay within about a second on a record with a few hundred changes and specs.
-- Careful writes: `wm` edits only the lines it owns, and a multi-file operation completes or leaves the record as it was.
+- Careful writes: `wm` edits only the lines it owns, and a multi-file operation completes or leaves the record as it was. The one exception is `wm check --fix`, run when the human asks, which changes the layout of any file in the active record but never its wording.
 - Only code in `src/waymark/adapters/` may name an agent tool; only `record/` and `assets/` touch files (held by `tests/test_constraints.py`).
 - Agent tool setup (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.codex/`, `.cursor/`, the generated `.agents/skills/wm-*/`) is per machine and never committed; each clone sets it up with `wm init`. The maintainer skills in `.agents/skills/` are committed.
 
