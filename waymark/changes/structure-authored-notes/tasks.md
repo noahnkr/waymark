@@ -26,7 +26,7 @@
   - Verify:
     - tests in `tests/record/test_authored_formats.py` for the scenario "Bulleted goal"
     - `wm check` here
-- [ ] 1.4 Settle decisions and open questions before acceptance
+- [x] 1.4 Settle decisions and open questions before acceptance
   - Criteria:
     - each decision of an active change's design needs `- Status: proposed|decided` and `- Decided by: human|planner`; a missing or unknown value gives `decision-format` with the values allowed
     - an active change's design needs `## Open questions`, holding `None.` or a list
