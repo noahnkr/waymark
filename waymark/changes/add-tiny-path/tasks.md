@@ -17,6 +17,6 @@
 
 ## 2. Charter and docs
 
-- [ ] 2.1 Describe the three paths in the charter and the docs
+- [x] 2.1 Describe the three paths in the charter and the docs
   - Criteria: the charter's goals name the tiny path's approval (the human's yes in the session, and the merge) and the three paths; concepts has a section on the tiny, short and full paths and its glossary has "Tiny path"; getting started, the multi-repo guide (the planner may edit any code repo), the smoke test (one tiny fix) and the README's "Light for small changes" match; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py`, `uv run --no-sync codespell` and `wm check`

@@ -90,7 +90,9 @@ and explains each one as it happens:
 
 1. **Propose.** The agent drafts a proposal: why, what changes, non-goals,
    impact, and the change's review level when it isn't the project default. A
-   small change takes the short path: proposal and tasks, no design.
+   small change takes the short path: proposal and tasks, no design. Work that
+   changes no requirement needs no change at all: `/wm-fix` takes it on the
+   [tiny path](concepts.md#paths).
 2. **Specs.** It writes the change's deltas against the living specs. On an
    existing codebase, this is where the first spec for that area is born.
 3. **Tasks.** It writes the task list: each item with criteria and how to

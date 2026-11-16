@@ -142,10 +142,12 @@ its items name. The `wm-apply` skill creates the branches where they're missing.
 differs while the change is being built.
 
 **Building.** An item's context pack gives its repo folder on this machine.
-Claude Code's hooks let the planner and implementers edit a code repo only while
-an accepted change's item being built names it, and refuse an edit in any other
-code repo with the repos that may be edited now. The planner may edit the
-record at any time. An item whose repo isn't on this machine can't be delegated
+The session started in the atlas is where all work is done from, across every
+code repo. Claude Code's hooks let the planner edit any code repo, for a change
+or a tiny fix, and the record at any time. An implementer edits a code repo only
+while an accepted change's item being built names it; an edit in any other code
+repo is refused with the repos it may edit now. A tiny fix that touches several
+code repos uses a branch of the same name and a pull request in each. An item whose repo isn't on this machine can't be delegated
 until it is registered.
 
 **Commits and pull requests.** Code is committed in the code repos and the record

@@ -202,9 +202,12 @@ A search SHALL return at most fifty results.
   git, in any session, on any machine.
 - **Two sign-offs, both yours.** Agents draft every file and write the code. You
   approve each change before it's built, and again when it's archived.
-- **Light for small changes, thorough for big ones.** A small change takes the
-  short path: a proposal, a task list and a quick self-check. A bigger one adds
-  a design, and a riskier change gets a second agent as an independent reviewer.
+- **Light for small changes, thorough for big ones.** Work that changes no
+  requirement, such as a typo or a bug fix the specs already describe, takes the
+  tiny path: your yes, a commit and a pull request, with nothing in the record.
+  A small change takes the short path: a proposal, a task list and a quick
+  self-check. A bigger one adds a design, and a riskier change gets a second
+  agent as an independent reviewer.
 
 In Claude Code, these rules are enforced by hooks, not just asked for. See
 [what's enforced, and where](#whats-enforced-and-where).
@@ -264,7 +267,7 @@ they're measured.
 | Enforced by | What | Holds in |
 |---|---|---|
 | `wm` and CI | Nothing is built before acceptance; archive refuses unbuilt items or an unreviewed change; conflicting changes are caught; record health (`wm check`, in CI) | Every agent tool |
-| Claude Code's hooks | Only you accept a change or override a missing review; implementers edit only code and their notes; in an atlas, the planner and implementers edit code only in the repo of the item being built; reviewers edit nothing; delegated agents can't commit, push or write the record; commit messages are conventional commits; results are recorded from the agents' own words | Claude Code |
+| Claude Code's hooks | Only you accept a change or override a missing review; implementers edit only code and their notes; in an atlas, implementers edit code only in the repo of the item being built; reviewers edit nothing; delegated agents can't commit, push or write the record; commit messages are conventional commits; results are recorded from the agents' own words | Claude Code |
 
 These are guard rails against mistakes and shortcuts, not security against
 someone set on getting around them.

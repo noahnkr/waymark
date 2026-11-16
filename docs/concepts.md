@@ -8,8 +8,10 @@ the files alone.
 
 ## The workflow
 
-Every piece of work is a **change**, including a project's first build and the
-first work on an existing codebase. A change goes through these steps:
+Work that changes what the system does is a **change**, including a project's
+first build and the first work on an existing codebase. Work that changes no
+requirement takes the [tiny path](#paths) and needs no change. A change goes
+through these steps:
 
 ```
 explore    optional: think an idea through; nothing is written unless you ask
@@ -32,6 +34,18 @@ code, the merged specs and the archived change are reviewed and merged together.
 If the pull request needs more work, the archive commit is reverted and the
 change archived again. Specs come before design: first agree on what the system does, then
 on how.
+
+## Paths
+
+| Path | For | What it takes |
+|---|---|---|
+| **Tiny** | work that adds, changes or removes no requirement: a typo, a docs fix, a bug where the code disagrees with a spec, a refactor, a dependency bump | no change folder: the agent says why it is tiny and builds after your yes, then commits and offers a pull request (`/wm-fix`). Nothing is written to the record; your merge is the second approval |
+| **Short** | a small change | a change with a proposal, deltas and a task list, but no design (a `Path: short` line); review level `self` or `none` |
+| **Full** | anything bigger | a change with a design, and an independent review when it is risky |
+
+The test for tiny is the specs, not the size: if every requirement still holds
+as written, the work is tiny. If tiny work turns out to change a requirement, it
+stops and becomes a change. Specs can't be edited by hand on any path.
 
 **Changing an accepted change withdraws its acceptance.** That covers the
 proposal (its `Review:` line included), the deltas, the design and each task
@@ -99,7 +113,7 @@ list:
 |---|---|---|---|
 | Is | the main agent session, working with you | a fresh agent, started for an item tagged `build: delegate` with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
 | Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules | every item's criteria, the deltas and their scenarios, the design, earlier reviews, the code; **not** how it was built |
-| May | explore, draft and edit artifacts, build items (in an atlas, only in the repo of an item being built), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and add notes under its item | read code and the record; run tests and other read-only commands |
+| May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and add notes under its item | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
 
 Only you accept a change. The record is the source of truth: whoever builds an
@@ -197,6 +211,7 @@ and pull request, through the workflow `wm ci` writes.
 | **Design** | How a change will be built, including its decisions: the options, the choice and why. |
 | **Task item** | One checkbox in a change's task list, with its criteria, how to verify it, an optional `build: delegate` tag, and the record of building it. |
 | **Acceptance** | Your explicit approval of a change before any of it is built. Only you can give it. |
+| **Tiny path** | The route for work that adds, changes or removes no requirement: no change, just your yes, a conventional commit and a pull request. |
 | **Short path** | The light route for a small change: no design, and review level `self` or `none`. Marked by a `Path: short` line in the proposal. |
 | **Conflict** | A delta that no longer applies to its spec (a *mismatch*, which blocks its change), or two active changes that name the same requirement (an *overlap*, which is reported). |
 | **Sync** | Merging an applied change's deltas into the specs without archiving it yet. |
