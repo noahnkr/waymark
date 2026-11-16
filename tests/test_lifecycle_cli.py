@@ -113,7 +113,7 @@ def test_change_runs_from_init_to_archive_with_the_record_in_the_repo(session: S
     session.run("tick", name, "1.2")
     assert session.step(name) == (Phase.APPLYING, StepKind.REVIEW, None)
     assert "missing the independent review" in session.run(
-        "archive", name, "--outcome", "Capped.", expect=EXIT_REFUSED
+        "archive", name, "--built", "Capped.", expect=EXIT_REFUSED
     )
 
     refusal = session.run("review", name, "--self", "fine", expect=EXIT_REFUSED)
@@ -136,7 +136,7 @@ def test_change_runs_from_init_to_archive_with_the_record_in_the_repo(session: S
     assert session.step(name) == (Phase.APPLIED, StepKind.ARCHIVE, None)
     assert "1 warning" in session.run("check")
 
-    session.run("archive", name, "--outcome", "Results are capped at fifty.")
+    session.run("archive", name, "--built", "Results are capped at fifty.")
     record = load_record(find_project(session.root))
     assert record.problems == ()
     assert record.changes == {}
@@ -205,7 +205,7 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     for number in ("1.1", "1.2"):
         session.run("tick", name, number)
     session.run("review", name, "--self", "matches the criteria")
-    session.run("archive", name, "--outcome", "Capped in the API and shown in the web app.")
+    session.run("archive", name, "--built", "Capped in the API and shown in the web app.")
 
     record = load_record(find_project(session.root))
     assert record.problems == ()
@@ -230,7 +230,7 @@ def test_small_change_takes_the_short_path_with_two_approvals(session: Session) 
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")
-    session.run("archive", name, "--outcome", "Typo fixed.")
+    session.run("archive", name, "--built", "Typo fixed.")
     record = load_record(find_project(session.root))
     assert record.problems == ()
     assert record.changes == {}
@@ -247,11 +247,11 @@ def test_override_archives_a_change_whose_review_is_missing(session: Session) ->
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")
-    refusal = session.run("archive", name, "--outcome", "Done.", expect=EXIT_REFUSED)
+    refusal = session.run("archive", name, "--built", "Done.", expect=EXIT_REFUSED)
     assert "--override" in refusal
-    session.run("archive", name, "--outcome", "Done.", "--override", "checked by hand")
+    session.run("archive", name, "--built", "Done.", "--override", "checked by hand")
     text = session.read(f"changes/archive/{TODAY}-{name}/proposal.md")
-    assert text.endswith("## Outcome\n\nDone.\n")
+    assert text.endswith("## Outcome\n\n- Built: Done.\n- Differs: none\n")
     tasks = session.read(f"changes/archive/{TODAY}-{name}/tasks.md")
     assert tasks.endswith(": checked by hand\n")
     assert f"- (override) {TODAY} by " in tasks
@@ -272,7 +272,7 @@ def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:
     session.run("accept", name)
     session.run("tick", name, "1.1")
     session.run("sync", name, expect=EXIT_REFUSED)
-    session.run("archive", name, "--outcome", "Fixed.")
+    session.run("archive", name, "--built", "Fixed.")
     roadmap = session.read("milestones/tidy-docs/roadmap.md")
     assert f"- [x] [Fix the typo](../../changes/archive/{TODAY}-{name}/proposal.md)" in roadmap
     state = derive_state(load_record(find_project(session.root)))

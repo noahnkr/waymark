@@ -56,7 +56,7 @@ $ wm status
 
 ◆ 1 thing needs you: wm inbox
 
-$ wm archive add-result-limit --outcome "Searches return the fifty best matches."
+$ wm archive add-result-limit --built "Searches return the fifty best matches."
 Archived "add-result-limit" as changes/archive/2026-01-15-add-result-limit. Its deltas are now part of the specs.
 ```
 

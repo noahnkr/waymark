@@ -421,7 +421,7 @@ def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
     assert project.change_state().applied
-    lifecycle.archive(project.root, NAME, DAY, outcome="Typo fixed.")
+    lifecycle.archive(project.root, NAME, DAY, built="Typo fixed.")
     assert project.record().changes == {}
     assert DESIGN not in project.read(f"changes/archive/2026-01-15-{NAME}/proposal.md")
 

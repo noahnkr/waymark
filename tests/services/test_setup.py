@@ -516,7 +516,7 @@ def test_writes_are_refused_when_the_pinned_version_differs(project: Workspace) 
         lambda: setup.create_exploration(project.root, "paging"),
         lambda: lifecycle.accept(project.root, "add-limit", TODAY),
         lambda: lifecycle.tick(project.root, "add-limit", "1.1"),
-        lambda: lifecycle.archive(project.root, "add-limit", TODAY, outcome="Done."),
+        lambda: lifecycle.archive(project.root, "add-limit", TODAY, built="Done."),
     )
     for attempt in attempts:
         with pytest.raises(Refusal) as refusal:

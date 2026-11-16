@@ -258,7 +258,7 @@ TASKS = """# Tasks
 """
 
 REVIEWER_REASONS = "cap and order hold; the scenario is covered by the test"
-OUTCOME = "Searches return the fifty best matches."
+BUILT = "Searches return the fifty best matches."
 
 
 @contextmanager
@@ -331,7 +331,7 @@ def evidence() -> str:
             "design": _read(root, f"{folder}/design.md"),
             "tasks": _read(root, f"{folder}/tasks.md"),
         }
-        archived = lifecycle.archive(root, CHANGE, DAY, outcome=OUTCOME).message
+        archived = lifecycle.archive(root, CHANGE, DAY, built=BUILT).message
         spec = _read(root, "specs/search.md")
     session = [
         "# /wm-explore (optional): think the idea through with the agent",
@@ -358,7 +358,7 @@ def evidence() -> str:
         "$ wm status",
         built,
         "",
-        f'$ wm archive {CHANGE} --outcome "{OUTCOME}"',
+        f'$ wm archive {CHANGE} --built "{BUILT}"',
         archived,
     ]
     lines = [

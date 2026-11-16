@@ -16,6 +16,7 @@ from waymark.record.fingerprint import change_fingerprint
 from waymark.record.milestones import ROADMAP_FILE
 from waymark.record.moves import rewrite_links, tick_roadmap_lines
 from waymark.record.names import ArchiveName
+from waymark.record.proposal import BUILT, DIFFERS, NONE, Proposal
 from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, SPECS, Record
 from waymark.record.records import RecordError, RecordKind
 from waymark.record.specs import Spec, parse_spec
@@ -504,12 +505,44 @@ def _listed(numbers: list[str]) -> str:
     return f"items {', '.join(numbers)} are"
 
 
-def archive(
+_OUTCOME_FORM = f'"- {BUILT}: <what was built>" and "- {DIFFERS}: <how it differs, or none>"'
+
+
+def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | None) -> str:
+    """The Outcome to write: from --built and --differs, or the one in the proposal."""
+    if differs is not None and built is None:
+        raise Refusal("--differs goes with --built. Pass both, or neither.")
+    existing = proposal.outcome
+    if built is not None:
+        if existing:
+            raise Refusal(
+                f'The proposal of "{name}" already has an outcome. Drop --built and --differs, '
+                "or edit the outcome in the proposal."
+            )
+        text = one_line(built, "what was built")
+        diff = one_line(differs, "how it differs from the proposal") if differs else NONE
+        return f"- {BUILT}: {text}\n- {DIFFERS}: {diff}"
+    if not existing:
+        raise Refusal(
+            'Archiving records what came of the change. Pass --built "<what was built>" and, '
+            'when it differs from the proposal, --differs "<how>".'
+        )
+    missing = [label for label in (BUILT, DIFFERS) if label not in proposal.outcome_lines]
+    if missing:
+        raise Refusal(
+            f'The outcome in the proposal of "{name}" needs a "- {missing[0]}:" line. '
+            f"An outcome is written {_OUTCOME_FORM}."
+        )
+    return existing
+
+
+def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
     start: Path,
     name: str,
     today: datetime.date,
     *,
-    outcome: str | None = None,
+    built: str | None = None,
+    differs: str | None = None,
     override: str | None = None,
     by: str | None = None,
 ) -> Done:
@@ -519,19 +552,7 @@ def archive(
     _archive_gate(state, reason)
     assert change.proposal is not None
 
-    existing = change.proposal.outcome
-    given = outcome.strip() if outcome else ""
-    if given and existing:
-        raise Refusal(
-            f'The proposal of "{name}" already has an outcome. Drop --outcome, or edit the '
-            "outcome in the proposal."
-        )
-    final = given or existing
-    if not final:
-        raise Refusal(
-            'Archiving records what came of the change. Pass --outcome "<what happened>", '
-            'or write the "## Outcome" section in the proposal.'
-        )
+    final = _outcome(name, change.proposal, built, differs)
     override_line: str | None = None
     if reason is not None:
         entry = records.Record(RecordKind.OVERRIDE, today, who=_who(record, by), text=reason)

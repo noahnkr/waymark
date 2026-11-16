@@ -224,10 +224,12 @@ def _working(  # noqa: PLR0911 - one return per step
         guidance = [
             "Archiving is the human's call. Ask them, then archive on the change's branch, "
             "before the pull request, so the code and the archive are reviewed together.",
-            "Say in the outcome what was built and anything that differs from the proposal.",
+            "Say in the outcome what was built, and how it differs from the proposal if it does.",
             "Commit the record on the branch, then describe the pull request with wm pr.",
         ]
-        return guidance, [f'wm archive {name} --outcome "<what came of it>"']
+        return guidance, [
+            f'wm archive {name} --built "<what was built>" --differs "<how it differs>"'
+        ]
     if step is StepKind.ACCEPT:
         guidance = [
             "Only the human accepts a change. Summarize the proposal, the deltas, the design "

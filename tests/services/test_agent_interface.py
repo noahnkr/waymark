@@ -128,7 +128,9 @@ def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace)
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     step = at(project)
     assert step["step"] == "archive"
-    assert step["commands"] == [f'wm archive {NAME} --outcome "<what came of it>"']
+    assert step["commands"] == [
+        f'wm archive {NAME} --built "<what was built>" --differs "<how it differs>"'
+    ]
 
 
 def test_instructions_skip_the_design_on_the_short_path(project: Workspace) -> None:

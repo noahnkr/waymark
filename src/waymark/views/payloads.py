@@ -219,7 +219,7 @@ def inbox_entries(record: Record, state: RecordState) -> list[Payload]:
             summary = f"Accept again: {step.reason}" if again else "Ready to accept."
             entries.append(_entry("accept", summary, change=name, command=f"wm accept {name}"))
         if step.kind is StepKind.ARCHIVE:
-            command = f'wm archive {name} --outcome "<what came of it>"'
+            command = f'wm archive {name} --built "<what was built>" --differs "<how it differs>"'
             entries.append(
                 _entry("archive", "Applied; ready to archive.", change=name, command=command)
             )

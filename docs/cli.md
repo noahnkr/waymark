@@ -249,11 +249,12 @@ wm sync <change> [--by NAME]
 Archive an applied change. For the human to run.
 
 ```
-wm archive <change> [--outcome TEXT] [--override REASON] [--by NAME]
+wm archive <change> [--built TEXT] [--differs TEXT] [--override REASON] [--by NAME]
 ```
 
 - `change`: the change's name
-- `--outcome`: what came of the change
+- `--built`: what was built, for the outcome
+- `--differs`: how it differs from the proposal; none when left out
 - `--override`: archive although review records are missing; the reason is recorded
 - `--by`: who the record names as its writer (default: your git name)
 

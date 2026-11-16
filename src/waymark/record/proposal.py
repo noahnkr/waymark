@@ -40,6 +40,10 @@ USER_VISIBLE = "User-visible"
 CODE = "Code"
 IMPACT_LINES = (SPECS, USER_VISIBLE, CODE)
 NONE = "none"
+BUILT = "Built"
+DIFFERS = "Differs"
+
+_OUTCOME_LINE = re.compile(r"^[-*][ \t]+(Built|Differs):(?:[ \t]+(.*))?$")
 
 _IMPACT_LINE = re.compile(r"^[-*][ \t]+(Specs|User-visible|Code):(?:[ \t]+(.*))?$")
 _SPEC_NAME = re.compile(r"`([^`\s]+)`")
@@ -80,6 +84,16 @@ class Proposal:
     def no_spec_changes(self) -> bool:
         """Whether the Impact says ``- Specs: none``."""
         return self.impact_specs == ()
+
+    @property
+    def outcome_lines(self) -> dict[str, str]:
+        """The Outcome's ``Built`` and ``Differs`` lines that have text."""
+        found: dict[str, str] = {}
+        for line in (self.outcome or "").split("\n"):
+            match = _OUTCOME_LINE.match(line)
+            if match and (match.group(2) or "").strip():
+                found.setdefault(match.group(1), match.group(2).strip())
+        return found
 
     def accepted_text(self) -> str:
         """The text acceptance covers: everything but the outcome."""

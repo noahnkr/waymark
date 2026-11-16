@@ -83,6 +83,19 @@ def test_wm_command_is_installed_and_runs() -> None:
     assert result.stdout.strip() == f"wm {__version__}"
 
 
+def test_archive_takes_built_and_differs_not_outcome(capsys: pytest.CaptureFixture[str]) -> None:
+    """Requirement "Structured outcome": the options of wm archive."""
+    with pytest.raises(SystemExit):
+        main(["archive", "--help"])
+    usage = capsys.readouterr().out
+    assert "--built" in usage
+    assert "--differs" in usage
+    assert "--outcome" not in usage
+    with pytest.raises(SystemExit) as exit_info:
+        main(["archive", "add-limit", "--outcome", "Done."])
+    assert exit_info.value.code == EXIT_USAGE
+
+
 def test_init_help_says_it_also_sets_up_a_clone(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         main(["init", "--help"])
