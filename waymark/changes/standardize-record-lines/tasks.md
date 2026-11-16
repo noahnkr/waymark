@@ -2,7 +2,7 @@
 
 ## 1. Records, layout and migration
 
-- [ ] 1.1 Define every record kind once in `record/records.py`
+- [x] 1.1 Define every record kind once in `record/records.py`
   - Criteria: `RecordKind`, `Record`, and a table per kind give its argument grammar, whether it has text, whether it is a change-level or item record, and its shape for messages; `render` and `parse` round-trip every kind, with the arguments first and `by <who>` running to `: ` or the end of the line; findings render and parse as ``- <severity> `<place>`: <text>``, with a place that holds `: `; `who_for` gives `--by`, else the git user, else None, and refuses a value with `: `
   - Verify: `uv run --no-sync pytest tests/record/test_records.py`, with tests named after the requirements "One record shape", "Who wrote a record" and "Findings name their place in backticks"
 - [ ] 1.2 Read item records and the Log by the record's format

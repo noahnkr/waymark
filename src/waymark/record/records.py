@@ -1,0 +1,354 @@
+"""Records: the dated lines wm writes into a change as evidence.
+
+Every record has one shape, ``(<kind>) <YYYY-MM-DD> [<args>] [by <who>]: <text>``.
+The kind's arguments come first, so ``by`` can run to ``: `` or the end of the
+line and the name may hold spaces. A kind without text ends after who wrote it.
+This module is the only place a record's text is built or read; the table of
+kinds says what each one carries.
+
+Findings sit under a review record as ``<severity> `<place>`: <text>``.
+"""
+
+import datetime
+import re
+from dataclasses import dataclass
+from enum import Enum, StrEnum
+from pathlib import Path
+
+from waymark.record import git
+from waymark.record.terms import ReviewSeverity, Verdict
+
+IMPLEMENTER = "wm-implementer"
+"""Who wrote a record taken from an implementer's ending."""
+REVIEWER = "wm-reviewer"
+"""Who wrote a record taken from a reviewer's ending."""
+
+
+class RecordError(ValueError):
+    """A value that can't go into a record, with the reason."""
+
+
+class RecordKind(StrEnum):
+    """The kinds of record wm writes."""
+
+    ACCEPTED = "accepted"
+    SYNCED = "synced"
+    OVERRIDE = "override"
+    SELF_REVIEW = "self-review"
+    REVIEW = "review"
+    RESOLVED = "resolved"
+    REOPENED = "reopened"
+    BLOCKED = "blocked"
+    GAP = "gap"
+    NOTE = "note"
+
+
+class Level(Enum):
+    """Where a kind of record goes: under an item, in the change's Log, or either."""
+
+    ITEM = "item"
+    CHANGE = "change"
+    BOTH = "both"
+
+
+class Grammar(Enum):
+    """The arguments a kind of record carries before who wrote it."""
+
+    NONE = "none"
+    VERDICT = "verdict"
+    """A verdict, then the item numbers a ``changes`` verdict names."""
+    ACCEPTANCE = "acceptance"
+    """``fingerprint <hex16>``, then optionally ``items <number> <number>...``."""
+
+
+@dataclass(frozen=True)
+class KindSpec:
+    """What one kind of record carries, and its shape for messages."""
+
+    grammar: Grammar
+    has_text: bool
+    level: Level
+    shape: str
+
+
+KINDS: dict[RecordKind, KindSpec] = {
+    RecordKind.ACCEPTED: KindSpec(
+        Grammar.ACCEPTANCE,
+        has_text=False,
+        level=Level.CHANGE,
+        shape="(accepted) YYYY-MM-DD fingerprint <digest> [items <item> <item>...] [by <who>]",
+    ),
+    RecordKind.SYNCED: KindSpec(
+        Grammar.NONE, has_text=False, level=Level.CHANGE, shape="(synced) YYYY-MM-DD [by <who>]"
+    ),
+    RecordKind.OVERRIDE: KindSpec(
+        Grammar.NONE,
+        has_text=True,
+        level=Level.CHANGE,
+        shape="(override) YYYY-MM-DD [by <who>]: <reason>",
+    ),
+    RecordKind.SELF_REVIEW: KindSpec(
+        Grammar.NONE,
+        has_text=True,
+        level=Level.CHANGE,
+        shape="(self-review) YYYY-MM-DD [by <who>]: <summary>",
+    ),
+    RecordKind.REVIEW: KindSpec(
+        Grammar.VERDICT,
+        has_text=True,
+        level=Level.CHANGE,
+        shape="(review) YYYY-MM-DD pass|changes <item>...|spec-gap [by <who>]: <reasons>",
+    ),
+    RecordKind.RESOLVED: KindSpec(
+        Grammar.NONE,
+        has_text=True,
+        level=Level.BOTH,
+        shape="(resolved) YYYY-MM-DD [by <who>]: <what was decided>",
+    ),
+    RecordKind.REOPENED: KindSpec(
+        Grammar.NONE, has_text=False, level=Level.ITEM, shape="(reopened) YYYY-MM-DD [by <who>]"
+    ),
+    RecordKind.BLOCKED: KindSpec(
+        Grammar.NONE,
+        has_text=True,
+        level=Level.ITEM,
+        shape="(blocked) YYYY-MM-DD [by <who>]: <reason>",
+    ),
+    RecordKind.GAP: KindSpec(
+        Grammar.NONE,
+        has_text=True,
+        level=Level.ITEM,
+        shape="(gap) YYYY-MM-DD [by <who>]: <what is missing>",
+    ),
+    RecordKind.NOTE: KindSpec(
+        Grammar.NONE, has_text=True, level=Level.ITEM, shape="(note) YYYY-MM-DD [by <who>]: <text>"
+    ),
+}
+
+_START = re.compile(r"^\(([a-z][a-z-]*)\)(?=\s|$)")
+_HEAD = re.compile(r"^\(([a-z][a-z-]*)\) (\d{4}-\d{2}-\d{2})(?=\s|:|$)(.*)$")
+_ITEM_NUMBER = re.compile(r"^\d+\.\d+$")
+_DIGEST = re.compile(r"^[0-9a-f]{16}$")
+_TEXT_SEPARATOR = ": "
+
+
+@dataclass(frozen=True)
+class Record:
+    """One record. Only the fields its kind's grammar has are set."""
+
+    kind: RecordKind
+    date: datetime.date
+    who: str | None = None
+    text: str | None = None
+    verdict: Verdict | None = None
+    items: tuple[str, ...] | None = None
+    """The items a ``changes`` verdict names, or an acceptance covers; None when absent."""
+    fingerprint: str | None = None
+
+
+@dataclass(frozen=True)
+class ParseError:
+    """A line that starts like a record but doesn't have a record's shape."""
+
+    kind: RecordKind | None
+    message: str
+
+
+def shape(kind: RecordKind) -> str:
+    """The shape of a kind of record, as messages show it."""
+    return KINDS[kind].shape
+
+
+def looks_like_record(text: str) -> bool:
+    """Whether a line's text starts like a record: a lowercase word in parentheses."""
+    return _START.match(text) is not None
+
+
+def _arguments(record: Record) -> list[str]:
+    grammar = KINDS[record.kind].grammar
+    if grammar is Grammar.VERDICT:
+        assert record.verdict is not None
+        return [record.verdict.value, *(record.items or ())]
+    if grammar is Grammar.ACCEPTANCE:
+        assert record.fingerprint is not None
+        parts = ["fingerprint", record.fingerprint]
+        if record.items is not None:
+            parts += ["items", *record.items]
+        return parts
+    return []
+
+
+def render(record: Record) -> str:
+    """A record's text, without the list marker in front of it."""
+    spec = KINDS[record.kind]
+    words = [f"({record.kind.value})", record.date.isoformat(), *_arguments(record)]
+    if record.who:
+        words += ["by", record.who]
+    line = " ".join(words)
+    if spec.has_text:
+        if not record.text:
+            raise RecordError(f'A "{record.kind.value}" record needs a text.')
+        line += _TEXT_SEPARATOR + record.text
+    return line
+
+
+def _fail(kind: RecordKind | None, reason: str) -> ParseError:
+    if kind is None:
+        return ParseError(None, reason)
+    return ParseError(kind, f'{reason} A "{kind.value}" record is written "{shape(kind)}".')
+
+
+def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one return per refusal
+    """Read a record from a line's text, without its list marker.
+
+    None when the text doesn't start like a record at all; a ParseError when it
+    does but has the wrong shape or an unknown kind.
+    """
+    text = text.strip()
+    start = _START.match(text)
+    if start is None:
+        return None
+    try:
+        kind = RecordKind(start.group(1))
+    except ValueError:
+        known = ", ".join(f"({k.value})" for k in RecordKind)
+        return _fail(None, f'"({start.group(1)})" is not a kind of record. The kinds are {known}.')
+    head = _HEAD.match(text)
+    if head is None:
+        return _fail(kind, "The date is missing or not written YYYY-MM-DD.")
+    try:
+        date = datetime.date.fromisoformat(head.group(2))
+    except ValueError:
+        return _fail(kind, f'"{head.group(2)}" is not a date.')
+    spec = KINDS[kind]
+    rest = head.group(3)
+    body, separator, line_text = rest.partition(_TEXT_SEPARATOR)
+    if rest.startswith(":") and not rest.startswith(_TEXT_SEPARATOR):
+        return _fail(kind, "Put a space after the colon.")
+    if spec.has_text and (not separator or not line_text.strip()):
+        return _fail(kind, "The text after the colon is missing.")
+    if not spec.has_text and separator:
+        return _fail(kind, "This kind of record has no text after a colon.")
+    words, who = _split_who(body.strip())
+    if who == "":
+        return _fail(kind, 'The name after "by" is missing.')
+    found = _read_arguments(kind, spec.grammar, words)
+    if isinstance(found, ParseError):
+        return found
+    verdict, items, fingerprint = found
+    return Record(
+        kind,
+        date,
+        who=who,
+        text=line_text.strip() if spec.has_text else None,
+        verdict=verdict,
+        items=items,
+        fingerprint=fingerprint,
+    )
+
+
+def _split_who(body: str) -> tuple[list[str], str | None]:
+    """The argument words, and who wrote the record: None when it doesn't say."""
+    words = body.split()
+    if "by" not in words:
+        return words, None
+    at = words.index("by")
+    return words[:at], " ".join(words[at + 1 :])
+
+
+def _read_arguments(  # noqa: PLR0911 - one return per refusal
+    kind: RecordKind, grammar: Grammar, words: list[str]
+) -> tuple[Verdict | None, tuple[str, ...] | None, str | None] | ParseError:
+    if grammar is Grammar.NONE:
+        if words:
+            return _fail(kind, f'"{" ".join(words)}" is not expected before "by" or the colon.')
+        return None, None, None
+    if grammar is Grammar.VERDICT:
+        if not words:
+            return _fail(kind, "The verdict is missing.")
+        try:
+            verdict = Verdict(words[0])
+        except ValueError:
+            return _fail(kind, f'"{words[0]}" is not a verdict.')
+        items = tuple(words[1:])
+        if any(not _ITEM_NUMBER.match(item) for item in items):
+            return _fail(kind, "Only item numbers such as 1.2 may follow the verdict.")
+        if items and verdict is not Verdict.CHANGES:
+            return _fail(kind, f'Only a "changes" verdict names items, not "{verdict.value}".')
+        return verdict, items if verdict is Verdict.CHANGES else None, None
+    if len(words) < 2 or words[0] != "fingerprint" or not _DIGEST.match(words[1]):  # noqa: PLR2004
+        return _fail(kind, "The fingerprint is missing or not 16 hexadecimal digits.")
+    rest = words[2:]
+    if not rest:
+        return None, None, words[1]
+    if rest[0] != "items" or any(not _ITEM_NUMBER.match(item) for item in rest[1:]):
+        return _fail(kind, 'After the fingerprint come "items" and the item numbers.')
+    return None, tuple(rest[1:]), words[1]
+
+
+@dataclass(frozen=True)
+class Finding:
+    """One thing a review found: how much it matters, where, and what."""
+
+    severity: ReviewSeverity
+    place: str
+    text: str
+
+
+FINDING_SHAPE = "<severity> `<place>`: <text>"
+FINDING_ARGUMENT = "<critical|warning|suggestion>: <place>: <text>"
+
+_FINDING = re.compile(r"^(critical|warning|suggestion) `([^`]+)`: (\S.*)$")
+_FINDING_ARGUMENT_QUOTED = re.compile(r"^(critical|warning|suggestion): `([^`]+)`: (\S.*)$")
+_FINDING_ARGUMENT = re.compile(r"^(critical|warning|suggestion): (\S.*?): (\S.*)$")
+
+
+def render_finding(finding: Finding) -> str:
+    """A finding's text, without the list marker in front of it."""
+    if "`" in finding.place:
+        raise RecordError("A finding's place can't hold a backtick.")
+    return f"{finding.severity.value} `{finding.place}`: {finding.text}"
+
+
+def parse_finding(text: str) -> Finding | None:
+    """Read a finding as wm writes it under a review record; None when it isn't one."""
+    match = _FINDING.match(text.strip())
+    if match is None:
+        return None
+    return Finding(ReviewSeverity(match.group(1)), match.group(2), match.group(3).strip())
+
+
+def parse_finding_argument(text: str) -> Finding | None:
+    """Read a finding as a command takes it: ``<severity>: <place>: <text>``.
+
+    A place that holds ``: `` is given in backticks; otherwise it runs to the
+    first ``: ``.
+    """
+    text = text.strip()
+    match = _FINDING_ARGUMENT_QUOTED.match(text) or _FINDING_ARGUMENT.match(text)
+    if match is None:
+        return None
+    return Finding(ReviewSeverity(match.group(1)), match.group(2), match.group(3).strip())
+
+
+def check_who(who: str) -> str:
+    """A name fit to go into a record; raises RecordError otherwise."""
+    name = " ".join(who.split())
+    if not name:
+        raise RecordError("The name after --by is empty.")
+    if _TEXT_SEPARATOR in name or name.endswith(":"):
+        raise RecordError(f'"{name}" can\'t be used as a name: it holds ": ".')
+    return name
+
+
+def who_for(root: Path, by: str | None) -> str | None:
+    """Who writes a record: ``--by`` when given, else the git user, else None."""
+    if by is not None:
+        return check_who(by)
+    name = git.user_name(root)
+    if name is None:
+        return None
+    try:
+        return check_who(name)
+    except RecordError:
+        return None
