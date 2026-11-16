@@ -57,6 +57,41 @@ def test_format_problems_are_errors(project: Workspace) -> None:
     )
 
 
+def old_layouts(project: Workspace) -> list[tuple[str, int]]:
+    result = check(project.root, NOW)
+    found = [(f.path, f.line) for f in result if f.code == "old-layout"]
+    assert all("wm update" in f.message for f in result if f.code == "old-layout")
+    assert all(f.severity is Severity.ERROR for f in result if f.code == "old-layout")
+    return found
+
+
+def test_scenario_old_fact_line(project: Workspace) -> None:
+    project.change()
+    project.replace("changes/add-limit/proposal.md", "- Owner: Sam Doe\n", "Owner: Sam Doe\n")
+    assert old_layouts(project) == [("changes/add-limit/proposal.md", 3)]
+
+
+def test_scenario_old_glossary_line(project: Workspace) -> None:
+    project.replace(
+        "charter.md",
+        "- **Match**: a document that satisfies the query.\n",
+        "Record: everything in waymark/\n",
+    )
+    [finding] = [f for f in check(project.root, NOW) if f.path == "charter.md"]
+    assert finding.code == "old-layout"
+    assert "wm update" in finding.message
+    assert "- **<term>**: <meaning>" in finding.message
+
+
+def test_old_delta_headings_are_old_layouts(project: Workspace) -> None:
+    project.write("specs/search.md", spec())
+    text = delta(added=(requirement("Result order"),)).replace(
+        "## ADDED Requirements", "## Added requirements"
+    )
+    project.change("add-order", deltas={"search": text})
+    assert [path for path, _ in old_layouts(project)] == ["changes/add-order/specs/search.md"]
+
+
 def test_broken_links_are_errors(project: Workspace) -> None:
     project.replace("charter.md", "rebuilt nightly.", "rebuilt [nightly](jobs.md).")
     assert findings(project) == [("error", "charter.md", "broken-link")]
