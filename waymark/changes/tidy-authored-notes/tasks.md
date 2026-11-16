@@ -15,6 +15,7 @@
 - [x] 1.4 Move to format 3, drop the old layouts and the migrations
   - Criteria: a one-off `services/format_three.py` moves this repository's record to the new layouts, for every change, active and archived, the charter and the explorations, without changing wording; `RECORD_FORMAT` is 3; once it has run here, `format_two.py`, `format_three.py` and their tests are removed, `MIGRATIONS` is empty, and `wm update` refuses an older record with a reason that names its format; the old layouts (bare facts, the old glossary line, the trailing tag, the old delta headings, an exploration without `- Status:`) give `old-layout` naming `wm update`, and their readers go; the tests move to the new layouts; `wm check` is healthy here, and the human accepts this change again
   - Verify: tests in `tests/record/` and `tests/services/test_migrations.py` for the scenarios "Older record", "Old fact line", "Old glossary line" and the old delta headings; then `wm check` and `wm status` here
+  - (reopened) 2026-11-16 by Noah Roberts
 
 ## 2. Templates, skills and docs
 
