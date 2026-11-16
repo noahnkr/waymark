@@ -70,7 +70,7 @@
   - Verify:
     - the assets tests in `tests/`
     - read each skill against the deltas
-- [ ] 2.2 Update the docs and the changelog
+- [x] 2.2 Update the docs and the changelog
   - Criteria:
     - concepts and getting started show the new layouts and `--built`/`--differs`
     - the changelog lists the user-visible changes named in the proposal's Impact, including that `--outcome` is gone
