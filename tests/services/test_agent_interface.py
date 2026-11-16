@@ -29,7 +29,13 @@ from waymark.record.text import Document
 from waymark.services import lifecycle
 from waymark.services.common import Refusal
 from waymark.services.context import RESULT_LINE, VERDICT_LINE, context_pack, delegation_problems
-from waymark.services.instructions import CHECKLISTS, SHARED_RULES, instructions
+from waymark.services.instructions import (
+    CHECKLISTS,
+    SHARED_RULES,
+    SIZING_RULES,
+    WRITING_RULES,
+    instructions,
+)
 from waymark.views import render
 from waymark.views.schemas import SCHEMAS
 from waymark.views.style import Style
@@ -171,6 +177,25 @@ def test_scenario_specs_checklist(project: Workspace) -> None:
         "text": "Each THEN can be checked by someone who didn't write it.",
         "enforced": False,
     } in checklist
+
+
+def test_scenario_specs_step(project: Workspace) -> None:
+    """Requirement "Writing and sizing rules": the specs step gives the writing rules."""
+    project.change(deltas={}, design=None, tasks=None)
+    guidance = valid(at(project))["guidance"]
+    assert list(WRITING_RULES) == guidance[-len(WRITING_RULES) :]
+    assert any("an outcome someone else can check" in line for line in guidance)
+    assert not set(SIZING_RULES) & set(guidance)
+
+
+def test_scenario_tasks_step(project: Workspace) -> None:
+    project.change(tasks=None)
+    guidance = valid(at(project))["guidance"]
+    assert at(project)["step"] == "tasks"
+    assert set(SIZING_RULES) <= set(guidance)
+    assert any("run past about five bullets" in line for line in guidance)
+    assert not set(WRITING_RULES) & set(guidance)
+    assert not set(WRITING_RULES + SIZING_RULES) & set(at(project, "design")["guidance"])
 
 
 def test_scenario_apply_has_no_checklist(project: Workspace) -> None:

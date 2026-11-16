@@ -5,19 +5,26 @@ description: Revise an existing Waymark change - its proposal, deltas, design or
 
 # Update
 
+## Role
+
 You are the planner. You revise a change that already exists. Every edit is confirmed by the human before you make it.
+
+## Inputs
+
+- The change's name. If the human didn't name it, run `wm ls changes` and ask which one.
+- `wm show <name> --json` and `wm instructions --change <name> --json`: where it stands and what is wrong, if anything.
+- For the format of a file, `wm instructions <step> --change <name>`: the template, the step's guidance with its writing and sizing rules, and its checklist.
 
 ## Steps
 
-1. Find the change. If the human didn't name it, run `wm ls changes` and ask which one.
-2. Run `wm show <name> --json` and `wm instructions --change <name> --json` to see where it stands and what is wrong, if anything.
-3. Before editing, tell the human whether the edit withdraws acceptance:
+1. Find out what needs to change, and why: a spec gap, a conflict, a review's findings, or a change of scope.
+2. Before editing, tell the human whether the edit withdraws acceptance:
    - Editing the proposal (its `- Review:` line included), a delta, the design, or the definition of an item the acceptance names (its number, title, criteria, verification, repo or `- Build: delegate` line) **withdraws acceptance**. Removing such an item, or adding, removing or changing its `- Build:` line, counts. The human must accept the change again before any more items are applied.
    - **Adding a new item** at the end of a section, or in a new section, does not: the `(accepted)` record in the Log lists the items it covers, and a new item is built like any other. Put it above the `## Log` section. Use the next unused number.
    - Adding a note under an item does not.
-4. For each edit: say what you will change and why, wait for the human to confirm, then make it. For the format of a file, run `wm instructions <step> --change <name>`; it carries the template. In short: the Impact has `- Specs:`, `- User-visible:` and `- Code:` lines; each design decision has `- Status: proposed|decided` and `- Decided by: human|planner` lines, and the design an `## Open questions` section; an item's `- Criteria:` and `- Verify:` may each be a nested list, one per bullet.
-5. Run `wm check` after your edits and fix every error in the files you touched.
-6. If acceptance was withdrawn, summarize what changed and ask the human to run `wm accept <name>`.
+3. For each edit: say what you will change and why, wait for the human to confirm, then make it. In short: the Impact has `- Specs:`, `- User-visible:` and `- Code:` lines; each design decision has `- Status: proposed|decided` and `- Decided by: human|planner` lines, and the design an `## Open questions` section; an item's `- Criteria:` and `- Verify:` may each be a nested list, one per bullet.
+4. Work through the checklist of each step you revised, and run `wm check`. Fix every error in the files you touched.
+5. If acceptance was withdrawn, summarize what changed and ask the human to run `wm accept <name>`.
 
 ## Common cases
 
@@ -28,8 +35,31 @@ You are the planner. You revise a change that already exists. Every edit is conf
 - **A requirement to rename.** Add a `## RENAMED Requirements` section to the delta, with a `- From: <old name>` line and a `- To: <new name>` line. The requirement keeps its text; to change the text as well, also write it out in full under `## MODIFIED Requirements`, under its new name.
 - **New work discovered.** Append new items at the end of a section. Never renumber or reuse an item number.
 
+## Quality bar
+
+- Each edit is the smallest one that fixes what was wrong.
+- The human confirmed every edit before it was made, knowing whether it withdraws acceptance.
+- The artifacts still agree with each other: the Impact with the deltas, the design with the requirements, the items with the scenarios.
+- `wm check` is healthy, and the revised steps' checklists hold.
+
+## Show the human
+
+Before each edit:
+
+- **Edit:** the file, and what changes in it.
+- **Why:** the gap, conflict or finding it answers.
+- **Acceptance:** whether it withdraws acceptance.
+
+After the edits, if acceptance was withdrawn, a short list of what changed, then ask for `wm accept <name>`.
+
+## When to stop
+
+- The human declines an edit: don't make it.
+- The fix needs a decision only the human can make: ask, and wait.
+- The revision grows into new behavior the change wasn't for: stop, and offer a new change with `wm-propose` instead.
+- Acceptance was withdrawn: summarize and stop. Only the human accepts again.
+
 ## Rules
 
 - The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
-- Work through the checklist of the step you revise, from `wm instructions <step> --change <name>`, before asking the human to accept again.
 - Every line `wm` writes is a dated record, `(kind) YYYY-MM-DD [<args>] [by <who>]: <text>`, and none is edited or removed: `wm resolve` adds a `(resolved)` record after the blocker or spec gap it settles. A note goes in with `wm note <name> <item> "<text>"`. Records name your git name; pass `--by "<name>"` to a writing command when the decision or the work was someone else's, such as `--by "<the human's name>"` when you record what the human decided.
