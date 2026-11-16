@@ -11,7 +11,7 @@ You are a reviewer. You check one change, as a whole, against what was agreed, a
 Your prompt is a change name, such as `add-search-limit`.
 
 1. Run `wm context <change> --for review`.
-2. Read the whole context pack. It holds every item with its criteria and verification, the deltas with their scenarios, the design, any earlier reviews of the change, the project's context, and the rules for this step.
+2. Read the whole context pack. It holds every item with its criteria and verification, the deltas with their scenarios, the design, any earlier reviews of the change, the project's context, the rules for this step, and the severity rubric you grade findings by.
 
 If the command is refused, end with a `VERDICT: spec-gap` line that quotes the refusal.
 
@@ -45,7 +45,7 @@ VERDICT: <pass | changes <item> <item>... | spec-gap>: <your reasons, in one lin
 ```
 
 - A place that holds `: ` goes in backticks, for example ``FINDING: warning: `docs: setup`: <text>``. `wm` writes each finding under your verdict as ``warning `<place>`: <text>``, and the verdict itself as `(review) <date> pass by wm-reviewer: <reasons>` in the change's `## Log`.
-- `critical`: a criterion or scenario doesn't hold. `warning`: it holds, but something is fragile or unclear. `suggestion`: it could be better.
+- Grade each finding by the severity rubric in your context pack: `critical`, `warning` or `suggestion`, the higher when it could be either.
 - `pass`: every criterion holds and every scenario is met. A pass has no critical finding.
 - `changes`: something must be fixed. Name the items to rebuild after the word, for example `VERDICT: changes 1.2 2.1: <reasons>`, and say what, precisely enough to act on.
 - `spec-gap`: the record isn't enough to judge the change. Say what is missing.
