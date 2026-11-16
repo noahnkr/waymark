@@ -20,3 +20,11 @@
 - [x] 2.1 Describe the three paths in the charter and the docs
   - Criteria: the charter's goals name the tiny path's approval (the human's yes in the session, and the merge) and the three paths; concepts has a section on the tiny, short and full paths and its glossary has "Tiny path"; getting started, the multi-repo guide (the planner may edit any code repo), the smoke test (one tiny fix) and the README's "Light for small changes" match; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py`, `uv run --no-sync codespell` and `wm check`
+
+## Review
+
+- (review) 2026-11-15 pass: every item's criteria hold and every delta scenario is met, the full suite (932 tests), docs check, codespell, ruff, mypy and wm check all pass, and the atlas edit rule, wm-fix skill, specs guidance and docs follow the design
+  - suggestion: tests/services/test_check.py test_nothing_recorded: it commits through `commit_all` and never checks that the message is conventional, which the "Nothing recorded" scenario mentions; it checks the record, `wm check` and `wm status` only
+  - suggestion: tests/hooks/test_decide.py test_spec_edited_outside_a_change: it asserts the reason "they change only when a change is archived or synced", which is close to the scenario's "specs change only through a change" but not the same words; consider aligning the scenario wording or the refusal text
+  - suggestion: docs/multi-repo.md:150: the edited paragraph leaves one line far longer than the lines around it; rewrap it
+  - suggestion: CHANGELOG.md: no line yet for the behavior changes the proposal marks "for the changelog" (wm-fix, planner edits in an atlas, the specs guidance); the waymark-write-docs skill asks for one, though earlier changes left this to the release commit

@@ -147,8 +147,8 @@ code repo. Claude Code's hooks let the planner edit any code repo, for a change
 or a tiny fix, and the record at any time. An implementer edits a code repo only
 while an accepted change's item being built names it; an edit in any other code
 repo is refused with the repos it may edit now. A tiny fix that touches several
-code repos uses a branch of the same name and a pull request in each. An item whose repo isn't on this machine can't be delegated
-until it is registered.
+code repos uses a branch of the same name and a pull request in each. An item
+whose repo isn't on this machine can't be delegated until it is registered.
 
 **Commits and pull requests.** Code is committed in the code repos and the record
 in the atlas. Each repository gets its own pull request; the `wm-pr` skill opens
