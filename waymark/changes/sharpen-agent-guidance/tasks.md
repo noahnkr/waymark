@@ -22,7 +22,7 @@
   - Verify:
     - the assets tests and `tests/test_skills.py`
     - read the two agents and `wm-apply` against their old text
-- [ ] 2.2 Update the docs and the changelog
+- [x] 2.2 Update the docs and the changelog
   - Criteria:
     - concepts says the review pack and step give the severity rubric, and the implement pack the stopping rules
     - the changelog lists the rubric, the stopping rules and the `severity_rubric` and `stopping_rules` fields
