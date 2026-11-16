@@ -47,3 +47,7 @@ The exploration `lighter-workflow` asked for paths that scale with the size of t
 - Code: `hooks/decide.py` (the atlas edit rule), `services/instructions.py` (the specs guidance), `assets/` (the new skill), and the adapters' skill count.
 - Assets: the new `wm-fix` skill, plus `wm-propose`, `wm-explore` and `wm-onboard`.
 - Docs: concepts, getting started, the multi-repo guide, the smoke test, the README and the charter.
+
+## Outcome
+
+Work that adds, changes or removes no requirement now takes the tiny path: no change folder, the human's yes in the session, a conventional commit and a pull request, run by the new wm-fix skill; wm-propose asks which path fits (tiny, short or full) and wm-explore offers the tiny path. In an atlas the planner may edit any code repo from the atlas session, while implementers keep the one-repo limit and specs stay protected. wm instructions and wm-propose ask for functional requirements, Waymark's charter has the same rule, and the building and commits specs were rewritten to fit.
