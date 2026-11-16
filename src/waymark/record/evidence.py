@@ -16,7 +16,6 @@ from waymark.record.text import Document
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+\.\d+)\s")
 _HEADING = re.compile(r"^## (.*)$")
 _LIST_LINE = re.compile(r"^\s*[-*] (.*)$")
-_NOTE = re.compile(r"^  [-*] Note: \S")
 
 
 def evidence(relative: str, text: str) -> Counter[str]:
@@ -55,12 +54,3 @@ def evidence_changes(relative: str, before: str, after: str) -> list[str]:
     added = [f"adds {name}" for name in sorted((new - old).elements())]
     removed = [f"removes {name}" for name in sorted((old - new).elements())]
     return added + removed
-
-
-def only_adds_notes(before: str, after: str) -> bool:
-    """Whether an edit to a task list does nothing but add note lines."""
-    old = Counter(Document.parse("", before).raw_lines())
-    new = Counter(Document.parse("", after).raw_lines())
-    if old - new:
-        return False
-    return all(_NOTE.match(line) or line.startswith("    ") for line in (new - old).elements())

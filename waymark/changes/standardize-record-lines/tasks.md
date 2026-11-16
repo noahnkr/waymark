@@ -17,7 +17,7 @@
 - [x] 1.5 Add `wm check --fix`
   - Criteria: `--fix` opens the record for writing, runs `standard_layout` over the charter, specs, active changes, explorations and milestones, never archived changes, and writes every changed file or none; it refuses, writing nothing, when the fix would change any acceptance state, record or tick; it names each fixed file and its kinds of fix, or says there was nothing to fix, then reports the check, failing when an error remains
   - Verify: tests in `tests/services/test_check.py` and `tests/test_cli.py` for the scenarios "Layout fixed", "Fenced code left alone", "Nothing to fix", "Error that can't be fixed", "Accepted change fixed" and "Older record format"
-- [ ] 1.6 Guard the records in the hooks and write agent endings `by` the agent
+- [x] 1.6 Guard the records in the hooks and write agent endings `by` the agent
   - Criteria: evidence is every tick and every record in an active change's task list; an implementer's edit to any file in the record is refused with a reason that names `wm note` and `RESULT:`; `only_adds_notes` is gone; an implementer's ending is recorded `by wm-implementer`, with `partial` writing a `(note)`, and a reviewer's `by wm-reviewer`, from a final message or a handed-back report
   - Verify: tests in `tests/hooks/test_decide.py` and `tests/record/test_evidence.py` for the scenarios "Implementer writes a note by hand", "Reviewer's verdict", "Implementer done in the foreground", "Implementer partly done", "Implementer in the background" and "Reviewer in the background"
 - [ ] 1.7 Show item records and the Log in `wm show`

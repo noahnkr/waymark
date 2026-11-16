@@ -259,17 +259,17 @@ def test_reviewers_edit_is_denied(hooks: Hooks) -> None:
     assert hooks.tool("Write", {"file_path": path, "content": "x"}, "wm-implementer") == {}
 
 
-def test_implementers_edit_of_the_record_is_denied_except_for_notes(hooks: Hooks) -> None:
+def test_implementers_edit_of_the_record_is_denied(hooks: Hooks) -> None:
     tasks = str(hooks.project.path(TASKS_FILE))
     proposal = str(hooks.project.path(f"changes/{CHANGE}/proposal.md"))
     note = {
         "file_path": tasks,
         "old_string": "fifty-one matches\n",
-        "new_string": "fifty-one matches\n  - Note: used the existing sorter\n",
+        "new_string": "fifty-one matches\n  - (note) 2026-01-15: used the existing sorter\n",
     }
-    assert hooks.tool("Edit", note, "wm-implementer") == {}
+    assert "wm note" in denied(hooks.tool("Edit", note, "wm-implementer"))
     reply = hooks.tool("Write", {"file_path": proposal, "content": "# x\n"}, "wm-implementer")
-    assert "An implementer may add" in denied(reply)
+    assert "An implementer doesn't edit the record" in denied(reply)
 
 
 def test_hand_written_evidence_is_denied_for_every_agent(hooks: Hooks) -> None:
@@ -361,8 +361,7 @@ def test_implementers_result_ticks_its_item(hooks: Hooks) -> None:
 def test_implementers_blocked_result_writes_the_blocked_line(hooks: Hooks) -> None:
     hooks.stop("wm-implementer", "ITEM: add-limit 1.1\nRESULT: blocked: no access to the index")
     text = hooks.project.read(TASKS_FILE)
-    assert "  - (blocked) " in text
-    assert ": no access to the index\n" in text
+    assert " by wm-implementer: no access to the index\n" in text
 
 
 def test_reviewers_verdict_is_written_as_the_review_record(hooks: Hooks) -> None:
@@ -374,8 +373,7 @@ def test_reviewers_verdict_is_written_as_the_review_record(hooks: Hooks) -> None
     )
     assert "Recorded the verdict changes" in reply["systemMessage"]
     text = hooks.project.read(TASKS_FILE)
-    assert f"- (review) {today} changes 1.1" in text
-    assert ": off by one at fifty\n" in text
+    assert f"- (review) {today} changes 1.1 by wm-reviewer: off by one at fifty\n" in text
 
 
 def test_agent_already_asked_once_is_released_with_a_notice(hooks: Hooks) -> None:
@@ -398,8 +396,7 @@ def test_reviewers_handed_back_verdict_is_written_as_the_review_record(hooks: Ho
     reply = hooks.handback("wm-reviewer", "CHANGE: add-limit\nVERDICT: pass: caps at fifty")
     assert "Recorded the verdict pass" in reply["systemMessage"]
     text = hooks.project.read(TASKS_FILE)
-    assert f"- (review) {today} pass" in text
-    assert ": caps at fifty\n" in text
+    assert f"- (review) {today} pass by wm-reviewer: caps at fifty\n" in text
 
 
 def test_handed_back_report_without_its_ending_is_denied(hooks: Hooks) -> None:
