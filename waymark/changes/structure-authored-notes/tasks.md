@@ -11,7 +11,7 @@
   - Verify:
     - tests in `tests/record/test_authored_formats.py` and `tests/services/test_check.py` for the scenarios "Impact matches the deltas" and "Delta not named in the impact"
     - `wm check` here
-- [ ] 1.2 Archive with a structured Outcome
+- [x] 1.2 Archive with a structured Outcome
   - Criteria:
     - `wm archive` takes `--built` and `--differs`, and `--outcome` is gone
     - the archived proposal's Outcome holds `- Built: <text>` and `- Differs: <text>`, with `none` when `--differs` is left out
