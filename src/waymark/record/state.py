@@ -350,6 +350,9 @@ def _artifact_step(change: Change) -> tuple[Phase, NextStep] | None:
     if change.problems_in(DESIGN_FILE) or (change.design is None and not change.short_path):
         step = NextStep(StepKind.DESIGN, reason=reason(DESIGN_FILE, "Draft the design."))
         return reached, step
+    if change.design is not None and (unsettled := change.design.unsettled):
+        settle = "Settle the design before it is accepted: " + "; ".join(unsettled) + "."
+        return reached, NextStep(StepKind.DESIGN, reason=settle)
     if not change.short_path:
         reached = Phase.DESIGNED
 

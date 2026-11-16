@@ -97,6 +97,19 @@ def test_short_path_skips_the_designed_phase(workspace: Workspace) -> None:
     assert step(workspace.change_state()) == (Phase.PLANNED, StepKind.ACCEPT, None, True)
 
 
+def test_unsettled_design_keeps_the_next_step_at_design(workspace: Workspace) -> None:
+    design = DESIGN.replace("- Status: decided", "- Status: proposed").replace(
+        "None.", "- Fifty or twenty?"
+    )
+    workspace.change(design=design)
+    state = workspace.change_state()
+    assert (state.phase, state.next_step.kind) == (Phase.SPECIFIED, StepKind.DESIGN)
+    assert state.next_step.reason == (
+        'Settle the design before it is accepted: decision "Where to cut" is proposed; '
+        'open question "Fifty or twenty?" is listed.'
+    )
+
+
 def test_full_path_without_a_design(workspace: Workspace) -> None:
     workspace.change(design=None)
     assert step(workspace.change_state()) == (Phase.SPECIFIED, StepKind.DESIGN, None, False)

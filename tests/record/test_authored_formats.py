@@ -1,7 +1,8 @@
 """The layouts humans and the planner write: facts, the glossary, the exploration status."""
 
-from tests.support import CHARTER, NO_SPECS, Workspace, document, proposal
+from tests.support import CHARTER, DESIGN, NO_SPECS, Workspace, document, proposal
 from waymark.record.charter import parse_charter
+from waymark.record.design import parse_design
 from waymark.record.explorations import parse_exploration
 from waymark.record.proposal import parse_proposal
 from waymark.record.state import AcceptanceState, ExplorationStatus, derive_state
@@ -105,6 +106,31 @@ def test_numbered_goals_and_constraints() -> None:
     assert [code for _, code in charter_problems(skipped)] == ["numbered-list-format"]
     commented = CHARTER.replace("1. Runs offline.\n", "<!-- - a note -->\n1. Runs offline.\n")
     assert charter_problems(commented) == []
+
+
+def test_settled_decisions_are_checked(workspace: Workspace) -> None:
+    """Requirement "Settled decisions": the two lines and the section are required."""
+    workspace.change(design=DESIGN.replace("- Decided by: planner\n", "- Decided by: Sam\n"))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert problem.code == "decision-format"
+    assert '"- Decided by: human" or "- Decided by: planner"' in problem.message
+    workspace.change(design=DESIGN.replace("- Status: decided\n", ""))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert (problem.code, "the line is missing" in problem.message) == ("decision-format", True)
+    workspace.change(design=DESIGN.replace("## Open questions\n\nNone.\n\n", ""))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert problem.code == "missing-section"
+    workspace.change(design=DESIGN.replace("None.", "We may cut later."))
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert problem.code == "open-questions-format"
+
+
+def test_open_questions_are_read() -> None:
+    text = DESIGN.replace("None.", "- Fifty or twenty?\n- Who decides?")
+    design = parse_design(document(text, "changes/add-limit/design.md"))
+    assert design.open_questions == ("Fifty or twenty?", "Who decides?")
+    assert design.decisions[0].status == "decided"
+    assert design.decisions[0].decided_by == "planner"
 
 
 def test_exploration_status() -> None:

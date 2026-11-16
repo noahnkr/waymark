@@ -237,9 +237,15 @@ Cut the sorted list at fifty, in the search service.
 
 ### Decision: Where to cut
 
+- Status: decided
+- Decided by: planner
 - Options: in the database query, or after sorting
 - Choice: after sorting
 - Why: the order has to be final before the cut
+
+## Open questions
+
+None.
 
 ## Risks and trade-offs
 

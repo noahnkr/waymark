@@ -75,9 +75,15 @@ Cut the result list after sorting.
 
 ### Decision: Where to cut
 
+- Status: decided
+- Decided by: planner
 - Options: in the query, or after sorting
 - Choice: after sorting
 - Why: the order must be final first
+
+## Open questions
+
+None.
 
 ## Risks and trade-offs
 

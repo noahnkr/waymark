@@ -6,7 +6,16 @@ from dataclasses import dataclass
 
 from waymark.record.config import Config
 from waymark.record.deltas import Delta, parse_delta
-from waymark.record.design import Design, parse_design
+from waymark.record.design import (
+    DECIDED_BY,
+    DECIDERS,
+    NO_QUESTIONS,
+    OPEN_QUESTIONS,
+    STATUS,
+    STATUSES,
+    Design,
+    parse_design,
+)
 from waymark.record.files import RecordFiles
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.problems import WHOLE_FILE, Problem
@@ -118,6 +127,46 @@ def _load_deltas(files: RecordFiles, path: str, problems: list[Problem]) -> dict
     return deltas
 
 
+def _check_decisions(design: Design, problems: list[Problem]) -> None:
+    """Each decision says whether it is settled and who made it; open questions are listed."""
+    for decision in design.decisions:
+        for label, value, allowed in (
+            (STATUS, decision.status, STATUSES),
+            (DECIDED_BY, decision.decided_by, DECIDERS),
+        ):
+            if value in allowed:
+                continue
+            choices = " or ".join(f'"- {label}: {choice}"' for choice in allowed)
+            found = f'"{value}" is not one of them' if value else "the line is missing"
+            problems.append(
+                Problem(
+                    design.doc.path,
+                    decision.index + 1,
+                    "decision-format",
+                    f'Decision "{decision.name}" has a {choices} line; {found}.',
+                )
+            )
+    if design.open_questions is None:
+        problems.append(
+            Problem(
+                design.doc.path,
+                WHOLE_FILE,
+                "missing-section",
+                f'Add a "## {OPEN_QUESTIONS}" section: a list of the questions still open, '
+                f'or "{NO_QUESTIONS}".',
+            )
+        )
+    problems.extend(
+        Problem(
+            design.doc.path,
+            index + 1,
+            "open-questions-format",
+            f'Open questions are a list, one question per line, or "{NO_QUESTIONS}".',
+        )
+        for index in design.open_questions_prose
+    )
+
+
 def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -> None:
     """The Impact has its three lines, and ``Specs:`` names exactly the specs with a delta.
 
@@ -169,6 +218,8 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
     default = config.default_review if config else ReviewLevel.SELF
     if proposal is not None:
         _check_impact(change, proposal, problems)
+    if change.design is not None:
+        _check_decisions(change.design, problems)
     if change.short_path and change.design is not None:
         problems.append(
             Problem(

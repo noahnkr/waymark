@@ -11,9 +11,16 @@
 ## Decisions
 
 ### Decision: <name>
+- Status: <proposed while the human hasn't settled it, then decided>
+- Decided by: <human or planner>
 - Options: <the options considered>
 - Choice: <the one taken>
 - Why: <the reason>
+
+## Open questions
+
+<!-- Questions still open, one per line as a list, or "None.". A change can't be
+     accepted while a question is listed or a decision is proposed. -->
 
 ## Risks and trade-offs
 

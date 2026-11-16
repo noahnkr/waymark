@@ -63,6 +63,25 @@ def test_accept_writes_the_acceptance_record_with_date_and_person(project: Works
     assert project.record().problems == ()
 
 
+def test_scenario_proposed_decision(project: Workspace) -> None:
+    project.change(design=DESIGN.replace("- Status: decided", "- Status: proposed"))
+    message = refused(project, "accept", DAY)
+    assert 'decision "Where to cut" is proposed' in message
+    assert project.change_state().acceptance is AcceptanceState.MISSING
+
+
+def test_scenario_open_question(project: Workspace) -> None:
+    project.change(
+        design=DESIGN.replace(
+            "## Open questions\n\nNone.", "## Open questions\n\n- Fifty or twenty?"
+        )
+    )
+    message = refused(project, "accept", DAY)
+    assert 'open question "Fifty or twenty?" is listed' in message
+    state = project.change_state()
+    assert (state.next_step.kind, project.record().problems) == (StepKind.DESIGN, ())
+
+
 def test_accept_is_refused_while_an_artifact_is_missing(project: Workspace) -> None:
     project.change(tasks=None)
     with pytest.raises(Refusal, match='next step is "tasks"'):
