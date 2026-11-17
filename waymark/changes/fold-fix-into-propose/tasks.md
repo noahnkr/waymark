@@ -2,7 +2,7 @@
 
 ## 1. Skills
 
-- [ ] 1.1 Make `wm-propose` choose the path and carry the tiny path
+- [x] 1.1 Make `wm-propose` choose the path and carry the tiny path
   - Criteria:
     - step 1 is "Investigate and choose the path": read the specs and the code, choose tiny, short or full by the rules of "Propose picks the path", say why, and ask the human nothing about the path
     - a `## The tiny path` section, between Steps and Quality bar, holds `wm-fix`'s steps: the one-line confirmation and the wait for a yes, then branch, build, check, commit and offer a pull request that says why no requirement changes; if a requirement turns out to change, stop building and draft a change
