@@ -247,6 +247,7 @@ def test_scenario_new_record_is_format_1(tmp_path: Path) -> None:
     setup.init_project(tmp_path)
     text = (tmp_path / "waymark/config.toml").read_text(encoding="utf-8")
     assert "record_format = 1\n" in text
+    assert "wm update" not in text
 
 
 def test_scenario_record_from_wm_0_2_0(initialized: Path) -> None:

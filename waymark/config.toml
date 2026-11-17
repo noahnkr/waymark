@@ -4,7 +4,7 @@
 # only this one may write it.
 wm_version = "0.2.0"
 
-# The record's format. "wm update" advances it; don't edit it by hand.
+# The record's format. Only a wm that reads this format can use the record; don't edit it by hand.
 record_format = 1
 
 # How a task item is reviewed unless it says otherwise:
