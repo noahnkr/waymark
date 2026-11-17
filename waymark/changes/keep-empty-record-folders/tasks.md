@@ -12,7 +12,7 @@
     - `test_init_keeps_every_record_folder_in_git` in `tests/services/test_setup.py`, which commits the record and clones it
     - `test_archiving_the_last_change_keeps_the_changes_folder` in `tests/services/test_archive.py`
     - the existing clone and code-repo tests in `tests/services/test_setup.py` pass unchanged
-- [ ] 1.2 `wm update` writes any missing `.gitkeep`
+- [x] 1.2 `wm update` writes any missing `.gitkeep`
   - Criteria:
     - on a record with none of the six `.gitkeep` files and no `changes/archive/`, `wm update` writes all six, prints `created: waymark/<folder>/.gitkeep` for each, and ends with the line asking to review the changes to `waymark/` and commit them
     - on a record that has all six, it writes none, prints nothing about them, and still ends with "Everything is up to date." when nothing else changed

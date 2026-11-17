@@ -140,6 +140,48 @@ def test_update_on_a_current_project_changes_nothing(initialized: Path) -> None:
     assert files_under(initialized) == before
 
 
+KEEPS = tuple(
+    f"waymark/{folder}/.gitkeep"
+    for folder in (
+        "specs",
+        "changes",
+        "changes/archive",
+        "explorations",
+        "milestones",
+        "milestones/archive",
+    )
+)
+
+
+def test_update_adds_missing_record_folder_keeps(initialized: Path) -> None:
+    """Scenario: Existing record without them."""
+    for keep in KEEPS:
+        (initialized / keep).unlink()
+    (initialized / "waymark/changes/archive").rmdir()
+
+    done = integration.update(initialized)
+
+    for keep in KEEPS:
+        assert (initialized / keep).read_bytes() == b"", keep
+        assert f"created: {keep}" in done.message.splitlines()
+        assert keep in done.paths
+    assert done.message.splitlines()[-1] == "Review the changes to waymark/ and commit them."
+    assert load_record(find_project(initialized)).problems == ()
+
+
+def test_update_leaves_record_folder_keeps_alone(initialized: Path) -> None:
+    """Scenario: Already in place."""
+    spec_keep = initialized / "waymark/specs/.gitkeep"
+    spec_keep.write_text("kept by hand\n", encoding="utf-8")
+
+    done = integration.update(initialized)
+
+    assert ".gitkeep" not in done.message
+    assert done.message == "Everything is up to date."
+    assert done.paths == ()
+    assert spec_keep.read_text(encoding="utf-8") == "kept by hand\n"
+
+
 def test_update_regenerates_only_the_files_waymark_owns(initialized: Path) -> None:
     skill = initialized / ".claude/skills/wm-apply/SKILL.md"
     skill.write_text("edited by hand\n", encoding="utf-8")
