@@ -7,17 +7,14 @@ from dataclasses import dataclass
 from waymark.record.problems import Problem
 from waymark.record.text import Document, Section
 
-OLD_LAYOUT = 'This is the layout of an older record format. Run "wm update" to migrate the record.'
-"""What wm says about a layout of an older record format."""
-
 _FACT = re.compile(r"^([-*][ \t]+)?([A-Z][A-Za-z-]*):(?:[ \t]+(.*))?$")
 
 
 @dataclass(frozen=True)
 class Fact:
-    """A ``- Key: value`` line under an artifact's title.
+    """A ``Key: value`` line under an artifact's title, with or without a list bullet.
 
-    ``bullet`` is False for the older bare ``Key: value`` form.
+    ``bullet`` says whether it was written as ``- Key: value``.
     """
 
     value: str

@@ -10,7 +10,6 @@ import re
 from dataclasses import dataclass
 
 from waymark.record.outline import (
-    OLD_LAYOUT,
     collect_sections,
     parse_facts,
     require_title,
@@ -199,7 +198,14 @@ def parse_delta(domain: str, doc: Document) -> Delta:
         heading = section.title.strip()
         for name in (ADDED, MODIFIED, REMOVED, RENAMED):
             if heading.casefold() == name.casefold() and heading != name:
-                problems.append(Problem(doc.path, section.start + 1, "old-layout", OLD_LAYOUT))
+                problems.append(
+                    Problem(
+                        doc.path,
+                        section.start + 1,
+                        "layout",
+                        f'A delta section is headed "## {name}", written exactly so.',
+                    )
+                )
     sections = collect_sections(
         doc, (), problems, optional=(PURPOSE, ADDED, MODIFIED, REMOVED, RENAMED), strict=True
     )

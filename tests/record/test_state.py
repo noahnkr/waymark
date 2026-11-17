@@ -157,16 +157,6 @@ def test_review_level_comes_from_the_proposal_or_the_project_default(
     assert change.review_level(ReviewLevel.NONE) is ReviewLevel.INDEPENDENT
 
 
-def test_old_tag(workspace: Workspace) -> None:
-    tasks = TASKS.replace(
-        "1.1 Cap the result count", "1.1 Cap the result count   `review: independent`"
-    )
-    workspace.change(tasks=tasks)
-    assert code_list(workspace) == [(TASKS_FILE, "old-record-format")]
-    (problem,) = workspace.record().changes["add-limit"].problems
-    assert "wm update" in problem.message
-
-
 def test_change_with_no_spec_changes_is_specified_without_deltas(workspace: Workspace) -> None:
     workspace.change(proposal_text=proposal(impact=NO_SPECS), deltas={}, design=None)
     assert step(workspace.change_state()) == (Phase.SPECIFIED, StepKind.DESIGN, None, False)

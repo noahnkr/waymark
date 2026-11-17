@@ -13,8 +13,17 @@ RECORD_DIR = "waymark"
 """The record's folder, at the top of a repository or an atlas."""
 
 _REPO_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
-RECORD_FORMAT = 3
+RECORD_FORMAT = 1
 """The record format this version of wm reads and writes."""
+
+
+def other_format_reason(found: int) -> str:
+    """Why a record in a format other than this wm's can't be used, and what to do."""
+    return (
+        f"The record is in format {found}, and this wm reads only format {RECORD_FORMAT}. "
+        "Install the wm version that wrote it."
+    )
+
 
 _TOP_KEYS = frozenset(
     {

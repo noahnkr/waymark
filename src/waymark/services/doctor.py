@@ -15,17 +15,13 @@ from pathlib import Path
 from waymark import __version__
 from waymark.record import git
 from waymark.record.atlas import Found, locate_atlas, locate_repo, pointer_file, read_pointer
-from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT
+from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT, other_format_reason
 from waymark.record.files import RecordFiles
-from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE
 from waymark.record.project import Project, ProjectNotFoundError, find_project
 from waymark.record.record import Record, load_record
 from waymark.record.registry import Registry, load_registry
 from waymark.services import integration
 from waymark.services.common import Refusal, install_hint
-
-OLD_HOOKS_DIR = ".waymark/hooks"
-"""Where wm 0.1.0 committed the git hooks, relative to the repository's top."""
 
 
 class Status(StrEnum):
@@ -91,19 +87,6 @@ def _project_check(project: Project) -> Check:
     return Check("project", Status.OK, "Found the record.", project.root)
 
 
-def _old_pointer_check(code_repo: Path) -> Check:
-    """A warning for a code repo whose pointer is still in its old place."""
-    pointer, _ = read_pointer(code_repo)
-    command = f"wm atlas point {pointer.atlas}" if pointer else "wm atlas point <atlas>"
-    return Check(
-        "pointer",
-        Status.WARNING,
-        f"This code repo's pointer is in {OLD_POINTER_FILE}, its old place. Run "
-        f'"{command}" in it to move the pointer to {POINTER_FILE}.',
-        code_repo,
-    )
-
-
 def _pin_checks(record: Record) -> list[Check]:
     config = record.config
     if config is None:
@@ -128,8 +111,7 @@ def _pin_checks(record: Record) -> list[Check]:
             Check(
                 "record format",
                 Status.WARNING,
-                f"The record is in format {config.record_format}; this wm writes format "
-                f'{RECORD_FORMAT}. Run "wm update" to migrate it.',
+                other_format_reason(config.record_format),
             )
         )
         return checks
@@ -188,19 +170,16 @@ def _quoted(path: str) -> str:
 
 
 def _machine_files_in_git(record: Record) -> Check:
-    """Whether files wm writes for each machine are still tracked, as a 0.1.0 project had them.
-
-    The git hooks wm 0.1.0 committed in ``.waymark/hooks/`` count too.
-    """
+    """Whether files wm writes for each machine are tracked in git."""
     assert record.config is not None
     root = record.project.root
     tools = record.config.agent_tools
     try:
         written = integration.integration_files(RecordFiles(root), tools)
-        patterns = [*integration.ignore_patterns(tools), f"/{OLD_HOOKS_DIR}/"]
+        patterns = integration.ignore_patterns(tools)
     except Refusal as refusal:
         return Check("machine files in git", Status.ERROR, str(refusal))
-    found = git.tracked(root, [*sorted(written), OLD_HOOKS_DIR])
+    found = git.tracked(root, sorted(written))
     if not found:
         return Check(
             "machine files in git", Status.OK, "No file wm writes for this machine is tracked."
@@ -240,8 +219,6 @@ def doctor(start: Path) -> Report:
         checks.append(Check("project", Status.ERROR, error.plain, start))
         return Report("project", tuple(checks))
     checks.append(_project_check(project))
-    if project.old_pointer and project.code_repo is not None:
-        checks.append(_old_pointer_check(project.code_repo))
     record = load_record(project)
     checks += _pin_checks(record)
     checks += _reference_checks(record, registry)

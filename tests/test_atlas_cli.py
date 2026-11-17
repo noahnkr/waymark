@@ -11,7 +11,7 @@ from tests.support import ATLAS_CONFIG, CONFIG, Workspace, spec
 from tests.views.validator import errors
 from waymark import __version__
 from waymark.cli import EXIT_OK, EXIT_REFUSED, main
-from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE, Pointer, render_pointer
+from waymark.record.pointer import POINTER_FILE, Pointer, render_pointer
 from waymark.views.schemas import SCHEMAS
 
 
@@ -103,24 +103,23 @@ def test_hook_replies_carry_no_notes(
     assert "note:" not in err
 
 
-def code_repo_with(tmp_path: Path, *, old: bool) -> Workspace:
-    """An atlas "suite", and its code repo "suite-api" with a pointer, new or old."""
+def code_repo_with(tmp_path: Path) -> Workspace:
+    """An atlas "suite", and its code repo "suite-api" with a pointer."""
     atlas = Workspace(tmp_path / "atlas", ATLAS_CONFIG)
     git_init(atlas.root)
     code = tmp_path / "suite-api"
     git_init(code)
     pointer = Pointer("suite", "../atlas", __version__)
-    target = code / (OLD_POINTER_FILE if old else POINTER_FILE)
+    target = code / POINTER_FILE
     target.parent.mkdir(parents=True)
-    target.write_text(render_pointer(pointer, old=old), encoding="utf-8")
+    target.write_text(render_pointer(pointer), encoding="utf-8")
     return atlas
 
 
-@pytest.mark.parametrize("old", [False, True], ids=["pointer", "old pointer"])
 def test_status_in_a_code_repo_shows_the_atlas_changes(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], old: bool
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    atlas = code_repo_with(tmp_path, old=old)
+    atlas = code_repo_with(tmp_path)
     atlas.change()
     monkeypatch.chdir(tmp_path / "suite-api")
     code, out, err = run(capsys, "status")
@@ -130,11 +129,10 @@ def test_status_in_a_code_repo_shows_the_atlas_changes(
     assert [change["name"] for change in json.loads(out)["changes"]] == ["add-limit"]
 
 
-@pytest.mark.parametrize("old", [False, True], ids=["pointer", "old pointer"])
 def test_check_in_a_code_repo_checks_the_atlas(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], old: bool
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    code_repo_with(tmp_path, old=old)
+    code_repo_with(tmp_path)
     monkeypatch.chdir(tmp_path / "suite-api")
     code, out, err = run(capsys, "check")
     assert code == EXIT_OK, out + err

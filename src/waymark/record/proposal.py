@@ -1,7 +1,6 @@
 """Proposals: why a change is wanted and what it changes, plus its owner, path and review level.
 
-The acceptance and the sync are records in the task list's Log; an
-``Accepted:``, ``Synced:`` or ``Review override:`` line here is from format 1.
+The acceptance and the sync are records in the task list's Log.
 """
 
 import datetime
@@ -10,7 +9,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from waymark.record.outline import (
-    OLD_LAYOUT,
     collect_sections,
     content,
     parse_facts,
@@ -21,9 +19,7 @@ from waymark.record.terms import ReviewLevel
 from waymark.record.text import Document
 
 OWNER = "Owner"
-ACCEPTED = "Accepted"
 PATH = "Path"
-SYNCED = "Synced"
 REVIEW = "Review"
 SHORT = "short"
 FULL = "full"
@@ -113,12 +109,8 @@ def parse_proposal(doc: Document) -> Proposal:
     """Read a proposal."""
     problems: list[Problem] = []
     title = require_title(doc, problems)
-    facts = parse_facts(doc, {OWNER, PATH, REVIEW}, problems, prose=True)
-    problems.extend(
-        Problem(doc.path, fact.index + 1, "old-layout", OLD_LAYOUT)
-        for fact in facts.values()
-        if not fact.bullet
-    )
+    every_fact = parse_facts(doc, {OWNER, PATH, REVIEW}, problems, prose=True)
+    facts = {key: fact for key, fact in every_fact.items() if fact.bullet}
 
     owner = facts[OWNER].value if OWNER in facts else ""
     if not owner:
@@ -127,7 +119,7 @@ def parse_proposal(doc: Document) -> Proposal:
                 doc.path,
                 1,
                 "missing-owner",
-                f'Every change has one owner. Add an "{OWNER}: <name>" line under the title.',
+                f'Every change has one owner. Add a "- {OWNER}: <name>" line under the title.',
             )
         )
 

@@ -12,7 +12,6 @@ from waymark.record.tasks import LOG_SECTION, Tasks
 from waymark.record.text import Document, Section
 
 _BOX = re.compile(r"^- \[[ xX]\]")
-_FORMAT_LINE = re.compile(r"^record_format\s*=\s*\d+", re.MULTILINE)
 
 
 def _lines(doc: Document) -> list[str]:
@@ -86,12 +85,6 @@ def set_outcome(proposal: Proposal, outcome: str) -> str:
     trailing = [newline] if section.end < len(lines) else []
     lines[section.start : section.end] = [*body, *trailing]
     return "".join(lines)
-
-
-def set_record_format(config_text: str, number: int) -> str:
-    """Advance the record format number in the settings, leaving every other line alone."""
-    assert _FORMAT_LINE.search(config_text) is not None
-    return _FORMAT_LINE.sub(f"record_format = {number}", config_text, count=1)
 
 
 def replace_spans(doc: Document, replacements: dict[tuple[int, int, int], str]) -> str:

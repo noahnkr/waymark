@@ -354,7 +354,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     )
     init.set_defaults(handler=_init)
 
-    summary = "Migrate the record to this version and regenerate the files Waymark owns."
+    summary = "Regenerate the files Waymark owns, and add any missing record folders."
     update = commands.add_parser("update", help=summary, description=summary)
     update.set_defaults(handler=_update)
 

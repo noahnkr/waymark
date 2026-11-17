@@ -20,7 +20,6 @@ from waymark.record.files import RecordFiles
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.problems import WHOLE_FILE, Problem
 from waymark.record.proposal import (
-    ACCEPTED,
     IMPACT,
     IMPACT_LINES,
     NONE,
@@ -28,7 +27,6 @@ from waymark.record.proposal import (
     REVIEW,
     SHORT,
     SPECS,
-    SYNCED,
     Acceptance,
     Proposal,
     parse_proposal,
@@ -373,27 +371,7 @@ def load_change(
             else:
                 tasks = parse_tasks(doc)
                 problems.extend(tasks.problems)
-    if proposal is not None:
-        _old_proposal_lines(proposal, problems)
     change = Change(name, path, archived_on, proposal, deltas, design, tasks, ())
     if archived_on is None:
         _check_against_config(change, config, problems)
     return Change(name, path, archived_on, proposal, deltas, design, tasks, tuple(sorted(problems)))
-
-
-def _old_proposal_lines(proposal: Proposal, problems: list[Problem]) -> None:
-    """A proposal holds no records; report old acceptance, sync and override lines."""
-    for index, line in enumerate(proposal.doc.lines):
-        if line.in_fence:
-            continue
-        if line.text.startswith((f"{ACCEPTED}:", f"{SYNCED}:", "Review override:")):
-            problems.append(
-                Problem(
-                    proposal.doc.path,
-                    index + 1,
-                    "old-record-format",
-                    'This line is in the old record format. Run "wm update" to migrate the '
-                    "record; wm keeps the acceptance, the sync and the override as records in "
-                    "the task list's Log section.",
-                )
-            )

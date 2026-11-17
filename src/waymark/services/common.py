@@ -6,7 +6,7 @@ from pathlib import Path
 from waymark import __version__
 from waymark.record.atlas import Found, Location, locate_repo
 from waymark.record.changes import Change
-from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
+from waymark.record.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
 from waymark.record.project import RECORD_DIR, ProjectNotFoundError, find_project
 from waymark.record.record import Record, load_archived_change, load_record
 from waymark.record.registry import Registry, load_registry
@@ -72,10 +72,7 @@ def require_writable(record: Record) -> None:
     config = record.config
     assert config is not None
     if config.record_format != RECORD_FORMAT:
-        raise Refusal(
-            f"The record is in format {config.record_format}, and this wm writes format "
-            f'{RECORD_FORMAT}. Run "wm update" to migrate the record.'
-        )
+        raise Refusal(other_format_reason(config.record_format))
 
 
 def open_record(start: Path, *, writing: bool = False) -> Record:

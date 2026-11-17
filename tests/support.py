@@ -16,7 +16,7 @@ from waymark.record.state import ChangeState, RecordState, derive_state
 from waymark.record.text import Document
 
 CONFIG = (
-    f'wm_version = "{__version__}"\nrecord_format = 3\n'
+    f'wm_version = "{__version__}"\nrecord_format = 1\n'
     'default_review = "self"\nagent_tools = ["some-tool"]\n'
 )
 ATLAS_CONFIG = (

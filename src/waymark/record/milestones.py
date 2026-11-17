@@ -9,7 +9,6 @@ from waymark.record.problems import WHOLE_FILE, Problem
 from waymark.record.text import Document
 
 MILESTONE_FILE = "milestone.md"
-OLD_FILES = ("goal.md", "roadmap.md")
 
 GOAL = "Goal"
 DONE_WHEN = "Done when"

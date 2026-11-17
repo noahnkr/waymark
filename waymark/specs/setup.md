@@ -24,10 +24,10 @@ In a git repository that already has a record, `wm init` SHALL set up this machi
 - WHEN `wm init` runs
 - THEN it is refused, nothing is written, and the message gives the command that installs the pinned version
 
-#### Scenario: Record needs migrating
-- GIVEN a project whose record format is older than the running `wm` writes
+#### Scenario: Record in another format
+- GIVEN a project whose record is in a format other than the one the running `wm` reads
 - WHEN `wm init` runs
-- THEN it is refused, nothing is written, and the message says to run `wm update`
+- THEN it is refused, nothing is written, and the message says to install the `wm` version that wrote the record
 
 ### Requirement: Machine files ignored
 `wm init` and `wm update` SHALL keep the files `wm` writes for a machine out of git through one marked block in the repository's top `.gitignore`, listing the shared skills `wm` writes and each listed agent tool's files. The block SHALL NOT list `waymark/`, and lines outside the block SHALL be kept byte for byte.
@@ -53,10 +53,10 @@ In a git repository that already has a record, `wm init` SHALL set up this machi
 - THEN the block is replaced with the current list, in place, and the lines around it are unchanged
 
 ### Requirement: Tracked machine files reported
-`wm doctor` SHALL warn when a file `wm` writes for a machine, or a git hook `wm` 0.1.0 committed under `.waymark/hooks/`, is tracked in git, and the warning SHALL give the `git rm -r --cached` command that stops tracking those files without deleting them.
+`wm doctor` SHALL warn when a file `wm` writes for a machine is tracked in git, and the warning SHALL give the `git rm -r --cached` command that stops tracking those files without deleting them.
 
-#### Scenario: Project set up with 0.1.0
-- GIVEN a project whose `.claude/` files and `.waymark/hooks/` were committed
+#### Scenario: Agent files committed
+- GIVEN a project whose `.claude/` files were committed
 - WHEN `wm doctor` runs
 - THEN it warns, names the tracked paths, and gives one `git rm -r --cached` command for them
 

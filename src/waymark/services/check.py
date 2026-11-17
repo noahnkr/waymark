@@ -7,7 +7,7 @@ from pathlib import Path
 
 from waymark import __version__
 from waymark.record import git
-from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
+from waymark.record.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
 from waymark.record.problems import WHOLE_FILE
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import Record, link_problems
@@ -118,10 +118,7 @@ def _setup_findings(record: Record) -> list[Finding]:
         )
         found.append(Finding(Severity.WARNING, CONFIG_FILE, WHOLE_FILE, "version-pin", message))
     if config.record_format != RECORD_FORMAT:
-        message = (
-            f"The record is in format {config.record_format}, and this wm writes format "
-            f'{RECORD_FORMAT}. Run "wm update" to migrate it.'
-        )
+        message = other_format_reason(config.record_format)
         found.append(Finding(Severity.WARNING, CONFIG_FILE, WHOLE_FILE, "record-format", message))
     return found
 

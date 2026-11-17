@@ -4,7 +4,6 @@ wm never clones, pulls or pushes. These commands only record where the
 repositories already are, and read another atlas's specs where it sits.
 """
 
-import contextlib
 import os
 from pathlib import Path
 
@@ -14,8 +13,6 @@ from waymark.record.atlas import Found, atlas_name_at, locate_atlas, locate_repo
 from waymark.record.config import CONFIG_FILE, RECORD_DIR, Config
 from waymark.record.files import RecordFiles
 from waymark.record.pointer import (
-    OLD_POINTER_DIR,
-    OLD_POINTER_FILE,
     POINTER_FILE,
     Pointer,
     is_pointer,
@@ -136,17 +133,10 @@ def _relative_hint(folder: Path, base: Path) -> str | None:
         return None
 
 
-def _remove_if_empty(folder: Path) -> None:
-    with contextlib.suppress(OSError):  # not empty, or already gone
-        folder.rmdir()
-
-
 def point(start: Path, atlas: str, path: str | None = None) -> Done:
     """Write the pointer that tells a code repo which atlas holds its record.
 
-    The pointer is a pointer-only ``waymark/config.toml``. The old
-    ``.waymark/atlas.toml`` is removed with the same step, and the ``.waymark/``
-    folder too when nothing else is left in it.
+    The pointer is a pointer-only ``waymark/config.toml``.
     """
     top = git.repository_root(start)
     if top is None:
@@ -171,17 +161,10 @@ def point(start: Path, atlas: str, path: str | None = None) -> Done:
         hint = _relative_hint(folder, top)
     config = load_record(Project(folder)).config
     pin = config.wm_version if config else __version__
-    old = files.is_file(OLD_POINTER_FILE)
     transaction = Transaction(files)
     transaction.write(POINTER_FILE, render_pointer(Pointer(atlas, hint, pin)))
-    if old:
-        transaction.delete(OLD_POINTER_FILE)
     commit(transaction)
-    if old:
-        _remove_if_empty(top / OLD_POINTER_DIR)
     verb = "Updated" if current is not None else "Wrote"
     lines = [f'{verb} {POINTER_FILE}: this repository\'s record is the atlas "{atlas}".']
-    if old:
-        lines.append(f"Removed {OLD_POINTER_FILE}, the pointer's old place.")
     lines.append("Commit the change so anyone who clones this repository finds the atlas too.")
     return Done(" ".join(lines))

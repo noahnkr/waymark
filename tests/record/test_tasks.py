@@ -46,13 +46,6 @@ def test_build_tag_marks_an_item_for_delegation() -> None:
     assert (tagged.delegate, plain.delegate) == (True, False)
 
 
-def test_an_old_review_tag_is_in_the_old_record_format() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `review: independent`\n  - Build: delegate\n")
-    assert [problem.code for problem in tasks.problems] == ["old-record-format"]
-    assert "wm update" in tasks.problems[0].message
-    assert (tasks.items[0].title, tasks.items[0].delegate) == ("Cap it", True)
-
-
 def test_unknown_build_tag_is_a_problem_that_names_delegate() -> None:
     tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - Build: someone\n")
     (problem,) = tasks.problems
@@ -64,10 +57,10 @@ def test_unknown_build_tag_is_a_problem_that_names_delegate() -> None:
     assert not item.delegate
 
 
-def test_a_trailing_build_tag_is_an_old_layout() -> None:
+def test_a_trailing_build_tag_stays_part_of_the_title() -> None:
     tasks = parse(HEAD + "- [ ] 1.1 Cap it   `build: delegate`\n")
-    assert [problem.code for problem in tasks.problems] == ["old-layout"]
-    assert tasks.items[0].title == "Cap it"
+    assert tasks.problems == ()
+    assert tasks.items[0].title == "Cap it   `build: delegate`"
     assert not tasks.items[0].delegate
 
 

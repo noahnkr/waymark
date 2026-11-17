@@ -10,7 +10,8 @@ from tests.conftest import git_init
 from tests.support import ATLAS_CONFIG, CONFIG, Workspace, spec
 from waymark import __version__
 from waymark.record.pointer import is_pointer
-from waymark.record.registry import load_registry
+from waymark.record.project import ProjectNotFoundError, find_project
+from waymark.record.registry import Registry, load_registry
 from waymark.services import integration, setup
 from waymark.services.atlas import point, register
 from waymark.services.common import Refusal, take_notices
@@ -156,56 +157,29 @@ def test_point_writes_the_pointer_with_a_relative_hint_and_the_atlas_pin(
     assert "Removed" not in again.message
 
 
-def write_old_pointer(code: Path) -> None:
-    (code / ".waymark").mkdir()
-    (code / ".waymark" / "atlas.toml").write_text(
-        'atlas = "suite"\npath = "../atlas"\n', encoding="utf-8"
-    )
+def write_atlas_toml(code: Path) -> Path:
+    """The file wm 0.1.1 wrote as a code repo's pointer, which wm no longer reads."""
+    target = code / ".waymark" / "atlas.toml"
+    target.parent.mkdir(parents=True)
+    target.write_text('atlas = "suite"\npath = "../atlas"\n', encoding="utf-8")
+    return target
 
 
-def test_point_moves_the_old_pointer_and_removes_its_folder(
-    suite: Workspace, tmp_path: Path
-) -> None:
-    """Scenario: Move the pointer."""
+def test_an_atlas_toml_alone_does_not_make_a_code_repo(suite: Workspace, tmp_path: Path) -> None:
+    """The suite fixture makes "suite-api" a git repository beside the atlas."""
     code = tmp_path / "suite-api"
-    write_old_pointer(code)
+    write_atlas_toml(code)
+    with pytest.raises(ProjectNotFoundError):
+        find_project(code, Registry(tmp_path / "registry.toml"))
+
+
+def test_point_leaves_an_atlas_toml_alone(suite: Workspace, tmp_path: Path) -> None:
+    code = tmp_path / "suite-api"
+    old = write_atlas_toml(code)
     done = point(code, "suite", "../atlas")
-    assert "Removed .waymark/atlas.toml" in done.message
+    assert "Removed" not in done.message
     assert is_pointer((code / "waymark" / "config.toml").read_text(encoding="utf-8"))
-    assert not (code / ".waymark").exists()
-
-
-def test_point_keeps_the_old_folder_when_something_else_is_in_it(
-    suite: Workspace, tmp_path: Path
-) -> None:
-    code = tmp_path / "suite-api"
-    write_old_pointer(code)
-    (code / ".waymark" / "hooks").mkdir()
-    (code / ".waymark" / "hooks" / "commit-msg").write_text("#!/bin/sh\n", encoding="utf-8")
-    point(code, "suite", "../atlas")
-    assert not (code / ".waymark" / "atlas.toml").exists()
-    assert (code / ".waymark" / "hooks" / "commit-msg").is_file()
-
-
-def test_point_that_fails_leaves_the_old_pointer_in_place(
-    suite: Workspace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    code = tmp_path / "suite-api"
-    write_old_pointer(code)
-
-    unlink = Path.unlink
-
-    def refuse(self: Path, missing_ok: bool = False) -> None:
-        if self.name == "atlas.toml":
-            raise PermissionError("denied")
-        unlink(self, missing_ok=missing_ok)
-
-    monkeypatch.setattr(Path, "unlink", refuse)
-    with pytest.raises(Refusal, match="Nothing was changed"):
-        point(code, "suite", "../atlas")
-    monkeypatch.undo()
-    assert (code / ".waymark" / "atlas.toml").is_file()
-    assert not (code / "waymark" / "config.toml").exists()
+    assert old.read_text(encoding="utf-8") == 'atlas = "suite"\npath = "../atlas"\n'
 
 
 def test_point_is_refused_where_it_cant_lead_anywhere(

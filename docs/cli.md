@@ -19,7 +19,7 @@ wm init [--atlas NAME] [--tool NAME]
 
 ## wm update
 
-Migrate the record to this version and regenerate the files Waymark owns.
+Regenerate the files Waymark owns, and add any missing record folders.
 
 ```
 wm update

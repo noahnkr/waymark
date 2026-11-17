@@ -1,7 +1,6 @@
 # Changelog
 
-All notable changes to Waymark, one entry per release. A release that changes
-the record's format says whether `wm update` migrates an older record.
+All notable changes to Waymark, one entry per release.
 
 ## [0.2.0] - 2026-11-16
 

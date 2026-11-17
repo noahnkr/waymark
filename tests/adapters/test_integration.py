@@ -1,5 +1,6 @@
 """Installing and updating the files Waymark owns, and the stub second adapter."""
 
+import datetime
 import json
 import re
 from collections.abc import Iterator, Mapping
@@ -14,9 +15,8 @@ from waymark.adapters import Adapter, Capabilities
 from waymark.cli import build_parser
 from waymark.record.project import find_project
 from waymark.record.record import load_record
-from waymark.services import integration, setup
+from waymark.services import check, doctor, integration, setup
 from waymark.services.common import Refusal
-from waymark.services.migrations import Migration
 
 TOOL = adapters.names()[0]
 SETTINGS = ".claude/settings.json"
@@ -227,26 +227,51 @@ def test_update_is_refused_when_the_pinned_version_differs(initialized: Path) ->
     assert (initialized / ".claude/skills/wm-apply/SKILL.md").read_text(encoding="utf-8") == "old\n"
 
 
-def test_update_migrates_the_record_before_regenerating(
-    initialized: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    def mark(files: object, transaction: object) -> None:
-        del files
-        transaction.write("charter.md", "# Migrated\n")  # type: ignore[attr-defined]
+REASON_3 = (
+    "The record is in format 3, and this wm reads only format 1. "
+    "Install the wm version that wrote it."
+)
 
-    step = Migration(3, "mark it", mark)
-    monkeypatch.setattr("waymark.services.migrations.MIGRATIONS", (step,))
-    monkeypatch.setattr("waymark.services.migrations.RECORD_FORMAT", 4)
-    monkeypatch.setattr("waymark.services.migrations.migrate.__defaults__", ((step,), 4))
-    monkeypatch.setattr("waymark.record.config.RECORD_FORMAT", 4)
-    monkeypatch.setattr("waymark.services.common.RECORD_FORMAT", 4)
-    with pytest.raises(Refusal, match="wm update"):
+
+def set_format(root: Path, number: int) -> None:
+    config = root / "waymark/config.toml"
+    text = config.read_text(encoding="utf-8")
+    config.write_text(
+        text.replace("record_format = 1", f"record_format = {number}"), encoding="utf-8"
+    )
+
+
+def test_scenario_new_record_is_format_1(tmp_path: Path) -> None:
+    """Scenario: New record."""
+    git_init(tmp_path)
+    setup.init_project(tmp_path)
+    text = (tmp_path / "waymark/config.toml").read_text(encoding="utf-8")
+    assert "record_format = 1\n" in text
+    assert "wm update" not in text
+
+
+def test_scenario_record_from_wm_0_2_0(initialized: Path) -> None:
+    """Scenario: Record from wm 0.2.0."""
+    set_format(initialized, 3)
+    (initialized / "waymark/specs/.gitkeep").unlink()
+    before = files_under(initialized)
+    with pytest.raises(Refusal) as refusal:
+        integration.update(initialized)
+    assert str(refusal.value) == REASON_3
+    with pytest.raises(Refusal) as refusal:
         setup.create_change(initialized, "add-limit")
-    done = integration.update(initialized)
-    assert "Migrated the record: format 3 to 4: mark it." in done.message
-    assert (initialized / "waymark/charter.md").read_text(encoding="utf-8") == "# Migrated\n"
-    assert "record_format = 4" in (initialized / "waymark/config.toml").read_text(encoding="utf-8")
-    setup.create_change(initialized, "add-limit")
+    assert str(refusal.value) == REASON_3
+    assert files_under(initialized) == before
+
+
+def test_scenario_reported_by_the_checks(initialized: Path) -> None:
+    """Scenario: Reported by the checks, from wm check and wm doctor."""
+    set_format(initialized, 2)
+    reason = REASON_3.replace("format 3", "format 2")
+    findings = check.check(initialized, datetime.datetime.now(datetime.UTC))
+    assert [(f.code, f.message) for f in findings] == [("record-format", reason)]
+    [found] = [c for c in doctor.doctor(initialized).checks if c.name == "record format"]
+    assert found.message == reason
 
 
 def test_update_refuses_a_tool_the_settings_name_but_wm_does_not_know(initialized: Path) -> None:

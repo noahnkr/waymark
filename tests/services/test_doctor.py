@@ -129,39 +129,6 @@ def test_atlas_doctor_warns_about_a_pointer_with_another_pin(
     assert "wm atlas point suite" in message(report, "pointer api")
 
 
-def test_atlas_doctor_reads_an_old_pointer_and_names_its_file(
-    suite: Workspace, tmp_path: Path
-) -> None:
-    register(suite.root)
-    old = tmp_path / "suite-api" / ".waymark"
-    old.mkdir()
-    (old / "atlas.toml").write_text('atlas = "suite"\nwm_version = "0.0.1"\n', encoding="utf-8")
-    report = atlas_doctor(suite.root)
-    assert outcome(report)["pointer api"] is Status.WARNING
-    assert ".waymark/atlas.toml pins wm 0.0.1" in message(report, "pointer api")
-    (old / "atlas.toml").write_text('atlas = "suite"\n', encoding="utf-8")
-    report = atlas_doctor(suite.root)
-    assert outcome(report)["pointer api"] is Status.OK
-    assert '.waymark/atlas.toml names "suite"' in message(report, "pointer api")
-
-
-@pytest.mark.usefixtures("on_path")
-def test_doctor_warns_about_a_pointer_in_its_old_place(suite: Workspace, tmp_path: Path) -> None:
-    """Scenario: Atlas set up with 0.1.1 (the doctor part)."""
-    code = tmp_path / "suite-api"
-    (code / ".waymark").mkdir()
-    (code / ".waymark" / "atlas.toml").write_text(
-        'atlas = "suite"\npath = "../atlas"\n', encoding="utf-8"
-    )
-    report = doctor(code)
-    assert outcome(report)["project"] is Status.OK
-    assert outcome(report)["pointer"] is Status.WARNING
-    assert ".waymark/atlas.toml" in message(report, "pointer")
-    assert '"wm atlas point suite"' in message(report, "pointer")
-    point(code, "suite", "../atlas")
-    assert "pointer" not in outcome(doctor(code))
-
-
 def test_atlas_doctor_warns_about_registry_entries_the_settings_dont_list(
     suite: Workspace, tmp_path: Path, isolated_registry: Path
 ) -> None:
@@ -232,18 +199,10 @@ def git(root: Path, *args: str) -> str:
 
 
 def committed_project(root: Path, *forced: str) -> None:
-    """A project set up by wm init and committed, with some ignored paths added anyway.
-
-    Forcing ``.waymark/hooks`` first writes the git hooks a wm 0.1.0 project committed.
-    """
+    """A project set up by wm init and committed, with some ignored paths added anyway."""
     git_init(root)
     git(root, "config", "user.email", "sam@example.com")
     setup.init_project(root)
-    if ".waymark/hooks" in forced:
-        hooks = root / ".waymark" / "hooks"
-        hooks.mkdir(parents=True)
-        for name in ("commit-msg", "pre-commit"):
-            (hooks / name).write_text(f"#!/bin/sh\nwm run-hook {name}\n", encoding="utf-8")
     git(root, "add", "-A")
     if forced:
         git(root, "add", "--force", "--", *forced)
@@ -251,10 +210,10 @@ def committed_project(root: Path, *forced: str) -> None:
 
 
 @pytest.mark.usefixtures("on_path")
-def test_doctor_names_machine_files_tracked_in_git_and_how_to_stop(tmp_path: Path) -> None:
-    """Scenario: Project set up with 0.1.0."""
-    committed_project(tmp_path, ".claude", ".waymark/hooks", ".agents")
-    tracked = git(tmp_path, "ls-files", "--", ".claude", ".waymark/hooks", ".agents").split()
+def test_scenario_agent_files_committed(tmp_path: Path) -> None:
+    """Scenario: Agent files committed."""
+    committed_project(tmp_path, ".claude", ".agents")
+    tracked = git(tmp_path, "ls-files", "--", ".claude", ".agents").split()
     report = doctor(tmp_path)
     assert outcome(report)["machine files in git"] is Status.WARNING
     text = message(report, "machine files in git")
@@ -263,32 +222,30 @@ def test_doctor_names_machine_files_tracked_in_git_and_how_to_stop(tmp_path: Pat
     assert text.count("git rm -r --cached") == 1
     command = text.split("git rm -r --cached ", 1)[1]
     assert command == (
-        '".agents/skills/wm-*" ".claude/skills/wm-*" ".claude/agents/wm-*.md" '
-        ".claude/settings.json .waymark/hooks"
+        '".agents/skills/wm-*" ".claude/skills/wm-*" ".claude/agents/wm-*.md" .claude/settings.json'
     )
+    assert ".waymark" not in text
     assert not report.failed
 
 
 @pytest.mark.usefixtures("on_path")
 def test_doctor_command_stops_tracking_every_machine_file_and_keeps_them(tmp_path: Path) -> None:
-    committed_project(tmp_path, ".claude", ".waymark/hooks")
+    committed_project(tmp_path, ".claude")
     text = message(doctor(tmp_path), "machine files in git")
     arguments = [part.strip('"') for part in text.split("git rm -r --cached ", 1)[1].split()]
     assert arguments == [
         ".claude/skills/wm-*",
         ".claude/agents/wm-*.md",
         ".claude/settings.json",
-        ".waymark/hooks",
     ]
     git(tmp_path, "rm", "-r", "--cached", "--quiet", "--", *arguments)
     assert (tmp_path / ".claude" / "settings.json").is_file()
-    assert (tmp_path / ".waymark" / "hooks" / "commit-msg").is_file()
     git(tmp_path, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "chore: untrack")
     assert outcome(doctor(tmp_path))["machine files in git"] is Status.OK
 
 
 @pytest.mark.usefixtures("on_path")
-def test_doctor_passes_when_no_machine_file_is_tracked(tmp_path: Path) -> None:
+def test_scenario_nothing_tracked(tmp_path: Path) -> None:
     """Scenario: Nothing tracked."""
     committed_project(tmp_path)
     report = doctor(tmp_path)

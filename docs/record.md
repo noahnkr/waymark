@@ -54,7 +54,7 @@ values and keep the keys.
 | Key | What it holds |
 |---|---|
 | `wm_version` | The exact wm version the project uses. Any version can read the record; only this one may write it. |
-| `record_format` | The record's format, now `3`. Never edit it by hand; `wm update` refuses a record in an older format. |
+| `record_format` | The record's format, now `1`. Never edit it by hand. A record in another format is refused, with the reason to install the `wm` version that wrote it. |
 | `default_review` | `self`, `independent` or `none`: a change's review level when its proposal has no `- Review:` line. |
 | `agent_tools` | Which agent tools get skills, agents and hooks, such as `["claude-code"]`. |
 | `commit_scopes` | Optional. The scopes a conventional commit may use; the commit hook refuses any other. |

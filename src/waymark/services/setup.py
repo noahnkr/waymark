@@ -11,8 +11,7 @@ from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.files import RecordFiles
 from waymark.record.milestones import MILESTONE_FILE
 from waymark.record.names import NAME_RULE, is_valid_name
-from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE, is_pointer, parse_pointer
-from waymark.record.problems import Problem
+from waymark.record.pointer import POINTER_FILE, is_pointer, parse_pointer
 from waymark.record.project import RECORD_DIR
 from waymark.record.proposal import OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
@@ -83,25 +82,18 @@ def init_project(
 def _refuse_in_a_code_repo(files: RecordFiles) -> None:
     """Refuse ``wm init`` in a code repo that points at an atlas, before anything is written.
 
-    The pointer is a pointer-only ``waymark/config.toml``, or, when there is no
-    ``waymark/config.toml``, wm 0.1.1's ``.waymark/atlas.toml``. A repository
-    with a record is left to the caller.
+    The pointer is a pointer-only ``waymark/config.toml``. A repository with a
+    record is left to the caller.
     """
-    problems: list[Problem] = []
-    if files.is_file(POINTER_FILE):
-        text = files.read(POINTER_FILE, problems)
-        if text is None or not is_pointer(text):
-            return
-        source, old = POINTER_FILE, False
-    elif files.is_file(OLD_POINTER_FILE):
-        text = files.read(OLD_POINTER_FILE, problems)
-        source, old = OLD_POINTER_FILE, True
-    else:
+    if not files.is_file(POINTER_FILE):
         return
-    pointer, _ = parse_pointer(text or "", old=old)
+    text = files.read(POINTER_FILE, [])
+    if text is None or not is_pointer(text):
+        return
+    pointer, _ = parse_pointer(text)
     atlas = f'the atlas "{pointer.atlas}"' if pointer is not None else "an atlas"
     raise Refusal(
-        f"This repository is a code repo that points at {atlas} ({source}), and its record "
+        f"This repository is a code repo that points at {atlas} ({POINTER_FILE}), and its record "
         'lives in the atlas. Nothing was written. Run "wm init" in the atlas instead.'
     )
 
@@ -109,8 +101,8 @@ def _refuse_in_a_code_repo(files: RecordFiles) -> None:
 def _set_up_clone(root: Path, atlas: str | None, tools: tuple[str, ...] | None) -> Done:
     """Set up this machine in a repository that already has a record, leaving the record alone.
 
-    Needs the pinned wm and a record in this wm's format, so a fresh clone is
-    never migrated by accident.
+    Needs the pinned wm and a record in this wm's format; anything else is
+    refused before a file is written.
     """
     if atlas is not None or tools is not None:
         raise Refusal(

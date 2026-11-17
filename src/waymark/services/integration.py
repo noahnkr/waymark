@@ -16,14 +16,13 @@ from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import FOLDER_KEEP, RECORD_FOLDERS, Record
 from waymark.record.store import Transaction
-from waymark.services import ci, migrations
+from waymark.services import ci
 from waymark.services.common import (
     Done,
     Refusal,
     commit,
     open_record,
     repo_locations,
-    require_pinned,
 )
 
 SHARED_SKILLS = ".agents/skills"
@@ -239,15 +238,13 @@ def _listed(items: Sequence[str]) -> str:
 
 
 def update(start: Path) -> Done:
-    """Migrate the record to this version's format and regenerate the files Waymark owns.
+    """Regenerate the files Waymark owns, and add any missing record folders.
 
-    The last line asks for a review and a commit only when something shared
-    changed: the record, ``.gitignore`` or the CI workflow. The files that
-    belong to this machine are never to be committed.
+    A record in another format is refused before anything is written. The last
+    line asks for a review and a commit only when something shared changed:
+    the record, ``.gitignore`` or the CI workflow. The files that belong to
+    this machine are never to be committed.
     """
-    record = open_record(start)
-    require_pinned(record)
-    migrated = migrations.migrate(record.files)
     record = open_record(start, writing=True)
     project_files = RecordFiles(record.project.root)
     transaction = Transaction(project_files)
@@ -260,9 +257,8 @@ def update(start: Path) -> Done:
     if workflow != "absent":
         changes.append(FileChange(ci.WORKFLOW, workflow))
     changed = [change for change in changes if change.status != "unchanged"]
-    lines = [f"Migrated the record: {step}." for step in migrated]
-    lines += [f"{change.status}: {change.path}" for change in changed]
-    shared = [f"{RECORD_DIR}/"] if migrated or keeps else []
+    lines = [f"{change.status}: {change.path}" for change in changed]
+    shared = [f"{RECORD_DIR}/"] if keeps else []
     shared += [change.path for change in changed if change.path in (ignore.PATH, ci.WORKFLOW)]
     if shared:
         lines.append(f"Review the changes to {_listed(shared)} and commit them.")
