@@ -72,7 +72,8 @@ adds the `.gitignore` block if it is missing. It doesn't change anything in
 
 `wm init` is refused in a clone when the installed `wm` isn't the pinned
 version; the message gives the command that installs it. It is also refused
-when the record needs migrating; run `wm update` for that.
+when the record is in another format than the installed `wm` reads; the message
+says to install the `wm` version that wrote it.
 
 ## 3. Write the charter: the `wm-kickoff` skill
 
@@ -145,23 +146,14 @@ workflow, it names them and asks you to review and commit the changes. It never
 asks you to commit the agent tool files. `wm update` and `wm init` also delete
 any skill folder named `wm-*` that the installed `wm` doesn't ship, and list
 each file as `removed:`. Folders with other names are left
-alone, so don't name your own skills `wm-*`. A release that changes the record's
-format says in the [changelog](../CHANGELOG.md) whether `wm update` migrates an
-older record. When it doesn't, `wm update` refuses the record, names its format,
-and changes nothing.
+alone, so don't name your own skills `wm-*`. `wm update` never changes the
+record's format. A record in another format than the installed `wm` reads is
+refused, its format named, and nothing changes.
 
-A project set up with `wm` 0.1.0 committed the agent tool files and its git
-hooks. `wm update` adds the `.gitignore` block, but git keeps tracking files it
-already tracks. `wm doctor` warns about them, and gives the `git rm -r --cached`
-command that stops tracking them and keeps your copies. Run it, then commit.
-
-`wm` no longer has git hooks, and `wm run-hook` is gone. A clone that `wm`
-0.1.0 or 0.1.1 set up still points git at the old hooks, which call
-`wm run-hook`, so its commits fail. In each such clone, run
-`git config --unset core.hooksPath`, then delete the hooks folder that setting
-named. `wm update` doesn't do this for you. If a hook manager such as husky,
-lefthook or pre-commit calls `wm run-hook`, remove those two lines from its
-settings.
+If the agent tool files were ever committed, git keeps tracking them even with
+the `.gitignore` block in place. `wm doctor` warns about them, and gives the
+`git rm -r --cached` command that stops tracking them and keeps your copies. Run
+it, then commit.
 
 ## Next
 

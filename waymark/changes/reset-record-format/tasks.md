@@ -41,7 +41,7 @@
 
 ## 2. Docs
 
-- [ ] 2.1 Docs for one format and no migration
+- [x] 2.1 Docs for one format and no migration
   - Criteria:
     - `docs/record.md` gives `record_format` as `1` and says a record in another format is refused with the reason to install the `wm` version that wrote it
     - `docs/getting-started.md` no longer mentions migrating the record

@@ -107,12 +107,6 @@ refused in a code repo with a pointer, and the message names the atlas to run it
 in. A repo you don't own, such as a client's, can stay untouched: the atlas
 works without a pointer.
 
-**A pointer written by `wm` 0.1.1 or earlier** is `.waymark/atlas.toml`. `wm`
-still reads it when the code repo has no `waymark/config.toml`, and `wm doctor`
-warns about it. Run `wm atlas point notes` to move it: the new pointer is
-written, and the old file is removed, with its folder when nothing else is in
-it.
-
 ## 4. A change that spans both repos
 
 Sessions run in the atlas. The planner drafts the change there as usual; what
