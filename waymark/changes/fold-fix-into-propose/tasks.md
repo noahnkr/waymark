@@ -49,3 +49,7 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint 563b169b2d57c2c6 items 1.1 1.2 2.1 3.1 by Noah Roberts
+- (review) 2026-11-16 pass by wm-reviewer: every item's criteria and every delta scenario hold, wm-propose chooses the path and carries the tiny path with its one-line confirmation, wm-fix is gone from the assets, docs and README, retired wm-* folders are removed all or nothing with a working rollback, and the tests (1136), mypy, ruff, codespell, the docs check and wm check all pass
+  - suggestion `tests/adapters/test_integration.py`: the "Skill retired" and "The project's own skill" tests live here, not in `tests/services/test_integration.py` as item 2.1's Verify names; that file doesn't exist and the existing integration tests are in the adapters file
+  - suggestion `docs/concepts.md:51`: the reflowed Paths paragraph leaves one line much longer than the rest
+  - suggestion `src/waymark/record/store.py:3`: the module docstring now breaks after "then applies", leaving a very short line
