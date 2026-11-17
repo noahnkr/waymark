@@ -27,6 +27,12 @@ waymark/
   explorations/<name>.md
 ```
 
+Each of the six folders, `specs/`, `changes/`, `changes/archive/`,
+`explorations/`, `milestones/` and `milestones/archive/`, holds an empty
+`.gitkeep`, so git keeps it while it holds nothing else. `wm init` writes them
+with a new record, and `wm update` adds any that are missing. No `wm` command
+removes one, and `wm check` doesn't read them.
+
 ## Two kinds of line
 
 - **What people and agents write** is sections of prose and `- Label:` lines,

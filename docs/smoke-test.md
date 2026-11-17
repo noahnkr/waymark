@@ -17,7 +17,10 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 - [ ] Make a scratch git repository with a little code in it (a small script and
       a test are enough), and commit it. Run `wm init`: nothing is staged,
       `git status` shows only `waymark/` and `.gitignore` as new, and
-      `git config core.hooksPath` prints nothing. Run `wm doctor`: no errors.
+      `git config core.hooksPath` prints nothing. `waymark/specs/`,
+      `changes/`, `changes/archive/`, `explorations/`, `milestones/` and
+      `milestones/archive/` each hold an empty `.gitkeep`. Run `wm doctor`: no
+      errors.
 - [ ] Commit `waymark/` and `.gitignore` as `chore: set up waymark`.
 - [ ] **A fresh clone.** Clone the scratch repository into another folder and
       run `wm init` there: it sets up this machine and changes nothing in

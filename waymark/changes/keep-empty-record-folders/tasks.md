@@ -24,7 +24,7 @@
 
 ## 2. Docs
 
-- [ ] 2.1 Describe the `.gitkeep` files in the docs
+- [x] 2.1 Describe the `.gitkeep` files in the docs
   - Criteria:
     - `docs/record.md`'s layout notes that `wm init` writes a `.gitkeep` into each of the six folders so they are committed while empty, and that `wm update` adds a missing one
     - `docs/smoke-test.md`'s new-project step checks that the six folders hold a `.gitkeep`
