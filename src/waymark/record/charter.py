@@ -4,7 +4,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from waymark.record.outline import OLD_LAYOUT, collect_sections, require_title
+from waymark.record.outline import collect_sections, require_title
 from waymark.record.problems import Problem
 from waymark.record.terms import Step
 from waymark.record.text import Document
@@ -25,9 +25,6 @@ GLOSSARY_LINE = re.compile(r"^- \*\*(\S[^*]*?)\*\*: \S")
 
 _NUMBERED_LINE = re.compile(r"^(\d+)\.[ \t]+\S")
 """An item of a numbered list: ``<n>. <text>``."""
-
-_OLD_GLOSSARY_LINE = re.compile(r"^([A-Z][^:*]*?):\s+(\S.*)$")
-"""A glossary entry in the format 2 layout: ``<term>: <meaning>``."""
 
 
 @dataclass(frozen=True)
@@ -133,16 +130,6 @@ def _check_glossary(doc: Document, start: int, end: int, problems: list[Problem]
         if line.is_blank or line.in_fence or line.text.startswith(" "):
             continue
         if GLOSSARY_LINE.match(text):
-            continue
-        if _OLD_GLOSSARY_LINE.match(text):
-            problems.append(
-                Problem(
-                    doc.path,
-                    index + 1,
-                    "old-layout",
-                    f'{OLD_LAYOUT} A glossary entry is written "- **<term>**: <meaning>".',
-                )
-            )
             continue
         problems.append(
             Problem(

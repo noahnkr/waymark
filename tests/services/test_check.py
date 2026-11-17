@@ -71,18 +71,13 @@ def test_format_problems_are_errors(project: Workspace) -> None:
     )
 
 
-def old_layouts(project: Workspace) -> list[tuple[str, int]]:
-    result = check(project.root, NOW)
-    found = [(f.path, f.line) for f in result if f.code == "old-layout"]
-    assert all("wm update" in f.message for f in result if f.code == "old-layout")
-    assert all(f.severity is Severity.ERROR for f in result if f.code == "old-layout")
-    return found
-
-
-def test_scenario_old_fact_line(project: Workspace) -> None:
+def test_scenario_fact_without_a_bullet(project: Workspace) -> None:
     project.change()
     project.replace("changes/add-limit/proposal.md", "- Owner: Sam Doe\n", "Owner: Sam Doe\n")
-    assert old_layouts(project) == [("changes/add-limit/proposal.md", 3)]
+    result = check(project.root, NOW)
+    found = [(f.severity, f.path, f.code) for f in result if f.path.endswith("proposal.md")]
+    assert found == [(Severity.ERROR, "changes/add-limit/proposal.md", "missing-owner")]
+    assert not any("wm update" in f.message for f in result)
 
 
 def test_scenario_old_glossary_line(project: Workspace) -> None:
@@ -92,18 +87,21 @@ def test_scenario_old_glossary_line(project: Workspace) -> None:
         "Record: everything in waymark/\n",
     )
     [finding] = [f for f in check(project.root, NOW) if f.path == "charter.md"]
-    assert finding.code == "old-layout"
-    assert "wm update" in finding.message
+    assert finding.code == "glossary-format"
+    assert "wm update" not in finding.message
     assert "- **<term>**: <meaning>" in finding.message
 
 
-def test_old_delta_headings_are_old_layouts(project: Workspace) -> None:
+def test_scenario_heading_in_another_case(project: Workspace) -> None:
     project.write("specs/search.md", spec())
     text = delta(added=(requirement("Result order"),)).replace(
-        "## ADDED Requirements", "## Added requirements"
+        "## ADDED Requirements", "## Added Requirements"
     )
     project.change("add-order", deltas={"search": text})
-    assert [path for path, _ in old_layouts(project)] == ["changes/add-order/specs/search.md"]
+    [finding] = [f for f in check(project.root, NOW) if f.code == "layout"]
+    assert (finding.severity, finding.path) == (Severity.ERROR, "changes/add-order/specs/search.md")
+    assert "## ADDED Requirements" in finding.message
+    assert "wm update" not in finding.message
 
 
 def test_scenario_impact_matches_the_deltas(project: Workspace) -> None:
@@ -192,16 +190,12 @@ def test_malformed_evidence_is_an_error(project: Workspace) -> None:
     assert findings(project) == [("error", "changes/add-limit/tasks.md", "malformed-record")]
 
 
-def test_unknown_build_tag_and_repeated_tag_are_errors(project: Workspace) -> None:
+def test_unknown_build_tag_is_an_error(project: Workspace) -> None:
     project.change(
         tasks=HEAD
         + "- [ ] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - Build: someone\n"
-        + "- [ ] 1.2 Page it   `build: delegate`\n  - Criteria: done\n  - Verify: a test\n"
     )
-    assert findings(project) == [
-        ("error", "changes/add-limit/tasks.md", "unknown-build-tag"),
-        ("error", "changes/add-limit/tasks.md", "old-layout"),
-    ]
+    assert findings(project) == [("error", "changes/add-limit/tasks.md", "unknown-build-tag")]
 
 
 def test_delta_that_does_not_match_its_spec_is_an_error(project: Workspace) -> None:

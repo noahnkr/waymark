@@ -14,7 +14,7 @@
     - `grep -rn "migrat" src/` finds nothing
     - `wm check` passes on this repository
   - (note) 2026-11-16 by Noah Roberts: The three older-layout messages that still say to run wm update to migrate (outline.py OLD_LAYOUT, tasks.py _OLD_FORMAT, changes.py _old_proposal_lines) are removed by item 1.2; the grep for migrat in src/ is run again after 1.2.
-- [ ] 1.2 Remove the readers of older layouts
+- [x] 1.2 Remove the readers of older layouts
   - Criteria:
     - `OLD_LAYOUT`, `_OLD_FORMAT`, `_OLD_LABELED`, `_OLD_SECTION`, the `review` tag handling, `_old_proposal_lines`, `OLD_FILES`, `_old_milestone_file` and `_check_archived_milestone` are gone, and no problem has the code `old-layout` or `old-record-format`
     - a proposal with `Owner: Ada` and no `- Owner:` line is reported as having no owner, with no message naming `wm update`

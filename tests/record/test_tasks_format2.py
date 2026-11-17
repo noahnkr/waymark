@@ -99,14 +99,6 @@ def test_scenario_malformed_record_under_an_item() -> None:
     assert "(blocked) YYYY-MM-DD [by <who>]: <reason>" in problem.message
 
 
-def test_old_lines_in_the_latest_format_say_to_run_update() -> None:
-    assert codes(HEAD + ITEM + "  - Blocked: the key\n") == ["old-record-format"]
-    assert codes(HEAD + ITEM + "  - Note: half done\n") == ["old-record-format"]
-    assert codes(HEAD + ITEM + "\n## Review\n\n- (self-review) 2026-11-20: ok\n") == [
-        "old-record-format"
-    ]
-
-
 def test_records_in_the_wrong_place_are_reported() -> None:
     assert codes(
         HEAD + ITEM + "  - (accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 items 1.1\n"
@@ -156,13 +148,3 @@ def test_acceptance_comes_from_the_latest_accepted_record(workspace: Workspace) 
     assert change.acceptance is not None
     assert change.acceptance.date == datetime.date(2026, 11, 21)
     assert acceptance_state(record, change) is AcceptanceState.VALID
-
-
-def test_a_format_2_proposal_holds_no_records(workspace: Workspace) -> None:
-    workspace.write("config.toml", FORMAT_2)
-    workspace.change()
-    workspace.replace(
-        "changes/add-limit/proposal.md", "Owner: Sam Doe\n", "Owner: Sam Doe\nSynced: 2026-11-20\n"
-    )
-    change = workspace.record().changes["add-limit"]
-    assert [p.code for p in change.problems] == ["old-record-format"]

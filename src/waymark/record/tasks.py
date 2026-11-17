@@ -12,7 +12,6 @@ import re
 from dataclasses import dataclass, field
 
 from waymark.record import records
-from waymark.record.outline import OLD_LAYOUT
 from waymark.record.problems import Problem
 from waymark.record.records import RecordKind
 from waymark.record.terms import ReviewSeverity, Verdict
@@ -23,20 +22,12 @@ DELEGATE = "delegate"
 
 _SECTION = re.compile(r"^(\d+)\.\s+(\S.*)$")
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
-_TAG = re.compile(r"\s+`(review|build):\s*([A-Za-z-]+)`$")
 _LIST_LINE = re.compile(r"^(?:[-*+]|\d+[.)])(?:\s|$)")
 _FIELD = re.compile(r"^  [-*] (\S.*)$")
 _LABELED = re.compile(r"^(Criteria|Verify|Repo|Build):(?:\s+(.*))?$")
 BUILD = "Build"
-_OLD_LABELED = re.compile(r"^(Blocked|Spec gap|Note):")
 _RECORD_LINE = re.compile(r"^[-*] (\(.*)$")
-_OLD_SECTION = "Review"
 _REVIEW_KINDS = (RecordKind.REVIEW, RecordKind.SELF_REVIEW, RecordKind.RESOLVED)
-
-_OLD_FORMAT = (
-    'This line is in the old record format. Run "wm update" to migrate the record; '
-    'wm writes records as "(<kind>) YYYY-MM-DD [<args>] [by <who>]: <text>".'
-)
 
 
 @dataclass(frozen=True)
@@ -263,8 +254,6 @@ class _Parser:
         labeled = _LABELED.match(text)
         if labeled:
             self.labeled(index, labeled.group(1), (labeled.group(2) or "").strip())
-        elif _OLD_LABELED.match(text):
-            self.problem(index, "old-record-format", _OLD_FORMAT)
         elif records.looks_like_record(text):
             self.item_record(index, text)
         else:
@@ -275,28 +264,12 @@ class _Parser:
                 'or is a record that wm writes. Label this line, or write a note with "wm note".',
             )
 
-    def tags(self, index: int, title: str) -> tuple[str, bool]:
-        """Strip the trailing build tag from a title; an old review tag is reported."""
-        delegate = False
-        seen: set[str] = set()
-        while tag := _TAG.search(title):
-            title = title[: tag.start()].rstrip()
-            name, value = tag.group(1), tag.group(2)
-            if name == "review":
-                self.problem(index, "old-record-format", _OLD_FORMAT)
-                continue
-            if name not in seen:
-                self.problem(index, "old-layout", OLD_LAYOUT)
-            seen.add(name)
-            del value
-        return title, delegate
-
     def item_line(self, index: int, section: TaskSection | None, text: str) -> bool:
         match = _ITEM.match(text)
         if match is None:
             return False
         self.close_item()
-        title, delegate = self.tags(index, match.group(4))
+        title = match.group(4)
         number = f"{match.group(2)}.{match.group(3)}"
         if section is None:
             self.problem(
@@ -316,7 +289,7 @@ class _Parser:
             section=int(match.group(2)),
             title=title,
             ticked=match.group(1) != " ",
-            delegate=delegate,
+            delegate=False,
             index=index,
             end=index + 1,
         )
@@ -514,9 +487,6 @@ class _Parser:
                     )
                     continue
                 self.log_body(section)
-                continue
-            if title == _OLD_SECTION.casefold():
-                self.problem(section.start, "old-record-format", _OLD_FORMAT)
                 continue
             if self.log_section is not None:
                 self.problem(

@@ -699,7 +699,8 @@ def test_init_leaves_another_hook_setup_alone(tmp_path: Path, value: str) -> Non
 
 
 LAYOUT_CODES = {
-    "old-layout",
+    "layout",
+    "missing-owner",
     "glossary-format",
     "unknown-status",
     "unexpected-text",

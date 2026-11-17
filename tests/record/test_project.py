@@ -162,18 +162,15 @@ def test_milestone_needs_its_milestone_file(workspace: Workspace) -> None:
     ]
 
 
-def test_scenario_old_milestone_files(workspace: Workspace) -> None:
+def test_scenario_other_file_in_a_milestone(workspace: Workspace) -> None:
     workspace.write("milestones/faster-search/milestone.md", milestone())
-    workspace.write("milestones/faster-search/goal.md", "# G\n")
-    workspace.write("milestones/faster-search/roadmap.md", "# Roadmap\n")
+    workspace.write("milestones/faster-search/notes.md", "# Notes\n")
     workspace.write("milestones/archive/2026-01-20-old/goal.md", "# G\n")
-    found = [p for p in workspace.record().problems if p.code == "milestone-file"]
-    assert [p.path for p in found] == [
-        "milestones/archive/2026-01-20-old/goal.md",
-        "milestones/faster-search/goal.md",
-        "milestones/faster-search/roadmap.md",
+    found = [p for p in workspace.record().problems if p.path.startswith("milestones/")]
+    assert [(p.path, p.code) for p in found] == [
+        ("milestones/faster-search/notes.md", "unexpected-file")
     ]
-    assert all("milestone.md" in p.message for p in found)
+    assert "milestone.md" in found[0].message
 
 
 def test_problems_are_reported_with_record_relative_paths_and_lines(workspace: Workspace) -> None:
