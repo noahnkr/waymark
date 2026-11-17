@@ -109,8 +109,8 @@ def _refuse_in_a_code_repo(files: RecordFiles) -> None:
 def _set_up_clone(root: Path, atlas: str | None, tools: tuple[str, ...] | None) -> Done:
     """Set up this machine in a repository that already has a record, leaving the record alone.
 
-    Needs the pinned wm and a record in this wm's format, so a fresh clone is
-    never migrated by accident.
+    Needs the pinned wm and a record in this wm's format; anything else is
+    refused before a file is written.
     """
     if atlas is not None or tools is not None:
         raise Refusal(

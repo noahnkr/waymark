@@ -19,7 +19,7 @@ def test_config_holds_the_pinned_version_default_review_and_agent_tools() -> Non
     assert problems == ()
     assert config is not None
     assert config.wm_version == __version__
-    assert config.record_format == 3
+    assert config.record_format == 1
     assert config.default_review is ReviewLevel.SELF
     assert config.agent_tools == ("some-tool",)
 
@@ -91,8 +91,8 @@ def test_missing_pinned_version_is_a_problem() -> None:
 
 
 def test_record_format_number_is_required() -> None:
-    assert codes(CONFIG.replace("record_format = 3\n", "")) == ["invalid-setting"]
-    assert codes(CONFIG.replace("record_format = 3", "record_format = 0")) == ["invalid-setting"]
+    assert codes(CONFIG.replace("record_format = 1\n", "")) == ["invalid-setting"]
+    assert codes(CONFIG.replace("record_format = 1", "record_format = 0")) == ["invalid-setting"]
 
 
 def test_invalid_toml_is_a_problem() -> None:

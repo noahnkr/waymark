@@ -25,7 +25,7 @@ from waymark.record.state import ExplorationStatus, StepKind, derive_state
 from waymark.record.tasks import parse_tasks
 from waymark.record.terms import Layout, Phase
 from waymark.record.text import Document
-from waymark.services import check, ci, common, integration, lifecycle, migrations, setup
+from waymark.services import check, ci, integration, lifecycle, setup
 from waymark.services.common import Refusal
 
 TODAY = datetime.date(2026, 1, 15)
@@ -46,7 +46,7 @@ def test_init_creates_the_settings_and_a_charter_skeleton(tmp_path: Path) -> Non
     assert record.problems == ()
     assert record.config is not None
     assert record.config.wm_version == __version__
-    assert record.config.record_format == 3
+    assert record.config.record_format == 1
     assert record.layout is Layout.REPO
     assert record.charter is not None
     assert record.charter.title == tmp_path.name
@@ -250,14 +250,17 @@ def test_init_in_a_clone_is_refused_on_another_pinned_version(tmp_path: Path) ->
     assert not (clone / ".waymark").exists()
 
 
-def test_init_in_a_clone_is_refused_when_the_record_needs_migrating(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Scenario: Record needs migrating."""
+def test_scenario_record_in_another_format(tmp_path: Path) -> None:
+    """Scenario: Record in another format, for wm init in a clone."""
     clone = cloned_project(tmp_path)
-    monkeypatch.setattr(common, "RECORD_FORMAT", 4)
-    with pytest.raises(Refusal, match='Run "wm update"'):
+    config = clone / "waymark/config.toml"
+    config.write_text(
+        config.read_text(encoding="utf-8").replace("record_format = 1", "record_format = 3"),
+        encoding="utf-8",
+    )
+    with pytest.raises(Refusal, match="Install the wm version that wrote it") as refusal:
         setup.init_project(clone)
+    assert "format 3" in str(refusal.value)
     assert not (clone / ".claude").exists()
     assert not (clone / ".agents").exists()
     assert not (clone / ".waymark").exists()
@@ -463,14 +466,12 @@ def test_update_that_changes_only_machine_files_asks_for_no_commit(tmp_path: Pat
     assert staged(root) == []
 
 
-def test_update_names_the_record_and_the_workflow_when_they_change(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_update_names_the_record_and_the_workflow_when_they_change(tmp_path: Path) -> None:
     root = initialized_with_block(tmp_path)
     workflow = root / ci.WORKFLOW
     workflow.parent.mkdir(parents=True)
     workflow.write_text("old\n", encoding="utf-8")
-    monkeypatch.setattr(migrations, "migrate", lambda files: ("format 1 to 2: mark it",))
+    (root / "waymark/specs/.gitkeep").unlink()
     done = integration.update(root)
     assert done.message.splitlines()[-1] == (
         f"Review the changes to waymark/ and {ci.WORKFLOW} and commit them."
@@ -611,8 +612,8 @@ def test_reads_still_work_when_the_pinned_version_differs(project: Workspace) ->
 
 
 def test_writes_are_refused_when_the_record_format_differs(project: Workspace) -> None:
-    project.replace("config.toml", "record_format = 3", "record_format = 2")
-    with pytest.raises(Refusal, match="wm update"):
+    project.replace("config.toml", "record_format = 1", "record_format = 2")
+    with pytest.raises(Refusal, match="this wm reads only format 1"):
         setup.create_change(project.root, "add-limit")
 
 

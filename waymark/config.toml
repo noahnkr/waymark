@@ -5,7 +5,7 @@
 wm_version = "0.2.0"
 
 # The record's format. "wm update" advances it; don't edit it by hand.
-record_format = 3
+record_format = 1
 
 # How a task item is reviewed unless it says otherwise:
 # "self", "independent" or "none".

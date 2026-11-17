@@ -2,7 +2,7 @@
 
 ## 1. Code
 
-- [ ] 1.1 Format 1 with one reason, and no migration code
+- [x] 1.1 Format 1 with one reason, and no migration code
   - Criteria:
     - `RECORD_FORMAT` is 1, `wm init` writes `record_format = 1`, and this repository's `waymark/config.toml` holds `record_format = 1` in the same commit
     - a record at format 3 or 2 gets the reason `The record is in format <n>, and this wm reads only format 1. Install the wm version that wrote it.` from `wm update`, `wm init` in a clone, `wm check --fix` and the writing commands, each refused with no file changed, and from `wm check` and `wm doctor` as a finding
@@ -13,6 +13,7 @@
     - tests named after the scenarios: `test_scenario_new_record_is_format_1`, `test_scenario_record_from_wm_0_2_0` and `test_scenario_reported_by_the_checks` beside the update tests in `tests/adapters/test_integration.py`, `test_scenario_record_in_another_format` for `wm check --fix` and for `wm init` in a clone
     - `grep -rn "migrat" src/` finds nothing
     - `wm check` passes on this repository
+  - (note) 2026-11-16 by Noah Roberts: The three older-layout messages that still say to run wm update to migrate (outline.py OLD_LAYOUT, tasks.py _OLD_FORMAT, changes.py _old_proposal_lines) are removed by item 1.2; the grep for migrat in src/ is run again after 1.2.
 - [ ] 1.2 Remove the readers of older layouts
   - Criteria:
     - `OLD_LAYOUT`, `_OLD_FORMAT`, `_OLD_LABELED`, `_OLD_SECTION`, the `review` tag handling, `_old_proposal_lines`, `OLD_FILES`, `_old_milestone_file` and `_check_archived_milestone` are gone, and no problem has the code `old-layout` or `old-record-format`

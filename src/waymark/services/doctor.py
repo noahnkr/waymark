@@ -15,7 +15,7 @@ from pathlib import Path
 from waymark import __version__
 from waymark.record import git
 from waymark.record.atlas import Found, locate_atlas, locate_repo, pointer_file, read_pointer
-from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT
+from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT, other_format_reason
 from waymark.record.files import RecordFiles
 from waymark.record.pointer import OLD_POINTER_FILE, POINTER_FILE
 from waymark.record.project import Project, ProjectNotFoundError, find_project
@@ -128,8 +128,7 @@ def _pin_checks(record: Record) -> list[Check]:
             Check(
                 "record format",
                 Status.WARNING,
-                f"The record is in format {config.record_format}; this wm writes format "
-                f'{RECORD_FORMAT}. Run "wm update" to migrate it.',
+                other_format_reason(config.record_format),
             )
         )
         return checks

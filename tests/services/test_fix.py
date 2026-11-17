@@ -55,12 +55,13 @@ def test_scenario_accepted_change_fixed(project: Workspace) -> None:
     assert project.change_state().acceptance is AcceptanceState.VALID
 
 
-def test_scenario_older_record_format(project: Workspace) -> None:
+def test_scenario_record_in_another_format(project: Workspace) -> None:
     project.change(proposal_text=proposal() + "\n\n\n")
-    project.replace("config.toml", "record_format = 3", "record_format = 2")
+    project.replace("config.toml", "record_format = 1", "record_format = 3")
     before = project.read(PROPOSAL_FILE)
-    with pytest.raises(Refusal, match="wm update"):
+    with pytest.raises(Refusal, match="Install the wm version that wrote it") as refusal:
         fix_layout(project.root)
+    assert "wm update" not in str(refusal.value)
     assert project.read(PROPOSAL_FILE) == before
 
 
