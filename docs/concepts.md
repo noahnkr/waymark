@@ -44,11 +44,11 @@ on how.
 | **Full** | anything bigger | a change with a design, and an independent review when it is risky |
 
 The test for tiny is the specs, not the size: if every requirement still holds
-as written, the work is tiny. `/wm-propose` applies the test itself, after
-reading the specs and the code, and doesn't ask you which path to take. A
-change with a question still open takes the full path, where the design's open
-questions hold it until you answer. If tiny work turns out to change a
-requirement, it stops and becomes a change. Specs can't be edited by hand on any path.
+as written, the work is tiny. `/wm-propose` finds out which it is by reading
+the specs and the code. A change with a question still open takes the full
+path, where the design's open questions hold it until you answer. If tiny work
+turns out to change a requirement, it stops and becomes a change. Specs can't
+be edited by hand on any path.
 
 **Changing what was accepted withdraws the acceptance.** That covers the
 proposal (its `- Review:` line included), the deltas, the design and the

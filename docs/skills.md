@@ -112,14 +112,14 @@ still fuzzy, or you don't know yet whether it's a change.
 
 ## `/wm-propose`
 
-Does a piece of work at the size it turns out to need. It reads the specs and
-the code, picks the path itself and tells you why; it doesn't ask you which.
-**Use it** for anything you want built or changed, from a typo to a new feature.
+Does a piece of work, whatever its size. It looks at the specs and the code to
+see what the work involves, and the path follows from that. **Use it** for
+anything you want built or changed, from a typo to a new feature.
 
 **How it works**
 
-1. **Investigate and choose the path:** tiny when no requirement changes, short
-   when the change is small and nothing is left to settle, full otherwise.
+1. **Look at the work:** it's tiny when no requirement changes, short when the
+   specs change and nothing is left to settle, and full otherwise.
 2. **The tiny path:** shows one line, `Tiny: <what it will change>; keeps <the
    requirement>`, and builds nothing until you say yes. Then it branches, builds
    only what it said, runs the checks, the full checks and `wm check`, commits
@@ -146,7 +146,7 @@ the code, picks the path itself and tells you why; it doesn't ask you which.
 |---|---|
 | your request; `wm status`; `wm context --for explore`; `wm show <spec>`; the code; `wm instructions --change <name>` | tiny: code only, never the record; a change: `proposal.md`, `specs/<area>.md` deltas, `design.md` (full path), `tasks.md` |
 
-**Shows you** the path and why first. For tiny work, the `Tiny:` line, then the
+**Shows you** what the work involves first. For tiny work, the `Tiny:` line, then the
 pull request's title, description and target. For a change, each draft in a few
 lines; before acceptance: what it does, the deltas per spec, each decision with
 who made it, the review level, and the items with which to delegate. **Stops**

@@ -45,6 +45,15 @@
     - `uv run --no-sync python -m tools.docs --check`
     - codespell
     - `rg wm-fix docs README.md src` finds nothing
+- [x] 3.2 Word the path as following from the work, in plain language
+  - Criteria:
+    - the README's "How it works" keeps the Path, When and What gets written columns, drops the Run column, says once that everything starts with `/wm-propose`, and has no sentence saying the path is picked
+    - the README's Propose bullet says `/wm-propose` looks at the specs and code to see what the work involves, and how tiny work and a change go from there
+    - `docs/skills.md` and `docs/concepts.md` describe the path as following from what the work changes, not as picked by `/wm-propose`
+  - Verify:
+    - `uv run --no-sync python -m tools.docs --check`
+    - codespell
+    - `rg -n "picks (the path|it)" README.md docs` finds nothing
 
 ## Log
 
