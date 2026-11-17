@@ -170,14 +170,23 @@ waymark/
   charter.md                                  what the project is, its goals and its rules
   config.toml                                 settings, and the pinned wm version
   changes/
+    .gitkeep
     archive/
+      .gitkeep
       2026-01-15-add-dark-mode/
         design.md                             how it's built, and the decisions
         proposal.md                           why, what changes, and the outcome
         tasks.md                              the tasks, and what wm recorded
         specs/
           appearance.md                       the change to the spec
+  explorations/
+    .gitkeep
+  milestones/
+    .gitkeep
+    archive/
+      .gitkeep
   specs/
+    .gitkeep
     appearance.md                             the living spec, now with dark mode
 ```
 

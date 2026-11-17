@@ -14,7 +14,7 @@ from waymark import adapters, assets
 from waymark.record import git, ignore
 from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR
-from waymark.record.record import Record
+from waymark.record.record import FOLDER_KEEP, RECORD_FOLDERS, Record
 from waymark.record.store import Transaction
 from waymark.services import ci, migrations
 from waymark.services.common import (
@@ -36,6 +36,19 @@ class FileChange:
 
     path: str
     status: str
+
+
+def stage_folder_keeps(transaction: Transaction, files: RecordFiles) -> tuple[str, ...]:
+    """Stage an empty ``.gitkeep`` in each record folder that lacks one, and return their paths.
+
+    ``files`` is rooted at the repository's top, where the record folder is.
+    A ``.gitkeep`` that is already there is left alone.
+    """
+    paths = [f"{RECORD_DIR}/{folder}/{FOLDER_KEEP}" for folder in RECORD_FOLDERS]
+    missing = tuple(path for path in paths if not files.is_file(path))
+    for path in missing:
+        transaction.write(path, "")
+    return missing
 
 
 def require_tools(tools: tuple[str, ...]) -> None:
@@ -238,16 +251,18 @@ def update(start: Path) -> Done:
     record = open_record(start, writing=True)
     project_files = RecordFiles(record.project.root)
     transaction = Transaction(project_files)
+    keeps = stage_folder_keeps(transaction, project_files)
     workflow = ci.stage_workflow(transaction, project_files, only_if_present=True)
     paths = commit(transaction)
     machine = setup_machine(record)
-    changes = list(machine.changes)
+    changes = [FileChange(path, "created") for path in keeps]
+    changes += machine.changes
     if workflow != "absent":
         changes.append(FileChange(ci.WORKFLOW, workflow))
     changed = [change for change in changes if change.status != "unchanged"]
     lines = [f"Migrated the record: {step}." for step in migrated]
     lines += [f"{change.status}: {change.path}" for change in changed]
-    shared = [f"{RECORD_DIR}/"] if migrated else []
+    shared = [f"{RECORD_DIR}/"] if migrated or keeps else []
     shared += [change.path for change in changed if change.path in (ignore.PATH, ci.WORKFLOW)]
     if shared:
         lines.append(f"Review the changes to {_listed(shared)} and commit them.")

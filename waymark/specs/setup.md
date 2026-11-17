@@ -90,3 +90,26 @@ Messages about the agent tool files SHALL tell the user to run `wm init` to set 
 - GIVEN a Claude Code skills folder holding a skill named `release-notes` that `wm` didn't write
 - WHEN `wm init` runs
 - THEN the `release-notes` folder is unchanged
+
+### Requirement: Record folders kept in git
+`wm init`, when it creates a record, SHALL write an empty `.gitkeep` file into each of the record's folders: `specs/`, `changes/`, `changes/archive/`, `explorations/`, `milestones/` and `milestones/archive/`. `wm update` SHALL write the `.gitkeep` missing from any of these folders, list each as created, and tell the user to review and commit the record. No `wm` command SHALL remove a `.gitkeep`, and `wm check` SHALL NOT report one.
+
+#### Scenario: New record
+- GIVEN a git repository with no record
+- WHEN `wm init` runs
+- THEN each of the six folders holds an empty `.gitkeep`, and after committing `waymark/`, a fresh clone has all six folders
+
+#### Scenario: Existing record without them
+- GIVEN a project at the pinned version whose record has no `.gitkeep` files and no `changes/archive/` folder
+- WHEN `wm update` runs
+- THEN all six folders hold an empty `.gitkeep`, the output lists each as `created: waymark/<folder>/.gitkeep`, and its last line asks to review the changes to `waymark/` and commit them
+
+#### Scenario: Already in place
+- GIVEN a record whose six folders each hold a `.gitkeep`
+- WHEN `wm update` runs
+- THEN no `.gitkeep` is written, and the output doesn't mention them
+
+#### Scenario: Last change archived
+- GIVEN a record with one active change, whose folder `changes/` also holds a `.gitkeep`
+- WHEN the change is archived
+- THEN `changes/.gitkeep` is still there, and `wm check` reports nothing about it
