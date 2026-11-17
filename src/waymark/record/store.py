@@ -1,6 +1,7 @@
 """Writing the record: several files and a folder move as one step.
 
-A transaction collects the files to write or delete and the folder to move, then applies
+A transaction collects the files to write or delete, the folders to remove and the folder to
+move, then applies
 them together. If anything fails, every file is put back and the move undone,
 so a multi-file operation either completes or leaves the record as it was.
 """
@@ -21,6 +22,7 @@ class Transaction:
         self._files = files
         self._writes: dict[str, str] = {}
         self._deletes: set[str] = set()
+        self._folder_deletes: set[str] = set()
         self._moves: list[tuple[str, str]] = []
 
     def write(self, relative: str, text: str) -> None:
@@ -32,6 +34,10 @@ class Transaction:
         """Stage a file's removal. A file that isn't there is left alone."""
         self._deletes.add(relative)
         self._writes.pop(relative, None)
+
+    def delete_folder(self, relative: str) -> None:
+        """Stage a folder's removal with every file in it; a missing folder is left alone."""
+        self._folder_deletes.add(relative)
 
     def move(self, source: str, target: str) -> None:
         """Stage a folder move. It happens after the writes, which use the old paths."""
@@ -64,6 +70,8 @@ class Transaction:
                 if path not in originals:
                     originals[path] = path.read_bytes()
                 path.unlink()
+            for relative in sorted(self._folder_deletes):
+                _remove_folder(self._files.path(relative), originals)
             for source, target in self._moves:
                 origin, destination = self._files.path(source), self._files.path(target)
                 if destination.exists():
@@ -77,6 +85,22 @@ class Transaction:
                 f"The record could not be written ({error}). Nothing was changed. "
                 "Check the folder's permissions and that no other program has the files open."
             ) from error
+
+
+def _remove_folder(folder: Path, originals: dict[Path, bytes | None]) -> None:
+    """Remove a folder and everything in it, keeping each file's bytes for a rollback."""
+    if not folder.is_dir():
+        return
+    inside = sorted(folder.rglob("*"), reverse=True)
+    for path in inside:
+        if path.is_file():
+            if path not in originals:
+                originals[path] = path.read_bytes()
+            path.unlink()
+    for path in inside:
+        if path.is_dir():
+            path.rmdir()
+    folder.rmdir()
 
 
 def _replace(path: Path, data: bytes) -> None:

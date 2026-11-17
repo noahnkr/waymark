@@ -47,6 +47,8 @@ class Adapter(ABC):
     """Per-machine files the adapter merges into; never committed."""
     ignored: tuple[str, ...] = ()
     """``.gitignore`` patterns for every file ``files`` writes, and nothing the project owns."""
+    skill_folder: str | None = None
+    """The folder ``files`` copies the skills into, one folder per skill; None if it has none."""
 
     @abstractmethod
     def files(self, existing: Mapping[str, str | None]) -> dict[str, str]:

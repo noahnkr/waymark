@@ -138,3 +138,24 @@ def test_roadmap_lines_linking_into_a_folder_are_ticked() -> None:
     assert tick_roadmap_lines(doc, SOURCE) == milestone(
         roadmap.replace("- [ ]", "- [x]", 1), goal=goal
     )
+
+
+def test_transaction_removes_a_folder_and_puts_it_back_when_it_fails(workspace: Workspace) -> None:
+    workspace.write("skills/wm-old/SKILL.md", "old\n")
+    workspace.write("skills/wm-old/notes/more.md", "more\n")
+    workspace.write("changes/archive", "a file in the way\n")
+    workspace.write("changes/add-limit/proposal.md", "one\n")
+    failing = transaction(workspace)
+    failing.delete_folder("skills/wm-old")
+    failing.move("changes/add-limit", "changes/archive/2026-02-01-add-limit")
+    with pytest.raises(StoreError, match="Nothing was changed"):
+        failing.commit()
+    assert workspace.read("skills/wm-old/SKILL.md") == "old\n"
+    assert workspace.read("skills/wm-old/notes/more.md") == "more\n"
+
+    pending = transaction(workspace)
+    pending.delete_folder("skills/wm-old")
+    pending.delete_folder("skills/missing")
+    pending.commit()
+    assert not workspace.path("skills/wm-old").exists()
+    assert workspace.path("skills").is_dir()

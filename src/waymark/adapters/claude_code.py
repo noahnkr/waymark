@@ -223,6 +223,7 @@ class ClaudeCodeAdapter(Adapter):
     reads = (SETTINGS,)
     local_reads = (LOCAL_SETTINGS,)
     ignored = ("/.claude/skills/wm-*/", "/.claude/agents/wm-*.md", f"/{SETTINGS}")
+    skill_folder = ".claude/skills"
 
     def local_files(
         self, existing: Mapping[str, str | None], folders: Sequence[Path]
@@ -233,7 +234,7 @@ class ClaudeCodeAdapter(Adapter):
 
     def files(self, existing: Mapping[str, str | None]) -> dict[str, str]:
         rendered = {
-            f".claude/skills/{name}/{assets.SKILL_FILE}": assets.skill(name)
+            f"{self.skill_folder}/{name}/{assets.SKILL_FILE}": assets.skill(name)
             for name in assets.SKILLS
         }
         rendered.update({f".claude/agents/{name}.md": _agent_file(name) for name in assets.AGENTS})

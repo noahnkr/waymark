@@ -23,7 +23,7 @@
 
 ## 2. Pruning
 
-- [ ] 2.1 Remove retired `wm-*` skill folders in `wm init` and `wm update`
+- [x] 2.1 Remove retired `wm-*` skill folders in `wm init` and `wm update`
   - Criteria:
     - `Transaction.delete_folder` removes every file under a folder and then the empty folder, all or nothing with the rest of the transaction
     - `Adapter.skill_folder` names a tool's skills folder; Claude Code's is `.claude/skills`, and `integration.py` names no tool
