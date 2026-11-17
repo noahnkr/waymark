@@ -293,9 +293,8 @@ def code_repo_files(root: Path) -> dict[Path, bytes]:
             "waymark/config.toml",
             '[pointer]\natlas = "notes"\npath = "../notes-atlas"\nwm_version = "0.1.1"\n',
         ),
-        (".waymark/atlas.toml", 'atlas = "notes"\npath = "../notes-atlas"\n'),
     ],
-    ids=["new pointer", "old pointer"],
+    ids=["pointer"],
 )
 @pytest.mark.parametrize(
     "options",

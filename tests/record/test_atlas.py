@@ -26,11 +26,6 @@ def empty(tmp_path: Path) -> Registry:
     return Registry(tmp_path / "registry.toml")
 
 
-def write_old_pointer(folder: Path, text: str) -> None:
-    (folder / ".waymark").mkdir(parents=True, exist_ok=True)
-    (folder / ".waymark" / "atlas.toml").write_bytes(text.encode("utf-8"))
-
-
 def write_pointer(folder: Path, text: str) -> None:
     (folder / "waymark").mkdir(parents=True, exist_ok=True)
     (folder / "waymark" / "config.toml").write_bytes(text.encode("utf-8"))
@@ -44,14 +39,6 @@ def test_pointer_names_the_atlas_its_hint_and_the_pin() -> None:
     assert is_pointer(text)
     assert parse_pointer(text) == (pointer, None)
     assert parse_pointer('[pointer]\natlas = "suite"\n') == (Pointer("suite", None, None), None)
-
-
-def test_old_pointer_is_still_read() -> None:
-    pointer = Pointer("suite", "../atlas", "0.1.0")
-    text = render_pointer(pointer, old=True)
-    assert "[pointer]" not in text
-    assert parse_pointer(text, old=True) == (pointer, None)
-    assert parse_pointer('atlas = "suite"\n', old=True) == (Pointer("suite", None, None), None)
 
 
 @pytest.mark.parametrize(
@@ -83,22 +70,6 @@ def test_pointer_is_told_from_a_records_settings(text: str, pointer: bool) -> No
 )
 def test_pointer_that_cant_be_read_says_why(text: str, problem: str) -> None:
     pointer, reason = parse_pointer(text)
-    assert pointer is None
-    assert reason is not None
-    assert problem in reason
-
-
-@pytest.mark.parametrize(
-    ("text", "problem"),
-    [
-        ("atlas = \n", ".waymark/atlas.toml is not valid TOML"),
-        ('path = "../atlas"\n', "names no atlas"),
-        ('atlas = "suite"\nrepo = "api"\n', 'holds "repo"'),
-        ("atlas = 3\n", "not a string"),
-    ],
-)
-def test_old_pointer_that_cant_be_read_says_why(text: str, problem: str) -> None:
-    pointer, reason = parse_pointer(text, old=True)
     assert pointer is None
     assert reason is not None
     assert problem in reason
@@ -140,14 +111,6 @@ def test_repo_hint_is_not_used_when_its_pointer_names_another_atlas(
     assert locate_repo("suite", suite.root, API, empty(tmp_path)).found is Found.MISSING
 
 
-def test_repo_hint_is_not_used_when_its_old_pointer_names_another_atlas(
-    suite: Workspace, tmp_path: Path
-) -> None:
-    git_init(tmp_path / "suite-api")
-    write_old_pointer(tmp_path / "suite-api", 'atlas = "other"\n')
-    assert locate_repo("suite", suite.root, API, empty(tmp_path)).found is Found.MISSING
-
-
 def test_stale_registry_entry_falls_back_to_the_hint(suite: Workspace, tmp_path: Path) -> None:
     git_init(tmp_path / "suite-api")
     registry = empty(tmp_path).with_repo("suite", "api", tmp_path / "gone")
@@ -177,46 +140,12 @@ def test_project_is_found_from_a_code_repo_through_its_pointer(
     project = find_project(code / "src", empty(tmp_path))
     assert project.root == suite.root.resolve()
     assert project.code_repo == code.resolve()
-    assert not project.old_pointer
     assert any("wm atlas register" in note for note in project.notes)
-
-
-def test_project_is_found_from_a_code_repo_through_its_old_pointer(
-    suite: Workspace, tmp_path: Path
-) -> None:
-    code = tmp_path / "suite-api"
-    git_init(code)
-    write_old_pointer(code, 'atlas = "suite"\npath = "../atlas"\n')
-    (code / "src").mkdir()
-    project = find_project(code / "src", empty(tmp_path))
-    assert (project.root, project.code_repo) == (suite.root.resolve(), code.resolve())
-    assert project.old_pointer
-
-
-def test_old_pointer_comes_before_the_registry(suite: Workspace, tmp_path: Path) -> None:
-    other = Workspace(tmp_path / "other", ATLAS_CONFIG.replace('"suite"', '"other"'))
-    code = tmp_path / "suite-api"
-    git_init(code)
-    write_old_pointer(code, 'atlas = "suite"\npath = "../atlas"\n')
-    registry = empty(tmp_path).with_atlas("other", other.root).with_repo("other", "api", code)
-    project = find_project(code, registry)
-    assert project.root == suite.root.resolve()
-    assert project.old_pointer
-
-
-def test_new_pointer_is_read_before_the_old_one(suite: Workspace, tmp_path: Path) -> None:
-    code = tmp_path / "suite-api"
-    git_init(code)
-    write_pointer(code, '[pointer]\natlas = "suite"\npath = "../atlas"\n')
-    write_old_pointer(code, 'atlas = "other"\n')
-    project = find_project(code, empty(tmp_path))
-    assert project.root == suite.root.resolve()
-    assert not project.old_pointer
 
 
 def test_records_settings_are_not_taken_for_a_pointer(suite: Workspace, tmp_path: Path) -> None:
     project = find_project(suite.root, empty(tmp_path))
-    assert (project.root, project.code_repo, project.old_pointer) == (suite.root, None, False)
+    assert (project.root, project.code_repo) == (suite.root, None)
 
 
 def test_broken_pointer_is_reported_as_a_pointer(tmp_path: Path) -> None:

@@ -24,7 +24,7 @@
     - `test_scenario_fact_without_a_bullet`, `test_scenario_heading_in_another_case` and `test_scenario_other_file_in_a_milestone`, beside the existing tests for each reader
     - the existing glossary test for the scenario "Old glossary line" passes with the code `glossary-format`
     - `grep -rn "old-layout\|old-record-format\|OLD_LAYOUT" src/ tests/` finds nothing
-- [ ] 1.3 Remove 0.1.x leftovers
+- [x] 1.3 Remove 0.1.x leftovers
   - Criteria:
     - `OLD_POINTER_DIR`, `OLD_POINTER_FILE`, `parse_pointer`'s `old` parameter and `Project.old_pointer` are gone, and a code repo with only `.waymark/atlas.toml` is not found as a code repo
     - `wm atlas point` writes `waymark/config.toml` and doesn't touch `.waymark/`

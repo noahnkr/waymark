@@ -2,9 +2,7 @@
 
 It is a pointer-only ``waymark/config.toml`` in the code repo's top folder,
 whose only table is ``[pointer]``: the atlas's name, an optional relative-path
-hint and the pinned wm version. It holds no record. wm 0.1.1 and earlier wrote
-the same settings, at the top level, to ``.waymark/atlas.toml``, which is still
-read when the code repo has no ``waymark/config.toml``. A code repo needs no
+hint and the pinned wm version. It holds no record. A code repo needs no
 Waymark files; the pointer is written only when asked for.
 """
 
@@ -17,8 +15,6 @@ from waymark.record.config import CONFIG_FILE, RECORD_DIR
 
 POINTER_TABLE = "pointer"
 POINTER_FILE = f"{RECORD_DIR}/{CONFIG_FILE}"
-OLD_POINTER_DIR = ".waymark"
-OLD_POINTER_FILE = f"{OLD_POINTER_DIR}/atlas.toml"
 _KEYS = frozenset({"atlas", "path", "wm_version"})
 
 
@@ -61,23 +57,21 @@ def _pointer_table(data: dict[str, Any]) -> tuple[dict[str, Any] | None, str | N
     return table, None
 
 
-def parse_pointer(text: str, *, old: bool = False) -> tuple[Pointer | None, str | None]:
+def parse_pointer(text: str) -> tuple[Pointer | None, str | None]:
     """Read a pointer. Returns the pointer, or why it can't be read.
 
-    With ``old``, the text is a ``.waymark/atlas.toml``, whose settings are at
-    the top level; otherwise it is a ``waymark/config.toml``, whose settings
-    are in its ``[pointer]`` table and which holds nothing else.
+    The text is a ``waymark/config.toml``, whose settings are in its
+    ``[pointer]`` table and which holds nothing else.
     """
-    name = OLD_POINTER_FILE if old else POINTER_FILE
+    name = POINTER_FILE
     try:
         data = tomllib.loads(text)
     except tomllib.TOMLDecodeError as error:
         return None, f"{name} is not valid TOML: {error}."
-    if not old:
-        table, problem = _pointer_table(data)
-        if table is None:
-            return None, problem
-        data = table
+    table, problem = _pointer_table(data)
+    if table is None:
+        return None, problem
+    data = table
     unknown = sorted(set(data) - _KEYS)
     if unknown:
         return None, f'{name} holds "{unknown[0]}", which is not one of its settings.'
@@ -92,21 +86,16 @@ def parse_pointer(text: str, *, old: bool = False) -> tuple[Pointer | None, str 
     return Pointer(atlas, hint, version), None
 
 
-def render_pointer(pointer: Pointer, *, old: bool = False) -> str:
-    """The pointer's text: a ``waymark/config.toml``, or with ``old`` a ``.waymark/atlas.toml``."""
+def render_pointer(pointer: Pointer) -> str:
+    """The pointer's text, a ``waymark/config.toml``."""
     settings = [f"atlas = {json.dumps(pointer.atlas)}"]
     if pointer.path_hint:
         settings.append(f"path = {json.dumps(pointer.path_hint)}")
     if pointer.wm_version:
         settings.append(f"wm_version = {json.dumps(pointer.wm_version)}")
-    if old:
-        heading = [
-            "# This repository's record lives in a Waymark atlas. Written by wm atlas point."
-        ]
-    else:
-        heading = [
-            "# A pointer, not a record: this repository's record lives in the Waymark atlas",
-            "# named below. Written by wm atlas point.",
-            f"[{POINTER_TABLE}]",
-        ]
+    heading = [
+        "# A pointer, not a record: this repository's record lives in the Waymark atlas",
+        "# named below. Written by wm atlas point.",
+        f"[{POINTER_TABLE}]",
+    ]
     return "\n".join(heading + settings) + "\n"
