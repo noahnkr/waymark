@@ -119,6 +119,14 @@ def tracked(repository: Path, paths: Iterable[str]) -> tuple[str, ...]:
     return tuple(path for path in listing.split("\0") if path)
 
 
+def head_commit(repository: Path) -> str | None:
+    """The full hash of the checked-out commit; None before the first commit."""
+    try:
+        return _run(repository, "rev-parse", "--verify", "--quiet", "HEAD").strip() or None
+    except GitError:
+        return None
+
+
 def remote_url(repository: Path, remote: str = "origin") -> str | None:
     """A remote's URL as this clone's config has it; nothing is fetched."""
     try:
