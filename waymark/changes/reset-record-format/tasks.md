@@ -56,3 +56,7 @@
 
 - (accepted) 2026-11-16 fingerprint efd795a9e3eb34e1 items 1.1 1.2 1.3 1.4 2.1 by Noah Roberts
 - (accepted) 2026-11-16 fingerprint 2f4faf41f1b191ea items 1.1 1.2 1.3 1.4 2.1 by Noah Roberts
+- (review) 2026-11-16 changes 1.1 by wm-reviewer: the settings template, and this repository's config.toml written from it, still say "wm update" advances the record format, breaking 1.1's "no message tells the user to run wm update to migrate" criterion and the "Record format 1" requirement; reword that comment in src/waymark/record/templates/config.toml and waymark/config.toml. Everything else holds and every check passes.
+  - critical `src/waymark/record/templates/config.toml:7`: the comment `wm init` writes into every record says "wm update" advances the record format, which breaks 1.1's criterion that no message tells the user to run `wm update` to migrate, and the requirement "Record format 1"; the same line is in this repository's `waymark/config.toml:7`
+  - warning `tools/skills/waymark-release/SKILL.md:33`: the release skill still says to state what `wm update` migrates when the record format changes, which the next release would follow
+  - suggestion `src/waymark/record/tasks.py:292`: `delegate=False` is now a constant at the only place an item is built; the field could take its value from the `Build:` line alone, or be removed if nothing else sets it
