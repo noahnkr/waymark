@@ -73,6 +73,25 @@ def test_init_installs_the_skills_agents_and_hooks(initialized: Path) -> None:
     assert record.config.agent_tools == (TOOL,)
 
 
+SHIPPED = (
+    "wm-kickoff",
+    "wm-explore",
+    "wm-propose",
+    "wm-update",
+    "wm-apply",
+    "wm-archive",
+    "wm-onboard",
+    "wm-pr",
+)
+
+
+def test_scenario_new_project(initialized: Path) -> None:
+    """Requirement "Shipped skills": exactly eight skills, and no wm-fix."""
+    installed = {path.name for path in (initialized / ".claude" / "skills").iterdir()}
+    assert installed == set(SHIPPED)
+    assert "wm-fix" not in installed
+
+
 def test_skills_are_copied_not_linked(initialized: Path) -> None:
     for path in sorted(initialized.rglob("SKILL.md")):
         assert path.is_file()

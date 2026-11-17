@@ -119,7 +119,7 @@ def test_skills_are_copied_unchanged_into_the_tools_folder() -> None:
     files = generated()
     for name in assets.SKILLS:
         assert files[f".claude/skills/{name}/SKILL.md"] == assets.skill(name)
-    assert len([path for path in files if "/skills/" in path]) == len(assets.SKILLS) == 9
+    assert len([path for path in files if "/skills/" in path]) == len(assets.SKILLS) == 8
 
 
 def test_adapter_declares_its_tools_capabilities() -> None:

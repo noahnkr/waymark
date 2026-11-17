@@ -11,7 +11,7 @@
   - Verify:
     - tests in `tests/test_skills.py` for the scenarios "Path chosen by the planner" and "Open questions"
     - `tests/test_skills.py` layout tests
-- [ ] 1.2 Retire `wm-fix` and update the skills that named it
+- [x] 1.2 Retire `wm-fix` and update the skills that named it
   - Criteria:
     - `src/waymark/assets/skills/wm-fix/` is deleted and `wm-fix` is out of `assets.SKILLS`
     - `wm-explore` closes with four offers: do nothing, save an exploration, start a proposal (any size, with `wm-propose`), start a milestone
