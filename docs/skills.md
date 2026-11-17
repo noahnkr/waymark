@@ -1,6 +1,6 @@
 # Skills and agents
 
-`wm init` installs nine **skills**, which your agent session follows when you type
+`wm init` installs eight **skills**, which your agent session follows when you type
 a slash command, and two **agents**, fresh sessions started for one item or one
 review. This page covers what each one does, the notes it reads and writes, what
 it gets from `wm`, what it shows you, and when it stops. For the notes
@@ -8,8 +8,8 @@ themselves, read [The record](record.md).
 
 - [What every skill shares](#what-every-skill-shares)
 - Getting started: [`/wm-kickoff`](#wm-kickoff) · [`/wm-onboard`](#wm-onboard)
-- Thinking: [`/wm-explore`](#wm-explore) · [`/wm-fix`](#wm-fix)
-- A change: [`/wm-propose`](#wm-propose) · [`/wm-update`](#wm-update) · [`/wm-apply`](#wm-apply) · [`/wm-archive`](#wm-archive) · [`/wm-pr`](#wm-pr)
+- Thinking: [`/wm-explore`](#wm-explore)
+- Doing the work: [`/wm-propose`](#wm-propose) · [`/wm-update`](#wm-update) · [`/wm-apply`](#wm-apply) · [`/wm-archive`](#wm-archive) · [`/wm-pr`](#wm-pr)
 - Agents: [`wm-implementer`](#wm-implementer) · [`wm-reviewer`](#wm-reviewer)
 
 ## What every skill shares
@@ -81,7 +81,7 @@ then on.
 
 **Writes** one real change and the specs its delta creates, through the skills it
 follows. **Stops** when you want to stop (`wm status` shows where to resume), when
-the change turns out tiny (it follows `/wm-fix` instead), or once the change is
+the change turns out tiny (it follows the tiny path of `/wm-propose` instead), or once the change is
 archived.
 
 ## `/wm-explore`
@@ -100,8 +100,8 @@ still fuzzy, or you don't know yet whether it's a change.
 4. **The approaches:** two or more, each with what speaks for and against it,
    and its cost.
 5. **A recommendation,** and what would change it.
-6. **The closing offers:** do nothing; save an exploration; fix it on the tiny
-   path; start a proposal; start a milestone.
+6. **The closing offers:** do nothing; save an exploration; start a proposal,
+   of any size; start a milestone.
 
 | Reads | Writes, only on an offer |
 |---|---|
@@ -110,57 +110,49 @@ still fuzzy, or you don't know yet whether it's a change.
 **Stops** when you pick an offer (it does that one only), when you want to stop
 (it makes the offers), or when the idea is already in flight or in the specs.
 
-## `/wm-fix`
-
-Makes work that changes nothing the specs say: no change folder, no acceptance,
-no archive, nothing in the record. You approve it with a yes before it builds,
-and again when you merge. **Use it** for a typo, a docs fix, a bug where the code
-disagrees with a spec, a refactor or a dependency bump.
-
-**How it works:** checks that every requirement and scenario of the specs it
-touches still holds as written once it's done; tells you what it will change,
-why it is tiny and the requirement it keeps to, and builds nothing until you say
-yes; branches; builds only what it said; runs the checks, the full checks and
-`wm check`; commits with a conventional message; offers a pull request it
-describes itself.
-
-**Writes** code only, never the record. **Stops** and hands over to
-`/wm-propose` if the work isn't tiny or turns out to change a requirement; stops
-if you say no; never merges.
-
 ## `/wm-propose`
 
-Drafts every note of a change for you to accept: proposal, deltas, design and
-task list. **Use it** when you want to build or change something that adds,
-changes or removes a requirement.
+Does a piece of work at the size it turns out to need. It reads the specs and
+the code, picks the path itself and tells you why; it doesn't ask you which.
+**Use it** for anything you want built or changed, from a typo to a new feature.
 
 **How it works**
 
-1. **Path and name:** tiny (hands over to `/wm-fix`), short or full; a kebab-case
-   name starting with a verb; `wm new change <name>`.
-2. **Questions:** lists what the record doesn't settle (scope, edges, names, what's
-   out) and asks you, each with the answer it recommends. Your answers are
-   written into the notes.
-3. **Drafting, step by step,** with `wm instructions` at each: the template, the
+1. **Investigate and choose the path:** tiny when no requirement changes, short
+   when the change is small and nothing is left to settle, full otherwise.
+2. **The tiny path:** shows one line, `Tiny: <what it will change>; keeps <the
+   requirement>`, and builds nothing until you say yes. Then it branches, builds
+   only what it said, runs the checks, the full checks and `wm check`, commits
+   with a conventional message, and offers a pull request it describes itself.
+   It writes nothing to the record. If the work turns out to change a
+   requirement, it stops building and drafts a change.
+3. **Questions:** lists what the record and your words don't settle (scope,
+   edges, names, what's out) and asks you, each with the answer it recommends.
+   A question still open puts the change on the full path, under the design's
+   Open questions, which block acceptance until you answer.
+4. **Name:** a kebab-case name starting with a verb; `wm new change <name>`.
+5. **Drafting, step by step,** with `wm instructions` at each: the template, the
    guidance with its writing and sizing rules, and the checklist. `wm check`
    after each step.
-4. **Proposal**, then **deltas**, then the **design** (decisions with their
+6. **Proposal**, then **deltas**, then the **design** (decisions with their
    status and who made them), then the **tasks**.
-5. Suggests the **review level** and which items to **delegate**.
-6. **Consistency check:** `- Specs:` matches the deltas, every scenario is
+7. Suggests the **review level** and which items to **delegate**.
+8. **Consistency check:** `- Specs:` matches the deltas, every scenario is
    covered by an item, the design covers every requirement and adds none, the
    tasks touch what `- Code:` names, and each choice is what the approach does.
-7. Shows the **acceptance summary** and asks you to run `wm accept`.
+9. Shows the **acceptance summary** and asks you to run `wm accept`.
 
 | Reads | Writes |
 |---|---|
-| your request; `wm status`; `wm context --for explore`; `wm instructions --change <name>` | `proposal.md`, `specs/<area>.md` deltas, `design.md` (full path), `tasks.md` |
+| your request; `wm status`; `wm context --for explore`; `wm show <spec>`; the code; `wm instructions --change <name>` | tiny: code only, never the record; a change: `proposal.md`, `specs/<area>.md` deltas, `design.md` (full path), `tasks.md` |
 
-**Shows you** each draft in a few lines; before acceptance: what it does, the
-deltas per spec, each decision with who made it, the review level, and the items
-with which to delegate. **Stops** when the work is tiny, when an answer changes
-the scope, when a decision only you can make comes up, and at accept, which only
-you do.
+**Shows you** the path and why first. For tiny work, the `Tiny:` line, then the
+pull request's title, description and target. For a change, each draft in a few
+lines; before acceptance: what it does, the deltas per spec, each decision with
+who made it, the review level, and the items with which to delegate. **Stops**
+when you say no to tiny work, once its pull request is open (it never merges),
+when an answer changes the scope, when a decision only you can make comes up,
+and at accept, which only you do.
 
 ## `/wm-update`
 

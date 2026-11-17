@@ -109,12 +109,17 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 
 ## The tiny path
 
-- [ ] Ask for a typo fix in the scratch code with `/wm-fix`. The planner says
-      why it changes no requirement and waits for your yes. It creates no change
+- [ ] Ask for a typo fix in the scratch code with `/wm-propose`. The planner
+      picks the tiny path without asking which, shows one `Tiny:` line saying
+      what it will change and the requirement it keeps to, and waits for your
+      yes. It creates no change
       folder, commits with a conventional message, and offers a pull request.
       `wm status` shows no change in flight.
-- [ ] Ask `/wm-fix` for something that changes a requirement. It says the work
-      isn't tiny and hands over to `/wm-propose`.
+- [ ] Ask `/wm-propose` for something that changes a requirement. It picks the
+      short or full path itself and says why, without asking you which.
+- [ ] Copy `.claude/skills/wm-pr/` to `.claude/skills/wm-old/`, then run
+      `wm update`. It prints `removed: .claude/skills/wm-old/SKILL.md`, and the
+      folder is gone.
 
 ## Atlas (when the release touches multi-repo)
 

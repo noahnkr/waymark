@@ -35,7 +35,7 @@
 
 ## 3. Docs
 
-- [ ] 3.1 Update the docs for the single entry and the pruning
+- [x] 3.1 Update the docs for the single entry and the pruning
   - Criteria:
     - `docs/skills.md` has no `wm-fix` section and says under `wm-propose` how it chooses the path and confirms tiny work
     - `docs/concepts.md`, `docs/getting-started.md`, `docs/smoke-test.md` and the README name `wm-propose` for tiny work and no longer name `wm-fix`

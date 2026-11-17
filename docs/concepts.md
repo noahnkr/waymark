@@ -39,13 +39,16 @@ on how.
 
 | Path | For | What it takes |
 |---|---|---|
-| **Tiny** | work that adds, changes or removes no requirement: a typo, a docs fix, a bug where the code disagrees with a spec, a refactor, a dependency bump | no change folder: the agent says why it is tiny and builds after your yes, then commits and offers a pull request (`/wm-fix`). Nothing is written to the record; your merge is the second approval |
+| **Tiny** | work that adds, changes or removes no requirement: a typo, a docs fix, a bug where the code disagrees with a spec, a refactor, a dependency bump | no change folder: `/wm-propose` says in one line what it will change and the requirement it keeps to, builds after your yes, then commits and offers a pull request. Nothing is written to the record; your merge is the second approval |
 | **Short** | a small change | a change with a proposal, deltas and a task list, but no design (a `- Path: short` line); review level `self` or `none` |
 | **Full** | anything bigger | a change with a design, and an independent review when it is risky |
 
 The test for tiny is the specs, not the size: if every requirement still holds
-as written, the work is tiny. If tiny work turns out to change a requirement, it
-stops and becomes a change. Specs can't be edited by hand on any path.
+as written, the work is tiny. `/wm-propose` applies the test itself, after
+reading the specs and the code, and doesn't ask you which path to take. A
+change with a question still open takes the full path, where the design's open
+questions hold it until you answer. If tiny work turns out to change a
+requirement, it stops and becomes a change. Specs can't be edited by hand on any path.
 
 **Changing what was accepted withdraws the acceptance.** That covers the
 proposal (its `- Review:` line included), the deltas, the design and the
