@@ -3,8 +3,44 @@
 All notable changes to Waymark, one entry per release. A release that changes
 the record's format says whether `wm update` migrates an older record.
 
-## [Unreleased]
+## [0.2.0] - 2026-11-16
 
+The planner builds by default and each change is reviewed once. Small work takes
+a tiny path. The record moves to format 3, with structured notes, step
+checklists and one layout for every skill.
+
+- **Behavior change: the planner builds the items.** At the apply step,
+  `wm instructions` tells the session to build the item from its context pack,
+  run the checks the item touches, and record the result with `wm tick`,
+  `wm block` or `wm gap`. An item with a `- Build: delegate` line still goes to a
+  fresh implementer. In an atlas, the planner may edit any code repo; an
+  implementer edits only its item's repo.
+- **Behavior change: one review per change.** A change's review level comes from
+  a `- Review:` line in its proposal, or from `default_review`; items no longer
+  carry one. Once every item is ticked, the whole change is reviewed once, with
+  `wm review <change> --self "<summary>"` or by the `wm-reviewer` agent started
+  with the change's name. A `changes` verdict names the items to rebuild, and
+  `wm reopen` reopens each one. A pass with a critical finding is refused.
+- **The tiny path.** Work that adds, changes or removes no requirement needs no
+  change. The new `wm-fix` skill builds it after your yes, commits it, and offers
+  a pull request. `wm-propose` asks first which path fits.
+- **Archive before the pull request.** A change is archived on its own branch, so
+  the code, the merged specs and the archived change go in one pull request.
+  `wm pr` describes an archived change, with its outcome.
+- **Adding an item keeps acceptance.** The `(accepted)` record names the items it
+  covers. Changing or removing an accepted item, the proposal, a delta or the
+  design still withdraws it.
+- **Behavior change: no `.waymark/` folder and no git hooks.** `wm git-hooks` and
+  `wm run-hook` are removed. In Claude Code, the command hook refuses a
+  `git commit` whose message isn't a conventional commit with an allowed scope;
+  commits made outside an agent aren't checked. A code repo points at its atlas
+  through a pointer-only `waymark/config.toml`, written by `wm atlas point`.
+  `.waymark/atlas.toml` is still read, with a warning.
+- **Upgrading from 0.1.x.** This version can't migrate a record made by 0.1.x,
+  which is format 1: `wm update` refuses it and changes nothing (see record
+  format 3 below). In each clone that 0.1.0 or 0.1.1 set up, run
+  `git config --unset core.hooksPath` and delete the hooks folder it named, as
+  [Upgrading](docs/getting-started.md#upgrading) describes.
 - **A new README and two new references.** The README opens with a diagram of
   a change's trail and works as an index: the three paths and the steps, a
   quick start with a setup matrix, the skills, and a real walk-through of adding
@@ -112,6 +148,8 @@ the record's format says whether `wm update` migrates an older record.
 - **Findings** put their place in backticks: ``warning `src/a.py:12`: <text>``.
 - **`wm show --json`**: the `show.change` schema is version 3, with a `log` of
   records, a `by` on every record, and no item `notes` or review `records`.
+
+Smoke test: passed on 2026-11-16 with Claude Code 2.1.326 on Windows.
 
 ## [0.1.1] - 2026-11-15
 
