@@ -33,3 +33,6 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint 5ff4406ce2f879c1 items 1.1 1.2 2.1 by Noah Roberts
+- (self-review) 2026-11-16 by Noah Roberts: Every scenario in the setup delta has a test: New record (test_init_keeps_every_record_folder_in_git, with a commit and clone), Existing record without them and Already in place (test_update_adds_missing_record_folder_keeps, test_update_leaves_record_folder_keeps_alone), and Last change archived (test_archiving_the_last_change_keeps_the_changes_folder). No wm command deletes a record folder or a .gitkeep, and the reader skips hidden entries, so wm check doesn't report them. The clone and code-repo init tests pass unchanged. Running wm update on this repo created the six files, and a second run reported Everything is up to date. pytest (1140), ruff, mypy, codespell, tools.docs --check and wm check all pass.
+  - suggestion `tests/services/test_setup.py`: the six folder names are listed again in test_setup.py and test_integration.py instead of coming from RECORD_FOLDERS; they are kept separate so the tests check the spec's list, not the code's.
+  - suggestion `CHANGELOG.md`: there is no entry for unreleased work yet, so this change's user-visible lines are left for the release audit to add.
