@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from waymark.record.git import current_branch, last_changed, repository_root, tracked
+from waymark.record.git import current_branch, head_commit, last_changed, repository_root, tracked
 
 
 def git(folder: Path, *arguments: str, date: str | None = None) -> None:
@@ -66,6 +66,16 @@ def test_current_branch_is_read_from_git(repository: Path) -> None:
     assert current_branch(repository) == "add-limit"
     git(repository, "switch", "--quiet", "--detach")
     assert current_branch(repository) is None
+
+
+def test_head_commit_is_the_checked_out_commit_or_none_before_the_first(
+    repository: Path,
+) -> None:
+    assert head_commit(repository) is None
+    commit(repository, "a.txt", "2026-01-10T09:00:00+00:00")
+    sha = head_commit(repository)
+    assert sha is not None
+    assert len(sha) == 40
 
 
 def test_last_changed_gives_each_folders_newest_commit(repository: Path) -> None:

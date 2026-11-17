@@ -1,6 +1,7 @@
 """The CI workflow, and pull request text described from a change."""
 
 import datetime
+import os
 import subprocess
 from pathlib import Path
 
@@ -33,6 +34,23 @@ def remote(root: Path, url: str) -> None:
     subprocess.run(
         ["git", "-C", str(root), "remote", "add", "origin", url], check=True, capture_output=True
     )
+
+
+def commit(root: Path) -> str:
+    """Commit everything in a repository and return the commit's hash."""
+    environment = {
+        **os.environ,
+        "GIT_AUTHOR_EMAIL": "sam@example.com",
+        "GIT_COMMITTER_EMAIL": "sam@example.com",
+    }
+    for arguments in (["add", "--all"], ["commit", "--quiet", "--message", "chore: save"]):
+        subprocess.run(
+            ["git", "-C", str(root), *arguments], check=True, capture_output=True, env=environment
+        )
+    done = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"], check=True, capture_output=True, text=True
+    )
+    return done.stdout.strip()
 
 
 def test_ci_workflow_installs_the_pinned_wm_and_runs_check(project: Workspace) -> None:
@@ -208,6 +226,7 @@ def test_archived_on_its_branch(project: Workspace) -> None:
     project.change()
     remote(project.root, "git@github.com:someone/shop.git")
     archived(project, "Searches return the fifty best matches.")
+    sha = commit(project.root)
     payload = describe(project.record(), NAME)
     assert errors(payload, SCHEMAS["pr"]) == []
     assert (payload["title"], payload["branch"]) == ("Limit the results", NAME)
@@ -218,7 +237,7 @@ def test_archived_on_its_branch(project: Workspace) -> None:
     assert "## Review\n\nSelf-reviewed: fine" in body
     assert "## Outcome\n\n- Built: Searches return the fifty best matches.\n- Differs: none" in body
     folder = f"waymark/changes/archive/{DAY.isoformat()}-{NAME}"
-    url = f"https://github.com/someone/shop/blob/{NAME}/{folder}/proposal.md"
+    url = f"https://github.com/someone/shop/blob/{sha}/{folder}/proposal.md"
     assert payload["links"] == [{"name": "change", "url": url}]
     assert f"- The change: [{folder}/proposal.md]({url})" in body
 

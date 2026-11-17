@@ -1,7 +1,8 @@
 """Pull request text described from a change.
 
 wm only writes the text. The links come from each repository's git remote as
-this clone has it: nothing is fetched, and the pull request is opened by the
+this clone has it, and the proposal is linked at the checked-out commit so the
+link outlives the branch: nothing is fetched, and the pull request is opened by the
 git host's own command-line tool, when the human asks. Links are built for
 GitHub; on another host the text names the files and branches instead.
 """
@@ -118,14 +119,19 @@ def _proposal_path(change: Change) -> str:
 def _links(
     record: Record, change: Change, places: dict[str, Path | None], here: str | None
 ) -> list[dict[str, str]]:
+    """The change's proposal, and the other repos' pull requests from its branch.
+
+    The proposal is linked at the checked-out commit, which GitHub keeps after
+    the branch is deleted; before the first commit, at the branch.
+    """
     name = change.name
-    """The change's proposal on its branch, and the other repos' pull requests from it."""
     record_web = _web(record.project.root)
     home = next(iter(places), None)
     links: list[dict[str, str]] = []
     if record_web:
         proposal = _proposal_path(change)
-        links.append({"name": "change", "url": f"{record_web}/blob/{quote(name)}/{proposal}"})
+        ref = git.head_commit(record.project.root) or quote(name)
+        links.append({"name": "change", "url": f"{record_web}/blob/{ref}/{proposal}"})
     for other, folder in places.items():
         web = record_web if other == home else _web(folder)
         if other != here and web:
