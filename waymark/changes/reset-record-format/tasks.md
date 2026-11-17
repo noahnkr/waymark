@@ -18,11 +18,11 @@
   - Criteria:
     - `OLD_LAYOUT`, `_OLD_FORMAT`, `_OLD_LABELED`, `_OLD_SECTION`, the `review` tag handling, `_old_proposal_lines`, `OLD_FILES`, `_old_milestone_file` and `_check_archived_milestone` are gone, and no problem has the code `old-layout` or `old-record-format`
     - a proposal with `Owner: Ada` and no `- Owner:` line is reported as having no owner, with no message naming `wm update`
-    - a delta heading `## Added Requirements` is reported with the code `layout`, showing `## ADDED Requirements`; a glossary line in another form is reported with the code `layout`, showing `- **<term>**: <meaning>`
+    - a delta heading `## Added Requirements` is reported with the code `layout`, showing `## ADDED Requirements`; a glossary line in another form, such as `Record: everything in waymark/`, is reported as `glossary-format`, showing `- **<term>**: <meaning>`
     - a `notes.md` in an active milestone folder is reported as an error that names `milestone.md`
   - Verify:
     - `test_scenario_fact_without_a_bullet`, `test_scenario_heading_in_another_case` and `test_scenario_other_file_in_a_milestone`, beside the existing tests for each reader
-    - the existing glossary test for the scenario "Old glossary line" passes with the code `layout`
+    - the existing glossary test for the scenario "Old glossary line" passes with the code `glossary-format`
     - `grep -rn "old-layout\|old-record-format\|OLD_LAYOUT" src/ tests/` finds nothing
 - [ ] 1.3 Remove 0.1.x leftovers
   - Criteria:
@@ -55,3 +55,4 @@
 ## Log
 
 - (accepted) 2026-11-16 fingerprint efd795a9e3eb34e1 items 1.1 1.2 1.3 1.4 2.1 by Noah Roberts
+- (accepted) 2026-11-16 fingerprint 2f4faf41f1b191ea items 1.1 1.2 1.3 1.4 2.1 by Noah Roberts
