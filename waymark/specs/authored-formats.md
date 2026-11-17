@@ -7,17 +7,17 @@ The layouts of what humans and the planner write in the record: the proposal's f
 ## Requirements
 
 ### Requirement: Proposal facts as a list
-A proposal's facts SHALL be bullet lines between its title and its first section: `- Owner: <name>`, and optionally `- Review: <level>` and `- Path: short`. `wm new change` SHALL write them so. `wm check` SHALL report a fact written without the bullet as an old layout, naming `wm update`.
+A proposal's facts SHALL be bullet lines between its title and its first section: `- Owner: <name>`, and optionally `- Review: <level>` and `- Path: short`. `wm new change` SHALL write them so. A fact written without the bullet SHALL NOT be read as a fact.
 
 #### Scenario: New change
 - GIVEN a project with git user Ada
 - WHEN the planner runs `wm new change add-limit --short`
 - THEN the proposal has the lines `- Owner: Ada` and `- Path: short` under its title
 
-#### Scenario: Old fact line
-- GIVEN an active change whose proposal has the line `Owner: Ada` without a bullet
+#### Scenario: Fact without a bullet
+- GIVEN an active change whose proposal has the line `Owner: Ada` without a bullet, and no `- Owner:` line
 - WHEN `wm check` runs
-- THEN it reports an error on that line that names `wm update`
+- THEN it reports that the proposal has no owner, and no message names `wm update`
 
 ### Requirement: Glossary as a list
 The charter's glossary SHALL be a list of `- **<term>**: <meaning>` lines. `wm check` SHALL report a glossary line in another form as an error that shows the form. Step headings under Rules SHALL be read in any case, the template SHALL write them capitalized, such as `### Apply`, and a step with no rules MAY leave its heading out.
@@ -41,7 +41,7 @@ A task item's `- Criteria:` and `- Verify:` lines MAY each be followed by a nest
 - THEN the item's verification in the pack lists both bullets
 
 ### Requirement: Delta sections
-A delta's sections SHALL be `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` and `## RENAMED Requirements`. Under RENAMED, each rename SHALL be a `- From: <old name>` line followed by a `- To: <new name>` line. Archiving or syncing the change SHALL rename the requirement in the spec and keep its statement and scenarios. A rename whose old name the spec doesn't have, or whose new name it already has, SHALL be a conflict. `wm check` SHALL report a section with an old heading as an old layout, naming `wm update`.
+A delta's sections SHALL be `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` and `## RENAMED Requirements`. Under RENAMED, each rename SHALL be a `- From: <old name>` line followed by a `- To: <new name>` line. Archiving or syncing the change SHALL rename the requirement in the spec and keep its statement and scenarios. A rename whose old name the spec doesn't have, or whose new name it already has, SHALL be a conflict. `wm check` SHALL report a section heading that matches one of these in another case, showing the heading it expects.
 
 #### Scenario: Requirement renamed
 - GIVEN a spec with the requirement "Result cap"
@@ -52,6 +52,11 @@ A delta's sections SHALL be `## ADDED Requirements`, `## MODIFIED Requirements`,
 - GIVEN a spec without the requirement "Result cap"
 - WHEN a change's delta renames "Result cap" to "Result limit"
 - THEN `wm check` reports a conflict on that delta
+
+#### Scenario: Heading in another case
+- GIVEN an active change whose delta has the heading `## Added Requirements`
+- WHEN `wm check` runs
+- THEN it reports an error on that heading that shows `## ADDED Requirements`, and no message names `wm update`
 
 ### Requirement: Exploration status
 An exploration SHALL say where it stands in a `- Status:` line under its title: `open`, `parked`, or `led-to` followed by a link to the change or milestone it led to. The `- Status:` line alone SHALL say whether it is parked. A parked exploration SHALL say why in its Conclusion. `wm check` SHALL report a missing status as `missing-status`, an unknown status, a parked exploration with an empty Conclusion, and a `led-to` link that doesn't resolve.
@@ -76,13 +81,23 @@ An exploration SHALL say where it stands in a `- Status:` line under its title: 
 - WHEN the planner runs `wm context --for explore`
 - THEN the exploration is listed as open
 
-### Requirement: Record format 3
-This version of `wm` SHALL write and read only record format 3, and SHALL NOT migrate a record in an older format. `wm update` SHALL refuse such a record with a reason that names its format and says this `wm` doesn't migrate it, and SHALL change nothing.
+### Requirement: Record format 1
+This version of `wm` SHALL write and read only record format 1, and no command SHALL migrate a record. A record in any other format, older or newer, SHALL be refused by `wm update`, by `wm init` in a clone and by every command that writes the record, and reported by `wm check` and `wm doctor`, each with one reason: it names the record's format, says this `wm` reads only format 1, and says to install the `wm` version that wrote it. A refusal SHALL change nothing.
 
-#### Scenario: Older record
-- GIVEN a record in format 2
+#### Scenario: New record
+- GIVEN a git repository with no record
+- WHEN `wm init` runs
+- THEN `waymark/config.toml` holds `record_format = 1`
+
+#### Scenario: Record from wm 0.2.0
+- GIVEN a record at format 3, pinned to the running `wm`
 - WHEN `wm update` runs
-- THEN it is refused with a reason that names format 2, and no file changes
+- THEN it is refused with a reason that names format 3, says this `wm` reads only format 1 and says to install the `wm` version that wrote it, and no file changes
+
+#### Scenario: Reported by the checks
+- GIVEN a record at format 2, pinned to the running `wm`
+- WHEN `wm check` runs
+- THEN it reports the record's format with the same reason, and no message names `wm update`
 
 ### Requirement: Structured impact
 A proposal's `## Impact` section SHALL hold a `- Specs:` line, a `- User-visible:` line and a `- Code:` line, each followed by text or by nested bullets. `Specs:` SHALL name each spec the change has a delta for, in backticks, or say `none`. `wm check` SHALL report a missing line, a spec named under `Specs:` that has no delta in the change, and a delta whose spec isn't named.
@@ -147,16 +162,16 @@ Each template `wm` writes for a proposal, delta, design, task list, charter or e
 - THEN it reports no problem in that change
 
 ### Requirement: Milestone as one file
-A milestone SHALL be a folder holding one file, `milestone.md`: a title, then the sections `## Goal`, `## Done when`, `## Non-goals` and `## Roadmap`, in that order. `wm new milestone` SHALL write it so. The list lines under `## Roadmap`, and only those, SHALL be the milestone's roadmap entries. `wm check` SHALL report a `goal.md` or `roadmap.md` in a milestone folder, active or archived, as an error that names `milestone.md`.
+A milestone SHALL be a folder holding one file, `milestone.md`: a title, then the sections `## Goal`, `## Done when`, `## Non-goals` and `## Roadmap`, in that order. `wm new milestone` SHALL write it so. The list lines under `## Roadmap`, and only those, SHALL be the milestone's roadmap entries. `wm check` SHALL report any other file in an active milestone's folder as an error that names `milestone.md`.
 
 #### Scenario: New milestone
 - WHEN the planner runs `wm new milestone faster-search`
 - THEN the folder `milestones/faster-search` holds only `milestone.md`, with the four sections in order
 
-#### Scenario: Old milestone files
-- GIVEN a milestone folder holding `goal.md` and `roadmap.md`
+#### Scenario: Other file in a milestone
+- GIVEN an active milestone folder holding `milestone.md` and `notes.md`
 - WHEN `wm check` runs
-- THEN it reports an error on each file that names `milestone.md`
+- THEN it reports an error on `notes.md` that names `milestone.md`
 
 #### Scenario: Roadmap ticked at archive
 - GIVEN a milestone whose `## Roadmap` links to the change `add-limit`, and whose `## Done when` holds a bullet
