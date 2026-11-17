@@ -146,6 +146,32 @@ def cloned_project(tmp_path: Path) -> Path:
     return clone
 
 
+RECORD_FOLDERS = (
+    "specs",
+    "changes",
+    "changes/archive",
+    "explorations",
+    "milestones",
+    "milestones/archive",
+)
+
+
+def test_init_keeps_every_record_folder_in_git(tmp_path: Path) -> None:
+    """Scenario: New record."""
+    origin = tmp_path / "origin"
+    git_init(origin)
+    done = setup.init_project(origin)
+    for folder in RECORD_FOLDERS:
+        keep = origin / "waymark" / folder / ".gitkeep"
+        assert keep.read_bytes() == b"", folder
+        assert f"waymark/{folder}/.gitkeep" in done.paths
+    assert load_record(find_project(origin)).problems == ()
+
+    clone = cloned_project(tmp_path)
+    for folder in RECORD_FOLDERS:
+        assert (clone / "waymark" / folder).is_dir(), folder
+
+
 def test_init_in_a_fresh_clone_sets_up_this_machine_and_leaves_the_record_alone(
     tmp_path: Path,
 ) -> None:

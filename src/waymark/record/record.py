@@ -36,6 +36,19 @@ MILESTONES = "milestones"
 EXPLORATIONS = "explorations"
 ARCHIVE = "archive"
 
+FOLDER_KEEP = ".gitkeep"
+"""The empty file that keeps a record folder in git while it holds nothing else."""
+
+RECORD_FOLDERS = (
+    SPECS,
+    CHANGES,
+    f"{CHANGES}/{ARCHIVE}",
+    EXPLORATIONS,
+    MILESTONES,
+    f"{MILESTONES}/{ARCHIVE}",
+)
+"""The record's folders, each kept in git by a ``.gitkeep``."""
+
 
 @dataclass(frozen=True, order=True)
 class ArchiveEntry:

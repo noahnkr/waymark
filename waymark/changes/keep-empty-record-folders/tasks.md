@@ -2,7 +2,7 @@
 
 ## 1. Record folders
 
-- [ ] 1.1 `wm init` writes a `.gitkeep` into each record folder when it creates a record
+- [x] 1.1 `wm init` writes a `.gitkeep` into each record folder when it creates a record
   - Criteria:
     - a new record's `specs/`, `changes/`, `changes/archive/`, `explorations/`, `milestones/` and `milestones/archive/` each hold an empty `.gitkeep`, written in the same transaction as the settings and the charter
     - a fresh clone of the committed record has all six folders

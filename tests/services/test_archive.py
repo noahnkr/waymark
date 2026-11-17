@@ -84,6 +84,17 @@ def test_archive_merges_the_deltas_and_moves_the_change_to_the_dated_archive(
     assert project.path(f"{ARCHIVED}/specs/search.md").is_file()
 
 
+def test_archiving_the_last_change_keeps_the_changes_folder(project: Workspace) -> None:
+    """Scenario: Last change archived."""
+    project.write("changes/.gitkeep", "")
+    applied(project)
+    lifecycle.archive(project.root, NAME, LATER, built="Capped at fifty.")
+    assert project.read("changes/.gitkeep") == ""
+    record = project.record()
+    assert record.changes == {}
+    assert record.problems == ()
+
+
 def test_archive_merges_into_an_existing_spec(project: Workspace) -> None:
     project.write("specs/search.md", spec(requirement(), requirement("Empty query")))
     applied(project, deltas={"search": delta(modified=(CHANGED,))})

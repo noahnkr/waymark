@@ -64,6 +64,7 @@ def init_project(
     transaction.write(
         f"{RECORD_DIR}/{CHARTER_FILE}", templates.render(templates.CHARTER, title=root.name)
     )
+    integration.stage_folder_keeps(transaction, files)
     integration.stage(transaction, files, chosen)
     integration.stage_ignore(transaction, files, integration.ignore_patterns(chosen))
     paths = commit(transaction)
