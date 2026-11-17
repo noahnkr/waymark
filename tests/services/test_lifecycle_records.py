@@ -1,4 +1,4 @@
-"""The commands in record format 2: dated records under items and in the Log."""
+"""The commands that write records: dated records under items and in the Log."""
 
 import datetime
 
@@ -21,7 +21,7 @@ NEXT = datetime.date(2026, 11, 21)
 
 @pytest.fixture
 def latest(project: Workspace) -> Workspace:
-    """A project in a git repository; its record is in format 2."""
+    """A project in a git repository, in the format this wm writes."""
     return project
 
 
@@ -250,7 +250,7 @@ def test_scenario_overridden(latest: Workspace) -> None:
     assert body.count("the reviewer is away") == 1
 
 
-def test_the_archived_change_reads_as_format_2(latest: Workspace) -> None:
+def test_the_archived_change_reads_back_its_records(latest: Workspace) -> None:
     built(latest)
     lifecycle.self_review(latest.root, NAME, "fine", DAY)
     lifecycle.archive(latest.root, NAME, DAY, built="Done.")

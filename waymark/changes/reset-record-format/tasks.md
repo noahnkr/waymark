@@ -33,7 +33,7 @@
     - `test_scenario_agent_files_committed` and `test_scenario_nothing_tracked` in `tests/services/test_doctor.py`
     - a test that `.waymark/atlas.toml` alone doesn't make a code repo, in `tests/services/test_atlas.py`
     - `grep -rn "atlas.toml\|waymark/hooks\|OLD_HOOKS" src/` finds nothing
-- [ ] 1.4 Rename the tests named after format 2
+- [x] 1.4 Rename the tests named after format 2
   - Criteria:
     - `tests/record/test_tasks_format2.py` is `tests/record/test_tasks_records.py`, and `tests/services/test_lifecycle_format2.py` is `tests/services/test_lifecycle_records.py`, with their docstrings no longer naming a format
     - the `FORMAT_1` and `FORMAT_2` constants, and the tests that use them, are gone

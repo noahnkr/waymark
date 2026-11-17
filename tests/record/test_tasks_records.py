@@ -1,8 +1,8 @@
-"""Task lists in record format 2: records under items and the Log section."""
+"""Task lists: records under items and the Log section."""
 
 import datetime
 
-from tests.support import CONFIG, Workspace, document
+from tests.support import Workspace, document
 from waymark.record.fingerprint import change_fingerprint
 from waymark.record.records import RecordKind
 from waymark.record.state import AcceptanceState, acceptance_state
@@ -11,8 +11,6 @@ from waymark.record.terms import ReviewSeverity, Verdict
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 ITEM = "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n  - Verify: a test\n"
-FORMAT_2 = CONFIG
-FORMAT_1 = CONFIG.replace("record_format = 2", "record_format = 1")
 
 
 def parse(text: str) -> Tasks:
@@ -132,7 +130,6 @@ def _accept_in_log(workspace: Workspace, items: list[str], fingerprint: str) -> 
 
 
 def test_acceptance_comes_from_the_latest_accepted_record(workspace: Workspace) -> None:
-    workspace.write("config.toml", FORMAT_2)
     workspace.change()
     record = workspace.record()
     change = record.changes["add-limit"]
