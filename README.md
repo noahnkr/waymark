@@ -447,7 +447,7 @@ is caught once both are in the same branch, not before.
 - **[Architecture](docs/architecture.md)**: how `wm` is built, and how to add an agent tool
 - **[Smoke test](docs/smoke-test.md)**: the manual walk-through before a release
 
-Works with Claude Code. Version last verified: **2.1.325**, on Windows.
+Works with Claude Code. Version last verified: **2.1.326**, on Windows.
 
 ## License
 
