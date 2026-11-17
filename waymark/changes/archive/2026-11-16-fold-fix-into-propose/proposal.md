@@ -36,3 +36,8 @@ Removing a skill brings up a second gap: `wm init` and `wm update` write the ski
   - `wm-explore`'s closing offers drop "Fix it on the tiny path"
   - `wm init` and `wm update` remove retired `wm-*` skill folders and list them as removed
 - Code: the skills in `src/waymark/assets/` and their list, `services/integration.py`, the adapter base and the Claude Code adapter, `record/store.py`, the tests, and the docs (`concepts`, `getting-started`, `skills`, `smoke-test`, README)
+
+## Outcome
+
+- Built: wm-propose is the one skill for work of any size: it looks at the specs and the code, follows the tiny path after a one-line confirmation and the human's yes, or drafts a short or full change, and a question still open puts a change on the full path. wm-fix is no longer shipped, wm-explore closes with four offers, and wm init and wm update delete retired wm-* skill folders, printing removed: for each file.
+- Differs: Item 3.2 was added after the review, rewording the README, concepts and skills docs so the path follows from the work, in plainer language. wm-update needed no edit, since it never named wm-fix. Two review suggestions are left open: item 2.1's verify line names tests/services/test_integration.py but the tests are in tests/adapters/test_integration.py, and the store.py module docstring has a short line.
