@@ -30,9 +30,8 @@ Offer exactly these:
 
 1. **Do nothing.** The conversation was enough.
 2. **Save an exploration.** Run `wm new exploration <name>` and fill in its sections: Context, Questions, Approaches, Related. Its `- Status:` line says where it stands: leave it `open` while it is, or set it to `parked` and write the reason in the Conclusion when the idea is kept for later.
-3. **Fix it on the tiny path**, when the idea adds, changes or removes no requirement. Hand over to the `wm-fix` skill.
-4. **Start a proposal.** Hand over to the `wm-propose` skill. If an exploration was saved, set its status to `led-to` with a link to the new change, such as `- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md)`, and say in the Conclusion what was decided.
-5. **Start a milestone**, when the goal is too big or too uncertain for one change. Run `wm new milestone <name>`. It writes one file, `milestone.md`, with the sections Goal, Done when, Non-goals and Roadmap. Draft the goal with the human, and list the likely changes under `## Roadmap` as plain lines.
+3. **Start a proposal.** Hand over to the `wm-propose` skill, whatever the size: it chooses the path itself, from a tiny fix with no change to a change with a design. If an exploration was saved and the work becomes a change, set its status to `led-to` with a link to the new change, such as `- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md)`, and say in the Conclusion what was decided.
+4. **Start a milestone**, when the goal is too big or too uncertain for one change. Run `wm new milestone <name>`. It writes one file, `milestone.md`, with the sections Goal, Done when, Non-goals and Roadmap. Draft the goal with the human, and list the likely changes under `## Roadmap` as plain lines.
 
 ## Quality bar
 
@@ -43,7 +42,7 @@ Offer exactly these:
 
 ## Show the human
 
-In this order: what the record says, the problem, the open questions, the approaches with their for, against and cost, and your recommendation. Then the five closing offers, numbered.
+In this order: what the record says, the problem, the open questions, the approaches with their for, against and cost, and your recommendation. Then the four closing offers, numbered.
 
 ## When to stop
 

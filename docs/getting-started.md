@@ -92,8 +92,8 @@ and explains each one as it happens:
    impact (the specs it touches, what users will see change, and the code), and
    the change's review level when it isn't the project default. A
    small change takes the short path: proposal and tasks, no design. Work that
-   changes no requirement needs no change at all: `/wm-fix` takes it on the
-   [tiny path](concepts.md#paths).
+   changes no requirement needs no change at all: `/wm-propose` takes it on
+   the [tiny path](concepts.md#paths).
 2. **Specs.** It writes the change's deltas against the living specs. On an
    existing codebase, this is where the first spec for that area is born.
 3. **Tasks.** It writes the task list: each item with criteria and how to
@@ -142,7 +142,10 @@ version installed, reading works and writing is refused, with the command that
 installs the pinned one. To upgrade a project: change the pin, install that
 version, and run `wm update`. When it changes the record, `.gitignore` or the CI
 workflow, it names them and asks you to review and commit the changes. It never
-asks you to commit the agent tool files. A release that changes the record's
+asks you to commit the agent tool files. `wm update` and `wm init` also delete
+any skill folder named `wm-*` that the installed `wm` doesn't ship, and list
+each file as `removed:`. Folders with other names are left
+alone, so don't name your own skills `wm-*`. A release that changes the record's
 format says in the [changelog](../CHANGELOG.md) whether `wm update` migrates an
 older record. When it doesn't, `wm update` refuses the record, names its format,
 and changes nothing.

@@ -94,8 +94,38 @@ def stage_ignore(
     return FileChange(ignore.PATH, "created" if current is None else "updated")
 
 
+RETIRED_PREFIX = "wm-"
+"""Skill folders with this prefix are wm's; one it no longer ships is removed."""
+
+
+def stage_retired(
+    transaction: Transaction, files: RecordFiles, tools: tuple[str, ...]
+) -> list[FileChange]:
+    """Stage the removal of every ``wm-*`` skill folder wm no longer ships.
+
+    The shared skills folder and each tool's skills folder are looked at; a
+    folder without the prefix is the project's own and is left alone. Each file
+    removed is listed as ``removed``.
+    """
+    require_tools(tools)
+    folders = [SHARED_SKILLS]
+    for tool in tools:
+        folder = adapters.get(tool).skill_folder
+        if folder is not None and folder not in folders:
+            folders.append(folder)
+    changes: list[FileChange] = []
+    for folder in folders:
+        for entry in files.entries(folder):
+            retired = entry.name.startswith(RETIRED_PREFIX) and entry.name not in assets.SKILLS
+            if entry.is_dir and retired:
+                path = f"{folder}/{entry.name}"
+                transaction.delete_folder(path)
+                changes += [FileChange(file, "removed") for file in files.files_under(path)]
+    return changes
+
+
 def stage(transaction: Transaction, files: RecordFiles, tools: tuple[str, ...]) -> list[FileChange]:
-    """Stage the integration files, and say which are new, changed or already current."""
+    """Stage the integration files, and say which are new, changed, current or removed."""
     changes: list[FileChange] = []
     for path, text in sorted(integration_files(files, tools).items()):
         current = files.read(path, []) if files.is_file(path) else None
@@ -104,7 +134,7 @@ def stage(transaction: Transaction, files: RecordFiles, tools: tuple[str, ...]) 
         else:
             transaction.write(path, text)
             changes.append(FileChange(path, "created" if current is None else "updated"))
-    return changes
+    return changes + stage_retired(transaction, files, tools)
 
 
 def local_files(

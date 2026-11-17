@@ -44,6 +44,16 @@ class RecordFiles:
         ]
         return tuple(sorted(found, key=lambda entry: entry.name))
 
+    def files_under(self, relative: str) -> tuple[str, ...]:
+        """Every file inside a folder, at any depth, as sorted record-relative paths."""
+        folder = self.path(relative)
+        if not folder.is_dir():
+            return ()
+        found = (
+            path.relative_to(folder).as_posix() for path in folder.rglob("*") if path.is_file()
+        )
+        return tuple(sorted(f"{relative}/{name}" for name in found))
+
     def read(self, relative: str, problems: list[Problem]) -> str | None:
         """A file's text; a file that can't be read as UTF-8 is reported as a problem."""
         try:

@@ -73,6 +73,25 @@ def test_init_installs_the_skills_agents_and_hooks(initialized: Path) -> None:
     assert record.config.agent_tools == (TOOL,)
 
 
+SHIPPED = (
+    "wm-kickoff",
+    "wm-explore",
+    "wm-propose",
+    "wm-update",
+    "wm-apply",
+    "wm-archive",
+    "wm-onboard",
+    "wm-pr",
+)
+
+
+def test_scenario_new_project(initialized: Path) -> None:
+    """Requirement "Shipped skills": exactly eight skills, and no wm-fix."""
+    installed = {path.name for path in (initialized / ".claude" / "skills").iterdir()}
+    assert installed == set(SHIPPED)
+    assert "wm-fix" not in installed
+
+
 def test_skills_are_copied_not_linked(initialized: Path) -> None:
     for path in sorted(initialized.rglob("SKILL.md")):
         assert path.is_file()
@@ -281,3 +300,39 @@ def test_delegated_agents_are_told_how_to_end() -> None:
     assert "CHANGE: <change>\nVERDICT: <pass | changes <item> <item>... | spec-gap>" in reviewer
     assert "wm context <change> <item> --for implement" in implementer
     assert "wm context <change> --for review" in reviewer
+
+
+def retired_skill(root: Path, folder: str) -> Path:
+    """A skill folder wm used to ship, as an older wm left it on this machine."""
+    skill = root / folder / "wm-fix" / "SKILL.md"
+    skill.parent.mkdir(parents=True, exist_ok=True)
+    skill.write_text("---\nname: wm-fix\n---\n", encoding="utf-8")
+    return skill.parent
+
+
+def test_scenario_skill_retired(initialized: Path) -> None:
+    """Requirement "Retired skills removed": both copies go, and each file is listed."""
+    shared = retired_skill(initialized, ".agents/skills")
+    claude = retired_skill(initialized, ".claude/skills")
+    done = integration.update(initialized)
+    assert not shared.exists()
+    assert not claude.exists()
+    assert done.message.splitlines() == [
+        "removed: .agents/skills/wm-fix/SKILL.md",
+        "removed: .claude/skills/wm-fix/SKILL.md",
+        "Updated this machine's files.",
+    ]
+    assert integration.update(initialized).message == "Everything is up to date."
+
+
+def test_scenario_the_projects_own_skill(initialized: Path) -> None:
+    """Requirement "Retired skills removed": a folder without the wm- prefix is left alone."""
+    own = initialized / ".claude/skills/release-notes/SKILL.md"
+    own.parent.mkdir(parents=True)
+    own.write_text("mine\n", encoding="utf-8")
+    retired = retired_skill(initialized, ".claude/skills")
+    done = setup.init_project(initialized)
+    assert own.read_text(encoding="utf-8") == "mine\n"
+    assert not retired.exists()
+    assert "removed: .claude/skills/wm-fix/SKILL.md" in done.message
+    assert "release-notes" not in done.message

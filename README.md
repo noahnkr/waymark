@@ -32,23 +32,25 @@ command-line tool, `wm`, keeps track of where everything stands.
 
 ## How it works
 
-Not every piece of work needs the whole trail. What decides it is whether the
-work changes what the specs say, not how big it is:
+Everything starts with `/wm-propose`. A typo fix and a new feature go through
+the same door, but they don't take the same amount of work:
 
-| Path | When | What gets written | Run |
-|---|---|---|---|
-| **Tiny** | Nothing in the specs changes: a typo, a docs fix, a bug, a refactor | Nothing. You say yes, the agent makes the fix, you review the pull request. | `/wm-fix` |
-| **Short** | A small change that doesn't need a design | A short plan: what's changing and why, the spec edits, and a task list. | `/wm-propose` |
-| **Full** | A change that needs a design | The same plan plus a design, with every decision agreed before work starts. | `/wm-propose` |
+| Path | When | What gets written |
+|---|---|---|
+| **Tiny** | The specs don't change: a typo, a docs fix, a bug, a refactor | Nothing. You say yes, the agent fixes it, you review the pull request. |
+| **Short** | The specs change, but there's nothing to design | A short plan: what's changing and why, the spec edits, and a task list. |
+| **Full** | The specs change and there are decisions to make | The same plan plus a design, and you agree every decision before anything gets built. |
 
-Here's what happens along the way:
+Here's how a change goes:
 
 - **Explore**, if you're not sure yet. `/wm-explore` talks the idea through with
   you, using what the specs already say, and writes nothing unless you ask. It
   can save your thinking for later, or turn it into a change or a milestone.
-- **Propose.** `/wm-propose` asks you whatever the plan needs, then writes it:
-  why the change is wanted, the edits to the specs, a design if it needs one,
-  and a task list where every task says how you'll know it's done.
+- **Propose.** `/wm-propose` looks at your specs and code to see what the work
+  involves. If it's tiny, it tells you in one line what it'll change and does it
+  once you say yes. Otherwise it asks what it needs to know, then writes the
+  plan: why, the spec edits, a design if there is one, and a task list where
+  every task says how you'll know it's done.
 - **Accept.** You read a short summary and run `wm accept`. Nothing is built
   before that.
 - **Apply.** `/wm-apply` builds the tasks one at a time and commits each one.
@@ -111,8 +113,7 @@ You work through skills, as slash commands in Claude Code:
 | `/wm-kickoff` | Write the project's charter with you, once per project |
 | `/wm-onboard` | Take a first change all the way through, explaining each step |
 | `/wm-explore` | Think a fuzzy idea through, without writing anything |
-| `/wm-fix` | Make a small fix that changes nothing in the specs |
-| `/wm-propose` | Write the plan for a change |
+| `/wm-propose` | Do any piece of work: a small fix after your yes, or the plan for a change |
 | `/wm-update` | Revise a plan, settle a decision, or fill a gap |
 | `/wm-apply` | Build an approved change, then check it |
 | `/wm-archive` | Finish a change and update the specs |
