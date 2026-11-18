@@ -140,3 +140,16 @@ def test_wrap_leaves_a_long_word_whole() -> None:
 def test_wrap_without_a_width_only_indents() -> None:
     text = " ".join(["word"] * 40) + "\n\n  nested line"
     assert Style().wrap(text, "  ") == "  " + " ".join(["word"] * 40) + "\n\n    nested line"
+
+
+def test_wrap_hangs_a_list_line_under_its_text() -> None:
+    """Design: list lines wrap with a hanging indent under their text."""
+    item = "- " + " ".join(["word"] * 30)
+    wrapped = Style(width=60).wrap(item, "  ").split("\n")
+    assert wrapped[0].startswith("  - word")
+    assert len(wrapped) > 1
+    assert all(line.startswith("    word") for line in wrapped[1:])
+    numbered = Style(width=60).wrap("12. " + " ".join(["word"] * 30), "").split("\n")
+    assert all(line.startswith("    word") for line in numbered[1:])
+    prose = Style(width=60).wrap(" ".join(["word"] * 30), "  ").split("\n")
+    assert all(line.startswith("  word") for line in prose)

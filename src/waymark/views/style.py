@@ -6,6 +6,7 @@ show the glyphs, as on a legacy Windows console, and wraps prose only on a
 terminal, so piped output keeps whole lines.
 """
 
+import re
 import shutil
 import sys
 import textwrap
@@ -31,6 +32,9 @@ _ROLES = {
     STRONG: "1",  # bold: names
 }
 """The palette: each role and the one of the 16 standard colors it is drawn in."""
+
+_LIST_MARKER = re.compile(r"(?:[-*•]|\d+\.)\s+")
+"""The start of a list line, whose wrapped lines hang under its text."""
 
 BAR_WIDTH = 10
 RULE_WIDTH = 72
@@ -152,8 +156,10 @@ class Style:
         """Prose with ``indent`` before each line, wrapped at word boundaries to ``width``.
 
         Each line of ``text`` is a paragraph, wrapped on its own with its indent on
-        every line; a word longer than the width is left whole, and blank lines stay
-        blank. With no width the paragraphs are only indented, one line each.
+        every line; a list line (``- ``, ``* ``, ``• `` or ``1. ``) hangs its
+        continuation lines under its text. A word longer than the width is left
+        whole, and blank lines stay blank. With no width the paragraphs are only
+        indented, one line each.
         """
         lines: list[str] = []
         for paragraph in text.split("\n"):
@@ -164,12 +170,14 @@ class Style:
                 lines.append(indent + paragraph)
                 continue
             own = paragraph[: len(paragraph) - len(paragraph.lstrip())]
+            marker = _LIST_MARKER.match(paragraph.lstrip())
+            hang = " " * len(marker.group(0)) if marker else ""
             lines.extend(
                 textwrap.wrap(
                     paragraph.strip(),
                     self.width,
                     initial_indent=indent + own,
-                    subsequent_indent=indent + own,
+                    subsequent_indent=indent + own + hang,
                     break_long_words=False,
                     break_on_hyphens=False,
                 )

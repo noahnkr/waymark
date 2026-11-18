@@ -12,6 +12,7 @@
     - `test_scenario_piped_output`, `test_scenario_forced_color`, `test_scenario_no_color_wins` and `test_scenario_json` in `tests/views/test_style.py` and `tests/test_views_cli.py`
     - tests for `wrap` at width 60 and with `None`, beside them
   - (note) 2026-11-18 by Noah Roberts: wrap(text, indent) with no width still puts the indent before each line, one line per paragraph, so piped output keeps its layout; the design's 'returns the text unchanged' is read as 'not wrapped'. Section rules are now drawn in accent, per the design's palette
+  - (reopened) 2026-11-18 by Noah Roberts
 
 ## 2. Views
 
@@ -44,3 +45,5 @@
 ## Log
 
 - (accepted) 2026-11-18 fingerprint 991db444e526cae4 items 1.1 2.1 2.2 3.1 by Noah Roberts
+- (review) 2026-11-18 changes 1.1 covers 1.1 2.1 2.2 3.1 by Noah Roberts: wrap() gives a wrapped list line no hanging indent: its continuation lines sit under the dash instead of under the text, as design step 5 requires, which shows in wm show's What changes and Non-goals
+  - warning `src/waymark/views/style.py`: Style.wrap: a bulleted line's continuation lines are indented to the dash, not hung under the text as design step 5 says
