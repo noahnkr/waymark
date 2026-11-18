@@ -33,3 +33,7 @@
     - `docs/concepts.md` and `docs/record.md` describe `- After:`, a change's branch and base, the merged-base warning and the plan pull request; the changelog's Unreleased section has the line
     - the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync pytest tests/adapters tests/test_docs.py`, codespell and `wm check`, for the scenarios "Milestone plan pull request", "Branch before the change" and "Pull request into the base"
+
+## Log
+
+- (accepted) 2026-11-17 fingerprint 7293ac9130dea93b items 1.1 1.2 1.3 2.1 by Noah Roberts
