@@ -40,3 +40,8 @@ The shs-nexus project shows the size of the gap: a project built on WelcomeHome,
   - an implementer may edit resources; tiny work may edit resources
   - the tasks guidance asks for an item to update a resource when a change alters something outside the repo
 - Code: `record/` (a new resources module, `record.py`, `templates.py`, a new `templates/resource.md`), `services/setup.py`, `services/context.py`, `services/instructions.py`, `views/` (payloads, schemas, render), `hooks/decide.py`, `cli.py`, the `wm-propose`, `wm-explore` and `wm-apply` skills in `assets/`, the tests, and the docs (`record.md`, `concepts.md`, `cli.md` and `json.md` generated, the CHANGELOG)
+
+## Outcome
+
+- Built: A new kind of note, a resource (waymark/resources/<name>.md), with four lines and six sections, which wm check holds to its layout, kind, status, date and the specs it serves. wm new resource <name> <kind>, wm ls resources and wm show <name> --kind resource. The explore pack lists resources, and the implement and review packs carry each active resource that serves a spec in the change deltas. The planner and implementers may edit resources, resources/ is kept in git, the tasks step asks for a resource item, and three skills and the docs explain resources.
+- Differs: The proposal "What changes" names wm new resource <name>, but as the deltas and design require it takes the kind too: wm new resource <name> <kind>. wm ls resources puts the kind and served specs in each row detail, such as "service, serves billing", keeping the existing row shape. The independent review passed with two warnings left open: an empty "- Serves:" line is not reported, and an implementer cannot run wm new resource (it can still write the file by hand).

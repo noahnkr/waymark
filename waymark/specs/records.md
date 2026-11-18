@@ -54,12 +54,17 @@ A record SHALL name who wrote it: the git user for a command run in the session,
 - THEN it is refused, and nothing is written
 
 ### Requirement: Records written only by wm
-An agent's edit to the record that adds, changes or removes a record or a tick SHALL be refused with a reason that names the `wm` command to use instead. An implementer SHALL NOT edit the record at all; its notes are written with `wm note` or from its ending.
+An agent's edit to the record that adds, changes or removes a record or a tick SHALL be refused with a reason that names the `wm` command to use instead. An implementer SHALL NOT edit the record, except its resources; its notes are written with `wm note` or from its ending.
 
 #### Scenario: Implementer writes a note by hand
 - GIVEN an implementer building item 1.2
 - WHEN it edits the change's task list to add a note under item 1.2
 - THEN the edit is refused with a reason that names `wm note`
+
+#### Scenario: Implementer edits a proposal
+- GIVEN an implementer building item 1.2
+- WHEN it edits the change's proposal
+- THEN the edit is refused with the reason that an implementer doesn't edit the record
 
 ### Requirement: Log section
 `wm` SHALL write every record about a change as a whole into a `## Log` section, the last section of the change's task list, creating the section when needed: `(accepted)`, `(synced)`, `(override)`, `(self-review)`, `(review)` and `(resolved)` for the review. The acceptance SHALL read `(accepted) <date> fingerprint <digest> items <number> <number>... by <who>`. The proposal SHALL hold no records. `wm check` SHALL report as an error a `## Log` section that isn't the last, or a change-level record outside it, in an active change.
