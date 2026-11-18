@@ -33,3 +33,8 @@ The context-beyond-the-code milestone gives each kind of fact one place: the cha
   - `wm instructions` and every `wm context` pack give all the project's rules, not one step's
   - `wm init` writes the charter's Rules without step headings
 - Code: `record/charter.py`, `record/templates/charter.md`, `services/instructions.py`, `services/context.py`, the `wm-kickoff`, `wm-explore` and `wm-apply` skills in `assets/`, this repository's `waymark/charter.md`, the tests, and the docs (`record.md`, `concepts.md`, the CHANGELOG)
+
+## Outcome
+
+- Built: The charter's Rules are one numbered list, checked like Goals and Constraints, and a step heading or bullet under them is reported. wm instructions and every context pack give the whole list under Project rules. The charter template, this repo's charter, the kickoff, explore and apply skills, the agent definitions, the docs and the CHANGELOG all describe one list for every agent.
+- Differs: One suggestion from the independent review is left open: the module docstring in services/context.py still says the packs carry apply rules and review rules. The explore pack's text also shows the Rules once, under Project rules, rather than as a charter section as well.

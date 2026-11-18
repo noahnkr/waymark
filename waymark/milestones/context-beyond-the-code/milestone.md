@@ -21,7 +21,7 @@ Give every fact an agent needs, and can't find in the code or in the requirement
 ## Roadmap
 
 - [add-resources](../../changes/archive/2026-11-18-add-resources/proposal.md): resources in `waymark/resources/`, with six fixed sections and the lines Kind, Serves, Status and Verified; `wm new resource <name> <kind>`, `wm ls resources` and `wm show --kind resource`; edited by hand, including by implementers and as tiny work; summarized in the implement and review packs of a change that touches a spec they serve
-- [flatten-charter-rules](../../changes/flatten-charter-rules/proposal.md): the charter's Rules become one numbered list, given whole to every step's instructions and every context pack, in place of step headings
+- [flatten-charter-rules](../../changes/archive/2026-11-18-flatten-charter-rules/proposal.md): the charter's Rules become one numbered list, given whole to every step's instructions and every context pack, in place of step headings
 - [add-spec-background](../../changes/archive/2026-11-18-add-spec-background/proposal.md): a spec may have a `## Background` section of facts for its area, changed through a delta, and carried in the implement and review packs of a change that touches the spec
 
 ## Log
@@ -29,3 +29,4 @@ Give every fact an agent needs, and can't find in the code or in the requirement
 - (proposed) 2026-11-17 add-resources by Noah Roberts
 - (archived) 2026-11-18 add-resources by Noah Roberts
 - (archived) 2026-11-18 add-spec-background by Noah Roberts
+- (archived) 2026-11-18 flatten-charter-rules by Noah Roberts
