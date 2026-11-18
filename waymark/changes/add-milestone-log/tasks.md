@@ -39,3 +39,7 @@
     - the changelog's Unreleased section has the line, marked as a behavior change for `wm close`
     - the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync pytest tests/adapters tests/test_docs.py`, codespell and `wm check`
+
+## Log
+
+- (accepted) 2026-11-17 fingerprint a282e6c537287e9c items 1.1 1.2 1.3 1.4 2.1 by Noah Roberts
