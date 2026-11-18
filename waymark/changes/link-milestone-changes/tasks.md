@@ -2,7 +2,7 @@
 
 ## 1. Link changes to milestones
 
-- [ ] 1.1 Read the `- Milestone:` line and check it against the roadmaps
+- [x] 1.1 Read the `- Milestone:` line and check it against the roadmaps
   - Criteria:
     - `Proposal.milestone` holds the value of a `- Milestone:` bullet, and is None without one
     - `wm check` reports the errors `unknown-milestone`, `milestone-unlinked`, `milestone-missing`, `milestone-other` and `milestone-twice` on an active change's proposal, each message naming the milestone and what to do

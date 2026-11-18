@@ -13,6 +13,7 @@ from tests.support import (
     TASKS,
     Workspace,
     delta,
+    milestone,
     proposal,
     requirement,
     spec,
@@ -335,3 +336,81 @@ def status_changes(project: Workspace) -> list[object]:
     from waymark.views import payloads  # noqa: PLC0415 - only this test needs it
 
     return list(payloads.status(project.record())["changes"])
+
+
+LINKED = "- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"
+
+
+def milestone_named(milestone_name: str) -> str:
+    return proposal().replace(
+        "- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- Milestone: {milestone_name}\n"
+    )
+
+
+def milestone_findings(project: Workspace) -> list[tuple[str, str, int, str]]:
+    return [
+        (f.severity.value, f.code, f.line, f.message)
+        for f in check(project.root, NOW)
+        if "milestone" in f.code
+    ]
+
+
+def test_scenario_proposal_and_roadmap_agree(project: Workspace) -> None:
+    project.change(proposal_text=milestone_named("faster-search"))
+    project.write("milestones/faster-search/milestone.md", milestone(LINKED))
+    assert milestone_findings(project) == []
+
+
+def test_scenario_roadmap_does_not_link_the_change(project: Workspace) -> None:
+    project.change(proposal_text=milestone_named("faster-search"))
+    project.write("milestones/faster-search/milestone.md", milestone("- add-limit: planned\n"))
+    [(severity, code, line, message)] = milestone_findings(project)
+    assert (severity, code, line) == ("error", "milestone-unlinked", 4)
+    assert '"faster-search"' in message
+    assert 'doesn\'t link "add-limit"' in message
+
+
+def test_scenario_linked_change_names_no_milestone(project: Workspace) -> None:
+    project.change()
+    project.write("milestones/faster-search/milestone.md", milestone(LINKED))
+    [(severity, code, _, message)] = milestone_findings(project)
+    assert (severity, code) == ("error", "milestone-missing")
+    assert '"- Milestone: faster-search"' in message
+
+
+def test_scenario_unknown_milestone(project: Workspace) -> None:
+    project.change(proposal_text=milestone_named("no-such-milestone"))
+    [(severity, code, _, message)] = milestone_findings(project)
+    assert (severity, code) == ("error", "unknown-milestone")
+    assert '"no-such-milestone"' in message
+    assert "doesn't exist" in message
+
+
+def test_a_change_named_for_one_milestone_and_linked_from_another(project: Workspace) -> None:
+    project.change(proposal_text=milestone_named("faster-search"))
+    project.write("milestones/faster-search/milestone.md", milestone())
+    project.write("milestones/better-ranking/milestone.md", milestone(LINKED))
+    [(_, code, _, message)] = milestone_findings(project)
+    assert code == "milestone-other"
+    assert '"better-ranking"' in message
+
+
+def test_a_change_on_two_roadmaps(project: Workspace) -> None:
+    project.change(proposal_text=milestone_named("faster-search"))
+    project.write("milestones/faster-search/milestone.md", milestone(LINKED))
+    project.write("milestones/better-ranking/milestone.md", milestone(LINKED))
+    [(severity, code, _, message)] = milestone_findings(project)
+    assert (severity, code) == ("error", "milestone-twice")
+    assert '"better-ranking", "faster-search"' in message
+
+
+def test_archived_changes_are_not_checked_against_roadmaps(project: Workspace) -> None:
+    project.change(
+        proposal_text=milestone_named("no-such-milestone"),
+        tasks="# Tasks\n\n## 1. Limit\n\n- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: ok\n",
+    )
+    lifecycle.accept(project.root, "add-limit", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.self_review(project.root, "add-limit", "fine", DAY)
+    lifecycle.archive(project.root, "add-limit", DAY, built="Shipped.")
+    assert milestone_findings(project) == []

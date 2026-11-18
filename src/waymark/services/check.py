@@ -11,7 +11,13 @@ from waymark.record.config import CONFIG_FILE, RECORD_FORMAT, other_format_reaso
 from waymark.record.problems import WHOLE_FILE
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import Record, link_problems
-from waymark.record.state import ConflictKind, ExplorationStatus, RecordState, derive_state
+from waymark.record.state import (
+    ConflictKind,
+    ExplorationStatus,
+    RecordState,
+    derive_state,
+    milestone_links,
+)
 from waymark.record.terms import ReviewLevel
 from waymark.services.common import install_hint, open_record
 
@@ -89,6 +95,63 @@ def _review_level_findings(record: Record, name: str) -> list[Finding]:
     ]
 
 
+def _milestone_findings(record: Record) -> list[Finding]:
+    """An active change's ``- Milestone:`` line and the roadmaps that link it must agree."""
+    found: list[Finding] = []
+    for name, linked in sorted(milestone_links(record).items()):
+        proposal = record.changes[name].proposal
+        if proposal is None:
+            continue
+        problem = _milestone_problem(record, name, proposal.milestone, linked)
+        if problem is not None:
+            code, message = problem
+            line = proposal.milestone_line or WHOLE_FILE
+            found.append(Finding(Severity.ERROR, proposal.doc.path, line, code, message))
+    return found
+
+
+def _milestone_problem(  # noqa: PLR0911 - one return per disagreement
+    record: Record, name: str, named: str | None, linked: tuple[str, ...]
+) -> tuple[str, str] | None:
+    """The code and message of how a change's milestone and the roadmaps disagree, if they do."""
+    if len(linked) > 1:
+        listed = ", ".join(f'"{milestone}"' for milestone in linked)
+        return (
+            "milestone-twice",
+            f'The change "{name}" is linked from the roadmaps of {listed}. A change belongs to '
+            "one milestone: remove the link from every roadmap but its own.",
+        )
+    if named is None:
+        if not linked:
+            return None
+        return (
+            "milestone-missing",
+            f'The roadmap of "{linked[0]}" links the change "{name}", but its proposal names no '
+            f'milestone. Add a "- Milestone: {linked[0]}" line under the "- Owner:" line, or '
+            "remove the link from the roadmap.",
+        )
+    if named not in record.milestones:
+        return (
+            "unknown-milestone",
+            f'The proposal names the milestone "{named}", which doesn\'t exist as an active '
+            "milestone. Fix the name to a folder under milestones/, or remove the line.",
+        )
+    if linked and named not in linked:
+        return (
+            "milestone-other",
+            f'The proposal names the milestone "{named}", but the roadmap of "{linked[0]}" links '
+            f'the change "{name}". Make them agree: fix the "- Milestone:" line, or move the link '
+            "to the named milestone's roadmap.",
+        )
+    if not linked:
+        return (
+            "milestone-unlinked",
+            f'The proposal names the milestone "{named}", but its roadmap doesn\'t link "{name}". '
+            'Link the change from a line in its "## Roadmap", or remove the "- Milestone:" line.',
+        )
+    return None
+
+
 def _stale_findings(record: Record, now: datetime.datetime) -> list[Finding]:
     root = record.project.root
     folders = {f"{RECORD_DIR}/{change.path}": change for change in record.changes.values()}
@@ -130,6 +193,7 @@ def check_record(record: Record, now: datetime.datetime) -> tuple[Finding, ...]:
         for p in (*record.problems, *link_problems(record))
     ]
     found += _state_findings(record, derive_state(record))
+    found += _milestone_findings(record)
     found += _stale_findings(record, now)
     found += _setup_findings(record)
     return tuple(sorted(found))

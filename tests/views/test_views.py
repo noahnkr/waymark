@@ -46,6 +46,9 @@ def busy(project: Workspace) -> Workspace:
     )
     project.change(
         "add-order",
+        proposal_text=proposal().replace(
+            "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+        ),
         deltas={"search": delta(added=(requirement("Result order"),))},
         tasks=HEAD
         + "- [ ] 1.1 Sort it\n  - Verify: a test\n  - Criteria: newest first\n"

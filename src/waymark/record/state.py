@@ -488,6 +488,27 @@ def _member(doc_path: str, target: str, kind: str) -> _Member | None:
     return None
 
 
+def milestone_links(record: Record) -> dict[str, tuple[str, ...]]:
+    """For each active change, the active milestones whose roadmap links its proposal."""
+    links: dict[str, list[str]] = {name: [] for name in record.changes}
+    for name, milestone in sorted(record.milestones.items()):
+        roadmap = milestone.roadmap
+        for entry in roadmap.entries if roadmap else ():
+            member = (
+                _member(roadmap.doc.path, entry.target, CHANGES)
+                if roadmap and entry.target
+                else None
+            )
+            if (
+                member
+                and not member.archived
+                and member.name in links
+                and name not in links[member.name]
+            ):
+                links[member.name].append(name)
+    return {change: tuple(names) for change, names in links.items()}
+
+
 def milestone_state(record: Record, milestone: Milestone) -> MilestoneState:
     """Derive a milestone's membership and progress from its roadmap's links."""
     lines: list[RoadmapLine] = []
