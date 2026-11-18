@@ -12,7 +12,7 @@
   - Verify:
     - tests in `tests/record/test_authored_formats.py` (or a new `tests/record/artifacts/test_explorations.py`) for the three scenarios
     - `uv run --no-sync pytest tests/record tests/services/test_check.py`
-- [ ] 1.2 Read archived explorations, show and list them, and keep their folder in git
+- [x] 1.2 Read archived explorations, show and list them, and keep their folder in git
   - Criteria:
     - `explorations/archive/` is not reported as an unexpected file, and its `<date>-<name>.md` files are read as archived explorations, never checked or fixed; a file whose name doesn't parse is reported as `invalid-name`
     - `wm show <name>` and `wm show <date>-<name>` find an archived exploration and print "Archived on <date>"; its JSON has an `archived_on` date, null for an active one, as `wm.show.change` has
@@ -101,3 +101,4 @@
   - critical `src/waymark/views/payloads.py show_exploration`: the JSON field is archived_on (also in views/schemas.py), but criterion 1.2 says archived. Rename it, or have the human amend the criterion to archived_on, which matches wm.show.change.
   - critical `docs/concepts.md`: it doesn't describe --from, wm exploration drop or resuming with /wm-explore <exploration> as criterion 3.2 requires, and line 188 still says you and your agents write an exploration's "- Status:" line, which the hooks now refuse.
   - warning `src/waymark/record/artifacts/explorations.py with_dropped`: on an open exploration with no Conclusion section, wm exploration drop raises an uncaught StopIteration instead of a refusal. Untested.
+- (accepted) 2026-11-18 fingerprint 879fc00b099a5688 items 1.1 1.2 1.3 2.1 2.2 2.3 2.4 3.1 3.2 by Noah Roberts
