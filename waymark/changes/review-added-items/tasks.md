@@ -7,7 +7,7 @@
   - Verify: tests in `tests/record/` and `tests/services/` for the scenarios "Item added after a pass", "Archive before the added item is reviewed" and "Older review records"
   - (gap) 2026-11-17 by Noah Roberts: The records spec's scenarios "Reviewer's verdict" and "Explicit author" (waymark/specs/records.md) give review and self-review records without covers, such as (review) 2026-11-20 pass by wm-reviewer: <reasons>, while the review delta requires every such record to name the items it covers. The change has no delta on records, so the two disagree: records needs a MODIFIED delta for those scenarios, and Impact's Specs line needs records.
   - (resolved) 2026-11-17 by Noah Roberts: A MODIFIED delta on records rewrites the Who wrote a record scenarios with covers, and Impact names records; the change was accepted again at review level self.
-- [ ] 1.2 Start the reviewer on the added items
+- [x] 1.2 Start the reviewer on the added items
   - Criteria: `wm context <change> --for review` holds only the items to review, with the deltas, the design and the earlier reviews; the delegation gate lets the reviewer start when some ticked item has no passing review; the reviewer's verdict covers those items; `wm show` shows what each review covers
   - Verify: tests in `tests/services/test_agent_interface.py`, `tests/hooks/test_decide.py` and `tests/views/`
 

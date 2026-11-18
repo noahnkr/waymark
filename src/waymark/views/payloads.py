@@ -372,7 +372,10 @@ def ls(record: Record, kind: str, *, archived: bool = False, source: str | None 
     return {**_header("ls"), "kind": kind, "from": source, "entries": entries}
 
 
-def _record(record: ReviewRecord) -> Payload:
+def _record(record: ReviewRecord, numbers: tuple[str, ...] = ()) -> Payload:
+    """A record as a payload; ``numbers`` are the change's items, which a review without
+    ``covers`` covers."""
+    reviews = record.kind in (RecordKind.REVIEW, RecordKind.SELF_REVIEW)
     return {
         "kind": record.kind.value,
         "date": record.date.isoformat(),
@@ -380,6 +383,7 @@ def _record(record: ReviewRecord) -> Payload:
         "verdict": record.verdict.value if record.verdict else None,
         "text": record.text,
         "items": list(record.covers if record.kind is RecordKind.ACCEPTED else record.items),
+        "covers": list(record.covers or numbers) if reviews else [],
         "findings": [
             {"severity": f.severity.value, "place": f.place, "text": f.text}
             for f in record.findings
@@ -420,6 +424,7 @@ def show_change(record: Record, change: Change) -> Payload:
     active = change.archived_on is None
     state = change_state(record, change, overlaps(record)) if active else None
     proposal = change.proposal
+    numbers = tuple(item.number for item in change.tasks.items) if change.tasks else ()
     return {
         **_header("show.change"),
         "name": change.name,
@@ -452,7 +457,7 @@ def show_change(record: Record, change: Change) -> Payload:
         ),
         "items": [_item(item, state) for item in (change.tasks.items if change.tasks else ())],
         "review": _change_review(record, change, state),
-        "log": [_record(r) for r in (change.tasks.log if change.tasks else ())],
+        "log": [_record(r, numbers) for r in (change.tasks.log if change.tasks else ())],
         "problems": [
             {"path": p.path, "line": p.line, "code": p.code, "message": p.message}
             for p in change.problems
