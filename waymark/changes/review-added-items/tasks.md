@@ -5,6 +5,8 @@
 - [ ] 1.1 Record what a review covers, and find the items no passing review covers
   - Criteria: `(review)` and `(self-review)` records take `covers <item>...` before `by`, and a record without it covers every item; `wm review` and `wm verdict` write every item of the change, or for a review of added items just those; `review_state` gives the ticked items no passing review covers, and the change isn't reviewed while there are any; the archive gate names them; `wm instructions` offers a review of those items only
   - Verify: tests in `tests/record/` and `tests/services/` for the scenarios "Item added after a pass", "Archive before the added item is reviewed" and "Older review records"
+  - (gap) 2026-11-17 by Noah Roberts: The records spec's scenarios "Reviewer's verdict" and "Explicit author" (waymark/specs/records.md) give review and self-review records without covers, such as (review) 2026-11-20 pass by wm-reviewer: <reasons>, while the review delta requires every such record to name the items it covers. The change has no delta on records, so the two disagree: records needs a MODIFIED delta for those scenarios, and Impact's Specs line needs records.
+  - (resolved) 2026-11-17 by Noah Roberts: A MODIFIED delta on records rewrites the Who wrote a record scenarios with covers, and Impact names records; the change was accepted again at review level self.
 - [ ] 1.2 Start the reviewer on the added items
   - Criteria: `wm context <change> --for review` holds only the items to review, with the deltas, the design and the earlier reviews; the delegation gate lets the reviewer start when some ticked item has no passing review; the reviewer's verdict covers those items; `wm show` shows what each review covers
   - Verify: tests in `tests/services/test_agent_interface.py`, `tests/hooks/test_decide.py` and `tests/views/`
@@ -18,3 +20,4 @@
 ## Log
 
 - (accepted) 2026-11-17 fingerprint a9c3f8d8b312bd26 items 1.1 1.2 2.1 by Noah Roberts
+- (accepted) 2026-11-17 fingerprint 1a05f8493f2c062d items 1.1 1.2 2.1 by Noah Roberts

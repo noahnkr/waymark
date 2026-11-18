@@ -25,7 +25,7 @@ Reviewing the whole change again would repeat work. The items that passed don't 
 
 ## Impact
 
-- Specs: `review` (a requirement is added, "Review of items added after a review").
+- Specs: `review` (a requirement is added, "Review of items added after a review"); `records` (the "Who wrote a record" scenarios show what a review covers).
 - User-visible: a behavior change for every user, for the changelog: review records gain `covers <item>...`; an item added after a passing review needs its own review before archive.
 - Code: `record/records.py` (the `covers` arguments), `record/state.py` (the items to review), `services/lifecycle.py`, `services/context.py`, `services/instructions.py`, `hooks/decide.py` (the delegation gate), `views/`.
 - Assets: `wm-apply`, `wm-update`, `wm-reviewer`. Docs: concepts.
