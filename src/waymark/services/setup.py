@@ -15,8 +15,9 @@ from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.pointer import POINTER_FILE, is_pointer, parse_pointer
 from waymark.record.project import RECORD_DIR
 from waymark.record.proposal import AFTER, MILESTONE, OWNER, PATH, SHORT
-from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
+from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES, RESOURCES
 from waymark.record.records import RecordKind
+from waymark.record.resources import KINDS as RESOURCE_KINDS
 from waymark.record.store import Transaction
 from waymark.record.text import Document
 from waymark.services import integration
@@ -217,3 +218,29 @@ def create_exploration(start: Path, name: str) -> Done:
         path, templates.render(templates.EXPLORATION, title=templates.title_from_name(name))
     )
     return Done(f'Created the exploration "{name}".', commit(transaction))
+
+
+def create_resource(
+    start: Path, name: str, kind: str | None, today: datetime.date | None = None
+) -> Done:
+    """Create a resource from the template: its kind as given, serving no spec, active, and
+    verified today."""
+    record = open_record(start, writing=True)
+    path = f"{RESOURCES}/{name}.md"
+    _require_new_name(name, "resource", record.files.is_file(path))
+    kinds = ", ".join(RESOURCE_KINDS)
+    if kind is None:
+        raise Refusal(
+            f'Name the resource\'s kind: "wm new resource {name} <kind>", one of {kinds}.'
+        )
+    if kind not in RESOURCE_KINDS:
+        raise Refusal(f'"{kind}" is not a kind of resource. The kinds are {kinds}.')
+    text = templates.render(
+        templates.RESOURCE,
+        title=templates.title_from_name(name),
+        kind=kind,
+        date=(today or datetime.date.today()).isoformat(),
+    )
+    transaction = Transaction(record.files)
+    transaction.write(path, text)
+    return Done(f'Created the resource "{name}".', commit(transaction))

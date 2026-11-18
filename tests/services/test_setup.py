@@ -834,3 +834,43 @@ def test_scenario_change_written_after_another(project: Workspace) -> None:
     with pytest.raises(Refusal, match="not a valid change name"):
         setup.create_change(project.root, "add-sort", after="Add_Limit")
     assert not project.path("changes/add-sort").exists()
+
+
+def test_scenario_new_resource(project: Workspace) -> None:
+    """Requirement "Resource commands": wm new resource writes a valid file from the template."""
+    done = setup.create_resource(project.root, "stripe", "service", datetime.date(2026, 11, 17))
+    assert done.message == 'Created the resource "stripe".'
+    assert done.paths == ("resources/stripe.md",)
+    text = project.read("resources/stripe.md")
+    for line in (
+        "- Kind: service\n",
+        "- Serves: none\n",
+        "- Status: active\n",
+        "- Verified: 2026-11-17\n",
+    ):
+        assert line in text
+    for section in ("What it is", "Access", "Interface", "Data", "Configuration", "Verification"):
+        assert f"## {section}\n" in text
+    assert "Never store a secret" in text
+    assert "Good: " in text
+    assert "Bad: " in text
+    assert [p for p in project.record().problems if p.path == "resources/stripe.md"] == []
+
+
+def test_scenario_name_taken(project: Workspace) -> None:
+    setup.create_resource(project.root, "stripe", "service")
+    before = project.read("resources/stripe.md")
+    with pytest.raises(Refusal, match='already is a resource named "stripe"'):
+        setup.create_resource(project.root, "stripe", "platform")
+    assert project.read("resources/stripe.md") == before
+
+
+def test_scenario_unknown_kind_given(project: Workspace) -> None:
+    kinds = "service, platform, account, database, dataset, document"
+    with pytest.raises(Refusal) as refusal:
+        setup.create_resource(project.root, "stripe", "repository")
+    assert kinds in str(refusal.value)
+    with pytest.raises(Refusal) as missing:
+        setup.create_resource(project.root, "stripe", None)
+    assert kinds in str(missing.value)
+    assert not project.path("resources/stripe.md").exists()

@@ -122,6 +122,10 @@ def _hook(args: argparse.Namespace) -> int:
 
 
 def _new(args: argparse.Namespace) -> int:
+    if args.kind != "resource" and args.resource_kind is not None:
+        raise Refusal(
+            f'"{args.resource_kind}" is a resource\'s kind; only "wm new resource" takes one.'
+        )
     if args.kind == "change":
         return _report(
             setup.create_change(
@@ -136,6 +140,8 @@ def _new(args: argparse.Namespace) -> int:
         )
     if args.short or args.owner or args.milestone or args.after:
         raise Refusal("--short, --owner, --milestone and --after apply to a change only.")
+    if args.kind == "resource":
+        return _report(setup.create_resource(_here(), args.name, args.resource_kind, _today()))
     if args.kind == "milestone":
         return _report(setup.create_milestone(_here(), args.name))
     return _report(setup.create_exploration(_here(), args.name))
@@ -431,10 +437,16 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     hook.add_argument("event", help="the tool's name for the event")
     hook.set_defaults(handler=_hook)
 
-    summary = "Create a change, milestone or exploration from the built-in template."
+    summary = "Create a change, milestone, exploration or resource from the built-in template."
     new = commands.add_parser("new", help=summary, description=summary)
-    new.add_argument("kind", choices=["change", "milestone", "exploration"])
+    new.add_argument("kind", choices=["change", "milestone", "exploration", "resource"])
     new.add_argument("name", help="a kebab-case name, for example add-search-limit")
+    new.add_argument(
+        "resource_kind",
+        nargs="?",
+        metavar="resource-kind",
+        help="for a resource only: service, platform, account, database, dataset or document",
+    )
     new.add_argument("--short", action="store_true", help="put a change on the short path")
     new.add_argument("--owner", metavar="NAME", help="a change's owner (default: your git name)")
     new.add_argument(

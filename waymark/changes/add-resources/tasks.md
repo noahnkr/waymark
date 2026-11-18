@@ -17,7 +17,7 @@
     - this repository's record gets `waymark/resources/.gitkeep` in the same commit
   - Verify:
     - the existing tests for the scenarios New record, Existing record without them, Already in place and Last change archived, updated for seven folders, and `test_scenario_record_without_resources`, in `tests/services/test_setup.py` or beside them
-- [ ] 1.3 `wm new resource`
+- [x] 1.3 `wm new resource`
   - Criteria:
     - `templates/resource.md` holds the title, the four lines, a comment with the rule never to store secrets and a good and bad example, and the six sections, each with a comment saying what goes there, to write `None.` when it doesn't apply, and that environments go in `###` subsections
     - `wm new resource <name> <kind>` writes `resources/<name>.md` with `- Kind: <kind>`, `- Serves: none`, `- Status: active` and `- Verified: <today>`, prints `Created the resource "<name>".`, and the new file passes `wm check`

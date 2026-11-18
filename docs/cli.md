@@ -108,14 +108,15 @@ wm hook <tool> <event>
 
 ## wm new
 
-Create a change, milestone or exploration from the built-in template.
+Create a change, milestone, exploration or resource from the built-in template.
 
 ```
-wm new <change|milestone|exploration> <name> [--short] [--owner NAME] [--milestone MILESTONE] [--after CHANGE]
+wm new <change|milestone|exploration|resource> <name> [resource-kind] [--short] [--owner NAME] [--milestone MILESTONE] [--after CHANGE]
 ```
 
-- `kind`: one of `change`, `milestone`, `exploration`
+- `kind`: one of `change`, `milestone`, `exploration`, `resource`
 - `name`: a kebab-case name, for example add-search-limit
+- `resource_kind`: for a resource only: service, platform, account, database, dataset or document
 - `--short`: put a change on the short path
 - `--owner`: a change's owner (default: your git name)
 - `--milestone`: the milestone a change belongs to; links it from the milestone's roadmap
