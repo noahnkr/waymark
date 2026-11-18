@@ -2,7 +2,7 @@
 
 import datetime
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -875,3 +875,52 @@ def test_scenario_unknown_kind_given(project: Workspace) -> None:
         setup.create_resource(project.root, "stripe", None)
     assert kinds in str(missing.value)
     assert not project.path("resources/stripe.md").exists()
+
+
+def test_claude_code_is_detected_by_its_folder_or_its_memory_file(tmp_path: Path) -> None:
+    """Item: a detection hook per adapter."""
+    claude = adapters.get("claude-code")
+    assert not claude.detect(tmp_path)
+    (tmp_path / ".claude").mkdir()
+    assert claude.detect(tmp_path)
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "CLAUDE.md").write_text("# Notes\n", encoding="utf-8")
+    assert claude.detect(other)
+    (other / ".claude").write_text("not a folder", encoding="utf-8")
+    assert claude.detect(other)
+
+
+def test_an_adapter_detects_nothing_by_default(tmp_path: Path) -> None:
+    class Bare(adapters.Adapter):
+        name = "bare"
+        title = "Bare"
+        capabilities = adapters.Capabilities(skills=False, subagents=False, hooks=False)
+
+        def files(self, existing: Mapping[str, str | None]) -> dict[str, str]:
+            return {}
+
+    (tmp_path / ".claude").mkdir()
+    assert not Bare().detect(tmp_path)
+
+
+def test_init_with_ci_writes_the_workflow_in_the_same_transaction(tmp_path: Path) -> None:
+    git_init(tmp_path)
+    done = setup.init_project(tmp_path, ci=True)
+    workflow = tmp_path / ".github" / "workflows" / "waymark.yml"
+    assert workflow.is_file()
+    assert ".github/workflows/waymark.yml" in done.paths
+    assert "Added .github/workflows/waymark.yml" in done.message
+    assert 'run "wm ci"' not in done.message
+
+
+def test_init_without_ci_writes_what_it_wrote_before(tmp_path: Path) -> None:
+    git_init(tmp_path)
+    plain = setup.init_project(tmp_path)
+    other = tmp_path / "other"
+    other.mkdir()
+    git_init(other)
+    explicit = setup.init_project(other, ci=False)
+    assert not (tmp_path / ".github").exists()
+    assert sorted(plain.paths) == sorted(explicit.paths)
+    assert 'run "wm ci"' in plain.message

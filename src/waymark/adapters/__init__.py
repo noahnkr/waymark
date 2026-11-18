@@ -54,6 +54,14 @@ class Adapter(ABC):
     def files(self, existing: Mapping[str, str | None]) -> dict[str, str]:
         """The files Waymark owns for this tool, with their full text."""
 
+    def detect(self, root: Path) -> bool:
+        """Whether the repository at ``root`` already uses this tool: its files or folder exist.
+
+        An adapter that can't tell says no.
+        """
+        del root
+        return False
+
     def local_files(
         self, existing: Mapping[str, str | None], folders: Sequence[Path]
     ) -> dict[str, str]:

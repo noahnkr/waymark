@@ -2,7 +2,7 @@
 
 ## 1. Building blocks
 
-- [ ] 1.1 Detection per adapter, and CI at init
+- [x] 1.1 Detection per adapter, and CI at init
   - Criteria:
     - `Adapter.detect(root)` exists, `False` by default; Claude Code's is `True` when `.claude/` or `CLAUDE.md` exists in the root
     - `init_project(..., ci=True)` writes `.github/workflows/waymark.yml` in the same transaction as the record, and `ci=False` writes what `wm init` wrote before
@@ -51,3 +51,7 @@
     - `docs/getting-started.md` shows the interactive `wm init` and says `--yes`, `--atlas` and `--tool` skip the questions
     - `docs/cli.md` is regenerated with `--yes`, and the CHANGELOG's Unreleased section notes the interactive init
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and codespell pass
+
+## Log
+
+- (accepted) 2026-11-18 fingerprint e4640089b6be55b8 items 1.1 1.2 1.3 1.4 2.1 3.1 by Noah Roberts
