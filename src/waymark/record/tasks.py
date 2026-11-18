@@ -130,6 +130,13 @@ def _open_stoppers(found: list[ReviewRecord]) -> tuple[str | None, str | None]:
     return blocked, spec_gap
 
 
+def _milestone_record(kind: RecordKind) -> str:
+    return (
+        f'A "({kind.value})" record is about a milestone\'s roadmap, so it goes in the '
+        "milestone's Log, where wm writes it. Remove it from the task list."
+    )
+
+
 def _from_record(record: records.Record, index: int) -> ReviewRecord:
     """A parsed record, as the task list keeps it."""
     is_acceptance = record.kind is RecordKind.ACCEPTED
@@ -211,6 +218,9 @@ class _Parser:
             self.problem(index, "malformed-record", found.message)
             return
         assert found is not None
+        if records.KINDS[found.kind].level is records.Level.MILESTONE:
+            self.problem(index, "misplaced-record", _milestone_record(found.kind))
+            return
         if records.KINDS[found.kind].level is records.Level.CHANGE:
             self.problem(
                 index,
@@ -387,6 +397,9 @@ class _Parser:
         if found is None or isinstance(found, records.ParseError):
             message = found.message if found is not None else "This is not a record."
             self.problem(index, "malformed-record", message)
+            return
+        if records.KINDS[found.kind].level is records.Level.MILESTONE:
+            self.problem(index, "misplaced-record", _milestone_record(found.kind))
             return
         if records.KINDS[found.kind].level is records.Level.ITEM:
             self.problem(

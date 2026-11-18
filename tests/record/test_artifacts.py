@@ -1,10 +1,11 @@
 """Proposals, designs, the charter, milestones and explorations."""
 
-from tests.support import CHARTER, DESIGN, NO_SPECS, document, milestone, proposal
+from tests.support import CHARTER, DESIGN, GOAL_TEXT, NO_SPECS, document, milestone, proposal
+from waymark.record import templates
 from waymark.record.charter import parse_charter
 from waymark.record.design import parse_design
 from waymark.record.explorations import Exploration, parse_exploration
-from waymark.record.milestones import parse_milestone
+from waymark.record.milestones import append_milestone_log, parse_milestone
 from waymark.record.proposal import Proposal, parse_proposal
 from waymark.record.terms import ReviewLevel, Step
 
@@ -241,3 +242,58 @@ def test_proposal_review_line_sets_the_change_review_level() -> None:
     assert proposal_codes(
         proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: strict\n")
     ) == ["invalid-review-level"]
+
+
+LOGGED = (
+    "\n## Log\n\n"
+    "- (added) 2026-11-20 add-cache by Ada: cache hot queries\n"
+    "- (moved) 2026-11-20 add-cache first by Ada\n"
+    "- a line that isn't a record\n"
+)
+
+
+def test_milestone_log_is_read_as_records() -> None:
+    goal, roadmap = parse_milestone(
+        document(milestone("- add-cache: cache hot queries\n") + LOGGED)
+    )
+    assert [entry.text for entry in roadmap.entries] == ["add-cache: cache hot queries"]
+    assert [(record.kind.value, record.change, record.after) for record in roadmap.log] == [
+        ("added", "add-cache", None),
+        ("moved", "add-cache", None),
+    ]
+    assert roadmap.log[0].text == "cache hot queries"
+    assert goal.problems == ()
+
+
+def test_scenario_log_not_last() -> None:
+    text = "# Faster\n\n" + GOAL_TEXT + LOGGED + "\n## Roadmap\n\n- add-cache: cache hot queries\n"
+    goal, roadmap = parse_milestone(document(text))
+    assert "log-section-last" in [problem.code for problem in goal.problems]
+    assert [entry.text for entry in roadmap.entries] == ["add-cache: cache hot queries"]
+
+
+def test_records_are_appended_to_a_milestone_log() -> None:
+    doc = document(milestone("- add-cache: cache hot queries\n\n"), "milestones/m/milestone.md")
+    first = append_milestone_log(doc, "(proposed) 2026-11-20 add-cache by Ada")
+    assert first.endswith(
+        "- add-cache: cache hot queries\n\n## Log\n\n- (proposed) 2026-11-20 add-cache by Ada\n"
+    )
+    second = append_milestone_log(
+        document(first, "milestones/m/milestone.md"), "(archived) 2026-11-21 add-cache by Ada"
+    )
+    assert second.endswith(
+        "- (proposed) 2026-11-20 add-cache by Ada\n- (archived) 2026-11-21 add-cache by Ada\n"
+    )
+
+
+def test_a_milestone_log_keeps_the_file_line_endings() -> None:
+    text = milestone("- add-cache: cache hot queries\n").replace("\n", "\r\n")
+    appended = append_milestone_log(document(text), "(proposed) 2026-11-20 add-cache")
+    assert "\n" not in appended.replace("\r\n", "")
+    assert appended.endswith("## Log\r\n\r\n- (proposed) 2026-11-20 add-cache\r\n")
+
+
+def test_scenario_new_milestone_has_no_log() -> None:
+    _, roadmap = parse_milestone(document(templates.render(templates.MILESTONE, title="Fast")))
+    assert roadmap.log == ()
+    assert "## Log" not in templates.render(templates.MILESTONE, title="Fast")

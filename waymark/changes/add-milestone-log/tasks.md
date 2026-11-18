@@ -2,7 +2,7 @@
 
 ## 1. The log and the commands
 
-- [ ] 1.1 Add the milestone record kinds and read a milestone's Log
+- [x] 1.1 Add the milestone record kinds and read a milestone's Log
   - Criteria:
     - `(added)`, `(dropped)`, `(moved)`, `(proposed)` and `(archived)` render and parse in the shapes the "Milestone log" requirement gives, at a milestone level, and a malformed one is a parse error
     - `milestone.md` may end with a `## Log` section, whose records are read, and `wm check` reports a `## Log` that isn't the last section
