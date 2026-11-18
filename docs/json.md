@@ -1976,6 +1976,46 @@ Printed by `wm context --for explore`.
         ],
         "additionalProperties": false
       }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "serves": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "kind",
+          "status",
+          "serves"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
@@ -1988,7 +2028,8 @@ Printed by `wm context --for explore`.
     "changes",
     "milestones",
     "explorations",
-    "references"
+    "references",
+    "resources"
   ],
   "additionalProperties": false
 }
@@ -2176,6 +2217,60 @@ Printed by `wm context <change> <item> --for implement`.
         }
       ]
     },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "what_it_is": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string"
+          },
+          "outline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "integer"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "level",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "command": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "what_it_is",
+          "access",
+          "outline",
+          "command"
+        ],
+        "additionalProperties": false
+      }
+    },
     "rules": {
       "type": "string"
     },
@@ -2258,6 +2353,7 @@ Printed by `wm context <change> <item> --for implement`.
     "item",
     "context",
     "milestone",
+    "resources",
     "rules",
     "proposal",
     "deltas",
@@ -2456,6 +2552,60 @@ Printed by `wm context <change> --for review`.
         }
       ]
     },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "what_it_is": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string"
+          },
+          "outline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "integer"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "level",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "command": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "what_it_is",
+          "access",
+          "outline",
+          "command"
+        ],
+        "additionalProperties": false
+      }
+    },
     "rules": {
       "type": "string"
     },
@@ -2506,6 +2656,7 @@ Printed by `wm context <change> --for review`.
     "resolutions",
     "context",
     "milestone",
+    "resources",
     "rules",
     "deltas",
     "design",

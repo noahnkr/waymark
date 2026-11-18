@@ -500,6 +500,7 @@ def context_delegated(payload: Payload, _: Style) -> str:
         lines += ["", "## Milestone", "", f"This change works toward `{milestone['name']}`."]
         lines += ["", "### Goal", "", milestone["goal"], "", "### Non-goals", ""]
         lines.append(milestone["non_goals"])
+    lines += _resource_lines(payload["resources"])
     if payload["rules"]:
         lines += ["", "## Rules for this step", "", payload["rules"]]
     if payload.get("proposal"):
@@ -563,7 +564,40 @@ def context_explore(payload: Payload, _: Style) -> str:
             lines.append(
                 f"- {exploration['name']} ({exploration['status']}{detail}): {exploration['title']}"
             )
+    lines += _resource_index(payload["resources"])
     return "\n".join(lines)
+
+
+def _resource_index(resources: list[Payload]) -> list[str]:
+    """Every resource, one line each, for the explore pack."""
+    if not resources:
+        return []
+    lines = ["", "## Resources", ""]
+    for resource in resources:
+        serves = ", ".join(resource["serves"]) or "none"
+        lines.append(
+            f"- {resource['name']} ({resource['kind'] or 'unknown'}, "
+            f"{resource['status'] or 'unknown'}, serves {serves}): {resource['title']}"
+        )
+    return [*lines, "", "Read one with: wm show <resource> --kind resource"]
+
+
+def _resource_lines(resources: list[Payload]) -> list[str]:
+    """The resources serving a change's specs: what each is, how to reach it, and the rest."""
+    if not resources:
+        return []
+    lines = ["", "## Resources"]
+    for resource in resources:
+        lines += ["", f"### {resource['name']} ({resource['kind'] or 'unknown'})"]
+        lines += ["", "What it is:", "", resource["what_it_is"] or "None."]
+        lines += ["", "Access:", "", resource["access"] or "None."]
+        lines += ["", "Its other headings:", ""]
+        lines += [
+            f"{'  ' * (heading['level'] - 2)}- {heading['title']}"
+            for heading in resource["outline"]
+        ]
+        lines += ["", f"Read it in full with: {resource['command']}"]
+    return lines
 
 
 def doctor(payload: Payload, style: Style) -> str:

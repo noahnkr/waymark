@@ -33,7 +33,7 @@
 
 ## 2. Agents
 
-- [ ] 2.1 Resources in the context packs
+- [x] 2.1 Resources in the context packs
   - Criteria:
     - the explore pack holds `resources`: each resource's name, title, kind, status and served specs, retired ones included
     - the implement and review packs hold `resources`: each active resource serving a spec the change has a delta for, with its name, kind, What it is and Access text, the outline of its other headings, and the command `wm show <name> --kind resource`; nothing of a retired resource, or of one serving only other specs
