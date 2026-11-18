@@ -60,7 +60,7 @@
     - `wm-apply` says to update the resource and its `- Verified:` date when an item changes something outside the repo
     - each skill keeps the shared layout the `skills` spec requires
   - Verify: `uv run --no-sync pytest tests/test_skills.py tests/adapters` passes, with any snapshots regenerated
-- [ ] 3.2 Docs for resources
+- [x] 3.2 Docs for resources
   - Criteria:
     - `docs/record.md` has a Resource section (folder, the four lines, the six sections, kinds, who edits it, the rule never to store secrets) and shows `resources/` in its tree and among the folders with a `.gitkeep`
     - `docs/concepts.md` defines a resource, and how it differs from a spec
