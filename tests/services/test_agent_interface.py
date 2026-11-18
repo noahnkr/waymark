@@ -33,6 +33,7 @@ from waymark.services.context import RESULT_LINE, VERDICT_LINE, context_pack, de
 from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
 from waymark.services.instructions import (
     CHECKLISTS,
+    FACT_RULE,
     SHARED_RULES,
     SIZING_RULES,
     WRITING_RULES,
@@ -188,6 +189,16 @@ def test_scenario_specs_step(project: Workspace) -> None:
     assert list(WRITING_RULES) == guidance[-len(WRITING_RULES) :]
     assert any("an outcome someone else can check" in line for line in guidance)
     assert not set(SIZING_RULES) & set(guidance)
+
+
+def test_scenario_specs_step_says_where_a_fact_goes(project: Workspace) -> None:
+    """Requirement "Spec background": the specs step gives the four places a fact goes."""
+    project.change(deltas={}, design=None, tasks=None)
+    guidance = valid(at(project))["guidance"]
+    assert FACT_RULE in guidance
+    for place in ("requirement", "Background", "resource", "charter's Context"):
+        assert place in FACT_RULE
+    assert FACT_RULE not in at(project, "tasks")["guidance"]
 
 
 def test_scenario_tasks_step(project: Workspace) -> None:

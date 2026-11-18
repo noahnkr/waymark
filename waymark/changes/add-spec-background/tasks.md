@@ -20,7 +20,7 @@
 
 ## 2. Guidance, skills and docs
 
-- [ ] 2.1 Where a fact goes
+- [x] 2.1 Where a fact goes
   - Criteria:
     - the delta template has a `## Background` section whose comment says what goes there, with a good and a bad example, and to remove it unless the change sets the Background
     - the specs step's guidance holds the rule: what the system does is a requirement, a fact about the area its Background, a fact about an outside system a resource, a fact for the whole project the charter's Context
