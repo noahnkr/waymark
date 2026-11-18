@@ -130,11 +130,12 @@ def _new(args: argparse.Namespace) -> int:
                 short=args.short,
                 owner=args.owner,
                 milestone=args.milestone,
+                after=args.after,
                 today=_today(),
             )
         )
-    if args.short or args.owner or args.milestone:
-        raise Refusal("--short, --owner and --milestone apply to a change only.")
+    if args.short or args.owner or args.milestone or args.after:
+        raise Refusal("--short, --owner, --milestone and --after apply to a change only.")
     if args.kind == "milestone":
         return _report(setup.create_milestone(_here(), args.name))
     return _report(setup.create_exploration(_here(), args.name))
@@ -440,6 +441,11 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         "--milestone",
         metavar="MILESTONE",
         help="the milestone a change belongs to; links it from the milestone's roadmap",
+    )
+    new.add_argument(
+        "--after",
+        metavar="CHANGE",
+        help="the change this one comes after; its unmerged branch is this one's base",
     )
     new.set_defaults(handler=_new)
 

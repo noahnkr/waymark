@@ -414,3 +414,55 @@ def test_archived_changes_are_not_checked_against_roadmaps(project: Workspace) -
     lifecycle.self_review(project.root, "add-limit", "fine", DAY)
     lifecycle.archive(project.root, "add-limit", DAY, built="Shipped.")
     assert milestone_findings(project) == []
+
+
+def after_named(other: str) -> str:
+    return proposal().replace("- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- After: {other}\n")
+
+
+def after_findings(project: Workspace) -> list[tuple[str, str, str, int, str]]:
+    return [
+        (f.severity.value, f.path, f.code, f.line, f.message)
+        for f in check(project.root, NOW)
+        if "after" in f.code
+    ]
+
+
+def test_an_after_line_naming_another_change_is_healthy(project: Workspace) -> None:
+    project.change("add-limit")
+    project.change("add-paging", proposal_text=after_named("add-limit"))
+    assert after_findings(project) == []
+
+
+def test_scenario_unknown_change_named(project: Workspace) -> None:
+    project.change("add-limit", proposal_text=after_named("no-such-change"))
+    [(severity, path, code, line, message)] = after_findings(project)
+    assert (severity, path, code, line) == (
+        "error",
+        "changes/add-limit/proposal.md",
+        "unknown-after",
+        4,
+    )
+    assert '"no-such-change"' in message
+
+
+def test_an_after_line_may_name_an_archived_change(project: Workspace) -> None:
+    project.write("changes/archive/2026-01-20-add-index/proposal.md", proposal(outcome="Done."))
+    project.change("add-limit", proposal_text=after_named("add-index"))
+    assert [code for _, _, code, _, _ in after_findings(project)] == []
+
+
+def test_a_change_after_itself(project: Workspace) -> None:
+    project.change("add-limit", proposal_text=after_named("add-limit"))
+    assert [code for _, _, code, _, _ in after_findings(project)] == ["after-self"]
+
+
+def test_scenario_cycle(project: Workspace) -> None:
+    project.change("add-a", proposal_text=after_named("add-b"))
+    project.change("add-b", proposal_text=after_named("add-a"))
+    found = after_findings(project)
+    assert sorted((path, code) for _, path, code, _, _ in found) == [
+        ("changes/add-a/proposal.md", "after-cycle"),
+        ("changes/add-b/proposal.md", "after-cycle"),
+    ]
+    assert "add-a -> add-b -> add-a" in found[0][4]

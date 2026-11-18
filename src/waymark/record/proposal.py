@@ -1,6 +1,7 @@
 """Proposals: why a change is wanted and what it changes.
 
-A proposal also names its owner, its milestone, its path and its review level.
+A proposal also names its owner, its milestone, the change it comes after, its path and its
+review level.
 
 The acceptance and the sync are records in the task list's Log.
 """
@@ -22,6 +23,7 @@ from waymark.record.text import Document
 
 OWNER = "Owner"
 MILESTONE = "Milestone"
+AFTER = "After"
 PATH = "Path"
 REVIEW = "Review"
 SHORT = "short"
@@ -83,6 +85,10 @@ class Proposal:
     """The milestone the ``- Milestone:`` line names, by its folder name; None without one."""
     milestone_line: int | None = None
     """The 1-based line of the ``- Milestone:`` line, for messages."""
+    after: str | None = None
+    """The change this one comes after, from the ``- After:`` line; None without one."""
+    after_line: int | None = None
+    """The 1-based line of the ``- After:`` line, for messages."""
 
     @property
     def no_spec_changes(self) -> bool:
@@ -116,7 +122,7 @@ def parse_proposal(doc: Document) -> Proposal:
     """Read a proposal."""
     problems: list[Problem] = []
     title = require_title(doc, problems)
-    every_fact = parse_facts(doc, {OWNER, MILESTONE, PATH, REVIEW}, problems, prose=True)
+    every_fact = parse_facts(doc, {OWNER, MILESTONE, AFTER, PATH, REVIEW}, problems, prose=True)
     facts = {key: fact for key, fact in every_fact.items() if fact.bullet}
 
     owner = facts[OWNER].value if OWNER in facts else ""
@@ -174,6 +180,7 @@ def parse_proposal(doc: Document) -> Proposal:
         names = tuple(_SPEC_NAME.findall(text))
         impact_specs = () if text.casefold() == NONE else names or None
     milestone = facts.get(MILESTONE)
+    after = facts.get(AFTER)
     return Proposal(
         doc=doc,
         title=title,
@@ -187,6 +194,8 @@ def parse_proposal(doc: Document) -> Proposal:
         problems=tuple(problems),
         milestone=(milestone.value or None) if milestone else None,
         milestone_line=milestone.index + 1 if milestone else None,
+        after=(after.value or None) if after else None,
+        after_line=after.index + 1 if after else None,
     )
 
 

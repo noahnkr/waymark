@@ -95,6 +95,57 @@ def _review_level_findings(record: Record, name: str) -> list[Finding]:
     ]
 
 
+def _after_findings(record: Record) -> list[Finding]:
+    """An active change's ``- After:`` line must name another change, without a cycle."""
+    archived = {entry.name for entry in record.archived_changes}
+    after = {
+        name: change.proposal.after
+        for name, change in record.changes.items()
+        if change.proposal is not None and change.proposal.after is not None
+    }
+    found: list[Finding] = []
+    for name, other in sorted(after.items()):
+        proposal = record.changes[name].proposal
+        assert proposal is not None
+        line = proposal.after_line or WHOLE_FILE
+        problem = _after_problem(name, other, after, set(record.changes) | archived)
+        if problem is not None:
+            code, message = problem
+            found.append(Finding(Severity.ERROR, proposal.doc.path, line, code, message))
+    return found
+
+
+def _after_problem(
+    name: str, other: str, after: dict[str, str], known: set[str]
+) -> tuple[str, str] | None:
+    """The code and message of what is wrong with a change's ``- After:`` line, if anything."""
+    if other == name:
+        return (
+            "after-self",
+            f'The change "{name}" says it comes after itself. Name the change it needs, or '
+            'remove the "- After:" line.',
+        )
+    if other not in known:
+        return (
+            "unknown-after",
+            f'The change "{name}" comes after "{other}", which is neither an active nor an '
+            'archived change. Fix the name, or remove the "- After:" line.',
+        )
+    chain = [name]
+    current = other
+    while current in after and current not in chain:
+        chain.append(current)
+        current = after[current]
+    if current == name:
+        cycle = " -> ".join([*chain, name])
+        return (
+            "after-cycle",
+            f'The "- After:" lines form a cycle: {cycle}. A change can\'t come after a change '
+            "that comes after it; remove one of the lines.",
+        )
+    return None
+
+
 def _milestone_findings(record: Record) -> list[Finding]:
     """An active change's ``- Milestone:`` line and the roadmaps that link it must agree."""
     found: list[Finding] = []
@@ -194,6 +245,7 @@ def check_record(record: Record, now: datetime.datetime) -> tuple[Finding, ...]:
     ]
     found += _state_findings(record, derive_state(record))
     found += _milestone_findings(record)
+    found += _after_findings(record)
     found += _stale_findings(record, now)
     found += _setup_findings(record)
     return tuple(sorted(found))

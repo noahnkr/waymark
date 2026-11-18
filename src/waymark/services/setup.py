@@ -14,7 +14,7 @@ from waymark.record.milestones import MILESTONE_FILE, append_milestone_log, link
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.pointer import POINTER_FILE, is_pointer, parse_pointer
 from waymark.record.project import RECORD_DIR
-from waymark.record.proposal import MILESTONE, OWNER, PATH, SHORT
+from waymark.record.proposal import AFTER, MILESTONE, OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
 from waymark.record.records import RecordKind
 from waymark.record.store import Transaction
@@ -139,19 +139,22 @@ def _require_new_name(name: str, kind: str, taken: bool) -> None:
         raise Refusal(f'There already is {article} {kind} named "{name}". Pick another name.')
 
 
-def create_change(
+def create_change(  # noqa: PLR0913 - the change's facts, and the day for its milestone's log
     start: Path,
     name: str,
     *,
     short: bool = False,
     owner: str | None = None,
     milestone: str | None = None,
+    after: str | None = None,
     today: datetime.date | None = None,
 ) -> Done:
     """Create a change folder with a proposal skeleton, linked from its milestone if it has one."""
     record = open_record(start, writing=True)
     folder = f"{CHANGES}/{name}"
     _require_new_name(name, "change", bool(record.files.entries(folder)))
+    if after is not None and not is_valid_name(after):
+        raise Refusal(f'"{after}" is not a valid change name: {NAME_RULE}.')
     member = record.milestones.get(milestone) if milestone is not None else None
     if milestone is not None and (member is None or member.roadmap is None):
         known = ", ".join(sorted(record.milestones)) or "none"
@@ -168,6 +171,7 @@ def create_change(
     facts = (
         f"- {OWNER}: {who}\n"
         + (f"- {MILESTONE}: {milestone}\n" if milestone else "")
+        + (f"- {AFTER}: {after}\n" if after else "")
         + (f"- {PATH}: {SHORT}\n" if short else "")
     )
     text = templates.render(templates.PROPOSAL, title=templates.title_from_name(name), facts=facts)

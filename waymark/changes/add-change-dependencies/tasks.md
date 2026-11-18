@@ -2,7 +2,7 @@
 
 ## 1. Dependencies, branches and bases
 
-- [ ] 1.1 Read and write the `- After:` line, and check it
+- [x] 1.1 Read and write the `- After:` line, and check it
   - Criteria:
     - `Proposal.after` holds the value of an `- After:` bullet, and is None without one
     - `wm new change <name> --after <change>` writes `- After: <change>` after `- Milestone:`, refuses an invalid name, and `--after` is refused for a milestone or an exploration

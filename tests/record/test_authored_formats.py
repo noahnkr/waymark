@@ -298,3 +298,13 @@ def test_proposal_facts_include_the_milestone_line() -> None:
     bare = text.replace("- Milestone: faster-search", "Milestone: faster-search")
     assert parse_proposal(document(bare, "changes/add-limit/proposal.md")).milestone is None
     assert parse_proposal(document(proposal(), "changes/add-limit/proposal.md")).milestone is None
+
+
+def test_proposal_facts_include_the_after_line() -> None:
+    """Requirement "Proposal facts as a list": `- After:` is one of the facts."""
+    text = proposal().replace("- Owner: Sam Doe\n", "- Owner: Sam Doe\n- After: add-index\n")
+    parsed = parse_proposal(document(text, "changes/add-limit/proposal.md"))
+    assert (parsed.after, parsed.after_line) == ("add-index", 4)
+    assert parsed.problems == ()
+    bare = text.replace("- After: add-index", "After: add-index")
+    assert parse_proposal(document(bare, "changes/add-limit/proposal.md")).after is None

@@ -272,3 +272,12 @@ def test_wm_roadmap_commands(project: Workspace, monkeypatch: pytest.MonkeyPatch
         with pytest.raises(SystemExit) as stopped:
             main(usage)
         assert stopped.value.code == EXIT_USAGE
+
+
+def test_wm_new_change_takes_after(project: Workspace, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(project.root)
+    assert main(["new", "change", "add-limit"]) == EXIT_OK
+    assert main(["new", "change", "add-paging", "--after", "add-limit"]) == EXIT_OK
+    assert "- After: add-limit\n" in project.read("changes/add-paging/proposal.md")
+    assert main(["new", "exploration", "paging", "--after", "add-limit"]) == EXIT_REFUSED
+    assert not project.path("explorations/paging.md").exists()
