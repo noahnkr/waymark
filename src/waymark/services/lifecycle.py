@@ -10,6 +10,7 @@ from pathlib import Path
 
 from waymark.record.artifacts.changes import Change
 from waymark.record.artifacts.deltas import merge_delta
+from waymark.record.artifacts.explorations import parse_exploration
 from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log
 from waymark.record.artifacts.proposal import BUILT, DIFFERS, NONE, Proposal
 from waymark.record.artifacts.specs import Spec, parse_spec
@@ -20,7 +21,7 @@ from waymark.record.evidence.records import RecordError, RecordKind
 from waymark.record.machine import git
 from waymark.record.markdown.text import Document
 from waymark.record.names import ArchiveName
-from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, SPECS, Record
+from waymark.record.record import ARCHIVE, CHANGES, EXPLORATIONS, MILESTONES, SPECS, Record
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -28,6 +29,7 @@ from waymark.record.state import (
     ItemState,
     RoadmapStatus,
     StepKind,
+    led_to_done,
     milestone_state,
 )
 from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
@@ -575,6 +577,30 @@ def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | No
     return existing
 
 
+def _archive_explorations(record: Record, transaction: Transaction, today: datetime.date) -> None:
+    """Stage the move of each exploration whose work the staged operation finishes.
+
+    Run after the links are rewritten: an active exploration whose ``led-to`` targets
+    all point into an archive, as staged, moves to ``explorations/archive/<date>-<name>.md``
+    with its own links re-aimed from there. A file already there refuses the operation.
+    """
+    for name, exploration in sorted(record.explorations.items()):
+        path = exploration.doc.path
+        staged = transaction.staged(path)
+        doc = Document.parse(path, staged) if staged is not None else exploration.doc
+        if not led_to_done(parse_exploration(name, doc)):
+            continue
+        target = f"{EXPLORATIONS}/{ARCHIVE}/{ArchiveName(today, name).folder}.md"
+        if record.files.path(target).exists():
+            raise Refusal(
+                f'The exploration "{name}" would move to {target} with its work, but an '
+                "exploration of that name was already archived today. Nothing was changed; "
+                "rename the exploration, then try again."
+            )
+        transaction.write(target, rewrite_links(doc, path, target))
+        transaction.delete(path)
+
+
 def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
     start: Path,
     name: str,
@@ -629,6 +655,7 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
             text = append_milestone_log(Document.parse(doc.path, text), archived_line)
         if text != doc.text:
             transaction.write(doc.path, text)
+    _archive_explorations(record, transaction, today)
     transaction.move(source, target)
     paths = commit(transaction)
     return Done(f'Archived "{name}" as {target}. Its deltas are now part of the specs.', paths)
@@ -680,6 +707,7 @@ def close_milestone(start: Path, name: str, today: datetime.date) -> Done:
         text = rewrite_links(doc, source, target)
         if text != doc.text:
             transaction.write(doc.path, text)
+    _archive_explorations(record, transaction, today)
     transaction.move(source, target)
     paths = commit(transaction)
     return Done(f'Closed the milestone "{name}" as {target}.', paths)

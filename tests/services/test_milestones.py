@@ -66,13 +66,31 @@ def test_closing_moves_the_milestone_to_the_dated_archive(project: Workspace) ->
     assert closed.endswith("- (dropped) 2026-02-01 add-paging by Sam Doe: paging can wait\n")
 
 
+def exploration(status: str, milestone_link: str = f"../milestones/{NAME}/milestone.md") -> str:
+    return (
+        f"# Speed\n\n- Status: {status}\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        f"## Conclusion\n\n[Faster search]({milestone_link})\n\n## Related\n"
+    )
+
+
+def snapshot(project: Workspace) -> dict[str, bytes]:
+    root = project.path("")
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
+
+
 def test_closing_rewrites_links_to_the_milestone(project: Workspace) -> None:
     milestone(project)
+    project.change("add-order")
     project.write(
         "explorations/speed.md",
-        f"# Speed\n\n- Status: led-to [Faster search](../milestones/{NAME}/milestone.md)\n\n"
-        "## Context\n\n## Questions\n\n## Approaches\n\n"
-        f"## Conclusion\n\n[Faster search](../milestones/{NAME}/milestone.md)\n\n## Related\n",
+        exploration(
+            f"led-to [Faster search](../milestones/{NAME}/milestone.md), "
+            "[add-order](../changes/add-order/proposal.md)"
+        ),
     )
     lifecycle.close_milestone(project.root, NAME, DAY)
     assert f"(../milestones/archive/2026-02-01-{NAME}/milestone.md)" in project.read(
@@ -81,6 +99,41 @@ def test_closing_rewrites_links_to_the_milestone(project: Workspace) -> None:
     assert link_problems(project.record()) == ()
     state = project.state().explorations["speed"]
     assert (state.status, state.detail) == (ExplorationStatus.LED_TO, f"milestone {NAME}")
+
+
+def test_scenario_its_milestone_closed(project: Workspace) -> None:
+    project.write(f"{ARCHIVED_CHANGE}/proposal.md", proposal(outcome="Done."))
+    milestone(project, f"- [x] [Limit](../../{ARCHIVED_CHANGE}/proposal.md)\n")
+    project.write(
+        "explorations/speed.md",
+        exploration(f"led-to [Faster search](../milestones/{NAME}/milestone.md)"),
+    )
+    done = lifecycle.close_milestone(project.root, NAME, DAY)
+    moved = "explorations/archive/2026-02-01-speed.md"
+    assert moved in done.paths
+    assert not project.path("explorations/speed.md").exists()
+    closed = f"../../milestones/archive/2026-02-01-{NAME}/milestone.md"
+    assert project.read(moved) == exploration(f"led-to [Faster search]({closed})", closed)
+    record = project.record()
+    assert record.problems == ()
+    assert record.explorations == {}
+    assert [(entry.name, entry.date) for entry in record.archived_explorations] == [("speed", DAY)]
+
+
+def test_close_refused_when_an_exploration_of_the_name_was_archived_that_day(
+    project: Workspace,
+) -> None:
+    milestone(project)
+    project.write(
+        "explorations/speed.md",
+        exploration(f"led-to [Faster search](../milestones/{NAME}/milestone.md)"),
+    )
+    project.write("explorations/archive/2026-02-01-speed.md", exploration("dropped"))
+    before = snapshot(project)
+    message = refused(project)
+    assert snapshot(project) == before
+    assert "explorations/archive/2026-02-01-speed.md" in message
+    assert '"speed"' in message
 
 
 def test_unknown_milestone_is_refused_with_the_open_ones(project: Workspace) -> None:

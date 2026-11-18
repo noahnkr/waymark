@@ -42,7 +42,7 @@
   - Verify:
     - tests in `tests/services/test_setup.py` for Change from an open exploration, A second change from the same exploration, Milestone from an exploration and Unknown exploration
     - `uv run --no-sync pytest tests/services/test_setup.py tests/test_lifecycle_cli.py`
-- [ ] 2.2 Move explorations to the archive with their work in `wm archive` and `wm close`
+- [x] 2.2 Move explorations to the archive with their work in `wm archive` and `wm close`
   - Criteria:
     - an exploration whose `led-to` targets are all archived or closed after the operation moves to `explorations/archive/<date>-<name>.md` in the same transaction, with its own links re-aimed from there
     - an exploration with a target still active, or one that led to the milestone of the change being archived, stays, with its links re-aimed
@@ -52,6 +52,7 @@
     - tests in `tests/services/test_milestones.py` for Its milestone closed and the same-day clash
     - `uv run --no-sync pytest tests/services`
   - Build: delegate
+  - (note) 2026-11-18 by wm-implementer: Links from other active documents to an exploration moved by wm archive or wm close are not re-aimed; the record asks only for the exploration's own links. A spec or active change linking the exploration would then fail wm check's link check.
 - [ ] 2.3 Add `wm exploration drop <exploration> --reason "<why>"`
   - Criteria:
     - an open exploration gets `- Status: dropped`, the reason as its Conclusion's last paragraph after any text already there, and moves to `explorations/archive/<date>-<name>.md`, in one transaction
