@@ -5,8 +5,8 @@ import datetime
 import pytest
 
 from tests.support import Workspace, milestone, proposal
-from waymark.record.milestones import parse_milestone
-from waymark.record.text import Document
+from waymark.record.artifacts.milestones import parse_milestone
+from waymark.record.markdown.text import Document
 from waymark.services import roadmap
 from waymark.services.common import Refusal
 

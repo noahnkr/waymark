@@ -4,15 +4,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waymark import __version__
-from waymark.record.atlas import Found, Location, locate_repo
-from waymark.record.changes import Change
-from waymark.record.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
-from waymark.record.project import RECORD_DIR, ProjectNotFoundError, find_project
+from waymark.record.artifacts.changes import Change
+from waymark.record.artifacts.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
+from waymark.record.artifacts.tasks import Item
+from waymark.record.machine.atlas import Found, Location, locate_repo
+from waymark.record.machine.project import RECORD_DIR, ProjectNotFoundError, find_project
+from waymark.record.machine.registry import Registry, load_registry
 from waymark.record.record import Record, load_archived_change, load_record
-from waymark.record.registry import Registry, load_registry
 from waymark.record.state import ChangeState, change_state, overlaps
-from waymark.record.store import StoreError, Transaction
-from waymark.record.tasks import Item
+from waymark.record.writing.store import StoreError, Transaction
 
 
 class Refusal(Exception):  # noqa: N818 - a refusal is an answer, not a fault

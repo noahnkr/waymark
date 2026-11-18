@@ -6,9 +6,9 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 import pytest
 
 from tests.support import TASKS, Workspace
-from waymark.record import records
-from waymark.record.atlas import Found, Location
-from waymark.record.records import RecordKind
+from waymark.record.evidence import records
+from waymark.record.evidence.records import RecordKind
+from waymark.record.machine.atlas import Found, Location
 from waymark.record.state import AcceptanceState, StepKind
 from waymark.record.terms import Verdict
 from waymark.services import lifecycle

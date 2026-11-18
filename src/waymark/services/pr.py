@@ -12,13 +12,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from waymark.record import git
-from waymark.record.branches import Branches
-from waymark.record.changes import Change
-from waymark.record.config import RECORD_DIR
-from waymark.record.proposal import WHAT_CHANGES, WHY
+from waymark.record.artifacts.changes import Change
+from waymark.record.artifacts.config import RECORD_DIR
+from waymark.record.artifacts.proposal import WHAT_CHANGES, WHY
+from waymark.record.evidence.records import RecordKind
+from waymark.record.machine import git
+from waymark.record.machine.branches import Branches
 from waymark.record.record import Record
-from waymark.record.records import RecordKind
 from waymark.record.state import review_state
 from waymark.record.terms import Layout, ReviewLevel
 from waymark.services.common import Refusal, find_active_or_archived, repo_locations

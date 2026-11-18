@@ -11,7 +11,7 @@ from tests.support import ATLAS_CONFIG, CONFIG, Workspace, spec
 from tests.views.validator import errors
 from waymark import __version__
 from waymark.cli import EXIT_OK, EXIT_REFUSED, main
-from waymark.record.pointer import POINTER_FILE, Pointer, render_pointer
+from waymark.record.machine.pointer import POINTER_FILE, Pointer, render_pointer
 from waymark.views.schemas import SCHEMAS
 
 

@@ -8,18 +8,19 @@ import datetime
 from collections.abc import Sequence
 from pathlib import Path
 
-from waymark.record import git, records
-from waymark.record.changes import Change
-from waymark.record.deltas import merge_delta
-from waymark.record.edits import append_log, edit_item, set_outcome
-from waymark.record.fingerprint import change_fingerprint
-from waymark.record.milestones import MILESTONE_FILE, append_milestone_log
-from waymark.record.moves import rewrite_links, tick_roadmap_lines
+from waymark.record.artifacts.changes import Change
+from waymark.record.artifacts.deltas import merge_delta
+from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log
+from waymark.record.artifacts.proposal import BUILT, DIFFERS, NONE, Proposal
+from waymark.record.artifacts.specs import Spec, parse_spec
+from waymark.record.artifacts.tasks import Tasks
+from waymark.record.evidence import records
+from waymark.record.evidence.fingerprint import change_fingerprint
+from waymark.record.evidence.records import RecordError, RecordKind
+from waymark.record.machine import git
+from waymark.record.markdown.text import Document
 from waymark.record.names import ArchiveName
-from waymark.record.proposal import BUILT, DIFFERS, NONE, Proposal
 from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, SPECS, Record
-from waymark.record.records import RecordError, RecordKind
-from waymark.record.specs import Spec, parse_spec
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -29,10 +30,10 @@ from waymark.record.state import (
     StepKind,
     milestone_state,
 )
-from waymark.record.store import Transaction
-from waymark.record.tasks import Tasks
 from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
-from waymark.record.text import Document
+from waymark.record.writing.edits import append_log, edit_item, set_outcome
+from waymark.record.writing.moves import rewrite_links, tick_roadmap_lines
+from waymark.record.writing.store import Transaction
 from waymark.services.common import (
     Done,
     Refusal,

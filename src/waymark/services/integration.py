@@ -11,11 +11,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waymark import adapters, assets
-from waymark.record import git, ignore
-from waymark.record.files import RecordFiles
-from waymark.record.project import RECORD_DIR
+from waymark.record.machine import git
+from waymark.record.machine.files import RecordFiles
+from waymark.record.machine.project import RECORD_DIR
 from waymark.record.record import FOLDER_KEEP, RECORD_FOLDERS, Record
-from waymark.record.store import Transaction
+from waymark.record.writing import ignore
+from waymark.record.writing.store import Transaction
 from waymark.services import ci
 from waymark.services.common import (
     Done,

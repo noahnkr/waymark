@@ -9,16 +9,22 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
-from waymark.record.changes import DESIGN_FILE, PROPOSAL_FILE, SPECS_DIR, TASKS_FILE, Change
-from waymark.record.deltas import delta_is_merged, delta_mismatches
-from waymark.record.explorations import Exploration
-from waymark.record.fingerprint import change_fingerprint
-from waymark.record.links import resolve
-from waymark.record.milestones import Milestone, RoadmapEntry
+from waymark.record.artifacts.changes import (
+    DESIGN_FILE,
+    PROPOSAL_FILE,
+    SPECS_DIR,
+    TASKS_FILE,
+    Change,
+)
+from waymark.record.artifacts.deltas import delta_is_merged, delta_mismatches
+from waymark.record.artifacts.explorations import Exploration
+from waymark.record.artifacts.milestones import Milestone, RoadmapEntry
+from waymark.record.artifacts.tasks import Item, ReviewRecord
+from waymark.record.evidence.fingerprint import change_fingerprint
+from waymark.record.evidence.records import RecordKind
+from waymark.record.markdown.links import resolve
 from waymark.record.names import is_valid_name, parse_archive_name
 from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, Record
-from waymark.record.records import RecordKind
-from waymark.record.tasks import Item, ReviewRecord
 from waymark.record.terms import Phase, ReviewLevel, Verdict
 
 ESCALATE_AFTER_CHANGES = 2

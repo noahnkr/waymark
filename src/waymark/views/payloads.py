@@ -13,23 +13,24 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from waymark import __version__
-from waymark.record import git
-from waymark.record.atlas import Location
-from waymark.record.branches import Branches as ChangeBranches
-from waymark.record.branches import ChangeBranch
-from waymark.record.changes import Change
-from waymark.record.config import RECORD_FORMAT
-from waymark.record.explorations import QUESTIONS, Exploration
-from waymark.record.milestones import Milestone
+from waymark.record.artifacts.changes import Change
+from waymark.record.artifacts.config import RECORD_FORMAT
+from waymark.record.artifacts.explorations import QUESTIONS, Exploration
+from waymark.record.artifacts.milestones import Milestone
+from waymark.record.artifacts.resources import Resource
+from waymark.record.artifacts.specs import Spec
+from waymark.record.artifacts.tasks import Item, ReviewRecord
+from waymark.record.evidence.records import RecordKind
+from waymark.record.machine import git
+from waymark.record.machine.atlas import Location
+from waymark.record.machine.branches import Branches as ChangeBranches
+from waymark.record.machine.branches import ChangeBranch
 from waymark.record.record import (
     ArchiveEntry,
     Record,
     load_archived_change,
     spec_history,
 )
-from waymark.record.records import RecordKind
-from waymark.record.resources import Resource
-from waymark.record.specs import Spec
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -44,7 +45,6 @@ from waymark.record.state import (
     milestone_state,
     overlaps,
 )
-from waymark.record.tasks import Item, ReviewRecord
 from waymark.record.terms import Layout, Verdict
 from waymark.services.check import Finding, Severity, check_record
 from waymark.services.common import Refusal, repo_locations

@@ -8,12 +8,12 @@ import datetime
 from pathlib import Path
 
 from waymark import __version__
-from waymark.record import records
-from waymark.record.fingerprint import change_fingerprint
-from waymark.record.project import RECORD_DIR, find_project
+from waymark.record.evidence import records
+from waymark.record.evidence.fingerprint import change_fingerprint
+from waymark.record.machine.project import RECORD_DIR, find_project
+from waymark.record.markdown.text import Document
 from waymark.record.record import Record, load_record
 from waymark.record.state import ChangeState, RecordState, derive_state
-from waymark.record.text import Document
 
 CONFIG = (
     f'wm_version = "{__version__}"\nrecord_format = 1\n'

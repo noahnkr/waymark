@@ -13,7 +13,7 @@ from tests.support import Workspace
 from waymark import __version__, adapters, assets
 from waymark.adapters import Adapter, Capabilities
 from waymark.cli import build_parser
-from waymark.record.project import find_project
+from waymark.record.machine.project import find_project
 from waymark.record.record import load_record
 from waymark.services import check, doctor, integration, setup
 from waymark.services.common import Refusal

@@ -13,7 +13,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from waymark import __version__, adapters
-from waymark.record import git
+from waymark.record.machine import git
 from waymark.record.terms import Step, Verdict
 from waymark.services import atlas as atlas_service
 from waymark.services import ci as ci_service

@@ -13,19 +13,19 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from waymark.record.changes import Change
-from waymark.record.deltas import parse_delta
-from waymark.record.design import parse_design
-from waymark.record.evidence import evidence
-from waymark.record.fingerprint import change_fingerprint
-from waymark.record.layout import Fix, standard_layout
-from waymark.record.proposal import parse_proposal
+from waymark.record.artifacts.changes import Change
+from waymark.record.artifacts.deltas import parse_delta
+from waymark.record.artifacts.design import parse_design
+from waymark.record.artifacts.proposal import parse_proposal
+from waymark.record.artifacts.specs import Spec, parse_spec
+from waymark.record.artifacts.tasks import parse_tasks
+from waymark.record.evidence.evidence import evidence
+from waymark.record.evidence.fingerprint import change_fingerprint
+from waymark.record.markdown.text import Document
 from waymark.record.record import Record
-from waymark.record.specs import Spec, parse_spec
 from waymark.record.state import AcceptanceState, acceptance_state
-from waymark.record.store import Transaction
-from waymark.record.tasks import parse_tasks
-from waymark.record.text import Document
+from waymark.record.writing.layout import Fix, standard_layout
+from waymark.record.writing.store import Transaction
 from waymark.services.common import Refusal, commit, open_record
 
 _FAULT = (

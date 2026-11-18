@@ -5,21 +5,23 @@ import re
 from pathlib import Path
 
 from waymark import __version__, adapters
-from waymark.record import git, records, templates
-from waymark.record.changes import PROPOSAL_FILE
-from waymark.record.charter import CHARTER_FILE
-from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
-from waymark.record.files import RecordFiles
-from waymark.record.milestones import MILESTONE_FILE, append_milestone_log, link_change
+from waymark.record.artifacts.changes import PROPOSAL_FILE
+from waymark.record.artifacts.charter import CHARTER_FILE
+from waymark.record.artifacts.config import CONFIG_FILE, RECORD_FORMAT
+from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log, link_change
+from waymark.record.artifacts.proposal import AFTER, MILESTONE, OWNER, PATH, SHORT
+from waymark.record.artifacts.resources import KINDS as RESOURCE_KINDS
+from waymark.record.evidence import records
+from waymark.record.evidence.records import RecordKind
+from waymark.record.machine import git
+from waymark.record.machine.files import RecordFiles
+from waymark.record.machine.pointer import POINTER_FILE, is_pointer, parse_pointer
+from waymark.record.machine.project import RECORD_DIR
+from waymark.record.markdown.text import Document
 from waymark.record.names import NAME_RULE, is_valid_name
-from waymark.record.pointer import POINTER_FILE, is_pointer, parse_pointer
-from waymark.record.project import RECORD_DIR
-from waymark.record.proposal import AFTER, MILESTONE, OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES, RESOURCES
-from waymark.record.records import RecordKind
-from waymark.record.resources import KINDS as RESOURCE_KINDS
-from waymark.record.store import Transaction
-from waymark.record.text import Document
+from waymark.record.writing import templates
+from waymark.record.writing.store import Transaction
 from waymark.services import ci as workflow
 from waymark.services import integration
 from waymark.services.atlas import register_new_atlas

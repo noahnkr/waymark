@@ -1,8 +1,8 @@
 """Paths, encodings and line endings behave the same on every platform."""
 
 from tests.support import Workspace, delta, requirement, spec
-from waymark.record.deltas import merge_delta
-from waymark.record.problems import Problem
+from waymark.record.artifacts.deltas import merge_delta
+from waymark.record.markdown.problems import Problem
 
 
 def as_windows(workspace: Workspace) -> None:

@@ -9,9 +9,9 @@ import pytest
 from tests.conftest import git_init
 from tests.support import ATLAS_CONFIG, CONFIG, Workspace, spec
 from waymark import __version__
-from waymark.record.pointer import is_pointer
-from waymark.record.project import ProjectNotFoundError, find_project
-from waymark.record.registry import Registry, load_registry
+from waymark.record.machine.pointer import is_pointer
+from waymark.record.machine.project import ProjectNotFoundError, find_project
+from waymark.record.machine.registry import Registry, load_registry
 from waymark.services import integration, setup
 from waymark.services.atlas import point, register
 from waymark.services.common import Refusal, take_notices

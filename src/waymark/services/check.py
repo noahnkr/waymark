@@ -6,11 +6,11 @@ from enum import StrEnum
 from pathlib import Path
 
 from waymark import __version__
-from waymark.record import git
-from waymark.record.branches import Branches
-from waymark.record.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
-from waymark.record.problems import WHOLE_FILE
-from waymark.record.project import RECORD_DIR
+from waymark.record.artifacts.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
+from waymark.record.machine import git
+from waymark.record.machine.branches import Branches
+from waymark.record.machine.project import RECORD_DIR
+from waymark.record.markdown.problems import WHOLE_FILE
 from waymark.record.record import Record, link_problems
 from waymark.record.state import (
     ConflictKind,

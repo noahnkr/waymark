@@ -17,13 +17,15 @@ doesn't have yet.
 
 from typing import Any
 
-from waymark.record.atlas import Location
-from waymark.record.changes import Change
-from waymark.record.links import LinkChecker
-from waymark.record.milestones import GOAL, NON_GOALS
+from waymark.record.artifacts.changes import Change
+from waymark.record.artifacts.milestones import GOAL, NON_GOALS
+from waymark.record.artifacts.resources import ACCESS, WHAT_IT_IS
+from waymark.record.artifacts.tasks import Item, ReviewRecord
+from waymark.record.evidence.records import RecordKind
+from waymark.record.machine.atlas import Location
+from waymark.record.markdown.links import LinkChecker
+from waymark.record.markdown.text import Document
 from waymark.record.record import Record
-from waymark.record.records import RecordKind
-from waymark.record.resources import ACCESS, WHAT_IT_IS
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -32,9 +34,7 @@ from waymark.record.state import (
     ItemState,
     derive_state,
 )
-from waymark.record.tasks import Item, ReviewRecord
 from waymark.record.terms import Layout, ReviewLevel
-from waymark.record.text import Document
 from waymark.services.common import Refusal, find_change, find_item, repo_locations, state_of
 from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
 from waymark.services.references import reference_record

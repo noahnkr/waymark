@@ -3,10 +3,10 @@
 import datetime
 
 from tests.support import Workspace, document
-from waymark.record.fingerprint import change_fingerprint
-from waymark.record.records import RecordKind
+from waymark.record.artifacts.tasks import Tasks, parse_tasks
+from waymark.record.evidence.fingerprint import change_fingerprint
+from waymark.record.evidence.records import RecordKind
 from waymark.record.state import AcceptanceState, acceptance_state
-from waymark.record.tasks import Tasks, parse_tasks
 from waymark.record.terms import ReviewSeverity, Verdict
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"

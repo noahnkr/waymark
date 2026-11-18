@@ -21,12 +21,12 @@ from tests.support import (
     spec,
 )
 from tests.views.validator import errors
-from waymark.record.deltas import parse_delta
-from waymark.record.design import parse_design
+from waymark.record.artifacts.deltas import parse_delta
+from waymark.record.artifacts.design import parse_design
+from waymark.record.artifacts.tasks import parse_tasks
+from waymark.record.markdown.text import Document
 from waymark.record.state import StepKind
-from waymark.record.tasks import parse_tasks
 from waymark.record.terms import Verdict
-from waymark.record.text import Document
 from waymark.services import lifecycle
 from waymark.services.common import Refusal
 from waymark.services.context import RESULT_LINE, VERDICT_LINE, context_pack, delegation_problems
@@ -299,7 +299,7 @@ def test_every_drafting_step_has_a_checklist_and_its_codes_exist() -> None:
     """Requirement "Checklist per drafting step": an enforced check names real codes."""
     source = "".join(
         path.read_text(encoding="utf-8")
-        for path in Path(waymark.__file__).parent.joinpath("record").glob("*.py")
+        for path in Path(waymark.__file__).parent.joinpath("record").rglob("*.py")
     )
     assert set(CHECKLISTS) == {StepKind.PROPOSE, StepKind.SPECS, StepKind.DESIGN, StepKind.TASKS}
     for checks in CHECKLISTS.values():

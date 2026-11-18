@@ -6,7 +6,7 @@ version; removing or changing one bumps it.
 
 from typing import Any
 
-from waymark.record.records import RecordKind
+from waymark.record.evidence.records import RecordKind
 from waymark.record.state import (
     AcceptanceState,
     ConflictKind,
