@@ -52,9 +52,15 @@ def _next_step(change: Payload, style: Style) -> str:
     return f"{style.symbol('arrow')} {label}"
 
 
+_PHASE_ROLES = {"accepted": ACCENT, "applying": ACCENT, "applied": OK}
+"""How a phase is colored: muted up to planned, accent while built, ok once applied."""
+
+
 def _change_line(change: Payload, style: Style) -> str:
     name = style.paint(f"{change['name']:<{_NAME_WIDTH}}", STRONG)
-    phase = f"{change['phase']:<{_PHASE_WIDTH}}"
+    phase = style.paint(
+        f"{change['phase']:<{_PHASE_WIDTH}}", _PHASE_ROLES.get(change["phase"], MUTED)
+    )
     bar = style.bar(change["ticked"], change["total"])
     progress = f"{change['ticked']}/{change['total']}"
     return f"  {name} {phase} {bar} {progress:<6} {_next_step(change, style)}"
@@ -79,6 +85,13 @@ def _branch_lines(change: Payload, style: Style) -> list[str]:
             )
             lines.append(style.paint(text, ATTENTION))
     return lines
+
+
+def _roadmap_marks(archived: int, total: int, style: Style) -> str:
+    """One mark per roadmap line: filled for an archived change, open for the rest."""
+    done = [style.symbol("milestone_done")] * archived
+    open_ = [style.symbol("milestone_open")] * max(0, total - archived)
+    return " ".join([style.paint(" ".join(done), OK), style.paint(" ".join(open_), MUTED)]).strip()
 
 
 def status(payload: Payload, style: Style) -> str:
@@ -107,7 +120,9 @@ def status(payload: Payload, style: Style) -> str:
         lines += ["", style.rule("Open milestones")]
         for milestone in payload["milestones"]:
             name = style.paint(f"{milestone['name']:<{_NAME_WIDTH}}", STRONG)
-            bar = style.bar(milestone["archived"], milestone["total"])
+            bar = _roadmap_marks(
+                milestone["archived"], milestone["total"] + milestone["planned"], style
+            )
             detail = f"{milestone['archived']}/{milestone['total']} changes archived"
             if milestone["planned"]:
                 detail += f", {milestone['planned']} not proposed yet"
@@ -153,7 +168,7 @@ def inbox(payload: Payload, style: Style) -> str:
             subject = entry["change"] or entry["exploration"]
             where = f"{subject} {entry['item']}" if entry["item"] else subject
             lines.append(f"  {style.symbol('human')} {style.paint(where, STRONG)}")
-            lines += _indent(entry["summary"], "      ")
+            lines.append(style.wrap(entry["summary"], "      "))
             if entry["command"]:
                 lines.append(
                     style.paint(f"      {style.symbol('arrow')} {entry['command']}", ACCENT)
@@ -162,16 +177,23 @@ def inbox(payload: Payload, style: Style) -> str:
 
 
 def check(payload: Payload, style: Style) -> str:
-    """The health check as text: one line per finding, then the counts."""
+    """The health check as text: the findings grouped under each file, then the counts."""
     lines: list[str] = []
-    for finding in payload["findings"]:
-        where = finding["path"] + (f":{finding['line']}" if finding["line"] else "")
-        severity = style.paint(
-            finding["severity"], DANGER if finding["severity"] == "error" else ATTENTION
-        )
-        lines.append(f"{severity}: {where}: {finding['code']}: {finding['message']}")
+    paths = list(dict.fromkeys(finding["path"] for finding in payload["findings"]))
+    for path in paths:
+        lines.append(style.paint(path, STRONG))
+        for finding in payload["findings"]:
+            if finding["path"] != path:
+                continue
+            severity = style.paint(
+                finding["severity"], DANGER if finding["severity"] == "error" else ATTENTION
+            )
+            where = f"{finding['line']}: " if finding["line"] else ""
+            lines.append(f"  {severity}: {where}{finding['code']}: {finding['message']}")
     if payload["findings"]:
-        lines.append(f"{payload['errors']} error(s), {payload['warnings']} warning(s).")
+        worst = DANGER if payload["errors"] else ATTENTION
+        counts = f"{payload['errors']} error(s), {payload['warnings']} warning(s)."
+        lines.append(style.paint(counts, worst))
     else:
         lines.append(style.paint(f"{style.symbol('done')} The record is healthy.", OK))
     return "\n".join(lines)
@@ -618,10 +640,13 @@ def doctor(payload: Payload, style: Style) -> str:
     """What a doctor found: one line per check, then the verdict."""
     marks = {"ok": ("done", OK), "warning": ("warning", ATTENTION), "error": ("error", DANGER)}
     lines: list[str] = []
+    width = max((len(check["name"]) for check in payload["checks"]), default=0) + 1
     for check in payload["checks"]:
         symbol, color = marks[check["status"]]
-        head = style.paint(f"{style.symbol(symbol)} {check['name']}", color)
-        lines.append(f"{head}: {check['message']}")
+        head = f"{style.symbol(symbol)} {check['name'] + ':':<{width}}"
+        hang = " " * (len(head) + 1)
+        message = style.wrap(check["message"], hang)[len(hang) :]
+        lines.append(f"{style.paint(head, color)} {message}")
         if check["_folder"]:
             lines.append(style.paint(f"    {check['_folder']}", MUTED))
     errors = sum(1 for check in payload["checks"] if check["status"] == "error")

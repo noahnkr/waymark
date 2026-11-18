@@ -137,7 +137,9 @@ class Style:
         filled = 0 if total <= 0 else min(width, done * width // total)
         if total > 0 and done >= total:
             filled = width
-        bar = self.symbol("full") * filled + self.symbol("empty") * (width - filled)
+        bar = self.paint(self.symbol("full") * filled, OK) + self.paint(
+            self.symbol("empty") * (width - filled), MUTED
+        )
         return bar if self.unicode else f"[{bar}]"
 
     def rule(self, title: str, width: int = RULE_WIDTH) -> str:

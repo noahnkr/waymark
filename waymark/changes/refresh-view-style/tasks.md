@@ -15,7 +15,7 @@
 
 ## 2. Views
 
-- [ ] 2.1 Status, inbox, check and doctor in the new style
+- [x] 2.1 Status, inbox, check and doctor in the new style
   - Criteria:
     - `wm status` colors each phase (muted through `planned`, accent for `accepted` and `applying`, ok for `applied`) and each bar (ok filled, muted empty), and draws each milestone's roadmap as `◆`/`◇`
     - `wm check` groups findings under each file's path, and colors the counts by the worst finding
@@ -23,6 +23,7 @@
     - with `Style()` (no color, no width), each view's text is unchanged except for the new glyphs and grouping
   - Verify:
     - view tests in `tests/test_views_cli.py` and `tests/services/test_doctor.py` with a fixed `Style(color=True, unicode=True, width=80)`, and the existing plain-output tests still pass
+  - (note) 2026-11-18 by Noah Roberts: In wm status a milestone's marks count its planned roadmap lines as open too, since they are on the roadmap and not archived; the bar now colors its filled part ok and its empty part muted in Style.bar
 - [ ] 2.2 Show views in the new style
   - Criteria:
     - `wm show <change>` draws items as a tree with `├─`, `└─` and `│`, records muted on the stem, and wraps the proposal's sections and each item's criteria

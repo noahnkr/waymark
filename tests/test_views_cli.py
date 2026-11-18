@@ -1,16 +1,20 @@
 """The read commands through the command line: text, ``--json`` and exit codes."""
 
+import datetime
 import json
 from pathlib import Path
 
 import pytest
 
 from tests.conftest import git_init
-from tests.support import Workspace, delta, requirement, spec
+from tests.support import Workspace, delta, milestone, requirement, spec
 from tests.views.validator import errors
 from waymark import __version__
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
+from waymark.services import lifecycle
+from waymark.views import payloads, render
 from waymark.views.schemas import SCHEMAS
+from waymark.views.style import Style
 
 
 class Terminal:
@@ -215,3 +219,49 @@ def test_scenario_json(terminal: Terminal, monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.delenv("NO_COLOR", raising=False)
     monkeypatch.setenv("FORCE_COLOR", "1")
     assert "\x1b[" not in terminal.run("status", "--json")
+
+
+STYLED = Style(color=True, unicode=True, width=80)
+"""A terminal 80 columns wide that shows color and glyphs."""
+NOW = datetime.datetime.now(datetime.UTC)
+
+
+def test_status_colors_phases_bars_and_roadmaps(terminal: Terminal) -> None:
+    """Item: status in the new style."""
+    terminal.project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- add-order: results in order\n- add-cache: a cache\n"),
+    )
+    record = terminal.project.record()
+    payload = payloads.status(record)
+    phase = payload["changes"][0]["phase"]
+    text = render.to_text(payload, STYLED)
+    assert f"\x1b[2m{phase}" in text
+    assert "\x1b[2m░░░░░░░░░░\x1b[0m" in text
+    assert "faster-search" in text
+    assert "\x1b[2m◇ ◇\x1b[0m" in text
+    lifecycle.accept(terminal.project.root, "add-order", datetime.date(2026, 1, 15))
+    accepted = render.to_text(payloads.status(terminal.project.record()), STYLED)
+    assert "\x1b[36maccepted" in accepted
+
+
+def test_check_groups_findings_by_file_and_colors_the_counts(terminal: Terminal) -> None:
+    terminal.project.write("specs/Other.md", "# Search\n")
+    text = render.to_text(payloads.check(terminal.project.record(), NOW), STYLED)
+    assert "\x1b[1mspecs/Other.md\x1b[0m\n  \x1b[31merror\x1b[0m: invalid-name:" in text
+    assert "\x1b[31m1 error(s)" in text
+    plain = render.to_text(payloads.check(terminal.project.record(), NOW), Style())
+    assert "specs/Other.md\n  error: invalid-name:" in plain
+
+
+def test_inbox_wraps_its_summaries(terminal: Terminal) -> None:
+    lifecycle.accept(terminal.project.root, "add-order", datetime.date(2026, 1, 15))
+    reason = " ".join(["the wording waits on the product owner"] * 6)
+    lifecycle.block(terminal.project.root, "add-order", "1.1", reason)
+    payload = payloads.inbox(terminal.project.record())
+    wrapped = render.to_text(payload, STYLED).split("\n")
+    summary = [line for line in wrapped if "product owner" in line]
+    assert len(summary) > 1
+    assert all(len(line) <= 80 and line.startswith("      ") for line in summary)
+    plain = render.to_text(payload, Style()).split("\n")
+    assert len([line for line in plain if "product owner" in line]) == 1
