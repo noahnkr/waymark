@@ -34,3 +34,5 @@
 ## Log
 
 - (accepted) 2026-11-18 fingerprint c7fbdef466aa348e items 1.1 1.2 2.1 by Noah Roberts
+- (review) 2026-11-18 pass covers 1.1 1.2 2.1 by wm-reviewer: every criterion of 1.1, 1.2 and 2.1 holds and every scenario in the three deltas is met; pytest, tools.docs --check, codespell, ruff, mypy and wm check all pass
+  - suggestion `src/waymark/services/context.py:3-8`: module docstring still says implementer/reviewer packs carry "apply rules"/"review rules"; they now carry the project's whole Rules
