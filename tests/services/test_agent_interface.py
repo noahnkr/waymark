@@ -52,6 +52,7 @@ FINDING = '--finding "<critical|warning|suggestion>: <place>: <text>"'
 RULES = CHARTER + "3. Keep items small.\n4. Ask before assuming.\n"
 CHARTER_RULES = "1. Run the tests before reporting.\n2. Check every scenario."
 ALL_RULES = CHARTER_RULES + "\n3. Keep items small.\n4. Ask before assuming."
+TWO_RULES = "1. Run the full checks.\n2. Docs follow the house style."
 
 
 def valid(payload: dict[str, Any]) -> dict[str, Any]:
@@ -1001,3 +1002,46 @@ def test_scenario_explore_index(project: Workspace) -> None:
     text = render.to_text(built, PLAIN)
     assert "- heroku (service, retired, serves none): Heroku" in text
     assert "- stripe (service, active, serves billing): Stripe" in text
+
+
+def test_scenario_same_rules_at_two_steps(project: Workspace) -> None:
+    """Requirement "Project rules at every step": the whole list, the same at each step."""
+    project.write("charter.md", CHARTER.replace(CHARTER_RULES, TWO_RULES))
+    project.change(deltas={}, design=None, tasks=None)
+    specs = valid(at(project))
+    assert specs["step"] == "specs"
+    assert specs["rules"] == TWO_RULES
+    accepted(project)
+    applying = valid(at(project, "apply"))
+    assert applying["rules"] == TWO_RULES
+    text = render.to_text(applying, PLAIN)
+    assert "Project rules" in text
+    assert "Rules for this step" not in text
+    assert "2. Docs follow the house style." in text
+
+
+def test_scenario_no_rules(project: Workspace) -> None:
+    """Requirement "Project rules at every step": with no rules, no heading."""
+    commented = CHARTER.replace(CHARTER_RULES + "\n", "<!-- The project's own rules. -->\n")
+    project.write("charter.md", commented)
+    explore = valid(instructions(project.record(), "explore", None))
+    assert explore["rules"] == ""
+    assert "Project rules" not in render.to_text(explore, PLAIN)
+
+
+def test_scenario_reviewer_gets_every_rule(project: Workspace) -> None:
+    """Requirement "Project rules in every pack": the reviewer sees the whole list."""
+    hand_edit = "1. Never hand-edit generated docs."
+    billing_change(project, independent=True)
+    project.write("charter.md", CHARTER.replace(CHARTER_RULES, hand_edit))
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    built = pack(project, "review")
+    assert built["rules"] == hand_edit
+    text = render.to_text(built, PLAIN)
+    assert f"## Project rules\n\n{hand_edit}" in text
+    assert pack_text(project, "explore").count(hand_edit) == 1
+
+
+def pack_text(project: Workspace, role: str) -> str:
+    return render.to_text(valid(context_pack(project.record(), role)), PLAIN)

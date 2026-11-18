@@ -12,7 +12,7 @@
     - `test_scenario_step_heading_under_rules` and `test_scenario_no_rules` beside the existing test for the scenario Bulleted goal, and the existing Old glossary line test still passes
     - `wm check` passes on this repository
   - (note) 2026-11-18 by Noah Roberts: Charter.rules became a string, so instructions.py and context.py now pass it whole in place of one step's text, to keep the build green; item 1.2 adds the Project rules titles and its scenario tests
-- [ ] 1.2 Every agent gets every rule
+- [x] 1.2 Every agent gets every rule
   - Criteria:
     - `wm instructions` gives the whole Rules as `rules` at every step, explore included, titled "Project rules" in the text output and left out when empty
     - the explore, implement and review packs give the whole Rules as `rules`, titled "Project rules" in their text output
