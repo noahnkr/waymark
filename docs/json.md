@@ -61,12 +61,21 @@ Printed by `wm status`.
     "writable": {
       "type": "boolean"
     },
+    "default_branch": {
+      "type": "string"
+    },
     "changes": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
           "name": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "base": {
             "type": "string"
           },
           "owner": {
@@ -224,6 +233,8 @@ Printed by `wm status`.
         },
         "required": [
           "name",
+          "branch",
+          "base",
           "owner",
           "phase",
           "short_path",
@@ -299,6 +310,7 @@ Printed by `wm status`.
     "wm_version",
     "pinned_version",
     "writable",
+    "default_branch",
     "changes",
     "milestones",
     "needs_human",
@@ -566,6 +578,12 @@ Printed by `wm show` for a change.
             "name": {
               "type": "string"
             },
+            "branch": {
+              "type": "string"
+            },
+            "base": {
+              "type": "string"
+            },
             "owner": {
               "type": [
                 "string",
@@ -721,6 +739,8 @@ Printed by `wm show` for a change.
           },
           "required": [
             "name",
+            "branch",
+            "base",
             "owner",
             "phase",
             "short_path",
@@ -1547,6 +1567,18 @@ Printed by `wm instructions`.
         "null"
       ]
     },
+    "branch": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "base": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "step": {
       "enum": [
         "propose",
@@ -1663,6 +1695,8 @@ Printed by `wm instructions`.
     "schema",
     "version",
     "change",
+    "branch",
+    "base",
     "step",
     "item",
     "ready",
@@ -2439,6 +2473,9 @@ Printed by `wm pr`.
     "branch": {
       "type": "string"
     },
+    "base": {
+      "type": "string"
+    },
     "title": {
       "type": "string"
     },
@@ -2471,6 +2508,7 @@ Printed by `wm pr`.
     "change",
     "repo",
     "branch",
+    "base",
     "title",
     "body",
     "links"

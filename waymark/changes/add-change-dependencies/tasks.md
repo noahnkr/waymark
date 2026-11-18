@@ -14,7 +14,7 @@
     - `record/branches.py` gives each active change its branch, its base and whether the change it comes after is merged, asking git once for the default branch and once per stacked change
     - `wm check` warns `after-merged` when the change it comes after is archived or its branch is merged, naming the rebase, the pull request and the `- After:` line
   - Verify: tests in `tests/record/` and `tests/services/test_check.py` with real git repositories, for the scenario "Dependency merged" and for a remote's HEAD, no remote, and a branch merged only on `origin`
-- [ ] 1.3 Show the branch and base in `wm instructions`, `wm pr` and `wm status`
+- [x] 1.3 Show the branch and base in `wm instructions`, `wm pr` and `wm status`
   - Criteria:
     - `wm instructions` gives `branch` and `base` for a change in its JSON and says them in its text
     - `wm pr` gives `base` beside `branch` in its JSON, and its text names the pull request from the branch into the base

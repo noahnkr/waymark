@@ -94,6 +94,8 @@ def status(payload: Payload, style: Style) -> str:
     if payload["changes"]:
         for change in payload["changes"]:
             lines.append(_change_line(change, style))
+            if change["base"] != payload["default_branch"]:
+                lines.append(style.paint(f"{' ' * (_NAME_WIDTH + 3)}on {change['base']}", DIM))
             lines += _branch_lines(change, style)
             lines += [
                 style.paint(f"      {style.symbol('warning')} {conflict['message']}", YELLOW)
@@ -377,6 +379,8 @@ def instructions(payload: Payload, style: Style) -> str:
         )
     elif payload["reason"]:
         lines.append(f"  {payload['reason']}")
+    if payload.get("branch"):
+        lines.append(f"  Branch {payload['branch']}, based on {payload['base']}.")
     if payload["shared_rules"]:
         lines += ["", style.paint("Shared rules", BOLD)]
         lines += [f"  {style.symbol('bullet')} {text}" for text in payload["shared_rules"]]
@@ -569,7 +573,10 @@ def doctor(payload: Payload, style: Style) -> str:
 def pr(payload: Payload, style: Style) -> str:
     """A pull request's title and description, ready to paste or hand to the host's tool."""
     where = f" in {payload['repo']}" if payload["repo"] else ""
-    head = style.rule(f"Pull request for {payload['change']}{where}, from {payload['branch']}")
+    head = style.rule(
+        f"Pull request for {payload['change']}{where}, from {payload['branch']} "
+        f"into {payload['base']}"
+    )
     return "\n".join([head, "", f"Title: {payload['title']}", "", payload["body"].rstrip("\n")])
 
 

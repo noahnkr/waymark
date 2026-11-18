@@ -537,3 +537,26 @@ def test_implement_pack_of_a_member_change_validates_and_shows_its_milestone(
     text = render.to_text(payload, PLAIN)
     assert "## Milestone" in text
     assert text.index("## Project context") < text.index("## Milestone") < text.index("## Deltas")
+
+
+def test_scenario_status_of_a_stacked_change(project: Workspace) -> None:
+    """Requirement "Views show branch and base": `on <base>` under a stacked change only."""
+    project.change("add-limit")
+    project.change(
+        "add-paging",
+        proposal_text=proposal().replace(
+            "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- After: add-limit\n"
+        ),
+    )
+    payload = valid(payloads.status(project.record()))
+    assert payload["default_branch"] == "main"
+    assert [(c["name"], c["branch"], c["base"]) for c in payload["changes"]] == [
+        ("add-limit", "add-limit", "main"),
+        ("add-paging", "add-paging", "add-limit"),
+    ]
+    lines = render.to_text(payload, PLAIN).splitlines()
+    paging = next(i for i, line in enumerate(lines) if line.lstrip().startswith("add-paging"))
+    limit = next(i for i, line in enumerate(lines) if line.lstrip().startswith("add-limit"))
+    assert lines[paging + 1].strip() == "on add-limit"
+    assert lines[limit + 1].strip() != "on main"
+    assert all(line.strip() != "on main" for line in lines)

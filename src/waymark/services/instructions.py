@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from waymark.record import templates
+from waymark.record.branches import Branches
 from waymark.record.changes import DESIGN_FILE, PROPOSAL_FILE, SPECS_DIR, TASKS_FILE, Change
 from waymark.record.charter import CHARTER_FILE
 from waymark.record.project import RECORD_DIR
@@ -375,6 +376,8 @@ def _explore(record: Record) -> dict[str, Any]:
         "schema": "wm.instructions",
         "version": INSTRUCTIONS_VERSION,
         "change": None,
+        "branch": None,
+        "base": None,
         "step": EXPLORE,
         "item": None,
         "ready": True,
@@ -447,10 +450,13 @@ def instructions(record: Record, step: str | None, change_name: str | None) -> d
     rules = ""
     if charter and kind.value in set(Step):
         rules = charter.rules.get(Step(kind.value), "")
+    place = Branches(record).of(change)
     return {
         "schema": "wm.instructions",
         "version": INSTRUCTIONS_VERSION,
         "change": change.name,
+        "branch": place.branch,
+        "base": place.base,
         "step": kind.value,
         "item": current.item if kind is current.kind else None,
         "ready": ready,

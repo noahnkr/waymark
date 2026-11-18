@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Any
 from waymark import __version__
 from waymark.record import git
 from waymark.record.atlas import Location
+from waymark.record.branches import Branches as ChangeBranches
+from waymark.record.branches import ChangeBranch
 from waymark.record.changes import Change
 from waymark.record.config import RECORD_FORMAT
 from waymark.record.explorations import QUESTIONS, Exploration
@@ -137,10 +139,14 @@ class _Branches:
         return entries
 
 
-def _change_summary(state: ChangeState, repos: list[Payload] | None = None) -> Payload:
+def _change_summary(
+    state: ChangeState, place: ChangeBranch, repos: list[Payload] | None = None
+) -> Payload:
     step = state.next_step
     return {
         "name": state.name,
+        "branch": place.branch,
+        "base": place.base,
         "owner": state.owner,
         "phase": state.phase.value,
         "short_path": state.short_path,
@@ -264,6 +270,7 @@ def status(record: Record) -> Payload:
         )
     recent = sorted(record.archived_changes, reverse=True)[:RECENT]
     branches = _Branches(record)
+    places = ChangeBranches(record)
     return {
         **_header("status"),
         "layout": record.layout.value,
@@ -271,9 +278,12 @@ def status(record: Record) -> Payload:
         "wm_version": __version__,
         "pinned_version": config.wm_version if config else None,
         "writable": _writable(record),
+        "default_branch": places.default,
         "changes": [
             _change_summary(
-                state.changes[name], branches.of(record.changes[name], state.changes[name])
+                state.changes[name],
+                places.of(record.changes[name]),
+                branches.of(record.changes[name], state.changes[name]),
             )
             for name in sorted(state.changes)
         ],
@@ -431,7 +441,13 @@ def show_change(record: Record, change: Change) -> Payload:
         "path": change.path,
         "archived_on": change.archived_on.isoformat() if change.archived_on else None,
         "title": proposal.title if proposal else None,
-        "state": _change_summary(state, _Branches(record).of(change, state)) if state else None,
+        "state": (
+            _change_summary(
+                state, ChangeBranches(record).of(change), _Branches(record).of(change, state)
+            )
+            if state
+            else None
+        ),
         "owner": proposal.owner if proposal else None,
         "accepted": (
             {"date": change.acceptance.date.isoformat(), "by": change.acceptance.who}

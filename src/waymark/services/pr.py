@@ -13,6 +13,7 @@ from typing import Any
 from urllib.parse import quote
 
 from waymark.record import git
+from waymark.record.branches import Branches
 from waymark.record.changes import Change
 from waymark.record.config import RECORD_DIR
 from waymark.record.proposal import WHAT_CHANGES, WHY
@@ -207,6 +208,7 @@ def describe(record: Record, name: str, repo: str | None = None) -> dict[str, An
         "change": name,
         "repo": repo,
         "branch": name,
+        "base": Branches(record).of(change).base,
         "title": proposal.title,
         "body": "\n".join(body).strip() + "\n",
         "links": links,
