@@ -349,3 +349,38 @@ def test_milestone_roadmap_marks(terminal: Terminal) -> None:
     assert "  ○ add-cache" in text
     ascii_text = render.to_text(payload, Style())
     assert "  o add-order" in ascii_text
+
+
+LONG_CRITERIA = (
+    "  - Criteria:\n"
+    "    - " + " ".join(["the first criterion holds"] * 5) + "\n"
+    "    - " + " ".join(["the second criterion holds"] * 5) + "\n"
+    "  - Verify: a test\n"
+)
+
+
+def test_every_criterion_hangs_under_its_bullet(terminal: Terminal) -> None:
+    """Item: the first bullet starts after its label and wraps like the rest."""
+    folder = terminal.project.path("changes/add-order")
+    tasks = (folder / "tasks.md").read_text(encoding="utf-8")
+    head, rest = tasks.split("- [ ] 1.1", 1)
+    title, after = rest.split("\n", 1)
+    after = after[after.index("- [ ] 1.2") :]
+    (folder / "tasks.md").write_text(
+        f"{head}- [ ] 1.1{title}\n{LONG_CRITERIA}{after}", encoding="utf-8"
+    )
+    payload = payloads.show(terminal.project.record(), "add-order")
+    lines = render.to_text(payload, Style(unicode=True, width=80)).split("\n")
+    start = lines.index("  │   Criteria:")
+    first, second = [i for i, line in enumerate(lines) if line.startswith("  │     - the ")]
+    assert first == start + 1
+    for index in (first, second):
+        continuation = lines[index + 1]
+        assert continuation.startswith("  │       ")
+        assert continuation[len("  │       ")].isalpha()
+        assert all(len(line) <= 80 for line in lines[index : index + 2])
+    assert "  │   Verify: a test" in lines
+    plain = render.to_text(payload, Style()).split("\n")
+    assert "  │   Criteria:" not in plain
+    assert "  |   Criteria:" in plain
+    assert "  |   Verify: a test" in plain

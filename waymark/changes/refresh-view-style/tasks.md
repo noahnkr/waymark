@@ -33,7 +33,7 @@
   - Verify:
     - `test_scenario_legacy_console`, `test_scenario_narrow_terminal` and `test_scenario_piped` in `tests/test_views_cli.py` or `tests/views/`
   - (note) 2026-11-18 by Noah Roberts: Prose is wrapped in the change, spec, milestone and exploration show views; a resource's sections are left unwrapped because they hold code and settings that wrapping would break. A roadmap line that is neither archived nor active (planned or missing) gets the muted open circle
-- [ ] 2.3 Every criterion of an item hangs under its bullet
+- [x] 2.3 Every criterion of an item hangs under its bullet
   - Criteria:
     - in `wm show <change>`, an item's Criteria and Verify that are a list start the list on the line after their label, so the first bullet wraps under its own text like the others
     - a Criteria or Verify of one line stays on its label's line

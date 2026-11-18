@@ -239,8 +239,12 @@ def _item_lines(item: Payload, style: Style, *, last: bool) -> list[str]:
     lines = [head + (style.paint(f"   ({', '.join(tags)})", MUTED) if tags else "")]
     for label, key in (("Criteria", "criteria"), ("Verify", "verify")):
         if item[key]:
-            text = f"{label}: {item[key]}".replace("\n", "\n  ")
-            lines += style.wrap(text, stem).split("\n")
+            if item[key].startswith("- "):
+                # A list starts on the line after its label, so every bullet hangs alike.
+                lines.append(f"{stem}{label}:")
+                lines += style.wrap(item[key], stem + "  ").split("\n")
+            else:
+                lines += style.wrap(f"{label}: {item[key]}", stem).split("\n")
     for label, key, color in (
         ("Blocked", "blocked", ATTENTION),
         ("Spec gap", "spec_gap", ATTENTION),
