@@ -2,7 +2,7 @@
 
 ## 1. Finding places
 
-- [ ] 1.1 Write a finding's path relative to the project
+- [x] 1.1 Write a finding's path relative to the project
   - Criteria:
     - a place starting with an absolute path inside the project is written relative to its top folder with forward slashes, followed by the rest of the place as given; both Windows (`C:\...`) and POSIX (`/...`) absolute paths are recognized on every platform
     - in an atlas, a place inside a code repo registered on this machine is written as `<repo>/<path>`
@@ -26,3 +26,7 @@
     - `docs/record.md` says a finding's place is a path relative to the project, or `<repo>/<path>` in an atlas, and that an absolute path is rewritten or refused
     - the CHANGELOG's Unreleased section notes it
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and codespell pass
+
+## Log
+
+- (accepted) 2026-11-18 fingerprint a7274f347a6b4e35 items 1.1 1.2 2.1 by Noah Roberts

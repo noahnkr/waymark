@@ -11,9 +11,10 @@ Findings sit under a review record as ``<severity> `<place>`: <text>``.
 
 import datetime
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, StrEnum
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 
 from waymark.record import git
 from waymark.record.names import is_valid_name
@@ -473,6 +474,43 @@ def parse_finding_argument(text: str) -> Finding | None:
     if match is None:
         return None
     return Finding(ReviewSeverity(match.group(1)), match.group(2), match.group(3).strip())
+
+
+_WINDOWS_ABSOLUTE = re.compile(r"[A-Za-z]:[\\/]|\\\\")
+"""A Windows absolute path: a drive and a slash, or a network share."""
+
+
+def _split_place(place: str) -> tuple[str, str]:
+    """A place's path, and what follows it from its first colon after any drive letter."""
+    start = 2 if _WINDOWS_ABSOLUTE.match(place) else 0
+    colon = place.find(":", start)
+    return (place, "") if colon < 0 else (place[:colon], place[colon:])
+
+
+def relative_place(place: str, roots: Sequence[tuple[str, PurePath]]) -> str | None:
+    """A finding's place with its path relative to a root; None when it is absolute elsewhere.
+
+    ``roots`` pairs a prefix with a folder: the project's top folder with no
+    prefix, and in an atlas each code repo on this machine with its name. An
+    absolute path inside a root is written relative to it, with forward slashes,
+    after the prefix; what follows the path, such as ``:12``, is kept. A
+    relative path gets forward slashes, and a place that isn't a path is kept.
+    Windows and POSIX paths are each compared in their own form, on any platform.
+    """
+    path, rest = _split_place(place)
+    windows = bool(_WINDOWS_ABSOLUTE.match(path))
+    if not windows and not path.startswith("/"):
+        return path.replace("\\", "/") + rest
+    flavor: type[PurePath] = PureWindowsPath if windows else PurePosixPath
+    given = flavor(path)
+    for prefix, folder in roots:
+        base = flavor(folder)
+        if not base.is_absolute() or not given.is_relative_to(base):
+            continue
+        inside = given.relative_to(base).as_posix()
+        joined = "/".join(part for part in (prefix, inside) if part and part != ".")
+        return (joined or ".") + rest
+    return None
 
 
 def check_who(who: str) -> str:
