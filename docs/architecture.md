@@ -145,9 +145,8 @@ uv run --no-sync python -m tools.install_skills
 
 | Skill | For |
 |---|---|
-| `waymark-draft-docs` | Planning and drafting a new or rewritten docs page with the maintainer |
 | `waymark-write-docs` | The house style and fact rules for any docs edit |
-| `waymark-check-docs` | Checking docs against the code, on request |
+| `waymark-check-docs` | Checking docs against the code, on request or when a release offers it |
 | `waymark-release` | Cutting a release, from audit to tag |
 
 CI runs the tests on Windows, macOS and Linux, each on Python 3.11 and the newest
@@ -173,13 +172,20 @@ scoped by component (`record`, `services`, `views`, `hooks`, `adapter-claude`,
 
 ## Releasing
 
+Each change with a User-visible line adds it to `CHANGELOG.md` under
+`## [Unreleased]`, in the item that updates its docs.
+
 The maintainer releases, with the `waymark-release` skill. Before each release, the
 [smoke-test checklist](smoke-test.md) is run by hand, and its result goes into the
 changelog's entry. The skill:
 
-1. sets the version in `src/waymark/__init__.py` and the pin in `waymark/config.toml`,
-   and writes and dates the entry in `CHANGELOG.md`, on a release branch;
-2. opens the pull request; after it is merged, pushes a tag `v<version>` on `main`.
+1. checks `## [Unreleased]` against the changes archived since the last tag, and
+   lists the review findings they left open, for the maintainer to fix, plan or drop;
+2. sets the version in `src/waymark/__init__.py` and the pin in `waymark/config.toml`,
+   and turns `## [Unreleased]` into the dated entry in `CHANGELOG.md`, on a release
+   branch;
+3. offers `waymark-check-docs` on the docs pages changed since the last tag;
+4. opens the pull request; after it is merged, pushes a tag `v<version>` on `main`.
 
 The release workflow checks that the tag, the version, the changelog entry and the
 smoke-test record agree, runs the tests, builds, publishes to PyPI through trusted

@@ -68,3 +68,4 @@ atlas).
 6. Never hand-edit generated docs; run `uv run --no-sync python -m tools.docs`.
 7. Docs follow the `waymark-write-docs` skill.
 8. Releases are cut with the `waymark-release` skill, never by hand.
+9. A change with a User-visible line adds it to `CHANGELOG.md` under `## [Unreleased]`, in the item that updates its docs; the release turns that heading into the version's entry.
