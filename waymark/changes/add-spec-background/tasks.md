@@ -34,3 +34,7 @@
     - `docs/concepts.md` gives the four places a fact goes
     - `docs/json.md` is regenerated, and the CHANGELOG's Unreleased section notes the section and the packs' `backgrounds`
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and codespell pass
+
+## Log
+
+- (accepted) 2026-11-18 fingerprint b111aa8b43d96dd8 items 1.1 1.2 2.1 2.2 by Noah Roberts

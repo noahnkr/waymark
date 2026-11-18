@@ -27,5 +27,4 @@ Give every fact an agent needs, and can't find in the code or in the requirement
 ## Log
 
 - (proposed) 2026-11-17 add-resources by Noah Roberts
-- (proposed) 2026-11-17 add-spec-background by Noah Roberts
 - (archived) 2026-11-18 add-resources by Noah Roberts
