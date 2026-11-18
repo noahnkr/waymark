@@ -541,7 +541,7 @@ def test_reviewer_verdict_is_written_from_its_own_words(project: Workspace) -> N
     )
     assert decision.allow
     assert project.read(TASKS_FILE).endswith(
-        "- (review) 2026-01-15 pass by wm-reviewer: boundary covered at 50 and 51\n"
+        "- (review) 2026-01-15 pass covers 1.1 by wm-reviewer: boundary covered at 50 and 51\n"
         "  - suggestion `docs/search.md`: say the limit\n"
     )
     assert project.change_state().applied
@@ -556,7 +556,7 @@ def test_reviewer_changes_verdict_names_the_items_to_rebuild(project: Workspace)
         "CHANGE: add-limit\nVERDICT: changes 1.1: off by one at 50",
     )
     text = project.read(TASKS_FILE)
-    assert "- (review) 2026-01-15 changes 1.1 by wm-reviewer: off by one at 50" in text
+    assert "- (review) 2026-01-15 changes 1.1 covers 1.1 by wm-reviewer: off by one at 50" in text
     assert "  - critical `src/search.py:12`: fifty-one come back" in text
     assert project.change_state().review.reopen == ("1.1",)
 
@@ -662,8 +662,9 @@ def test_reviewer_in_the_background(project: Workspace) -> None:
         project, Role.REVIEWER, "CHANGE: add-limit\nVERDICT: pass: boundary covered at 50"
     )
     assert decision.allow
-    assert "- (review) 2026-01-15 pass by wm-reviewer: boundary covered at 50" in project.read(
-        TASKS_FILE
+    assert (
+        "- (review) 2026-01-15 pass covers 1.1 by wm-reviewer: boundary covered at 50"
+        in project.read(TASKS_FILE)
     )
     assert project.change_state().applied
 

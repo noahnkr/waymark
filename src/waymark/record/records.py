@@ -56,7 +56,9 @@ class Grammar(Enum):
 
     NONE = "none"
     VERDICT = "verdict"
-    """A verdict, then the item numbers a ``changes`` verdict names."""
+    """A verdict, the item numbers a ``changes`` verdict names, then optionally ``covers``."""
+    COVERS = "covers"
+    """Optionally ``covers <number> <number>...``: the items a review was of."""
     ACCEPTANCE = "acceptance"
     """``fingerprint <hex16>``, then ``items <number> <number>...``."""
     SYNC = "sync"
@@ -93,16 +95,19 @@ KINDS: dict[RecordKind, KindSpec] = {
         shape="(override) YYYY-MM-DD [by <who>]: <reason>",
     ),
     RecordKind.SELF_REVIEW: KindSpec(
-        Grammar.NONE,
+        Grammar.COVERS,
         has_text=True,
         level=Level.CHANGE,
-        shape="(self-review) YYYY-MM-DD [by <who>]: <summary>",
+        shape="(self-review) YYYY-MM-DD [covers <item>...] [by <who>]: <summary>",
     ),
     RecordKind.REVIEW: KindSpec(
         Grammar.VERDICT,
         has_text=True,
         level=Level.CHANGE,
-        shape="(review) YYYY-MM-DD pass|changes <item>...|spec-gap [by <who>]: <reasons>",
+        shape=(
+            "(review) YYYY-MM-DD pass|changes <item>...|spec-gap [covers <item>...] "
+            "[by <who>]: <reasons>"
+        ),
     ),
     RecordKind.RESOLVED: KindSpec(
         Grammar.NONE,
@@ -149,6 +154,8 @@ class Record:
     items: tuple[str, ...] | None = None
     """The items a ``changes`` verdict names, or an acceptance covers; None when absent."""
     fingerprint: str | None = None
+    covers: tuple[str, ...] | None = None
+    """The items a review or a self-review was of; None when absent, which covers every item."""
 
 
 @dataclass(frozen=True)
@@ -173,7 +180,9 @@ def _arguments(record: Record) -> list[str]:
     grammar = KINDS[record.kind].grammar
     if grammar is Grammar.VERDICT:
         assert record.verdict is not None
-        return [record.verdict.value, *(record.items or ())]
+        return [record.verdict.value, *(record.items or ()), *_covers_words(record)]
+    if grammar is Grammar.COVERS:
+        return _covers_words(record)
     if grammar is Grammar.SYNC:
         return ["fingerprint", record.fingerprint] if record.fingerprint else []
     if grammar is Grammar.ACCEPTANCE:
@@ -183,6 +192,10 @@ def _arguments(record: Record) -> list[str]:
             parts += ["items", *record.items]
         return parts
     return []
+
+
+def _covers_words(record: Record) -> list[str]:
+    return ["covers", *record.covers] if record.covers else []
 
 
 def render(record: Record) -> str:
@@ -244,7 +257,7 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
     found = _read_arguments(kind, spec.grammar, words)
     if isinstance(found, ParseError):
         return found
-    verdict, items, fingerprint = found
+    verdict, items, fingerprint, covers = found
     return Record(
         kind,
         date,
@@ -253,6 +266,7 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
         verdict=verdict,
         items=items,
         fingerprint=fingerprint,
+        covers=covers,
     )
 
 
@@ -265,7 +279,7 @@ def _split_who(body: str) -> tuple[list[str], str | None]:
     return words[:at], " ".join(words[at + 1 :])
 
 
-_Arguments = tuple[Verdict | None, tuple[str, ...] | None, str | None]
+_Arguments = tuple[Verdict | None, tuple[str, ...] | None, str | None, tuple[str, ...] | None]
 
 
 def _read_arguments(
@@ -278,9 +292,23 @@ def _read_arguments(
         return _sync_arguments(kind, words)
     if grammar is Grammar.ACCEPTANCE:
         return _acceptance_arguments(kind, words)
+    if grammar is Grammar.COVERS:
+        covers = _covers_arguments(kind, words)
+        return covers if isinstance(covers, ParseError) else (None, None, None, covers)
     if words:
         return _fail(kind, f'"{" ".join(words)}" is not expected before "by" or the colon.')
-    return None, None, None
+    return None, None, None, None
+
+
+def _covers_arguments(kind: RecordKind, words: list[str]) -> tuple[str, ...] | ParseError | None:
+    """``covers <number> <number>...``, or nothing; the item numbers, or None."""
+    if not words:
+        return None
+    if words[0] != "covers" or not words[1:]:
+        return _fail(kind, f'"{" ".join(words)}" is not expected before "by" or the colon.')
+    if any(not _ITEM_NUMBER.match(item) for item in words[1:]):
+        return _fail(kind, 'Only item numbers such as 1.2 may follow "covers".')
+    return tuple(words[1:])
 
 
 def _verdict_arguments(kind: RecordKind, words: list[str]) -> _Arguments | ParseError:
@@ -290,12 +318,17 @@ def _verdict_arguments(kind: RecordKind, words: list[str]) -> _Arguments | Parse
         verdict = Verdict(words[0])
     except ValueError:
         return _fail(kind, f'"{words[0]}" is not a verdict.')
-    items = tuple(words[1:])
+    rest = words[1:]
+    at = rest.index("covers") if "covers" in rest else len(rest)
+    items = tuple(rest[:at])
     if any(not _ITEM_NUMBER.match(item) for item in items):
         return _fail(kind, "Only item numbers such as 1.2 may follow the verdict.")
     if items and verdict is not Verdict.CHANGES:
         return _fail(kind, f'Only a "changes" verdict names items, not "{verdict.value}".')
-    return verdict, items if verdict is Verdict.CHANGES else None, None
+    covers = _covers_arguments(kind, rest[at:])
+    if isinstance(covers, ParseError):
+        return covers
+    return verdict, items if verdict is Verdict.CHANGES else None, None, covers
 
 
 def _is_fingerprint(words: list[str]) -> bool:
@@ -305,10 +338,10 @@ def _is_fingerprint(words: list[str]) -> bool:
 
 def _sync_arguments(kind: RecordKind, words: list[str]) -> _Arguments | ParseError:
     if not words:
-        return None, None, None
+        return None, None, None, None
     if len(words) != 2 or not _is_fingerprint(words):  # noqa: PLR2004
         return _fail(kind, "Only a fingerprint of 16 hexadecimal digits may follow the date.")
-    return None, None, words[1]
+    return None, None, words[1], None
 
 
 def _acceptance_arguments(kind: RecordKind, words: list[str]) -> _Arguments | ParseError:
@@ -317,7 +350,7 @@ def _acceptance_arguments(kind: RecordKind, words: list[str]) -> _Arguments | Pa
     rest = words[2:]
     if not rest[1:] or rest[0] != "items" or any(not _ITEM_NUMBER.match(i) for i in rest[1:]):
         return _fail(kind, 'After the fingerprint come "items" and the item numbers.')
-    return None, tuple(rest[1:]), words[1]
+    return None, tuple(rest[1:]), words[1], None
 
 
 @dataclass(frozen=True)

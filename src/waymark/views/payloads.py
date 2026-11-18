@@ -25,6 +25,7 @@ from waymark.record.record import (
     load_archived_change,
     spec_history,
 )
+from waymark.record.records import RecordKind
 from waymark.record.specs import Spec
 from waymark.record.state import (
     AcceptanceState,
@@ -378,7 +379,7 @@ def _record(record: ReviewRecord) -> Payload:
         "by": record.who,
         "verdict": record.verdict.value if record.verdict else None,
         "text": record.text,
-        "items": list(record.items or record.covers),
+        "items": list(record.covers if record.kind is RecordKind.ACCEPTED else record.items),
         "findings": [
             {"severity": f.severity.value, "place": f.place, "text": f.text}
             for f in record.findings

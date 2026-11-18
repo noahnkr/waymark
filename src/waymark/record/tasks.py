@@ -45,8 +45,9 @@ class ReviewRecord:
     """One record, as the task list keeps it, with the line it is on.
 
     ``items`` are the items a ``changes`` verdict names to rebuild, ``covers``
-    the items an ``(accepted)`` record covers, and ``findings`` the findings
-    written under a review or a self-review.
+    the items an ``(accepted)`` record covers or a review or self-review was of
+    (empty for a review written without ``covers``, which covers every item),
+    and ``findings`` the findings written under a review or a self-review.
     """
 
     kind: RecordKind
@@ -141,7 +142,7 @@ def _from_record(record: records.Record, index: int) -> ReviewRecord:
         items=() if is_acceptance else (record.items or ()),
         who=record.who,
         fingerprint=record.fingerprint,
-        covers=(record.items or ()) if is_acceptance else (),
+        covers=(record.items or ()) if is_acceptance else (record.covers or ()),
     )
 
 

@@ -2,7 +2,7 @@
 
 ## 1. Review the items no review covers
 
-- [ ] 1.1 Record what a review covers, and find the items no passing review covers
+- [x] 1.1 Record what a review covers, and find the items no passing review covers
   - Criteria: `(review)` and `(self-review)` records take `covers <item>...` before `by`, and a record without it covers every item; `wm review` and `wm verdict` write every item of the change, or for a review of added items just those; `review_state` gives the ticked items no passing review covers, and the change isn't reviewed while there are any; the archive gate names them; `wm instructions` offers a review of those items only
   - Verify: tests in `tests/record/` and `tests/services/` for the scenarios "Item added after a pass", "Archive before the added item is reviewed" and "Older review records"
   - (gap) 2026-11-17 by Noah Roberts: The records spec's scenarios "Reviewer's verdict" and "Explicit author" (waymark/specs/records.md) give review and self-review records without covers, such as (review) 2026-11-20 pass by wm-reviewer: <reasons>, while the review delta requires every such record to name the items it covers. The change has no delta on records, so the two disagree: records needs a MODIFIED delta for those scenarios, and Impact's Specs line needs records.

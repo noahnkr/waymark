@@ -189,7 +189,7 @@ def test_self_review_with_a_finding(project: Workspace) -> None:
     assert text.startswith(TASKS.replace("- [ ]", "- [x]") + REVIEW + "- (accepted) ")
     assert text.endswith(
         " by Sam Doe\n"
-        "- (self-review) 2026-01-15 by Sam Doe: matches the criteria\n"
+        "- (self-review) 2026-01-15 covers 1.1 1.2 by Sam Doe: matches the criteria\n"
         "  - warning `src/a.py:12`: the name is vague\n"
     )
     assert project.record().problems == ()
@@ -258,7 +258,7 @@ def test_passing_verdict_counts_as_the_independent_review(project: Workspace) ->
     )
     text = project.read(TASKS_FILE)
     assert text.endswith(
-        "- (review) 2026-01-15 pass by Sam Doe: boundary covered\n"
+        "- (review) 2026-01-15 pass covers 1.1 by Sam Doe: boundary covered\n"
         "  - suggestion `docs/search.md`: say the limit\n"
     )
     state = project.change_state()
@@ -280,7 +280,10 @@ def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Wor
     built(project)
     assert "nothing to reopen" in refused(project, "reopen", "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
-    assert "- (review) 2026-01-15 changes 1.1 by Sam Doe: off by one" in project.read(TASKS_FILE)
+    assert (
+        "- (review) 2026-01-15 changes 1.1 covers 1.1 1.2 by Sam Doe: off by one"
+        in project.read(TASKS_FILE)
+    )
     assert "wm reopen add-limit 1.1" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
     assert "nothing to reopen" in refused(project, "reopen", "1.2", DAY)
 
@@ -431,7 +434,7 @@ def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Wo
         + REVIEW
         + "- (accepted) "
     )
-    assert text.endswith(" by Sam Doe\n- (self-review) 2026-01-15 by Sam Doe: fine\n")
+    assert text.endswith(" by Sam Doe\n- (self-review) 2026-01-15 covers 1.1 by Sam Doe: fine\n")
 
 
 def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:

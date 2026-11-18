@@ -48,6 +48,25 @@ ONE_OF_EACH = [
         text="the limit is not checked",
     ),
     Record(RecordKind.REVIEW, DAY, verdict=Verdict.SPEC_GAP, text="the limit is unspecified"),
+    Record(
+        RecordKind.SELF_REVIEW, DAY, who="Ada", text="every scenario holds", covers=("1.1", "1.2")
+    ),
+    Record(
+        RecordKind.REVIEW,
+        DAY,
+        who="wm-reviewer",
+        verdict=Verdict.PASS,
+        text="the added item holds",
+        covers=("1.3",),
+    ),
+    Record(
+        RecordKind.REVIEW,
+        DAY,
+        verdict=Verdict.CHANGES,
+        items=("1.3",),
+        text="off by one",
+        covers=("1.3",),
+    ),
     Record(RecordKind.RESOLVED, DAY, who="Ada", text="use the test key: it is enough"),
     Record(RecordKind.REOPENED, DAY, who="Ada Lovelace"),
     Record(RecordKind.REOPENED, DAY),
@@ -68,6 +87,9 @@ def test_one_record_shape_puts_the_arguments_before_who_wrote_it() -> None:
     assert {
         "(accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 items 1.1 1.2 by Ada Lovelace",
         "(review) 2026-11-20 changes 1.2 2.1 by wm-reviewer: the limit is not checked",
+        "(review) 2026-11-20 pass covers 1.3 by wm-reviewer: the added item holds",
+        "(review) 2026-11-20 changes 1.3 covers 1.3: off by one",
+        "(self-review) 2026-11-20 covers 1.1 1.2 by Ada: every scenario holds",
         "(reopened) 2026-11-20 by Ada Lovelace",
         "(reopened) 2026-11-20",
         "(blocked) 2026-11-20 by Ada: the API key is missing",
@@ -106,6 +128,12 @@ def test_scenario_malformed_record() -> None:
         "(accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 by Ada",
         "(someday) 2026-11-20: unknown kind",
         "(synced) 2026-11-20 fingerprint 0123 by Ada",
+        "(review) 2026-11-20 pass covers by Ada: no items",
+        "(review) 2026-11-20 pass covers one: not a number",
+        "(review) 2026-11-20 covers 1.1 pass: covers before the verdict",
+        "(self-review) 2026-11-20 covers: no items",
+        "(self-review) 2026-11-20 covers 1.1 two: not a number",
+        "(self-review) 2026-11-20 1.1 by Ada: no covers word",
     ],
 )
 def test_one_record_shape_refuses_what_is_not_one(text: str) -> None:
@@ -149,13 +177,28 @@ def test_who_wrote_a_record_refuses_a_name_with_a_colon(tmp_path: Path) -> None:
 
 
 def test_scenario_explicit_author() -> None:
-    record = Record(RecordKind.SELF_REVIEW, DAY, who="Ada and Grace", text="<summary>")
-    assert render(record) == "(self-review) 2026-11-20 by Ada and Grace: <summary>"
+    record = Record(
+        RecordKind.SELF_REVIEW, DAY, who="Ada and Grace", text="<summary>", covers=("1.1", "1.2")
+    )
+    assert render(record) == "(self-review) 2026-11-20 covers 1.1 1.2 by Ada and Grace: <summary>"
 
 
 def test_scenario_reviewers_verdict() -> None:
-    record = Record(RecordKind.REVIEW, DAY, who="wm-reviewer", verdict=Verdict.PASS, text="ok")
-    assert render(record) == "(review) 2026-11-20 pass by wm-reviewer: ok"
+    record = Record(
+        RecordKind.REVIEW,
+        DAY,
+        who="wm-reviewer",
+        verdict=Verdict.PASS,
+        text="<reasons>",
+        covers=("1.1", "1.2"),
+    )
+    assert render(record) == "(review) 2026-11-20 pass covers 1.1 1.2 by wm-reviewer: <reasons>"
+
+
+def test_a_review_without_covers_reads_as_covering_every_item() -> None:
+    found = parse("(review) 2026-11-20 pass by wm-reviewer: written before covers")
+    assert isinstance(found, Record)
+    assert found.covers is None
 
 
 def test_a_name_may_hold_the_word_by() -> None:
