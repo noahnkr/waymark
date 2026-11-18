@@ -11,7 +11,7 @@ from waymark.record.markdown.outline import (
     require_title,
 )
 from waymark.record.markdown.problems import Problem
-from waymark.record.markdown.text import Document
+from waymark.record.markdown.text import BOM, Document
 
 CONTEXT = "Context"
 QUESTIONS = "Questions"
@@ -47,6 +47,8 @@ class Exploration:
     """The ``- Status:`` value: open, led-to or dropped; None when there is no line."""
     status_links: tuple[str, ...] = ()
     """The link targets on a ``led-to`` status line."""
+    status_index: int | None = None
+    """The index of the ``- Status:`` line; None when there is no line."""
 
 
 def parse_exploration(name: str, doc: Document) -> Exploration:
@@ -75,7 +77,53 @@ def parse_exploration(name: str, doc: Document) -> Exploration:
         tuple(problems),
         status,
         status_links,
+        facts[STATUS].index if STATUS in facts else None,
     )
+
+
+def _join(doc: Document, lines: list[str], endings: list[str]) -> str:
+    body = "".join(text + ending for text, ending in zip(lines, endings, strict=True))
+    return (BOM if doc.bom else "") + body
+
+
+def with_led_to(exploration: Exploration, name: str, target: str) -> str:
+    """The exploration's text with its status led to ``name`` as well, line endings kept.
+
+    An exploration that already led somewhere keeps its links, and the new one is
+    added at the end of the line. Only the status line changes.
+    """
+    doc = exploration.doc
+    assert exploration.status_index is not None
+    lines = [line.text for line in doc.lines]
+    endings = [line.ending for line in doc.lines]
+    link = f"[{name}]({target})"
+    at = exploration.status_index
+    if exploration.status == LED_TO:
+        lines[at] = f"{lines[at].rstrip()}, {link}"
+    else:
+        lines[at] = f"- {STATUS}: {LED_TO} {link}"
+    return _join(doc, lines, endings)
+
+
+def with_dropped(exploration: Exploration, reason: str) -> str:
+    """The exploration's text with its status dropped and the reason ending its Conclusion."""
+    doc = exploration.doc
+    assert exploration.status_index is not None
+    newline = doc.newline
+    lines = [line.text for line in doc.lines]
+    endings = [line.ending for line in doc.lines]
+    lines[exploration.status_index] = f"- {STATUS}: {DROPPED}"
+    section = next(s for s in doc.sections(2) if s.title.casefold() == CONCLUSION.casefold())
+    filled = [i for i in range(section.body_start, section.end) if lines[i].strip()]
+    at = filled[-1] + 1 if filled else section.body_start
+    added = ["", reason]
+    if at < len(lines) and lines[at].strip():
+        added.append("")  # the next heading follows directly: keep a blank line before it
+    if at > 0 and not endings[at - 1]:
+        endings[at - 1] = newline
+    lines[at:at] = added
+    endings[at:at] = [newline] * len(added)
+    return _join(doc, lines, endings)
 
 
 def _status(

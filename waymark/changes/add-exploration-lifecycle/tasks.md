@@ -34,7 +34,7 @@
 
 ## 2. Commands
 
-- [ ] 2.1 Add `--from <exploration>` to `wm new change` and `wm new milestone`
+- [x] 2.1 Add `--from <exploration>` to `wm new change` and `wm new milestone`
   - Criteria:
     - the exploration's Status line is set to `led-to` with a link to the new proposal or `milestone.md`, in the same operation that creates it, and no other line of the exploration changes
     - an exploration that already led somewhere gets the new link added after the old ones

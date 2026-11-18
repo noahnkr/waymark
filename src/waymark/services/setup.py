@@ -8,6 +8,7 @@ from waymark import __version__, adapters
 from waymark.record.artifacts.changes import PROPOSAL_FILE
 from waymark.record.artifacts.charter import CHARTER_FILE
 from waymark.record.artifacts.config import CONFIG_FILE, RECORD_FORMAT
+from waymark.record.artifacts.explorations import Exploration, with_led_to
 from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log, link_change
 from waymark.record.artifacts.proposal import AFTER, MILESTONE, OWNER, PATH, SHORT
 from waymark.record.artifacts.resources import KINDS as RESOURCE_KINDS
@@ -19,7 +20,7 @@ from waymark.record.machine.pointer import POINTER_FILE, is_pointer, parse_point
 from waymark.record.machine.project import RECORD_DIR
 from waymark.record.markdown.text import Document
 from waymark.record.names import NAME_RULE, is_valid_name
-from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES, RESOURCES
+from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES, RESOURCES, Record
 from waymark.record.writing import templates
 from waymark.record.writing.store import Transaction
 from waymark.services import ci as workflow
@@ -176,11 +177,17 @@ def create_change(  # noqa: PLR0913 - the change's facts, and the day for its mi
     milestone: str | None = None,
     after: str | None = None,
     today: datetime.date | None = None,
+    source: str | None = None,
 ) -> Done:
-    """Create a change folder with a proposal skeleton, linked from its milestone if it has one."""
+    """Create a change folder with a proposal skeleton, linked from its milestone if it has one.
+
+    ``source`` names the exploration the change comes from; its status line then
+    leads to the change.
+    """
     record = open_record(start, writing=True)
     folder = f"{CHANGES}/{name}"
     _require_new_name(name, "change", bool(record.files.entries(folder)))
+    exploration = _source_exploration(record, source)
     if after is not None and not is_valid_name(after):
         raise Refusal(f'"{after}" is not a valid change name: {NAME_RULE}.')
     member = record.milestones.get(milestone) if milestone is not None else None
@@ -219,20 +226,48 @@ def create_change(  # noqa: PLR0913 - the change's facts, and the day for its mi
         )
         transaction.write(doc.path, append_milestone_log(linked, records.render(entry)))
         message += f' It is linked from the roadmap of "{milestone}".'
+    if exploration is not None:
+        target = f"../{CHANGES}/{name}/{PROPOSAL_FILE}"
+        transaction.write(exploration.doc.path, with_led_to(exploration, name, target))
+        message += f' The exploration "{exploration.name}" now leads to it.'
     return Done(message, commit(transaction))
 
 
-def create_milestone(start: Path, name: str) -> Done:
-    """Create a milestone folder with a milestone.md skeleton: its goal and roadmap."""
+def _source_exploration(record: Record, source: str | None) -> Exploration | None:
+    """The active exploration a new change or milestone comes from, or None for none."""
+    if source is None:
+        return None
+    exploration = record.explorations.get(source)
+    if exploration is None or exploration.status_index is None:
+        known = ", ".join(sorted(record.explorations)) or "none"
+        raise Refusal(
+            f'"{source}" is not an active exploration with a status line (the active ones: '
+            f"{known}). Name one of them with --from, or leave --from out."
+        )
+    return exploration
+
+
+def create_milestone(start: Path, name: str, source: str | None = None) -> Done:
+    """Create a milestone folder with a milestone.md skeleton: its goal and roadmap.
+
+    ``source`` names the exploration the milestone comes from; its status line then
+    leads to the milestone.
+    """
     record = open_record(start, writing=True)
     folder = f"{MILESTONES}/{name}"
     _require_new_name(name, "milestone", bool(record.files.entries(folder)))
+    exploration = _source_exploration(record, source)
     title = templates.title_from_name(name)
     transaction = Transaction(record.files)
     transaction.write(
         f"{folder}/{MILESTONE_FILE}", templates.render(templates.MILESTONE, title=title)
     )
-    return Done(f'Created the milestone "{name}" with a goal to draft.', commit(transaction))
+    message = f'Created the milestone "{name}" with a goal to draft.'
+    if exploration is not None:
+        target = f"../{MILESTONES}/{name}/{MILESTONE_FILE}"
+        transaction.write(exploration.doc.path, with_led_to(exploration, name, target))
+        message += f' The exploration "{exploration.name}" now leads to it.'
+    return Done(message, commit(transaction))
 
 
 def create_exploration(start: Path, name: str) -> Done:

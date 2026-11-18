@@ -189,14 +189,17 @@ def _new(args: argparse.Namespace) -> int:
                 milestone=args.milestone,
                 after=args.after,
                 today=_today(),
+                source=args.source,
             )
         )
     if args.short or args.owner or args.milestone or args.after:
         raise Refusal("--short, --owner, --milestone and --after apply to a change only.")
+    if args.kind == "milestone":
+        return _report(setup.create_milestone(_here(), args.name, args.source))
+    if args.source:
+        raise Refusal("--from applies to a change or a milestone only.")
     if args.kind == "resource":
         return _report(setup.create_resource(_here(), args.name, args.resource_kind, _today()))
-    if args.kind == "milestone":
-        return _report(setup.create_milestone(_here(), args.name))
     return _report(setup.create_exploration(_here(), args.name))
 
 
@@ -516,6 +519,12 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         "--after",
         metavar="CHANGE",
         help="the change this one comes after; its unmerged branch is this one's base",
+    )
+    new.add_argument(
+        "--from",
+        dest="source",
+        metavar="EXPLORATION",
+        help="the exploration a change or milestone comes from; its status then leads to it",
     )
     new.set_defaults(handler=_new)
 

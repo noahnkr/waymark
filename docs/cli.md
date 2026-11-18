@@ -121,7 +121,7 @@ wm hook <tool> <event>
 Create a change, milestone, exploration or resource from the built-in template.
 
 ```
-wm new <change|milestone|exploration|resource> <name> [resource-kind] [--short] [--owner NAME] [--milestone MILESTONE] [--after CHANGE]
+wm new <change|milestone|exploration|resource> <name> [resource-kind] [--short] [--owner NAME] [--milestone MILESTONE] [--after CHANGE] [--from EXPLORATION]
 ```
 
 - `kind`: one of `change`, `milestone`, `exploration`, `resource`
@@ -131,6 +131,7 @@ wm new <change|milestone|exploration|resource> <name> [resource-kind] [--short] 
 - `--owner`: a change's owner (default: your git name)
 - `--milestone`: the milestone a change belongs to; links it from the milestone's roadmap
 - `--after`: the change this one comes after; its unmerged branch is this one's base
+- `--from`: the exploration a change or milestone comes from; its status then leads to it
 
 ## wm accept
 
