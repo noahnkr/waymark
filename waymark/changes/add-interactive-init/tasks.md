@@ -60,3 +60,7 @@
 
 - (accepted) 2026-11-18 fingerprint e4640089b6be55b8 items 1.1 1.2 1.3 1.4 2.1 3.1 by Noah Roberts
 - (accepted) 2026-11-18 fingerprint fb25b46e5fa16a1a items 1.1 1.2 1.3 1.4 2.1 3.1 by Noah Roberts
+- (self-review) 2026-11-18 covers 1.1 1.2 1.3 1.4 2.1 3.1 by Noah Roberts: Every criterion of 1.1-3.1 holds and every setup scenario has a passing test; the full checks pass. The review found that on Windows Ctrl+C reaches the flow as KeyboardInterrupt, not a key, so it ended with a traceback; fixed in 6dc9328 with a test. The raw-mode key readers are checked by hand only at the smoke test
+  - warning `src/waymark/views/terminal.py`: RawTerminal.draw: a redraw goes back over as many lines as it drew, so a line wider than the terminal wraps and the next redraw leaves part of it behind; no test covers it
+  - warning `src/waymark/views/terminal.py`: the Windows and POSIX raw readers are tested only through their key mapping; reading real keys is checked by hand at the smoke test
+  - suggestion `src/waymark/views/welcome.py`: text_lines: in a clone the welcome screen still says it sets up the CI workflow if you want it, though a clone asks nothing
