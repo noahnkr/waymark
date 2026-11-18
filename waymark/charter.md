@@ -60,31 +60,11 @@ atlas).
 
 ## Rules
 
-### Explore
-
-### Propose
-
-- A change that alters what users see (commands, output, files written, the record format) says so under Impact, for the changelog.
-
-### Specs
-
-- Requirements describe what `wm` does as a user or an agent sees it: its commands, their output, and the record's files and formats. Modules, functions and other internals go in the design.
-
-### Design
-
-### Tasks
-
-- Every new rule gets a test named after it.
-- Docs that a change makes stale get their own item.
-
-### Apply
-
-- Run the checks the item touches, and the full checks (pytest, ruff, mypy, codespell, `tools.docs --check`) once before the pull request.
-- Never hand-edit generated docs; run `uv run --no-sync python -m tools.docs`.
-- Docs follow the `waymark-write-docs` skill.
-
-### Review
-
-### Archive
-
-- Releases are cut with the `waymark-release` skill, never by hand.
+1. A change that alters what users see (commands, output, files written, the record format) says so under Impact, for the changelog.
+2. Requirements describe what `wm` does as a user or an agent sees it: its commands, their output, and the record's files and formats. Modules, functions and other internals go in the design.
+3. Every new rule gets a test named after it.
+4. Docs that a change makes stale get their own item.
+5. Run the checks the item touches, and the full checks (pytest, ruff, mypy, codespell, `tools.docs --check`) once before the pull request.
+6. Never hand-edit generated docs; run `uv run --no-sync python -m tools.docs`.
+7. Docs follow the `waymark-write-docs` skill.
+8. Releases are cut with the `waymark-release` skill, never by hand.

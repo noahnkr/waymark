@@ -31,21 +31,8 @@ list, such as:
 
 ## Rules
 
-<!-- Project-specific rules for each workflow step. Each agent gets only its step's rules.
-     A step with no rules may leave its heading out. -->
-
-### Explore
-
-### Propose
-
-### Specs
-
-### Design
-
-### Tasks
-
-### Apply
-
-### Review
-
-### Archive
+<!-- The project's own rules, as a numbered list. Every agent gets all of them at
+every step, so write each as a rule for the whole project.
+Good: "1. Never hand-edit generated docs; regenerate them." Any agent can follow it.
+Bad: "1. Be careful with docs." Nobody can tell when it holds.
+A fact about one area of the system goes in that spec's Background instead. -->

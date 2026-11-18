@@ -1,4 +1,4 @@
-"""The charter: what the project is, the context every agent gets, and rules per step."""
+"""The charter: what the project is, and the context and rules every agent gets."""
 
 import re
 from collections.abc import Mapping
@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from waymark.record.outline import collect_sections, require_title
 from waymark.record.problems import Problem
-from waymark.record.terms import Step
 from waymark.record.text import Document
 
 CHARTER_FILE = "charter.md"
@@ -31,15 +30,15 @@ _NUMBERED_LINE = re.compile(r"^(\d+)\.[ \t]+\S")
 class Charter:
     """The project's charter.
 
-    ``context`` goes to every agent. ``rules`` holds the text for each workflow
-    step that has any; an agent gets only its own step's rules.
+    ``context`` and ``rules`` go to every agent at every step. ``rules`` is the
+    numbered list under ``## Rules``, whole.
     """
 
     doc: Document
     title: str
     sections: Mapping[str, str]
     context: str
-    rules: Mapping[Step, str]
+    rules: str
     problems: tuple[Problem, ...]
 
 
@@ -50,41 +49,12 @@ def parse_charter(doc: Document) -> Charter:
     found = collect_sections(doc, REQUIRED_SECTIONS, problems)
     sections = {name: doc.body(found[name]) if name in found else "" for name in REQUIRED_SECTIONS}
 
-    rules: dict[Step, str] = {}
-    if RULES in found:
-        parent = found[RULES]
-        for section in doc.sections(3, parent.body_start, parent.end):
-            name = section.title.casefold()
-            if name not in set(Step):
-                steps = ", ".join(step.value for step in Step)
-                problems.append(
-                    Problem(
-                        doc.path,
-                        section.start + 1,
-                        "unknown-step",
-                        f'"{section.title}" is not a workflow step, so no agent would get '
-                        f"these rules. Use one of: {steps}.",
-                    )
-                )
-            elif Step(name) in rules:
-                problems.append(
-                    Problem(
-                        doc.path,
-                        section.start + 1,
-                        "duplicate-section",
-                        f'The rules for "{name}" appear twice. Merge the two sections.',
-                    )
-                )
-            else:
-                text = doc.body(section)
-                if text:
-                    rules[Step(name)] = text
     if GLOSSARY in found:
         _check_glossary(doc, found[GLOSSARY].body_start, found[GLOSSARY].end, problems)
-    for name in (GOALS, CONSTRAINTS):
+    for name in (GOALS, CONSTRAINTS, RULES):
         if name in found:
             _check_numbered(doc, name, found[name].body_start, found[name].end, problems)
-    return Charter(doc, title, sections, sections[CONTEXT], rules, tuple(problems))
+    return Charter(doc, title, sections, sections[CONTEXT], sections[RULES], tuple(problems))
 
 
 def _check_numbered(

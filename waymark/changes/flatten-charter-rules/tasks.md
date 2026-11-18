@@ -2,7 +2,7 @@
 
 ## 1. Code
 
-- [ ] 1.1 Rules as one numbered list
+- [x] 1.1 Rules as one numbered list
   - Criteria:
     - the charter's Rules are read as one string and checked like Goals and Constraints: a bullet, a `###` heading or any other line is reported with the form `1. <text>`, and empty Rules are healthy
     - the step-heading parsing and its problems (`unknown-step` and the repeated step) are gone
@@ -11,6 +11,7 @@
   - Verify:
     - `test_scenario_step_heading_under_rules` and `test_scenario_no_rules` beside the existing test for the scenario Bulleted goal, and the existing Old glossary line test still passes
     - `wm check` passes on this repository
+  - (note) 2026-11-18 by Noah Roberts: Charter.rules became a string, so instructions.py and context.py now pass it whole in place of one step's text, to keep the build green; item 1.2 adds the Project rules titles and its scenario tests
 - [ ] 1.2 Every agent gets every rule
   - Criteria:
     - `wm instructions` gives the whole Rules as `rules` at every step, explore included, titled "Project rules" in the text output and left out when empty
@@ -29,3 +30,7 @@
   - Verify:
     - `uv run --no-sync pytest tests/test_skills.py tests/adapters tests/test_docs.py`, `uv run --no-sync python -m tools.docs --check` and codespell pass
     - `grep -rn -i "rules for this step\|step's rules" src/ docs/` finds nothing
+
+## Log
+
+- (accepted) 2026-11-18 fingerprint c7fbdef466aa348e items 1.1 1.2 2.1 by Noah Roberts

@@ -7,7 +7,7 @@ from waymark.record.design import parse_design
 from waymark.record.explorations import Exploration, parse_exploration
 from waymark.record.milestones import append_milestone_log, parse_milestone
 from waymark.record.proposal import Proposal, parse_proposal
-from waymark.record.terms import ReviewLevel, Step
+from waymark.record.terms import ReviewLevel
 
 EXPLORATION = """# Paging
 
@@ -127,18 +127,9 @@ def test_charter_has_its_required_sections_and_context() -> None:
     assert charter.sections["Vision"] == "Fast search for everyone."
 
 
-def test_charter_rules_are_kept_per_workflow_step() -> None:
+def test_charter_rules_are_one_list() -> None:
     charter = parse_charter(document(CHARTER, "charter.md"))
-    assert charter.rules == {
-        Step.APPLY: "Run the tests before reporting.",
-        Step.REVIEW: "Check every scenario.",
-    }
-    assert Step.DESIGN not in charter.rules
-
-
-def test_charter_rules_for_an_unknown_step_are_a_problem() -> None:
-    charter = parse_charter(document(CHARTER.replace("### apply", "### deploy")))
-    assert [problem.code for problem in charter.problems] == ["unknown-step"]
+    assert charter.rules == "1. Run the tests before reporting.\n2. Check every scenario."
 
 
 def test_charter_missing_section_is_a_problem() -> None:
@@ -157,7 +148,7 @@ def test_charter_skeleton_with_empty_sections_is_readable() -> None:
     charter = parse_charter(document(skeleton))
     assert charter.problems == ()
     assert charter.context == ""
-    assert charter.rules == {}
+    assert charter.rules == ""
 
 
 def test_milestone_has_goal_done_when_non_goals_and_roadmap() -> None:
