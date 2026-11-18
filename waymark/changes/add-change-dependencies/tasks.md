@@ -24,7 +24,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Keep one branch shape in the skills, and describe it in the docs
+- [x] 2.1 Keep one branch shape in the skills, and describe it in the docs
   - Criteria:
     - `wm-explore` puts a new milestone on a `plan-<milestone>` branch and offers a plan pull request before any member change is proposed
     - `wm-propose` creates a change's branch from its base before `wm new change`, and passes `--after` for a change that needs an unmerged one

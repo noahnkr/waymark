@@ -18,7 +18,7 @@ You are the planner. You build each item yourself, from the record, unless the i
 ## Steps
 
 1. Run `wm instructions --change <name> --json`. The step must be `apply`, `review`, `resolve-items` or `archive`; otherwise see When to stop.
-2. Make sure you are on the change's branch: its name is the branch name. Create it if it doesn't exist. In an atlas, the same branch name is used in the atlas and in every code repo the change's items name; `wm status` shows each one's branch and warns when one differs. If `wm` says a repo isn't on this machine, ask the human to clone it and run `wm atlas register`.
+2. Make sure you are on the change's branch: `wm instructions` gives its `branch` and its `base`. Create the branch from the base if it doesn't exist. When `wm check` warns that the change it comes after is merged, rebase the branch onto the default branch first. In an atlas, the same branch name is used in the atlas and in every code repo the change's items name; `wm status` shows each one's branch and warns when one differs. If `wm` says a repo isn't on this machine, ask the human to clone it and run `wm atlas register`.
 3. Run the loop below until `wm instructions --change <name> --json` says the step is `archive`.
 4. When the step is `archive`, every item is built and the change is reviewed. Tell the human, and offer the `wm-archive` skill, which archives the change on its branch, and then the `wm-pr` skill.
 

@@ -125,14 +125,15 @@ A search SHALL return at most fifty results, best matches first.
 ## Proposal
 
 `changes/<change>/proposal.md`. Why a change is wanted and what it changes.
-Created by `wm new change <name>` (with `--short` for the short path, and
-`--milestone <milestone>` for a change in a [milestone](#milestone)), drafted by
+Created by `wm new change <name>` (with `--short` for the short path,
+`--milestone <milestone>` for a change in a [milestone](#milestone), and
+`--after <change>` for a change based on another's branch), drafted by
 `/wm-propose` and revised by `/wm-update`. Acceptance covers everything in it
 except the Outcome.
 
 | Part | What it holds |
 |---|---|
-| Facts under the title | `- Owner: <name>` (from git), and optionally `- Milestone: <name>`, `- Review: self\|independent\|none` and `- Path: short`. |
+| Facts under the title | `- Owner: <name>` (from git), and optionally `- Milestone: <name>`, `- After: <change>`, `- Review: self\|independent\|none` and `- Path: short`. |
 | `## Why` | The problem and why now, not the solution. |
 | `## What changes` | What will be different once the change is archived. |
 | `## Non-goals` | What a reader might expect and won't get. |
@@ -152,6 +153,11 @@ except the Outcome.
 
 **Checks:** `missing-owner`, `invalid-path`, `invalid-review-level`,
 `impact-format`, `impact-mismatch`, `old-layout`, `short-path-review`, `empty-section`.
+For an `- After:` line in an active change: `unknown-after` (no active or archived
+change has that name), `after-self`, `after-cycle` (the lines lead back to the
+change), all errors, and the warning `after-merged` (the change it comes after is
+archived or merged, so rebase onto the default branch and take the line off). See
+[Branches](concepts.md#branches).
 
 ## Delta
 
