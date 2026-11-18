@@ -35,7 +35,7 @@
 
 ## 3. Docs
 
-- [ ] 3.1 Docs for color and wrapping
+- [x] 3.1 Docs for color and wrapping
   - Criteria:
     - `tools/docs.py` writes an "Environment" section into `docs/cli.md` naming `NO_COLOR`, `FORCE_COLOR` and wrapping on a terminal, and `docs/cli.md` is regenerated
     - the CHANGELOG's Unreleased section notes the new look, `FORCE_COLOR` and wrapping

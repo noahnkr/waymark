@@ -6,6 +6,15 @@ Every command of `wm` 0.3.0. Read commands take `--json`; their payloads are des
 
 Exit codes: `0` success; `1` refused, or problems found; `2` usage error.
 
+## Environment
+
+- `NO_COLOR`: set to any value, even empty, and the text output carries no color. It wins over `FORCE_COLOR`.
+- `FORCE_COLOR`: set to any value but empty or `0`, and the text output carries color even when it isn't going to a terminal.
+- `TERM=dumb`: no color on a terminal.
+- JSON output never carries color.
+- On a terminal, prose in `wm show`, `wm inbox` and `wm doctor` wraps to the terminal's width, from 60 to 100 columns. Output that isn't going to a terminal is never wrapped.
+- When the output's encoding can't show the glyphs, they're drawn in ASCII.
+
 ## wm init
 
 Create the record, or set up this machine in a clone that has one.
