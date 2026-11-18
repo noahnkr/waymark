@@ -2,7 +2,7 @@
 
 ## 1. The record
 
-- [ ] 1.1 Replace `parked` with `dropped` in the exploration status, its state and the template
+- [x] 1.1 Replace `parked` with `dropped` in the exploration status, its state and the template
   - Criteria:
     - `- Status:` reads `open`, `led-to <links>` or `dropped`; `parked` or any other value is an unknown status whose message names `open`, `led-to` and `dropped`
     - a missing status is still `missing-status`, and its message doesn't name `wm update`

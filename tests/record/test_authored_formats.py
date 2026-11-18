@@ -210,42 +210,38 @@ def test_open_questions_are_read() -> None:
 def test_exploration_status() -> None:
     """Requirement "Exploration status": the line is read and checked."""
     assert codes(explore("open")) == []
+    assert codes(explore("dropped")) == []
     assert codes(explore("someday")) == ["unknown-status"]
     assert codes(explore("led-to")) == ["unknown-status"]
 
 
-def test_scenario_parked_exploration(workspace: Workspace) -> None:
-    workspace.write("explorations/paging.md", explore("parked", "Waits for a second user."))
-    record = workspace.record()
-    state = derive_state(record).explorations["paging"]
-    assert (state.status, state.detail) == (ExplorationStatus.PARKED, "Waits for a second user.")
-    built = context_pack(record, "explore")
-    assert built["explorations"][0]["status"] == "parked"
+def test_scenario_new_exploration(workspace: Workspace) -> None:
+    setup.create_exploration(workspace.root, "result-paging")
+    text = workspace.read("explorations/result-paging.md")
+    assert "\n- Status: open\n" in text
+    built = context_pack(workspace.record(), "explore")
+    assert built["explorations"][0]["status"] == "open"
+
+
+def test_scenario_parked_is_not_a_status() -> None:
+    [problem] = parse_exploration("paging", document(explore("parked"), "e.md")).problems
+    assert problem.code == "unknown-status"
+    for status in ("open", "led-to", "dropped"):
+        assert f"- Status: {status}" in problem.message
 
 
 def test_scenario_missing_status() -> None:
     [problem] = parse_exploration("paging", document(explore(""), "e.md")).problems
     assert problem.code == "missing-status"
-    assert '"- Status: open"' in problem.message
+    for status in ("open", "led-to", "dropped"):
+        assert f"- Status: {status}" in problem.message
     assert "wm update" not in problem.message
 
 
-def test_scenario_parked_in_the_conclusion_only(workspace: Workspace) -> None:
-    workspace.write("explorations/paging.md", explore("open", "Parked: waits for a second user."))
+def test_dropped_exploration_gives_its_reason(workspace: Workspace) -> None:
+    workspace.write("explorations/paging.md", explore("dropped", "Results never pass fifty."))
     state = derive_state(workspace.record()).explorations["paging"]
-    assert state.status is ExplorationStatus.OPEN
-    built = context_pack(workspace.record(), "explore")
-    assert built["explorations"][0]["status"] == "open"
-    assert codes(explore("open", "Parked:")) == []
-
-
-def test_parked_reason_is_the_conclusion() -> None:
-    parsed = parse_exploration("paging", document(explore("parked", "Waits."), "e.md"))
-    assert parsed.parked == "Waits."
-
-
-def test_scenario_parked_without_a_reason() -> None:
-    assert codes(explore("parked")) == ["parked-without-reason"]
+    assert (state.status, state.detail) == (ExplorationStatus.DROPPED, "Results never pass fifty.")
 
 
 def test_led_to_status_points_at_its_change(workspace: Workspace) -> None:

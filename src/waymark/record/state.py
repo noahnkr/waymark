@@ -77,11 +77,11 @@ class RoadmapStatus(StrEnum):
 
 
 class ExplorationStatus(StrEnum):
-    """Where an exploration went, read from its conclusion."""
+    """Where an exploration stands, read from its status line."""
 
     OPEN = "open"
-    PARKED = "parked"
     LED_TO = "led-to"
+    DROPPED = "dropped"
     UNREADABLE = "unreadable"
 
 
@@ -190,7 +190,7 @@ class MilestoneState:
 
 @dataclass(frozen=True)
 class ExplorationState:
-    """An exploration's state, and what it led to or why it was parked."""
+    """An exploration's state, and what it led to or why it was dropped."""
 
     name: str
     status: ExplorationStatus
@@ -557,8 +557,9 @@ def exploration_state(record: Record, exploration: Exploration) -> ExplorationSt
 
 
 def _state_from_status(exploration: Exploration) -> ExplorationState:
-    if exploration.status == "parked":
-        return ExplorationState(exploration.name, ExplorationStatus.PARKED, exploration.parked)
+    if exploration.status == "dropped":
+        reason = exploration.conclusion.strip() or None
+        return ExplorationState(exploration.name, ExplorationStatus.DROPPED, reason)
     if exploration.status == "led-to":
         for target in exploration.status_links:
             for folder in (CHANGES, MILESTONES):

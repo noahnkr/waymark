@@ -632,7 +632,7 @@ def test_exploration_state_comes_from_its_status_line(workspace: Workspace) -> N
     workspace.change("add-paging")
     workspace.write("milestones/faster-search/milestone.md", milestone())
     explore(workspace, "caching", "open")
-    explore(workspace, "ranking", "parked", "nobody asked for it")
+    explore(workspace, "ranking", "dropped", "nobody asked for it")
     explore(workspace, "paging", "led-to [add-paging](../changes/add-paging/proposal.md)")
     explore(workspace, "speed", "led-to [Faster search](../milestones/faster-search/milestone.md)")
     explore(workspace, "old", "led-to [done](../changes/archive/2026-01-20-add-limit/proposal.md)")
@@ -642,7 +642,7 @@ def test_exploration_state_comes_from_its_status_line(workspace: Workspace) -> N
         name: (state.status, state.detail) for name, state in states.items() if name != "vague"
     } == {
         "caching": (ExplorationStatus.OPEN, None),
-        "ranking": (ExplorationStatus.PARKED, "nobody asked for it"),
+        "ranking": (ExplorationStatus.DROPPED, "nobody asked for it"),
         "paging": (ExplorationStatus.LED_TO, "change add-paging"),
         "speed": (ExplorationStatus.LED_TO, "milestone faster-search"),
         "old": (ExplorationStatus.LED_TO, "change add-limit"),

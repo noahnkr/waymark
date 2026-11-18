@@ -1516,8 +1516,8 @@ Printed by `wm show` for an exploration.
     "status": {
       "enum": [
         "open",
-        "parked",
         "led-to",
+        "dropped",
         "unreadable"
       ]
     },
@@ -1913,8 +1913,8 @@ Printed by `wm context --for explore`.
           "status": {
             "enum": [
               "open",
-              "parked",
               "led-to",
+              "dropped",
               "unreadable"
             ]
           },

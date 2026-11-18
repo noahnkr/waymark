@@ -2,8 +2,10 @@
 
 - Status: open
 
-<!-- open while thinking; "parked" with the reason in the Conclusion; or
-     "led-to <link>" to the change or milestone this led to. -->
+<!-- "open" while it waits to be decided or built. Only wm changes this line:
+     "wm new change <name> --from <exploration>" or "wm new milestone <name> --from
+     <exploration>" writes "led-to <link>", and "wm exploration drop <exploration>
+     --reason "<why>"" writes "dropped". Both end in explorations/archive/. -->
 
 ## Context
 
@@ -19,9 +21,9 @@
 
 ## Conclusion
 
-<!-- Leave empty while open. When parked, why; when it led somewhere, what was
-     decided.
-     Good, when parked: "Waits for a second user who needs paging; one user can
+<!-- While open, what it waits for, if anything; when it leads somewhere, what
+     was decided. A drop adds its reason here.
+     Good, while open: "Waits for a second user who needs paging; one user can
      live with the long list."
      Bad: "Later." It doesn't say what would bring the idea back. -->
 
