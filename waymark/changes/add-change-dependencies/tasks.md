@@ -30,6 +30,13 @@
     - a dependency merged by a squash or a rebase, whose archive is on the default branch, is merged, with no `after-merged` warning missed
   - Verify: tests in `tests/record/test_branches.py` and `tests/services/test_check.py` with real git repositories, for the scenarios "Stacked change" and "Dependency merged", a dependency branch with no commits, and a dependency squash-merged on `origin`
 
+- [ ] 1.5 Ignore an older archive of a reused name, and test the merge check end to end
+  - Criteria:
+    - a dependency counts as merged from the default branch only when that branch holds an archived folder for it that this record doesn't hold, so an earlier change archived under the same name doesn't make a new active one merged
+    - `git.archived_on` reads the local default branch when there is no `origin`
+    - `wm check` warns `after-merged` for a dependency squash-merged on `origin`, and not for a dependency branch with no commits of its own, in repositories with real git history
+  - Verify: tests in `tests/record/test_branches.py` and `tests/services/test_check.py` with real git repositories, for a reused archived name, no remote, a squash-merged dependency and a dependency branch with no commits
+
 ## 2. Skills and docs
 
 - [x] 2.1 Keep one branch shape in the skills, and describe it in the docs
