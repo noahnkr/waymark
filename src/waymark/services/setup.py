@@ -20,6 +20,7 @@ from waymark.record.records import RecordKind
 from waymark.record.resources import KINDS as RESOURCE_KINDS
 from waymark.record.store import Transaction
 from waymark.record.text import Document
+from waymark.services import ci as workflow
 from waymark.services import integration
 from waymark.services.atlas import register_new_atlas
 from waymark.services.common import Done, Refusal, commit, open_record
@@ -27,14 +28,34 @@ from waymark.services.common import Done, Refusal, commit, open_record
 _ATLAS_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
 
+def has_record(root: Path) -> bool:
+    """Whether the repository at ``root`` already has a record, as a fresh clone does."""
+    return RecordFiles(root).is_file(f"{RECORD_DIR}/{CONFIG_FILE}")
+
+
+def atlas_name_problem(name: str) -> str | None:
+    """Why ``name`` can't name an atlas, or None when it can."""
+    if _ATLAS_NAME.fullmatch(name):
+        return None
+    return (
+        f'"{name}" can\'t be an atlas name. Use letters, digits, dots, hyphens or '
+        "underscores, starting with a letter or digit."
+    )
+
+
 def init_project(
-    start: Path, atlas: str | None = None, tools: tuple[str, ...] | None = None
+    start: Path,
+    atlas: str | None = None,
+    tools: tuple[str, ...] | None = None,
+    *,
+    ci: bool = False,
 ) -> Done:
     """Create the record at the top of the git repository around a folder.
 
     Also installs the skills, agent definitions and hooks for the project's
     agent tools: every tool wm knows, unless ``tools`` names them, and adds the
-    ``.gitignore`` block that keeps them out of git. In a repository that
+    ``.gitignore`` block that keeps them out of git. With ``ci`` it also adds the
+    CI workflow, in the same transaction. In a repository that
     already has a record, as in a fresh clone, it sets up this machine instead
     and leaves the record alone.
     """
@@ -47,11 +68,9 @@ def init_project(
     _refuse_in_a_code_repo(files)
     if files.is_file(f"{RECORD_DIR}/{CONFIG_FILE}"):
         return _set_up_clone(root, atlas, tools)
-    if atlas is not None and not _ATLAS_NAME.fullmatch(atlas):
-        raise Refusal(
-            f'"{atlas}" can\'t be an atlas name. Use letters, digits, dots, hyphens or '
-            "underscores, starting with a letter or digit."
-        )
+    problem = atlas_name_problem(atlas) if atlas is not None else None
+    if problem is not None:
+        raise Refusal(problem)
     chosen = adapters.names() if tools is None else tools
     integration.require_tools(chosen)
     config = templates.render(
@@ -70,14 +89,20 @@ def init_project(
     integration.stage_folder_keeps(transaction, files)
     integration.stage(transaction, files, chosen)
     integration.stage_ignore(transaction, files, integration.ignore_patterns(chosen))
+    if ci:
+        workflow.stage_workflow(transaction, files, only_if_present=False)
     paths = commit(transaction)
     kind = f'the atlas "{atlas}"' if atlas is not None else "a project"
     titles = ", ".join(adapters.get(tool).title for tool in chosen) or "no agent tool"
     registered = f" {register_new_atlas(root, atlas)}" if atlas is not None else ""
+    if ci:
+        ci_line = f'Added {workflow.WORKFLOW}, which runs "wm check" in GitHub Actions.\n'
+    else:
+        ci_line = 'To run "wm check" in GitHub Actions too, run "wm ci".\n'
     return Done(
         f"Initialized {kind} in {RECORD_DIR}/, with skills, agents and hooks for {titles}."
         f"{registered}\n"
-        'To run "wm check" in GitHub Actions too, run "wm ci".\n'
+        f"{ci_line}"
         "Next: run the wm-kickoff skill in your agent tool to draft the charter.",
         paths,
     )

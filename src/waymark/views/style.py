@@ -58,6 +58,7 @@ _GLYPHS = {
     "milestone_done": ("◆", "*"),
     "milestone_open": ("◇", "o"),
     "star": ("✦", "*"),
+    "current": ("●", "@"),
 }
 
 
@@ -71,7 +72,7 @@ def _can_encode(stream: TextIO) -> bool:
     return True
 
 
-def _enable_windows_colors() -> bool:
+def enable_escape_sequences() -> bool:
     """Turn on escape-sequence handling in a Windows console; False when it can't be."""
     enabled = True
     if sys.platform == "win32":
@@ -115,10 +116,10 @@ class Style:
             color = False
         elif _forced(environment):
             if terminal:
-                _enable_windows_colors()
+                enable_escape_sequences()
             color = True
         else:
-            color = terminal and environment.get("TERM") != "dumb" and _enable_windows_colors()
+            color = terminal and environment.get("TERM") != "dumb" and enable_escape_sequences()
         width = None
         if terminal:
             columns = shutil.get_terminal_size().columns

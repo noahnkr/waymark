@@ -225,6 +225,10 @@ class ClaudeCodeAdapter(Adapter):
     ignored = ("/.claude/skills/wm-*/", "/.claude/agents/wm-*.md", f"/{SETTINGS}")
     skill_folder = ".claude/skills"
 
+    def detect(self, root: Path) -> bool:
+        """Claude Code is in use where the repository has a ``.claude/`` folder or a CLAUDE.md."""
+        return (root / ".claude").is_dir() or (root / "CLAUDE.md").is_file()
+
     def local_files(
         self, existing: Mapping[str, str | None], folders: Sequence[Path]
     ) -> dict[str, str]:

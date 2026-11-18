@@ -15,7 +15,11 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       wheel, and check `wm --version`.
 - [ ] Note the Claude Code version: `claude --version`.
 - [ ] Make a scratch git repository with a little code in it (a small script and
-      a test are enough), and commit it. Run `wm init`: nothing is staged,
+      a test are enough), and commit it. On Windows, run `wm init` in Windows
+      Terminal: the welcome screen's star grows in, the text appears, and the
+      star twinkles until Enter. Answer the questions: a project, Claude Code
+      selected, and no to the CI workflow. `wm init` lists what it created and
+      ends with the next step. Then: nothing is staged,
       `git status` shows only `waymark/` and `.gitignore` as new, and
       `git config core.hooksPath` prints nothing. `waymark/specs/`,
       `changes/`, `changes/archive/`, `explorations/`, `milestones/` and
@@ -26,6 +30,16 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       run `wm init` there: it sets up this machine and changes nothing in
       `waymark/`. `git status` is clean, and `wm doctor` has no errors. Delete
       the clone.
+
+## Keys in a raw terminal
+
+- [ ] On Windows Terminal, and on one POSIX terminal (macOS Terminal or a Linux
+      terminal), run `wm init` in a fresh scratch repository. At its questions:
+      the up and down arrows move the pointer, Space toggles a tool, Enter
+      answers, and Backspace erases a letter of the atlas name. Run it again and
+      press Esc at a question: `wm init` ends with
+      `Setup canceled. Nothing was written.`, and `git status` shows nothing new.
+      After each run, the terminal shows its cursor and echoes what you type.
 
 ## Session start and kickoff
 

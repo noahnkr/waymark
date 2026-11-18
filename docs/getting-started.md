@@ -27,6 +27,25 @@ In the repository you want to work on (it must be a git repository; run
 wm init
 ```
 
+On a terminal, `wm init` opens with a welcome screen, then asks three questions,
+one screen at a time:
+
+| Question | Default |
+|---|---|
+| Is this repository a project or an atlas? For an atlas, its name. | a project |
+| Which agent tools should `wm` set up? | the tools it finds here, or all of them |
+| Add the CI workflow? | yes |
+
+Use the arrow keys to move, Space to select a tool, and Enter to answer. Esc or
+Ctrl+C cancels: `wm init` says `Setup canceled. Nothing was written.` and
+writes nothing. Where the terminal can't read single keys, the same questions
+come as numbered choices you type at a line.
+
+`wm init --yes` asks nothing, and so do `--atlas <name>` and `--tool <name>`:
+`wm init` then sets up a project (or the named atlas) with every agent tool, or
+the ones you name, and no CI workflow. It also asks nothing when its input or
+output isn't a terminal, as when an agent runs it.
+
 This writes:
 
 - `waymark/`, the record: `config.toml` (the settings, including the `wm`
@@ -35,12 +54,13 @@ This writes:
   agent definitions in `.claude/agents/`, and the hooks in
   `.claude/settings.json` (merged into any settings you already have);
 - a block in `.gitignore` that keeps the agent tool files out of git. They
-  belong to each machine, not to the project.
+  belong to each machine, not to the project;
+- `.github/workflows/waymark.yml`, when you answered yes to the CI workflow.
 
 `wm init` installs no git hooks and changes no git setting.
 
-Commit `waymark/` and `.gitignore`. They are the only files `wm init` wrote
-that `git status` shows. Then run `wm doctor` to check that everything is in place; it
+Commit `waymark/` and `.gitignore`, and the workflow if `wm init` added it.
+They are the only files `wm init` wrote that `git status` shows. Then run `wm doctor` to check that everything is in place; it
 changes nothing.
 
 The block sits between two marker lines. `wm` rewrites what is between them, and
@@ -56,8 +76,8 @@ leaves the rest of `.gitignore` alone. With Claude Code, the block lists:
 Your own skills and agents, `CLAUDE.md` and `AGENTS.md` are not in the block.
 Commit or ignore them as you choose.
 
-Optional: `wm ci` adds a GitHub Actions workflow that installs the pinned `wm`
-and runs `wm check` on every push and pull request. Nothing runs `wm check`
+The CI workflow installs the pinned `wm` and runs `wm check` on every push and
+pull request on GitHub Actions. To add it later, run `wm ci`. Nothing runs `wm check`
 when you commit; CI is where it runs.
 
 Commit messages are checked in Claude Code, by its command hook. Commits you
@@ -65,8 +85,9 @@ make by hand are not checked. See [the gates](concepts.md#the-gates).
 
 ### After cloning a project
 
-Install the `wm` version the project pins, then run `wm init` in the clone. It
-finds the record and sets up this machine: it writes the agent tool files and
+Install the `wm` version the project pins, then run `wm init` in the clone. On
+a terminal it shows the welcome screen and asks nothing. It finds the record
+and sets up this machine: it writes the agent tool files and
 adds the `.gitignore` block if it is missing. It doesn't change anything in
 `waymark/`. Run it again and it says the machine is already set up.
 
