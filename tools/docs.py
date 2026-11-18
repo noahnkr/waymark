@@ -27,7 +27,7 @@ from waymark import __version__, cli
 from waymark.services import lifecycle, setup
 from waymark.views import payloads, render
 from waymark.views.schemas import SCHEMAS
-from waymark.views.style import Style
+from waymark.views.style import MAX_WIDTH, MIN_WIDTH, Style
 
 ROOT = Path(__file__).resolve().parent.parent
 CLI_DOC = ROOT / "docs" / "cli.md"
@@ -116,6 +116,20 @@ def cli_reference() -> str:
         "their payloads are described in the [JSON schema reference](json.md).",
         "",
         "Exit codes: `0` success; `1` refused, or problems found; `2` usage error.",
+        "",
+        "## Environment",
+        "",
+        "- `NO_COLOR`: set to any value, even empty, and the text output carries no color. "
+        "It wins over `FORCE_COLOR`.",
+        "- `FORCE_COLOR`: set to any value but empty or `0`, and the text output carries "
+        "color even when it isn't going to a terminal.",
+        "- `TERM=dumb`: no color on a terminal.",
+        "- JSON output never carries color.",
+        "- On a terminal, prose in `wm show`, `wm inbox`, `wm check` and `wm doctor` wraps "
+        f"to the terminal's width, from {MIN_WIDTH} to {MAX_WIDTH} columns. Output that isn't "
+        "going "
+        "to a terminal is never wrapped.",
+        "- When the output's encoding can't show the glyphs, they're drawn in ASCII.",
     ]
     for full, child in _commands(parser, "wm"):
         lines += ["", f"## {full}", "", child.description or "", "", "```"]

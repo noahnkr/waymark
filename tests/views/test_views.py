@@ -431,7 +431,7 @@ def test_check_payload_counts_errors_and_warnings(project: Workspace) -> None:
     ]
     text = render.to_text(payload, PLAIN)
     assert text.endswith("1 error(s), 2 warning(s).")
-    assert "error: changes/cut-noise: conflict:" in text
+    assert "changes/cut-noise\n  error: conflict:" in text
 
 
 def test_json_is_never_styled_and_survives_any_console(project: Workspace) -> None:

@@ -311,7 +311,7 @@ def test_check_exits_1_when_it_finds_errors(session: Session) -> None:
     session.run("init")
     session.write("specs/Search.md", "# Search\n")
     output = session.run("check", expect=EXIT_REFUSED)
-    assert "error: specs/Search.md: invalid-name:" in output
+    assert "specs/Search.md\n  error: invalid-name:" in output
     assert "1 error(s), 0 warning(s)." in output
 
 

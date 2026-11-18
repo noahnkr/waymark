@@ -1,16 +1,22 @@
 """The read commands through the command line: text, ``--json`` and exit codes."""
 
+import datetime
+import io
 import json
 from pathlib import Path
 
 import pytest
 
 from tests.conftest import git_init
-from tests.support import Workspace, delta, requirement, spec
+from tests.support import Workspace, delta, milestone, requirement, spec
 from tests.views.validator import errors
 from waymark import __version__
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
+from waymark.services import lifecycle
+from waymark.views import payloads, render
+from waymark.views.payloads import Payload
 from waymark.views.schemas import SCHEMAS
+from waymark.views.style import Style
 
 
 class Terminal:
@@ -194,3 +200,205 @@ def test_show_a_resource_in_full(terminal: Terminal) -> None:
     assert "Kind: service" in text
     assert "Serves: billing" in text
     assert "Live." in text
+
+
+def test_scenario_piped_output(terminal: Terminal, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requirement "Color on a terminal": through the command line."""
+    monkeypatch.delenv("FORCE_COLOR", raising=False)
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    assert "\x1b[" not in terminal.run("status")
+
+
+def test_scenario_forced_color(terminal: Terminal, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setenv("FORCE_COLOR", "1")
+    assert "\x1b[" in terminal.run("status")
+    monkeypatch.setenv("NO_COLOR", "1")
+    assert "\x1b[" not in terminal.run("status")
+
+
+def test_scenario_json(terminal: Terminal, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setenv("FORCE_COLOR", "1")
+    assert "\x1b[" not in terminal.run("status", "--json")
+
+
+class LegacyConsole(io.StringIO):
+    """Output whose encoding is cp437, as on a legacy Windows console."""
+
+    @property
+    def encoding(self) -> str:  # type: ignore[override]
+        return "cp437"
+
+
+STYLED = Style(color=True, unicode=True, width=80)
+"""A terminal 80 columns wide that shows color and glyphs."""
+NOW = datetime.datetime.now(datetime.UTC)
+
+
+def test_status_colors_phases_bars_and_roadmaps(terminal: Terminal) -> None:
+    """Item: status in the new style."""
+    terminal.project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- add-order: results in order\n- add-cache: a cache\n"),
+    )
+    record = terminal.project.record()
+    payload = payloads.status(record)
+    phase = payload["changes"][0]["phase"]
+    text = render.to_text(payload, STYLED)
+    assert f"\x1b[2m{phase}" in text
+    assert "\x1b[2m░░░░░░░░░░\x1b[0m" in text
+    assert "faster-search" in text
+    assert "\x1b[2m◇ ◇\x1b[0m" in text
+    lifecycle.accept(terminal.project.root, "add-order", datetime.date(2026, 1, 15))
+    accepted = render.to_text(payloads.status(terminal.project.record()), STYLED)
+    assert "\x1b[36maccepted" in accepted
+
+
+def test_check_groups_findings_by_file_and_colors_the_counts(terminal: Terminal) -> None:
+    terminal.project.write("specs/Other.md", "# Search\n")
+    text = render.to_text(payloads.check(terminal.project.record(), NOW), STYLED)
+    assert "\x1b[1mspecs/Other.md\x1b[0m\n  \x1b[31merror\x1b[0m: invalid-name:" in text
+    assert "\x1b[31m1 error(s)" in text
+    plain = render.to_text(payloads.check(terminal.project.record(), NOW), Style())
+    assert "specs/Other.md\n  error: invalid-name:" in plain
+
+
+def test_inbox_wraps_its_summaries(terminal: Terminal) -> None:
+    lifecycle.accept(terminal.project.root, "add-order", datetime.date(2026, 1, 15))
+    reason = " ".join(["the wording waits on the product owner"] * 6)
+    lifecycle.block(terminal.project.root, "add-order", "1.1", reason)
+    payload = payloads.inbox(terminal.project.record())
+    wrapped = render.to_text(payload, STYLED).split("\n")
+    summary = [line for line in wrapped if "product owner" in line]
+    assert len(summary) > 1
+    assert all(len(line) <= 80 and line.startswith("      ") for line in summary)
+    plain = render.to_text(payload, Style()).split("\n")
+    assert len([line for line in plain if "product owner" in line]) == 1
+
+
+WHY = " ".join(["Long result lists are slow to read and slower to load"] * 6)
+"""One paragraph of about 300 characters."""
+
+
+def long_why(terminal: Terminal) -> Payload:
+    """The add-order change, with its Why one paragraph of about 300 characters."""
+    folder = terminal.project.path("changes/add-order")
+    text = (folder / "proposal.md").read_text(encoding="utf-8")
+    text = text.replace("Long result lists are slow.", WHY)
+    (folder / "proposal.md").write_text(text, encoding="utf-8")
+    assert len(WHY) >= 300
+    return payloads.show(terminal.project.record(), "add-order")
+
+
+def test_scenario_legacy_console(terminal: Terminal) -> None:
+    """Requirement "ASCII on consoles without the glyphs": a change with two items."""
+    style = Style.detect(LegacyConsole(), {})
+    assert not style.unicode
+    payload = payloads.show(terminal.project.record(), "add-order")
+    assert len(payload["items"]) == 2
+    text = render.to_text(payload, style)
+    text.encode("cp437")
+    assert "  |- o 1.1" in text
+    assert "  `- o 1.2" in text
+    assert "  |   Criteria:" in text
+
+
+def test_scenario_narrow_terminal(terminal: Terminal) -> None:
+    """Requirement "Prose wrapped on a terminal": at 80 columns."""
+    text = render.to_text(long_why(terminal), Style(unicode=True, width=80))
+    lines = text.split("\n")
+    start = lines.index("Why") + 1
+    why = []
+    for line in lines[start:]:
+        if not line:
+            break
+        why.append(line)
+    assert len(why) > 1
+    assert all(len(line) <= 80 and line.startswith("  ") for line in why)
+    assert " ".join(line.strip() for line in why) == WHY
+
+
+def test_scenario_piped(terminal: Terminal) -> None:
+    text = render.to_text(long_why(terminal), Style())
+    assert f"\n  {WHY}\n" in text
+
+
+def test_items_are_a_tree_with_records_on_the_stem(terminal: Terminal) -> None:
+    lifecycle.accept(terminal.project.root, "add-order", datetime.date(2026, 1, 15))
+    lifecycle.block(terminal.project.root, "add-order", "1.1", "waiting for the wording")
+    payload = payloads.show(terminal.project.record(), "add-order")
+    text = render.to_text(payload, Style(unicode=True, width=80))
+    assert "  ├─ ○ 1.1" in text
+    assert "  └─ ○ 1.2" in text
+    assert "  │   (blocked)" in text
+    colored = render.to_text(payload, STYLED)
+    assert "\x1b[2m  │   (blocked)" in colored
+
+
+def test_milestone_roadmap_marks(terminal: Terminal) -> None:
+    terminal.project.write(
+        "milestones/faster-search/milestone.md",
+        milestone(
+            "- [add-order](../../changes/add-order/proposal.md): order\n- add-cache: a cache\n"
+        ),
+    )
+    payload = payloads.show(terminal.project.record(), "faster-search")
+    text = render.to_text(payload, Style(unicode=True))
+    assert "  ◇ add-order" in text
+    assert "  ○ add-cache" in text
+    ascii_text = render.to_text(payload, Style())
+    assert "  o add-order" in ascii_text
+
+
+LONG_CRITERIA = (
+    "  - Criteria:\n"
+    "    - " + " ".join(["the first criterion holds"] * 5) + "\n"
+    "    - " + " ".join(["the second criterion holds"] * 5) + "\n"
+    "  - Verify: a test\n"
+)
+
+
+def test_every_criterion_hangs_under_its_bullet(terminal: Terminal) -> None:
+    """Item: the first bullet starts after its label and wraps like the rest."""
+    folder = terminal.project.path("changes/add-order")
+    tasks = (folder / "tasks.md").read_text(encoding="utf-8")
+    head, rest = tasks.split("- [ ] 1.1", 1)
+    title, after = rest.split("\n", 1)
+    after = after[after.index("- [ ] 1.2") :]
+    (folder / "tasks.md").write_text(
+        f"{head}- [ ] 1.1{title}\n{LONG_CRITERIA}{after}", encoding="utf-8"
+    )
+    payload = payloads.show(terminal.project.record(), "add-order")
+    lines = render.to_text(payload, Style(unicode=True, width=80)).split("\n")
+    start = lines.index("  │   Criteria:")
+    first, second = [i for i, line in enumerate(lines) if line.startswith("  │     - the ")]
+    assert first == start + 1
+    for index in (first, second):
+        continuation = lines[index + 1]
+        assert continuation.startswith("  │       ")
+        assert continuation[len("  │       ")].isalpha()
+        assert all(len(line) <= 80 for line in lines[index : index + 2])
+    assert "  │   Verify: a test" in lines
+    plain = render.to_text(payload, Style()).split("\n")
+    assert "  │   Criteria:" not in plain
+    assert "  |   Criteria:" in plain
+    assert "  |   Verify: a test" in plain
+
+
+def test_check_wraps_its_messages_on_a_terminal(terminal: Terminal) -> None:
+    """Item: wm check wraps each finding's message under where it starts."""
+    terminal.project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- [add-order](../../changes/add-order/proposal.md): order\n"),
+    )
+    payload = payloads.check(terminal.project.record(), NOW)
+    lines = render.to_text(payload, Style(width=80)).split("\n")
+    head = next(i for i, line in enumerate(lines) if "milestone-missing: " in line)
+    hang = lines[head].index("milestone-missing: ") + len("milestone-missing: ")
+    assert lines[head + 1].startswith(" " * hang)
+    assert lines[head + 1][hang] != " "
+    assert all(len(line) <= 80 for line in lines if " " in line.strip())
+    plain = render.to_text(payload, Style()).split("\n")
+    finding = next(line for line in plain if "milestone-missing: " in line)
+    assert finding.endswith("or remove the link from the roadmap.")

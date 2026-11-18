@@ -2,6 +2,23 @@
 
 All notable changes to Waymark, one entry per release.
 
+## [Unreleased]
+
+- **A new look in the terminal.** The views use one palette of the 16 standard
+  colors, by role: cyan for section rules and commands, green for done, yellow for
+  what needs you and for warnings, red for errors, dim for dates and records, bold
+  for names. `wm status` colors each change's phase and progress bar and marks each
+  milestone's roadmap lines `◆` archived and `◇` open. `wm show` draws a change's
+  items as a tree and marks a milestone's roadmap. `wm check` groups its findings
+  under each file. `wm doctor` lines its checks up in one column. Each glyph has an
+  ASCII stand-in for consoles that can't show it.
+- **Prose wraps on a terminal.** `wm show`, `wm inbox`, `wm check` and
+  `wm doctor` wrap their prose to the terminal's width, from 60 to 100 columns.
+  Output that isn't going to a terminal is not wrapped, so agents read whole lines.
+- **`FORCE_COLOR`.** Set to any value but empty or `0`, it turns color on when the
+  output isn't a terminal. `NO_COLOR` still turns color off, and wins. JSON output
+  never carries color.
+
 ## [0.3.0] - 2026-11-18
 
 Context beyond the code: resources, a spec's Background and one list of project

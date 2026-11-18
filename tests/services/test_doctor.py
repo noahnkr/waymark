@@ -266,3 +266,19 @@ def test_doctor_has_no_git_hooks_check(tmp_path: Path) -> None:
     names = [check.name for check in doctor(tmp_path).checks]
     assert not any("hooks" in name for name in names), names
     assert all("git-hooks" not in check.message for check in doctor(tmp_path).checks)
+
+
+def test_doctor_pads_names_and_wraps_messages(tmp_path: Path) -> None:
+    """Item: doctor in the new style, at a fixed width of 80."""
+    payload = payloads.doctor(doctor(tmp_path))
+    lines = render.to_text(payload, Style(unicode=True, width=80)).split("\n")
+    heads = [line for line in lines if line[:1] in ("✓", "!", "✗")]
+    assert heads
+    width = max(len(check["name"]) for check in payload["checks"]) + 1
+    column = 2 + width + 1
+    for line in heads:
+        assert line[column - 1] == " "
+        assert line[column] != " "
+    assert all(len(line) <= 80 for line in lines if " " in line.strip())
+    colored = render.to_text(payload, Style(color=True, unicode=True, width=80))
+    assert "\x1b[" in colored

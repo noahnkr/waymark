@@ -1,25 +1,45 @@
-"""A small styling helper: color, symbols, progress bars and section rules.
+"""A small styling helper: color by role, symbols, bars, rules and wrapping.
 
-Output is plain when it isn't going to a terminal or when ``NO_COLOR`` is set,
-and falls back to ASCII symbols when the console can't show the glyphs, as on a
-legacy Windows console.
+Output carries color on a terminal, or when ``FORCE_COLOR`` asks for it, and never
+when ``NO_COLOR`` is set. It falls back to ASCII symbols when the console can't
+show the glyphs, as on a legacy Windows console, and wraps prose only on a
+terminal, so piped output keeps whole lines.
 """
 
+import re
+import shutil
 import sys
+import textwrap
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TextIO
 
 RESET = "\x1b[0m"
-BOLD = "1"
-DIM = "2"
-RED = "31"
-GREEN = "32"
-YELLOW = "33"
-CYAN = "36"
+
+ACCENT = "accent"
+OK = "ok"
+ATTENTION = "attention"
+DANGER = "danger"
+MUTED = "muted"
+STRONG = "strong"
+
+_ROLES = {
+    ACCENT: "36",  # cyan: section rules, headings, commands
+    OK: "32",  # green: done and healthy
+    ATTENTION: "33",  # yellow: what needs the human, warnings
+    DANGER: "31",  # red: errors, blockers, critical findings
+    MUTED: "2",  # dim: dates, owners, paths, records
+    STRONG: "1",  # bold: names
+}
+"""The palette: each role and the one of the 16 standard colors it is drawn in."""
+
+_LIST_MARKER = re.compile(r"(?:[-*•]|\d+\.)\s+")
+"""The start of a list line, whose wrapped lines hang under its text."""
 
 BAR_WIDTH = 10
 RULE_WIDTH = 72
+MIN_WIDTH = 60
+MAX_WIDTH = 100
 
 _GLYPHS = {
     "done": ("✓", "x"),
@@ -32,6 +52,12 @@ _GLYPHS = {
     "full": ("█", "#"),
     "empty": ("░", "."),
     "rule": ("─", "-"),
+    "branch": ("├─", "|-"),
+    "last": ("└─", "`-"),
+    "stem": ("│", "|"),
+    "milestone_done": ("◆", "*"),
+    "milestone_open": ("◇", "o"),
+    "star": ("✦", "*"),
 }
 
 
@@ -60,27 +86,50 @@ def _enable_windows_colors() -> bool:
     return enabled
 
 
+def _forced(environment: Mapping[str, str]) -> bool:
+    """Whether ``FORCE_COLOR`` asks for color: set, and not empty or ``0``."""
+    return environment.get("FORCE_COLOR", "") not in ("", "0")
+
+
 @dataclass(frozen=True)
 class Style:
-    """How to draw: with or without color, with glyphs or ASCII."""
+    """How to draw: with or without color, with glyphs or ASCII, wrapped or not.
+
+    ``width`` is the column prose wraps at, or ``None`` to leave lines whole.
+    """
 
     color: bool = False
     unicode: bool = False
+    width: int | None = None
 
     @classmethod
     def detect(cls, stream: TextIO, environment: Mapping[str, str]) -> "Style":
-        """Choose a style for a stream from what it is and what the environment asks for."""
-        terminal = bool(getattr(stream, "isatty", lambda: False)())
-        wants_color = (
-            terminal and "NO_COLOR" not in environment and environment.get("TERM") != "dumb"
-        )
-        return cls(color=wants_color and _enable_windows_colors(), unicode=_can_encode(stream))
+        """Choose a style for a stream from what it is and what the environment asks for.
 
-    def paint(self, text: str, *codes: str) -> str:
-        """Text in the given colors, or unchanged when color is off."""
-        if not self.color or not codes or not text:
+        ``NO_COLOR`` wins over everything; ``FORCE_COLOR`` turns color on away from
+        a terminal; otherwise only a terminal whose ``TERM`` isn't ``dumb`` gets
+        color. Only a terminal gets a width: forcing color doesn't force wrapping.
+        """
+        terminal = bool(getattr(stream, "isatty", lambda: False)())
+        if "NO_COLOR" in environment:
+            color = False
+        elif _forced(environment):
+            if terminal:
+                _enable_windows_colors()
+            color = True
+        else:
+            color = terminal and environment.get("TERM") != "dumb" and _enable_windows_colors()
+        width = None
+        if terminal:
+            columns = shutil.get_terminal_size().columns
+            width = max(MIN_WIDTH, min(MAX_WIDTH, columns))
+        return cls(color=color, unicode=_can_encode(stream), width=width)
+
+    def paint(self, text: str, *roles: str) -> str:
+        """Text drawn in the given roles, or unchanged when color is off."""
+        if not self.color or not roles or not text:
             return text
-        return f"\x1b[{';'.join(codes)}m{text}{RESET}"
+        return f"\x1b[{';'.join(_ROLES[role] for role in roles)}m{text}{RESET}"
 
     def symbol(self, name: str) -> str:
         """A named symbol, as a glyph or as its ASCII stand-in."""
@@ -92,11 +141,45 @@ class Style:
         filled = 0 if total <= 0 else min(width, done * width // total)
         if total > 0 and done >= total:
             filled = width
-        bar = self.symbol("full") * filled + self.symbol("empty") * (width - filled)
+        bar = self.paint(self.symbol("full") * filled, OK) + self.paint(
+            self.symbol("empty") * (width - filled), MUTED
+        )
         return bar if self.unicode else f"[{bar}]"
 
     def rule(self, title: str, width: int = RULE_WIDTH) -> str:
         """A section rule with a title."""
         line = self.symbol("rule")
         head = f"{line * 2} {title} "
-        return self.paint(head + line * max(2, width - len(head)), BOLD)
+        return self.paint(head + line * max(2, width - len(head)), ACCENT)
+
+    def wrap(self, text: str, indent: str = "") -> str:
+        """Prose with ``indent`` before each line, wrapped at word boundaries to ``width``.
+
+        Each line of ``text`` is a paragraph, wrapped on its own with its indent on
+        every line; a list line (``- ``, ``* ``, ``• `` or ``1. ``) hangs its
+        continuation lines under its text. A word longer than the width is left
+        whole, and blank lines stay blank. With no width the paragraphs are only
+        indented, one line each.
+        """
+        lines: list[str] = []
+        for paragraph in text.split("\n"):
+            if not paragraph.strip():
+                lines.append("")
+                continue
+            if self.width is None:
+                lines.append(indent + paragraph)
+                continue
+            own = paragraph[: len(paragraph) - len(paragraph.lstrip())]
+            marker = _LIST_MARKER.match(paragraph.lstrip())
+            hang = " " * len(marker.group(0)) if marker else ""
+            lines.extend(
+                textwrap.wrap(
+                    paragraph.strip(),
+                    self.width,
+                    initial_indent=indent + own,
+                    subsequent_indent=indent + own + hang,
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+            )
+        return "\n".join(lines)
