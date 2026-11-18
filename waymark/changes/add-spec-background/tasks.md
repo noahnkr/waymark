@@ -39,3 +39,6 @@
 
 - (accepted) 2026-11-18 fingerprint b111aa8b43d96dd8 items 1.1 1.2 2.1 2.2 by Noah Roberts
 - (accepted) 2026-11-18 fingerprint 0398f7683dce131c items 1.1 1.2 2.1 2.2 by Noah Roberts
+- (review) 2026-11-18 pass covers 1.1 1.2 2.1 2.2 by wm-reviewer: every criterion of 1.1, 1.2, 2.1 and 2.2 holds, all five scenarios have passing tests, and the tests, wm check, the docs check, codespell, ruff and mypy all pass
+  - suggestion `src/waymark/views/render.py: _spec_lines`: the Background text is not fenced as the requirements and deltas are, so a Background holding `##` headings would blend into the pack's own headings
+  - suggestion `tests/record/test_deltas.py`: the archive scenarios are tested through merge_delta and delta_is_merged, not through a full archive or sync run
