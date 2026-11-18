@@ -106,12 +106,14 @@ a change adds a delta for a new area.
 |---|---|
 | `# <Title>` | The spec's name. In an atlas, an optional `Repos: api, web` line follows. |
 | `## Purpose` | What the area is for. |
+| `## Background` | Optional. Facts about the area that aren't requirements and can't be found in the code. It changes only through a delta. |
 | `## Requirements` | Every requirement, each under `### Requirement: <name>`. The name is the key, matched ignoring case and spacing. |
 | Requirement | A statement that says `SHALL`, then one or more `#### Scenario: <name>` blocks. |
 | Scenario | `- GIVEN` a starting state (optional), `- WHEN` one action, `- THEN` an outcome someone else can check. |
 
 **Checks:** `requirement-without-shall`, `requirement-without-scenario`,
-`scenario-incomplete`, `scenario-format`, `duplicate-requirement`, `unknown-repo`.
+`scenario-incomplete`, `scenario-format`, `duplicate-requirement`, `unknown-repo`,
+`empty-section` (an empty Purpose or Background).
 
 ```markdown
 ### Requirement: Result limit
@@ -170,6 +172,7 @@ the living spec, renames first.
 |---|---|
 | `# <Spec title>` | The spec it edits; a `Repos:` line may follow in an atlas. |
 | `## Purpose` | Only when the delta creates the spec, or changes what it is for. |
+| `## Background` | Only when the change sets the spec's Background. At archive or sync it replaces the spec's Background whole, or is added before `## Requirements` when the spec has none. |
 | `## ADDED Requirements` | New requirements, each with its scenarios. |
 | `## MODIFIED Requirements` | Each written out in full as it should read afterwards, under its heading in the spec, or its new name when also renamed. |
 | `## REMOVED Requirements` | Each heading with a `Reason:` line. |
@@ -181,7 +184,8 @@ fingerprint covers the living text of every requirement a delta touches, so
 another change archiving into the same requirement withdraws this one's acceptance.
 
 **Checks:** `empty-delta`, `delta-without-purpose`, `removal-without-reason`,
-`malformed-rename`, `delta-requirement-missing`, `delta-requirement-exists`, `old-layout`.
+`malformed-rename`, `delta-requirement-missing`, `delta-requirement-exists`, `old-layout`,
+`empty-section` (an empty Purpose or Background).
 
 ## Design
 

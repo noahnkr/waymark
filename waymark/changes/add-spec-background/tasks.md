@@ -28,7 +28,7 @@
   - Verify:
     - a test that the specs step's guidance holds the rule, beside the existing step-guidance tests, and the existing template-example tests pass
     - `uv run --no-sync pytest tests/test_skills.py tests/adapters` passes
-- [ ] 2.2 Docs for spec background
+- [x] 2.2 Docs for spec background
   - Criteria:
     - `docs/record.md` gives Background among a spec's and a delta's sections, and says a delta's Background replaces the spec's at archive
     - `docs/concepts.md` gives the four places a fact goes
