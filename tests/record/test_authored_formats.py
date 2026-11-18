@@ -285,3 +285,16 @@ def test_scenario_tag_added_after_acceptance(workspace: Workspace) -> None:
         "  - Criteria: rebuilt\n  - Build: delegate\n",
     )
     assert workspace.change_state().acceptance is AcceptanceState.WITHDRAWN
+
+
+def test_proposal_facts_include_the_milestone_line() -> None:
+    """Requirement "Proposal facts as a list": `- Milestone:` is one of the facts."""
+    text = proposal().replace(
+        "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+    )
+    parsed = parse_proposal(document(text, "changes/add-limit/proposal.md"))
+    assert (parsed.milestone, parsed.milestone_line) == ("faster-search", 4)
+    assert parsed.problems == ()
+    bare = text.replace("- Milestone: faster-search", "Milestone: faster-search")
+    assert parse_proposal(document(bare, "changes/add-limit/proposal.md")).milestone is None
+    assert parse_proposal(document(proposal(), "changes/add-limit/proposal.md")).milestone is None

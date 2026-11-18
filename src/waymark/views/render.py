@@ -479,6 +479,11 @@ def context_delegated(payload: Payload, _: Style) -> str:
         lines += ["## Your item", "", *_pack_item(item)]
     if payload["context"]:
         lines += ["", "## Project context", "", payload["context"]]
+    if payload["milestone"]:
+        milestone = payload["milestone"]
+        lines += ["", "## Milestone", "", f"This change works toward `{milestone['name']}`."]
+        lines += ["", "### Goal", "", milestone["goal"], "", "### Non-goals", ""]
+        lines.append(milestone["non_goals"])
     if payload["rules"]:
         lines += ["", "## Rules for this step", "", payload["rules"]]
     if payload.get("proposal"):

@@ -123,9 +123,13 @@ def _hook(args: argparse.Namespace) -> int:
 
 def _new(args: argparse.Namespace) -> int:
     if args.kind == "change":
-        return _report(setup.create_change(_here(), args.name, short=args.short, owner=args.owner))
-    if args.short or args.owner:
-        raise Refusal("--short and --owner apply to a change only.")
+        return _report(
+            setup.create_change(
+                _here(), args.name, short=args.short, owner=args.owner, milestone=args.milestone
+            )
+        )
+    if args.short or args.owner or args.milestone:
+        raise Refusal("--short, --owner and --milestone apply to a change only.")
     if args.kind == "milestone":
         return _report(setup.create_milestone(_here(), args.name))
     return _report(setup.create_exploration(_here(), args.name))
@@ -408,6 +412,11 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     new.add_argument("name", help="a kebab-case name, for example add-search-limit")
     new.add_argument("--short", action="store_true", help="put a change on the short path")
     new.add_argument("--owner", metavar="NAME", help="a change's owner (default: your git name)")
+    new.add_argument(
+        "--milestone",
+        metavar="MILESTONE",
+        help="the milestone a change belongs to; links it from the milestone's roadmap",
+    )
     new.set_defaults(handler=_new)
 
     summary = "Accept a change, so its items can be applied. For the human to run."

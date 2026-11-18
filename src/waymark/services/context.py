@@ -20,6 +20,7 @@ from typing import Any
 from waymark.record.atlas import Location
 from waymark.record.changes import Change
 from waymark.record.links import LinkChecker
+from waymark.record.milestones import GOAL, NON_GOALS
 from waymark.record.record import Record
 from waymark.record.records import RecordKind
 from waymark.record.state import (
@@ -262,6 +263,7 @@ def _implement_pack(record: Record, change_name: str, number: str) -> dict[str, 
         "change": change.name,
         "item": _item(record, change, item),
         "context": charter.context if charter else "",
+        "milestone": _milestone(record, change),
         "rules": charter.rules.get(Step.APPLY, "") if charter else "",
         "proposal": dict(proposal.sections) if proposal else None,
         "deltas": _deltas(change),
@@ -295,11 +297,26 @@ def _review_pack(record: Record, change_name: str) -> dict[str, Any]:
         "reviews": [_review(r, numbers) for r in records if r.kind is RecordKind.REVIEW],
         "resolutions": [r.text for r in records if r.kind is RecordKind.RESOLVED],
         "context": charter.context if charter else "",
+        "milestone": _milestone(record, change),
         "rules": charter.rules.get(Step.REVIEW, "") if charter else "",
         "deltas": _deltas(change),
         "design": _text(change.design.doc) if change.design else None,
         "severity_rubric": list(SEVERITY_RUBRIC),
         "ends_with": _ENDINGS[REVIEW],
+    }
+
+
+def _milestone(record: Record, change: Change) -> dict[str, str] | None:
+    """The milestone the change names, with its Goal and Non-goals; None without one."""
+    name = change.proposal.milestone if change.proposal else None
+    milestone = record.milestones.get(name) if name else None
+    if milestone is None or milestone.goal is None:
+        return None
+    sections = milestone.goal.sections
+    return {
+        "name": milestone.name,
+        "goal": sections.get(GOAL, ""),
+        "non_goals": sections.get(NON_GOALS, ""),
     }
 
 

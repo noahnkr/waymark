@@ -1,4 +1,6 @@
-"""Proposals: why a change is wanted and what it changes, plus its owner, path and review level.
+"""Proposals: why a change is wanted and what it changes.
+
+A proposal also names its owner, its milestone, its path and its review level.
 
 The acceptance and the sync are records in the task list's Log.
 """
@@ -19,6 +21,7 @@ from waymark.record.terms import ReviewLevel
 from waymark.record.text import Document
 
 OWNER = "Owner"
+MILESTONE = "Milestone"
 PATH = "Path"
 REVIEW = "Review"
 SHORT = "short"
@@ -76,6 +79,10 @@ class Proposal:
     it neither says ``none`` nor names a spec in backticks."""
     outcome: str | None
     problems: tuple[Problem, ...]
+    milestone: str | None = None
+    """The milestone the ``- Milestone:`` line names, by its folder name; None without one."""
+    milestone_line: int | None = None
+    """The 1-based line of the ``- Milestone:`` line, for messages."""
 
     @property
     def no_spec_changes(self) -> bool:
@@ -109,7 +116,7 @@ def parse_proposal(doc: Document) -> Proposal:
     """Read a proposal."""
     problems: list[Problem] = []
     title = require_title(doc, problems)
-    every_fact = parse_facts(doc, {OWNER, PATH, REVIEW}, problems, prose=True)
+    every_fact = parse_facts(doc, {OWNER, MILESTONE, PATH, REVIEW}, problems, prose=True)
     facts = {key: fact for key, fact in every_fact.items() if fact.bullet}
 
     owner = facts[OWNER].value if OWNER in facts else ""
@@ -166,6 +173,7 @@ def parse_proposal(doc: Document) -> Proposal:
         text = impact[SPECS]
         names = tuple(_SPEC_NAME.findall(text))
         impact_specs = () if text.casefold() == NONE else names or None
+    milestone = facts.get(MILESTONE)
     return Proposal(
         doc=doc,
         title=title,
@@ -177,6 +185,8 @@ def parse_proposal(doc: Document) -> Proposal:
         impact_specs=impact_specs,
         outcome=outcome or None,
         problems=tuple(problems),
+        milestone=(milestone.value or None) if milestone else None,
+        milestone_line=milestone.index + 1 if milestone else None,
     )
 
 

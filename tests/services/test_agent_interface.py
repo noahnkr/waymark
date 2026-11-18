@@ -15,6 +15,7 @@ from tests.support import (
     TASKS,
     Workspace,
     delta,
+    milestone,
     proposal,
     requirement,
     spec,
@@ -769,3 +770,43 @@ def test_reviewer_pack_holds_every_item_for_a_first_review(project: Workspace) -
     assert built["uncovered_only"] is False
     assert [item["number"] for item in built["items"]] == ["1.1", "1.2"]
     assert "Review the whole change at level independent" in render.to_text(built, PLAIN)
+
+
+def member_of_faster_search(project: Workspace) -> None:
+    """An independently reviewed change that belongs to the milestone faster-search."""
+    project.change(
+        proposal_text=INDEPENDENT.replace(
+            "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+        )
+    )
+    project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"),
+    )
+    lifecycle.accept(project.root, NAME, DAY)
+
+
+def test_scenario_member_changes_packs(project: Workspace) -> None:
+    """Requirement "Milestone in the context packs"."""
+    member_of_faster_search(project)
+    expected = {"name": "faster-search", "goal": "Answers in a blink.", "non_goals": "Ranking."}
+    built = pack(project, "implement")
+    assert built["milestone"] == expected
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    reviewed = pack(project, "review")
+    assert reviewed["milestone"] == expected
+    for payload in (built, reviewed):
+        text = render.to_text(payload, PLAIN)
+        assert "## Milestone\n\nThis change works toward `faster-search`." in text
+        assert "### Goal\n\nAnswers in a blink." in text
+        assert "### Non-goals\n\nRanking." in text
+        assert "P95 is low" not in text
+        assert "cap the results" not in text
+
+
+def test_scenario_change_without_a_milestone(project: Workspace) -> None:
+    accepted(project)
+    built = pack(project, "implement")
+    assert built["milestone"] is None
+    assert "## Milestone" not in render.to_text(built, PLAIN)

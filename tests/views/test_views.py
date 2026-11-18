@@ -13,6 +13,7 @@ from waymark import __version__
 from waymark.record.terms import Verdict
 from waymark.services import lifecycle
 from waymark.services.common import Refusal
+from waymark.services.context import context_pack
 from waymark.services.instructions import instructions
 from waymark.views import payloads, render
 from waymark.views.payloads import VERSIONS
@@ -46,6 +47,9 @@ def busy(project: Workspace) -> Workspace:
     )
     project.change(
         "add-order",
+        proposal_text=proposal().replace(
+            "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+        ),
         deltas={"search": delta(added=(requirement("Result order"),))},
         tasks=HEAD
         + "- [ ] 1.1 Sort it\n  - Verify: a test\n  - Criteria: newest first\n"
@@ -523,3 +527,13 @@ def test_show_change_gives_what_a_review_of_added_items_covers(project: Workspac
     assert [record["covers"] for record in payload["log"]] == [[], ["1.1", "1.2"], ["1.3"]]
     text = render.to_text(payload, PLAIN)
     assert "(self-review) 2026-01-15 covers 1.3 by Sam Doe: named well" in text
+
+
+def test_implement_pack_of_a_member_change_validates_and_shows_its_milestone(
+    project: Workspace,
+) -> None:
+    payload = valid(context_pack(busy(project).record(), "implement", "add-order", "1.4"))
+    assert payload["milestone"]["name"] == "faster-search"
+    text = render.to_text(payload, PLAIN)
+    assert "## Milestone" in text
+    assert text.index("## Project context") < text.index("## Milestone") < text.index("## Deltas")

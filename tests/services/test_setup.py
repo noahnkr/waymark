@@ -733,3 +733,87 @@ def test_every_template_is_written_in_the_current_layouts(tmp_path: Path) -> Non
     assert record.explorations["paging"].status == "open"
     charter = (tmp_path / "waymark" / "charter.md").read_text(encoding="utf-8")
     assert "### Apply\n" in charter
+
+
+MILESTONE_FILE = "milestones/faster-search/milestone.md"
+
+
+def faster_search(roadmap: str, *, newline: str = "\n") -> str:
+    text = (
+        "# Faster search\n\n## Goal\n\nFast.\n\n## Done when\n\n- fast\n\n"
+        f"## Non-goals\n\n- caching\n\n## Roadmap\n\n{roadmap}"
+    )
+    return text.replace("\n", newline)
+
+
+def test_scenario_planned_roadmap_line(project: Workspace) -> None:
+    """Requirement "New change in a milestone": a planned line becomes a link."""
+    project.write(MILESTONE_FILE, faster_search("- add-limit: cap the results\n- add-cache\n"))
+    done = setup.create_change(project.root, "add-limit", milestone="faster-search")
+    assert 'linked from the roadmap of "faster-search"' in done.message
+    proposal_text = project.read("changes/add-limit/proposal.md")
+    assert "- Owner: Sam Doe\n- Milestone: faster-search\n\n" in proposal_text
+    assert project.read(MILESTONE_FILE).endswith(
+        "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"
+        "- add-cache\n"
+    )
+    found = check.check(project.root, datetime.datetime(2026, 3, 1, tzinfo=datetime.UTC))
+    assert [f.code for f in found if "milestone" in f.code] == []
+
+
+def test_a_planned_line_with_only_the_name_becomes_a_link(project: Workspace) -> None:
+    project.write(MILESTONE_FILE, faster_search("- [ ] add-limit\n"))
+    setup.create_change(project.root, "add-limit", milestone="faster-search")
+    assert project.read(MILESTONE_FILE).endswith(
+        "- [ ] [add-limit](../../changes/add-limit/proposal.md)\n"
+    )
+
+
+def test_scenario_change_not_on_the_roadmap(project: Workspace) -> None:
+    project.write(MILESTONE_FILE, faster_search("- add-limits-v2: not this one\n\n"))
+    setup.create_change(project.root, "add-limit", milestone="faster-search")
+    assert project.read(MILESTONE_FILE).endswith(
+        "- add-limits-v2: not this one\n- [add-limit](../../changes/add-limit/proposal.md)\n\n"
+    )
+
+
+def test_a_change_joins_an_empty_roadmap(project: Workspace) -> None:
+    project.write(MILESTONE_FILE, faster_search(""))
+    setup.create_change(project.root, "add-limit", milestone="faster-search")
+    assert project.read(MILESTONE_FILE).endswith(
+        "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md)\n"
+    )
+
+
+def test_the_milestone_keeps_its_line_endings(project: Workspace) -> None:
+    project.write(MILESTONE_FILE, faster_search("- add-limit: cap\n", newline="\r\n"))
+    setup.create_change(project.root, "add-limit", milestone="faster-search", short=True)
+    text = project.read(MILESTONE_FILE)
+    assert "\n" not in text.replace("\r\n", "")
+    assert text.endswith("- [add-limit](../../changes/add-limit/proposal.md): cap\r\n")
+    proposal_text = project.read("changes/add-limit/proposal.md")
+    assert "- Milestone: faster-search\n- Path: short\n" in proposal_text
+
+
+def test_scenario_unknown_milestone_refused(project: Workspace) -> None:
+    project.write(MILESTONE_FILE, faster_search(""))
+    before = project.read(MILESTONE_FILE)
+    with pytest.raises(Refusal) as refusal:
+        setup.create_change(project.root, "add-limit", milestone="no-such-milestone")
+    assert '"no-such-milestone"' in str(refusal.value)
+    assert "faster-search" in str(refusal.value)
+    assert not project.path("changes/add-limit").exists()
+    assert project.read(MILESTONE_FILE) == before
+
+
+def test_a_change_joins_a_new_milestone_from_the_template(project: Workspace) -> None:
+    setup.create_milestone(project.root, "faster-search")
+    setup.create_change(project.root, "add-limit", milestone="faster-search")
+    record = load_record(find_project(project.root))
+    roadmap = record.milestones["faster-search"].roadmap
+    assert roadmap is not None
+    assert [entry.target for entry in roadmap.entries] == ["../../changes/add-limit/proposal.md"]
+    problems = record.milestones["faster-search"].problems
+    assert {problem.code for problem in problems} <= {"empty-section"}
+    found = check.check(project.root, datetime.datetime(2026, 3, 1, tzinfo=datetime.UTC))
+    assert [f.code for f in found if "milestone" in f.code] == []

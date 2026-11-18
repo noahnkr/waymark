@@ -7,7 +7,7 @@ The layouts of what humans and the planner write in the record: the proposal's f
 ## Requirements
 
 ### Requirement: Proposal facts as a list
-A proposal's facts SHALL be bullet lines between its title and its first section: `- Owner: <name>`, and optionally `- Review: <level>` and `- Path: short`. `wm new change` SHALL write them so. A fact written without the bullet SHALL NOT be read as a fact.
+A proposal's facts SHALL be bullet lines between its title and its first section: `- Owner: <name>`, and optionally `- Milestone: <name>`, `- Review: <level>` and `- Path: short`. `wm new change` SHALL write them so. A fact written without the bullet SHALL NOT be read as a fact.
 
 #### Scenario: New change
 - GIVEN a project with git user Ada
@@ -160,23 +160,6 @@ Each template `wm` writes for a proposal, delta, design, task list, charter or e
 - GIVEN an archived change whose proposal's Impact is free text and whose design has decisions without `- Status:`
 - WHEN `wm check` runs
 - THEN it reports no problem in that change
-
-### Requirement: Milestone as one file
-A milestone SHALL be a folder holding one file, `milestone.md`: a title, then the sections `## Goal`, `## Done when`, `## Non-goals` and `## Roadmap`, in that order. `wm new milestone` SHALL write it so. The list lines under `## Roadmap`, and only those, SHALL be the milestone's roadmap entries. `wm check` SHALL report any other file in an active milestone's folder as an error that names `milestone.md`.
-
-#### Scenario: New milestone
-- WHEN the planner runs `wm new milestone faster-search`
-- THEN the folder `milestones/faster-search` holds only `milestone.md`, with the four sections in order
-
-#### Scenario: Other file in a milestone
-- GIVEN an active milestone folder holding `milestone.md` and `notes.md`
-- WHEN `wm check` runs
-- THEN it reports an error on `notes.md` that names `milestone.md`
-
-#### Scenario: Roadmap ticked at archive
-- GIVEN a milestone whose `## Roadmap` links to the change `add-limit`, and whose `## Done when` holds a bullet
-- WHEN `add-limit` is archived
-- THEN the roadmap line links to the archived change and `wm status` counts it as archived, and the `## Done when` bullet is unchanged and isn't counted as a roadmap entry
 
 ### Requirement: Items say how they are done
 Every task item of an active change SHALL have a `- Criteria:` line and a `- Verify:` line. `wm check` SHALL report an item without one of them, naming the line it lacks.

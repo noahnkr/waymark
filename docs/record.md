@@ -125,13 +125,14 @@ A search SHALL return at most fifty results, best matches first.
 ## Proposal
 
 `changes/<change>/proposal.md`. Why a change is wanted and what it changes.
-Created by `wm new change <name>` (with `--short` for the short path), drafted by
+Created by `wm new change <name>` (with `--short` for the short path, and
+`--milestone <milestone>` for a change in a [milestone](#milestone)), drafted by
 `/wm-propose` and revised by `/wm-update`. Acceptance covers everything in it
 except the Outcome.
 
 | Part | What it holds |
 |---|---|
-| Facts under the title | `- Owner: <name>` (from git), and optionally `- Review: self\|independent\|none` and `- Path: short`. |
+| Facts under the title | `- Owner: <name>` (from git), and optionally `- Milestone: <name>`, `- Review: self\|independent\|none` and `- Path: short`. |
 | `## Why` | The problem and why now, not the solution. |
 | `## What changes` | What will be different once the change is archived. |
 | `## Non-goals` | What a reader might expect and won't get. |
@@ -267,8 +268,27 @@ line and rewrites the link, and `wm status` counts the progress. `wm close
 <milestone>` moves it to `milestones/archive/YYYY-MM-DD-<name>/` once every
 linked change is archived, and rewrites links to it.
 
+A change belongs to a milestone when its proposal has a `- Milestone: <name>`
+line, naming the milestone's folder, and the milestone's roadmap links the
+proposal. A change without the line belongs to no milestone.
+
+- **Creating one:** `wm new change add-cache --milestone faster-search` writes
+  `- Milestone: faster-search` in the proposal. In the roadmap, it turns the
+  plain line `- add-cache: cache hot queries` into a link to
+  `../../changes/add-cache/proposal.md` that keeps the text after the name, or
+  adds a linked line at the end when there is no such line. A milestone that
+  isn't active is refused.
+- **Its agents:** the implement and review context packs of a member change
+  carry the milestone's name, Goal and Non-goals, not its Done when or roadmap.
+
 **Checks:** `milestone-file` (a leftover `goal.md` or `roadmap.md`),
-`missing-file`, `section-order`, `missing-section`.
+`missing-file`, `section-order`, `missing-section`. On an active change's
+proposal: `unknown-milestone` (no active milestone has that name),
+`milestone-unlinked` (the named milestone's roadmap doesn't link the change),
+`milestone-missing` (a roadmap links the change, and the proposal names no
+milestone), `milestone-other` (the proposal names one milestone, and another's
+roadmap links it), `milestone-twice` (more than one roadmap links it). Archived
+changes aren't checked against roadmaps.
 
 ## Exploration
 

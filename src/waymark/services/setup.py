@@ -9,11 +9,11 @@ from waymark.record.changes import PROPOSAL_FILE
 from waymark.record.charter import CHARTER_FILE
 from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.files import RecordFiles
-from waymark.record.milestones import MILESTONE_FILE
+from waymark.record.milestones import MILESTONE_FILE, link_change
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.pointer import POINTER_FILE, is_pointer, parse_pointer
 from waymark.record.project import RECORD_DIR
-from waymark.record.proposal import OWNER, PATH, SHORT
+from waymark.record.proposal import MILESTONE, OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
 from waymark.record.store import Transaction
 from waymark.services import integration
@@ -136,23 +136,47 @@ def _require_new_name(name: str, kind: str, taken: bool) -> None:
         raise Refusal(f'There already is {article} {kind} named "{name}". Pick another name.')
 
 
-def create_change(start: Path, name: str, *, short: bool = False, owner: str | None = None) -> Done:
-    """Create a change folder with a proposal skeleton."""
+def create_change(
+    start: Path,
+    name: str,
+    *,
+    short: bool = False,
+    owner: str | None = None,
+    milestone: str | None = None,
+) -> Done:
+    """Create a change folder with a proposal skeleton, linked from its milestone if it has one."""
     record = open_record(start, writing=True)
     folder = f"{CHANGES}/{name}"
     _require_new_name(name, "change", bool(record.files.entries(folder)))
+    member = record.milestones.get(milestone) if milestone is not None else None
+    if milestone is not None and (member is None or member.roadmap is None):
+        known = ", ".join(sorted(record.milestones)) or "none"
+        raise Refusal(
+            f'"{milestone}" is not an active milestone (the active ones: {known}). Name one of '
+            f'them, or create it first with "wm new milestone {milestone}".'
+        )
     who = owner or git.user_name(record.project.root)
     if not who:
         raise Refusal(
             "Every change has one owner. Pass --owner <name>, or set your name in git: "
             'git config user.name "<name>".'
         )
-    facts = f"- {OWNER}: {who}\n" + (f"- {PATH}: {SHORT}\n" if short else "")
+    facts = (
+        f"- {OWNER}: {who}\n"
+        + (f"- {MILESTONE}: {milestone}\n" if milestone else "")
+        + (f"- {PATH}: {SHORT}\n" if short else "")
+    )
     text = templates.render(templates.PROPOSAL, title=templates.title_from_name(name), facts=facts)
     transaction = Transaction(record.files)
     transaction.write(f"{folder}/{PROPOSAL_FILE}", text)
     path = "on the short path " if short else ""
-    return Done(f'Created the change "{name}" {path}with a proposal to draft.', commit(transaction))
+    message = f'Created the change "{name}" {path}with a proposal to draft.'
+    if member is not None and member.roadmap is not None:
+        doc = member.roadmap.doc
+        target = f"../../{CHANGES}/{name}/{PROPOSAL_FILE}"
+        transaction.write(doc.path, link_change(doc, name, target))
+        message += f' It is linked from the roadmap of "{milestone}".'
+    return Done(message, commit(transaction))
 
 
 def create_milestone(start: Path, name: str) -> Done:
