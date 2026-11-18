@@ -15,7 +15,7 @@
 - [ ] 1.2 Read archived explorations, show and list them, and keep their folder in git
   - Criteria:
     - `explorations/archive/` is not reported as an unexpected file, and its `<date>-<name>.md` files are read as archived explorations, never checked or fixed; a file whose name doesn't parse is reported as `invalid-name`
-    - `wm show <name>` and `wm show <date>-<name>` find an archived exploration and print "Archived on <date>"; its JSON has an `archived` date, null for an active one
+    - `wm show <name>` and `wm show <date>-<name>` find an archived exploration and print "Archived on <date>"; its JSON has an `archived_on` date, null for an active one, as `wm.show.change` has
     - `wm ls explorations --archived` lists archived explorations marked archived; without the flag and in `wm context --for explore` they are left out
     - the `wm.show.exploration` and `wm.context.explore` schemas list `open`, `led-to`, `dropped` and their versions are raised
     - `wm init` and `wm update` write `explorations/archive/.gitkeep`, per the four Record folders kept in git scenarios
