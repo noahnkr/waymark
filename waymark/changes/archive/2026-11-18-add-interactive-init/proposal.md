@@ -31,3 +31,8 @@
   - `wm init --yes` runs without questions; `--atlas` and `--tool` also skip them
   - canceling at a question writes nothing
 - Code: a new terminal module and prompt module and welcome screen in `views/`, `cli.py` (`wm init` and `--yes`), `services/setup.py` (CI workflow at init), `services/ci.py`, `adapters/` (a detection hook per adapter), the tests, and the docs (`getting-started.md`, `cli.md` generated, the CHANGELOG)
+
+## Outcome
+
+- Built: On a terminal, wm init opens with a welcome screen (the Waymark star growing in and twinkling, the tagline, what it sets up and the skills to run next), then asks for the repository kind and atlas name, the agent tools (found ones pre-selected) and the CI workflow, and writes only after the last answer. Esc or Ctrl+C cancels with nothing written. Without raw mode the questions come as numbered choices. --yes, --atlas, --tool, or a piped input or output skip it all. Adapters gain detect(), and init_project can add the CI workflow.
+- Differs: The proposal and delta were respelled to canceled, and the change was accepted again. The self-review found and fixed Ctrl+C arriving as KeyboardInterrupt on Windows. The star is drawn from the design's description, not traced from the banner SVG. docs/cli.md was regenerated in item 2.1. Left open: wide-line redraws, by-hand-only checks of the raw readers, and the clone's welcome text mentioning CI.
