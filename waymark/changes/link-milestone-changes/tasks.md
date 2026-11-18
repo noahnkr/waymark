@@ -35,3 +35,7 @@
     - the changelog's Unreleased section has the line
     - the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync pytest tests/adapters tests/test_docs.py`, codespell and `wm check`
+
+## Log
+
+- (accepted) 2026-11-17 fingerprint f9584396683ca471 items 1.1 1.2 1.3 2.1 by Noah Roberts
