@@ -26,9 +26,10 @@ Make a milestone, when the human chooses one, a part of the workflow rather than
 
 - [link-milestone-changes](../../changes/archive/2026-11-17-link-milestone-changes/proposal.md): a `- Milestone:` line in the proposal, checked against the roadmap; `wm new change --milestone`; member changes' packs carry the milestone's Goal and Non-goals; a new `milestones` spec
 - [add-milestone-log](../../changes/archive/2026-11-17-add-milestone-log/proposal.md): `wm roadmap add`, `drop --reason` and `move`; hand edits to roadmap lines refused; a `## Log` in the milestone with records for added, dropped, moved, proposed and archived; `wm close` needs every line archived
-- [add-change-dependencies](../../changes/add-change-dependencies/proposal.md): a change says what it comes after; each change's branch and base shown in `wm status`, `wm instructions` and `wm pr`, with `wm pr` targeting the base; a warning for a change based on a merged branch; the plan pull request, branch creation and atlas branch names in the skills
+- [add-change-dependencies](../../changes/archive/2026-11-17-add-change-dependencies/proposal.md): a change says what it comes after; each change's branch and base shown in `wm status`, `wm instructions` and `wm pr`, with `wm pr` targeting the base; a warning for a change based on a merged branch; the plan pull request, branch creation and atlas branch names in the skills
 
 ## Log
 
 - (archived) 2026-11-17 add-milestone-log by Noah Roberts
 - (proposed) 2026-11-17 add-change-dependencies by Noah Roberts
+- (archived) 2026-11-17 add-change-dependencies by Noah Roberts
