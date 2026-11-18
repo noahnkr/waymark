@@ -66,3 +66,7 @@
     - `docs/concepts.md` defines a resource, and how it differs from a spec
     - `docs/cli.md` and `docs/json.md` are regenerated, and the CHANGELOG's Unreleased section names the new note, commands and pack fields
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and codespell pass
+
+## Log
+
+- (accepted) 2026-11-17 fingerprint 3ef36b267996b080 items 1.1 1.2 1.3 1.4 2.1 2.2 2.3 3.1 3.2 by Noah Roberts
