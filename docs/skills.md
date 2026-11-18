@@ -200,7 +200,8 @@ and handles the verdict. **Use it** when a change is accepted and ready to build
 5. **Review:** a self-review against every scenario, the design and every
    criterion, with findings graded by the severity rubric, recorded with
    `wm review --self`; or `wm-reviewer` with exactly `<change>` when the level is
-   independent.
+   independent. An item added after a passing review gets a review of its own,
+   of the items no passing review covers.
 6. A `changes` verdict reopens the named items to rebuild; a second one, or a
    spec gap, goes to you.
 7. **Resolve-items:** brings each blocker, gap or verdict to you, then
@@ -297,4 +298,4 @@ VERDICT: <pass | changes <item>... | spec-gap>: <reasons>
 
 | Reads | Writes |
 |---|---|
-| the review pack: every item with its criteria, verification and location, the deltas, the design, earlier reviews and resolutions, Context, the Review rules, the severity rubric; the code | nothing: `wm` records its ending as a `(review)` record with each finding under it; a `changes` verdict reopens the items it names; `wm` refuses a pass with a critical finding |
+| the review pack: the items to review (every item, or those no passing review covers) with their criteria, verification and location, the deltas, the design, earlier reviews and resolutions, Context, the Review rules, the severity rubric; the code | nothing: `wm` records its ending as a `(review)` record with each finding under it; a `changes` verdict reopens the items it names; `wm` refuses a pass with a critical finding |

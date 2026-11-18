@@ -13,7 +13,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Say that an added item needs its own review
+- [x] 2.1 Say that an added item needs its own review
   - Criteria: `wm-apply`, `wm-update` and the `wm-reviewer` definition say that an item added after a review is reviewed on its own, and the reviewer reviews only the items its pack holds; concepts describes `covers`; the changelog has the line; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync pytest tests/adapters tests/test_docs.py`, codespell and `wm check`
 

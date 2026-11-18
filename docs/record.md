@@ -245,7 +245,7 @@ The acceptance names the items it covers: **adding** an item keeps it, while
 ## Log
 
 - (accepted) 2026-01-15 fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
-- (self-review) 2026-01-16 by Sam Doe: every criterion holds
+- (self-review) 2026-01-16 covers 1.1 by Sam Doe: every criterion holds
   - suggestion `docs/search.md`: name the limit in the help text
 ```
 
@@ -294,8 +294,8 @@ Every line `wm` writes is a dated record. It names who it is by: your git name,
 |---|---|---|
 | `(accepted)` | Log | `wm accept`: the fingerprint and the items it covers |
 | `(synced)` | Log | `wm sync`: the deltas merged before the archive |
-| `(self-review)` | Log | `wm review --self`, with findings |
-| `(review)` | Log | `wm verdict`, or the reviewer's ending: `pass`, `changes <items>` or `spec-gap` |
+| `(self-review)` | Log | `wm review --self`, with `covers <items>` and findings |
+| `(review)` | Log | `wm verdict`, or the reviewer's ending: `pass`, `changes <items>` or `spec-gap`, then `covers <items>` |
 | `(override)` | Log | `wm archive --override`: your reason for archiving past a missing review |
 | `(blocked)` | item | `wm block`, or an implementer's `blocked` |
 | `(gap)` | item | `wm gap`, or an implementer's `spec-gap` |

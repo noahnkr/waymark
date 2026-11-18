@@ -59,6 +59,8 @@ Commit the item's work, in the repository it belongs to, with a conventional com
 
 Once every item is ticked, the change is reviewed once, as a whole. `wm instructions` tells you which kind; the change's review level comes from its proposal.
 
+An item added after a passing review is reviewed on its own. Once it is ticked, `wm instructions` makes the next step a review of the items no passing review covers, at the change's level, and names them. Review just those, and how they fit the rest. `wm` writes the record with `covers <item>...`, naming the items the review was of.
+
 - **Self-review.** Review the change against its deltas' scenarios, its design and each item's criteria:
   - complete: every criterion holds, and every scenario is met by some item;
   - correct: the code does what the requirements say, at the edges too;

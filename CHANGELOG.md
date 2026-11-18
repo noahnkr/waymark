@@ -2,6 +2,16 @@
 
 All notable changes to Waymark, one entry per release.
 
+## [Unreleased]
+
+- **Behavior change: an item added after a review is reviewed on its own.**
+  `(review)` and `(self-review)` records now name the items they cover, as
+  `covers <item>...`; a record without it covers every item. Once an item added
+  after a passing review is ticked, the next step is a review of the items no
+  passing review covers, and the reviewer's pack holds only those. `wm archive`
+  refuses a change with such an item unless you override it with a reason.
+  `wm show` and the JSON payloads give what each review covers.
+
 ## [0.2.0] - 2026-11-16
 
 The planner builds by default and each change is reviewed once. Small work takes
