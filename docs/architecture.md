@@ -52,12 +52,20 @@ adapter for another agent tool, and how to work on the code.
 
 | Folder under `src/waymark/` | Holds |
 |---|---|
-| `record/` | The only code that reads or writes the record's files: parsers, the record lines (`records.py`, the one place each record's shape is defined), the standard layout (`layout.py`), state derivation, delta merging, the acceptance fingerprint, the transactional writer, templates, the registry, git queries. |
+| `record/` | The only code that reads or writes the record's files. At its top: loading the whole record (`record.py`), state derivation (`state.py`), the fixed vocabulary (`terms.py`) and names (`names.py`). The rest is in five packages, below. |
 | `services/` | What the commands do, and every gate. A refused command raises `Refusal` with what is wrong and what to do next. |
 | `views/` | Payloads, their JSON schemas, and the text and JSON renderers. One payload feeds both renderings. |
 | `hooks/` | Tool-neutral hook decisions on six neutral events. |
 | `adapters/` | One adapter per agent tool. Only code here may name a tool. |
 | `assets/` | The skills and agent definitions, written once and tool-neutral. |
+
+| Package under `record/` | Holds |
+|---|---|
+| `markdown/` | Markdown as `wm` reads it: lines, fences, sections, outlines, links, and the problems found while reading. |
+| `artifacts/` | One module per authored file: changes, the charter, the settings, deltas and their merging, designs, explorations, milestones, proposals, resources, specs and task lists. |
+| `evidence/` | The lines only `wm` writes and the gates they feed: the record lines (`records.py`, the one place each record's shape is defined), gate evidence, the acceptance fingerprint, the per-agent marker and the commit-message check. |
+| `writing/` | Writing the record: the transactional writer, the edits `wm` owns, the standard layout (`layout.py`), folder moves, the `.gitignore` block, and the templates. |
+| `machine/` | This machine and its repository: git queries, reading files, finding the project, atlases, code repo pointers, the registry, and branches. |
 | `cli.py` | Parses arguments, calls a service, prints. |
 
 Three tests in `tests/test_constraints.py` hold the boundaries: the standard
@@ -83,7 +91,7 @@ Claude Code runs `wm hook claude-code <Event>` with its JSON on standard input.
    planner edit any code repo, and an implementer only the repo an accepted
    change's item being built names (`editable_repos`). An agent's ending is
    recorded once: a per-agent marker in the clone's git folder
-   (`record/agents.py`) lets the stop after a recorded handback through without
+   (`record/evidence/agents.py`) lets the stop after a recorded handback through without
    asking for the ending again.
 3. **The adapter translates the decision back** into the tool's reply format.
 

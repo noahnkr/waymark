@@ -8,20 +8,26 @@ import os
 from pathlib import Path
 
 from waymark import __version__
-from waymark.record import git
-from waymark.record.atlas import Found, atlas_name_at, locate_atlas, locate_repo, repo_problem
-from waymark.record.config import CONFIG_FILE, RECORD_DIR, Config
-from waymark.record.files import RecordFiles
-from waymark.record.pointer import (
+from waymark.record.artifacts.config import CONFIG_FILE, RECORD_DIR, Config
+from waymark.record.machine import git
+from waymark.record.machine.atlas import (
+    Found,
+    atlas_name_at,
+    locate_atlas,
+    locate_repo,
+    repo_problem,
+)
+from waymark.record.machine.files import RecordFiles
+from waymark.record.machine.pointer import (
     POINTER_FILE,
     Pointer,
     is_pointer,
     render_pointer,
 )
-from waymark.record.project import Project
+from waymark.record.machine.project import Project
+from waymark.record.machine.registry import Registry, load_registry, stage_registry
 from waymark.record.record import Record, load_record
-from waymark.record.registry import Registry, load_registry, stage_registry
-from waymark.record.store import Transaction
+from waymark.record.writing.store import Transaction
 from waymark.services import integration
 from waymark.services.common import Done, Refusal, commit, open_record
 

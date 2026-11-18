@@ -8,27 +8,27 @@ import datetime
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 
-from waymark.record.changes import PROPOSAL_FILE, SPECS_DIR, Change, load_change
-from waymark.record.charter import CHARTER_FILE, Charter, parse_charter
-from waymark.record.config import CONFIG_FILE, Config, parse_config
-from waymark.record.explorations import Exploration, parse_exploration
-from waymark.record.files import RecordFiles
-from waymark.record.links import LinkChecker
-from waymark.record.milestones import (
+from waymark.record.artifacts.changes import PROPOSAL_FILE, SPECS_DIR, Change, load_change
+from waymark.record.artifacts.charter import CHARTER_FILE, Charter, parse_charter
+from waymark.record.artifacts.config import CONFIG_FILE, Config, parse_config
+from waymark.record.artifacts.explorations import Exploration, parse_exploration
+from waymark.record.artifacts.milestones import (
     MILESTONE_FILE,
     Goal,
     Milestone,
     Roadmap,
     parse_milestone,
 )
+from waymark.record.artifacts.proposal import parse_proposal
+from waymark.record.artifacts.resources import Resource, parse_resource, unknown_specs
+from waymark.record.artifacts.specs import Spec, parse_spec
+from waymark.record.machine.files import RecordFiles
+from waymark.record.machine.project import Project
+from waymark.record.markdown.links import LinkChecker
+from waymark.record.markdown.problems import WHOLE_FILE, Problem
+from waymark.record.markdown.text import Document
 from waymark.record.names import NAME_RULE, is_valid_name, parse_archive_name
-from waymark.record.problems import WHOLE_FILE, Problem
-from waymark.record.project import Project
-from waymark.record.proposal import parse_proposal
-from waymark.record.resources import Resource, parse_resource, unknown_specs
-from waymark.record.specs import Spec, parse_spec
 from waymark.record.terms import Layout, ReviewLevel
-from waymark.record.text import Document
 
 SPECS = "specs"
 CHANGES = "changes"

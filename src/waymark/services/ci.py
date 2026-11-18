@@ -7,9 +7,9 @@ CI runs nothing from wm.
 
 from pathlib import Path
 
-from waymark.record import templates
-from waymark.record.files import RecordFiles
-from waymark.record.store import Transaction
+from waymark.record.machine.files import RecordFiles
+from waymark.record.writing import templates
+from waymark.record.writing.store import Transaction
 from waymark.services.common import Done, commit, open_record, require_pinned
 
 WORKFLOW = ".github/workflows/waymark.yml"

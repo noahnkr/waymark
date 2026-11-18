@@ -1,12 +1,12 @@
 """The layouts humans and the planner write: facts, the glossary, the exploration status."""
 
 from tests.support import CHARTER, DESIGN, NO_SPECS, Workspace, document, proposal
-from waymark.record.charter import parse_charter
-from waymark.record.design import parse_design
-from waymark.record.explorations import parse_exploration
-from waymark.record.proposal import parse_proposal
+from waymark.record.artifacts.charter import parse_charter
+from waymark.record.artifacts.design import parse_design
+from waymark.record.artifacts.explorations import parse_exploration
+from waymark.record.artifacts.proposal import parse_proposal
+from waymark.record.artifacts.tasks import parse_tasks
 from waymark.record.state import AcceptanceState, ExplorationStatus, derive_state
-from waymark.record.tasks import parse_tasks
 from waymark.services import setup
 from waymark.services.context import context_pack
 from waymark.services.instructions import instructions

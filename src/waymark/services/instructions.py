@@ -9,14 +9,20 @@ from the files; nothing depends on an earlier conversation.
 from dataclasses import dataclass
 from typing import Any
 
-from waymark.record import templates
-from waymark.record.branches import Branches
-from waymark.record.changes import DESIGN_FILE, PROPOSAL_FILE, SPECS_DIR, TASKS_FILE, Change
-from waymark.record.charter import CHARTER_FILE
-from waymark.record.project import RECORD_DIR
+from waymark.record.artifacts.changes import (
+    DESIGN_FILE,
+    PROPOSAL_FILE,
+    SPECS_DIR,
+    TASKS_FILE,
+    Change,
+)
+from waymark.record.artifacts.charter import CHARTER_FILE
+from waymark.record.machine.branches import Branches
+from waymark.record.machine.project import RECORD_DIR
 from waymark.record.record import SPECS, Record
 from waymark.record.state import AcceptanceState, ChangeState, StepKind
 from waymark.record.terms import Layout, ReviewLevel
+from waymark.record.writing import templates
 from waymark.services.common import Refusal, find_change, state_of
 from waymark.services.guidance import SEVERITY_RUBRIC
 

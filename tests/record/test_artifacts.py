@@ -1,13 +1,13 @@
 """Proposals, designs, the charter, milestones and explorations."""
 
 from tests.support import CHARTER, DESIGN, GOAL_TEXT, NO_SPECS, document, milestone, proposal
-from waymark.record import templates
-from waymark.record.charter import parse_charter
-from waymark.record.design import parse_design
-from waymark.record.explorations import Exploration, parse_exploration
-from waymark.record.milestones import append_milestone_log, parse_milestone
-from waymark.record.proposal import Proposal, parse_proposal
+from waymark.record.artifacts.charter import parse_charter
+from waymark.record.artifacts.design import parse_design
+from waymark.record.artifacts.explorations import Exploration, parse_exploration
+from waymark.record.artifacts.milestones import append_milestone_log, parse_milestone
+from waymark.record.artifacts.proposal import Proposal, parse_proposal
 from waymark.record.terms import ReviewLevel
+from waymark.record.writing import templates
 
 EXPLORATION = """# Paging
 

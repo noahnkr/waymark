@@ -11,15 +11,15 @@ from pathlib import Path
 from waymark import assets
 from waymark.hooks import commands
 from waymark.hooks.events import ALLOW, Decision, Event, EventKind, Role
-from waymark.record import agents
-from waymark.record.atlas import contains
-from waymark.record.commits import commit_problem
-from waymark.record.config import CONFIG_FILE, parse_config
-from waymark.record.evidence import evidence_changes, is_active_milestone
-from waymark.record.files import RecordFiles
-from waymark.record.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
+from waymark.record.artifacts.config import CONFIG_FILE, parse_config
+from waymark.record.evidence import agents
+from waymark.record.evidence.commits import commit_problem
+from waymark.record.evidence.evidence import evidence_changes, is_active_milestone
+from waymark.record.evidence.records import IMPLEMENTER, REVIEWER, parse_finding_argument
+from waymark.record.machine.atlas import contains
+from waymark.record.machine.files import RecordFiles
+from waymark.record.machine.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
 from waymark.record.record import RESOURCES, SPECS, Record, load_record
-from waymark.record.records import IMPLEMENTER, REVIEWER, parse_finding_argument
 from waymark.record.state import AcceptanceState, StepKind, derive_state
 from waymark.record.terms import Layout, Verdict
 from waymark.services import lifecycle

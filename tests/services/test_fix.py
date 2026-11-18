@@ -5,8 +5,8 @@ import datetime
 import pytest
 
 from tests.support import DESIGN, TASKS, Workspace, proposal
-from waymark.record.layout import Fix
 from waymark.record.state import AcceptanceState
+from waymark.record.writing.layout import Fix
 from waymark.services import fix, lifecycle
 from waymark.services.common import Refusal
 from waymark.services.fix import FixedFile, fix_layout

@@ -11,20 +11,20 @@ import pytest
 from tests.conftest import git_init
 from tests.support import Workspace, document
 from waymark import __version__, adapters
-from waymark.record import ignore, templates
-from waymark.record.charter import parse_charter
-from waymark.record.deltas import parse_delta
-from waymark.record.design import parse_design
-from waymark.record.explorations import parse_exploration
-from waymark.record.files import RecordFiles
-from waymark.record.layout import _comment_flags
-from waymark.record.project import find_project
-from waymark.record.proposal import parse_proposal
+from waymark.record.artifacts.charter import parse_charter
+from waymark.record.artifacts.deltas import parse_delta
+from waymark.record.artifacts.design import parse_design
+from waymark.record.artifacts.explorations import parse_exploration
+from waymark.record.artifacts.proposal import parse_proposal
+from waymark.record.artifacts.tasks import parse_tasks
+from waymark.record.machine.files import RecordFiles
+from waymark.record.machine.project import find_project
+from waymark.record.markdown.text import Document
 from waymark.record.record import load_record
 from waymark.record.state import ExplorationStatus, StepKind, derive_state
-from waymark.record.tasks import parse_tasks
 from waymark.record.terms import Layout, Phase
-from waymark.record.text import Document
+from waymark.record.writing import ignore, templates
+from waymark.record.writing.layout import _comment_flags
 from waymark.services import check, ci, integration, lifecycle, setup
 from waymark.services.common import Refusal
 

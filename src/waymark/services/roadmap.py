@@ -9,14 +9,14 @@ import datetime
 from dataclasses import dataclass
 from pathlib import Path
 
-from waymark.record import records
-from waymark.record.milestones import ROADMAP, Milestone, Roadmap, append_milestone_log
+from waymark.record.artifacts.milestones import ROADMAP, Milestone, Roadmap, append_milestone_log
+from waymark.record.evidence import records
+from waymark.record.evidence.records import RecordError, RecordKind
+from waymark.record.markdown.text import BOM, Document
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.record import Record
-from waymark.record.records import RecordError, RecordKind
 from waymark.record.state import entry_change
-from waymark.record.store import Transaction
-from waymark.record.text import BOM, Document
+from waymark.record.writing.store import Transaction
 from waymark.services.common import Done, Refusal, commit, one_line, open_record
 
 

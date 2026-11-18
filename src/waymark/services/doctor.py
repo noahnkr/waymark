@@ -13,13 +13,24 @@ from enum import StrEnum
 from pathlib import Path
 
 from waymark import __version__
-from waymark.record import git
-from waymark.record.atlas import Found, locate_atlas, locate_repo, pointer_file, read_pointer
-from waymark.record.config import CONFIG_FILE, RECORD_DIR, RECORD_FORMAT, other_format_reason
-from waymark.record.files import RecordFiles
-from waymark.record.project import Project, ProjectNotFoundError, find_project
+from waymark.record.artifacts.config import (
+    CONFIG_FILE,
+    RECORD_DIR,
+    RECORD_FORMAT,
+    other_format_reason,
+)
+from waymark.record.machine import git
+from waymark.record.machine.atlas import (
+    Found,
+    locate_atlas,
+    locate_repo,
+    pointer_file,
+    read_pointer,
+)
+from waymark.record.machine.files import RecordFiles
+from waymark.record.machine.project import Project, ProjectNotFoundError, find_project
+from waymark.record.machine.registry import Registry, load_registry
 from waymark.record.record import Record, load_record
-from waymark.record.registry import Registry, load_registry
 from waymark.services import integration
 from waymark.services.common import Refusal, install_hint
 

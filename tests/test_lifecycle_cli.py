@@ -8,8 +8,8 @@ import pytest
 from tests.conftest import git_init
 from tests.support import DESIGN, IMPACT, NO_SPECS, delta, milestone, requirement
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
-from waymark.record.pointer import is_pointer
-from waymark.record.project import find_project
+from waymark.record.machine.pointer import is_pointer
+from waymark.record.machine.project import find_project
 from waymark.record.record import load_record
 from waymark.record.state import StepKind, derive_state
 from waymark.record.terms import Layout, Phase

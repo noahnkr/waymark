@@ -1,10 +1,10 @@
 """Reading another atlas's specs, read only, where the atlas sits on this machine."""
 
-from waymark.record.atlas import Found, locate_atlas
-from waymark.record.config import CONFIG_FILE, RECORD_DIR
-from waymark.record.project import Project
+from waymark.record.artifacts.config import CONFIG_FILE, RECORD_DIR
+from waymark.record.machine.atlas import Found, locate_atlas
+from waymark.record.machine.project import Project
+from waymark.record.machine.registry import load_registry
 from waymark.record.record import Record, load_record
-from waymark.record.registry import load_registry
 from waymark.services.common import Refusal, notice
 
 
