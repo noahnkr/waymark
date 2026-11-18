@@ -18,7 +18,7 @@
     - an unknown milestone is refused before anything is written, and `--milestone` is refused for a milestone or an exploration
     - `docs/cli.md` is regenerated
   - Verify: tests in `tests/services/test_setup.py` and `tests/test_cli.py` for the scenarios "Planned roadmap line", "Change not on the roadmap" and "Unknown milestone refused"
-- [ ] 1.3 Carry the milestone's Goal and Non-goals in the implement and review packs
+- [x] 1.3 Carry the milestone's Goal and Non-goals in the implement and review packs
   - Criteria:
     - the implement and review packs of a change that names an active milestone have a `milestone` field with its name, goal and non-goals, and their text has a `## Milestone` section with them
     - the packs of a change without a milestone have `milestone: null` and no such section

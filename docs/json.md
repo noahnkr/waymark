@@ -2034,6 +2034,33 @@ Printed by `wm context <change> <item> --for implement`.
     "context": {
       "type": "string"
     },
+    "milestone": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "goal": {
+              "type": "string"
+            },
+            "non_goals": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "goal",
+            "non_goals"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "rules": {
       "type": "string"
     },
@@ -2115,6 +2142,7 @@ Printed by `wm context <change> <item> --for implement`.
     "change",
     "item",
     "context",
+    "milestone",
     "rules",
     "proposal",
     "deltas",
@@ -2286,6 +2314,33 @@ Printed by `wm context <change> --for review`.
     "context": {
       "type": "string"
     },
+    "milestone": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "goal": {
+              "type": "string"
+            },
+            "non_goals": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "goal",
+            "non_goals"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "rules": {
       "type": "string"
     },
@@ -2335,6 +2390,7 @@ Printed by `wm context <change> --for review`.
     "reviews",
     "resolutions",
     "context",
+    "milestone",
     "rules",
     "deltas",
     "design",

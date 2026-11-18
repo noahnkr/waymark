@@ -322,6 +322,9 @@ _PACK_ITEM = _object(
 _DELTAS = _array(_object({"spec": STRING, "text": STRING}))
 
 
+_PACK_MILESTONE = _nullable(_object({"name": STRING, "goal": STRING, "non_goals": STRING}))
+
+
 def _implement_pack() -> Schema:
     return _payload(
         "context.implement",
@@ -330,6 +333,7 @@ def _implement_pack() -> Schema:
             "change": STRING,
             "item": _PACK_ITEM,
             "context": STRING,
+            "milestone": _PACK_MILESTONE,
             "rules": STRING,
             "proposal": _nullable(SECTIONS),
             "deltas": _DELTAS,
@@ -353,6 +357,7 @@ def _review_pack() -> Schema:
             "reviews": _array(_PACK_REVIEW),
             "resolutions": NAMES,
             "context": STRING,
+            "milestone": _PACK_MILESTONE,
             "rules": STRING,
             "deltas": _DELTAS,
             "design": TEXT_OR_NULL,
