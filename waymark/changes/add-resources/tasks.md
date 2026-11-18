@@ -70,3 +70,7 @@
 ## Log
 
 - (accepted) 2026-11-17 fingerprint 3ef36b267996b080 items 1.1 1.2 1.3 1.4 2.1 2.2 2.3 3.1 3.2 by Noah Roberts
+- (review) 2026-11-18 pass covers 1.1 1.2 1.3 1.4 2.1 2.2 2.3 3.1 3.2 by wm-reviewer: every item's criteria hold and every delta scenario is met by a passing test; tests, lint, types, spelling, docs check and wm check all pass; only an empty Serves edge and the implementer's wm new resource refusal remain as warnings
+  - warning `src/waymark/record/resources.py parse_resource`: an empty "- Serves:" value is treated as serving no spec and wm check doesn't report it, but the requirement "Specs a resource serves" says the line SHALL name specs or be none. No test covers this edge.
+  - warning `src/waymark/hooks/decide.py _command`: an implementer's "wm new resource" is refused as a writing wm call. The requirement "Resources edited by hand" says an implementer may create a resource, and it still can by writing the file by hand, but not from the template. No test pins down which behavior is intended.
+  - suggestion `src/waymark/services/context.py _serving_resources`: the outline filter's literal level 2, with its noqa PLR2004, would read more clearly as a named constant.
