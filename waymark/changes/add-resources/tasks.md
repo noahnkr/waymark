@@ -2,7 +2,7 @@
 
 ## 1. Record
 
-- [ ] 1.1 Read and check resources
+- [x] 1.1 Read and check resources
   - Criteria:
     - `record/resources.py` reads a resource's title, the lines `- Kind:`, `- Serves:`, `- Status:` and `- Verified:`, the six sections, and the outline of its `##` and `###` headings; `load_record` loads `resources/` into `Record.resources`, and `Record.documents()` yields them
     - `wm check` reports as an error a missing line or section (naming it), a kind other than the six (listing them), a status other than `active` or `retired`, and a `- Verified:` value not in `YYYY-MM-DD` (saying so), each on its line where there is one

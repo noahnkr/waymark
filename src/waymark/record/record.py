@@ -6,7 +6,7 @@ only listed; each is parsed when something asks for it.
 
 import datetime
 from collections.abc import Iterator, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from waymark.record.changes import PROPOSAL_FILE, SPECS_DIR, Change, load_change
 from waymark.record.charter import CHARTER_FILE, Charter, parse_charter
@@ -25,6 +25,7 @@ from waymark.record.names import NAME_RULE, is_valid_name, parse_archive_name
 from waymark.record.problems import WHOLE_FILE, Problem
 from waymark.record.project import Project
 from waymark.record.proposal import parse_proposal
+from waymark.record.resources import Resource, parse_resource, unknown_specs
 from waymark.record.specs import Spec, parse_spec
 from waymark.record.terms import Layout, ReviewLevel
 from waymark.record.text import Document
@@ -33,6 +34,7 @@ SPECS = "specs"
 CHANGES = "changes"
 MILESTONES = "milestones"
 EXPLORATIONS = "explorations"
+RESOURCES = "resources"
 ARCHIVE = "archive"
 
 FOLDER_KEEP = ".gitkeep"
@@ -81,6 +83,7 @@ class Record:
     archived_milestones: tuple[ArchiveEntry, ...]
     explorations: Mapping[str, Exploration]
     problems: tuple[Problem, ...]
+    resources: Mapping[str, Resource] = field(default_factory=dict)
 
     @property
     def files(self) -> RecordFiles:
@@ -114,6 +117,8 @@ class Record:
                 yield milestone.goal.doc
         for exploration in self.explorations.values():
             yield exploration.doc
+        for resource in self.resources.values():
+            yield resource.doc
 
 
 def _bad_name(path: str, kind: str) -> Problem:
@@ -301,6 +306,12 @@ def load_record(project: Project) -> Record:
         explorations[name] = parse_exploration(name, doc)
         problems.extend(explorations[name].problems)
 
+    resources: dict[str, Resource] = {}
+    for name, doc in _load_markdown_folder(files, RESOURCES, "resource", problems).items():
+        resources[name] = parse_resource(name, doc)
+        problems.extend(resources[name].problems)
+        problems.extend(unknown_specs(resources[name], specs))
+
     return Record(
         project=project,
         config=config,
@@ -312,6 +323,7 @@ def load_record(project: Project) -> Record:
         archived_milestones=tuple(archived_milestones),
         explorations=explorations,
         problems=tuple(sorted(problems)),
+        resources=resources,
     )
 
 
