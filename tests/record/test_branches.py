@@ -55,17 +55,58 @@ def test_default_branch_is_the_remotes_head(project: Workspace, tmp_path: Path) 
     assert git.default_branch(project.root) == "trunk"
 
 
-def test_a_branch_merged_only_on_origin_is_merged(project: Workspace, tmp_path: Path) -> None:
+def commit_all(repository: Path, message: str) -> None:
+    run(repository, "add", "--all")
+    run(repository, "commit", "--quiet", "-m", message)
+
+
+def test_archived_on_lists_folders_on_origin_first(project: Workspace, tmp_path: Path) -> None:
+    on_main(project.root)
+    with_origin(project.root, tmp_path)
+    folder = "waymark/changes/archive"
+    assert git.archived_on(project.root, "main", folder) == frozenset()
+    project.write("changes/archive/2026-01-20-add-limit/proposal.md", proposal(outcome="Done."))
+    commit_all(project.root, "archive add-limit")
+    assert git.archived_on(project.root, "main", folder) == frozenset()
+    run(project.root, "push", "--quiet", "origin", "main")
+    run(project.root, "fetch", "--quiet", "origin")
+    assert git.archived_on(project.root, "main", folder) == {"2026-01-20-add-limit"}
+    assert git.archived_on(project.root, "no-such-branch", folder) == frozenset()
+
+
+def test_a_dependency_branch_with_no_commits_is_not_merged(project: Workspace) -> None:
+    on_main(project.root)
+    run(project.root, "branch", "add-limit")
+    project.change("add-limit")
+    project.change("add-paging", proposal_text=after("add-limit"))
+    record = project.record()
+    place = Branches(record).of(record.changes["add-paging"])
+    assert (place.base, place.merged) == ("add-limit", False)
+
+
+def test_a_dependency_squash_merged_on_origin_is_merged(project: Workspace, tmp_path: Path) -> None:
     on_main(project.root)
     with_origin(project.root, tmp_path)
     run(project.root, "checkout", "--quiet", "-b", "add-limit")
-    commit(project.root, "limit")
+    project.change("add-limit")
+    commit_all(project.root, "propose add-limit")
+    run(project.root, "checkout", "--quiet", "-b", "add-paging")
+    project.change("add-paging", proposal_text=after("add-limit"))
+    commit_all(project.root, "propose add-paging")
+    run(project.root, "checkout", "--quiet", "add-limit")
+    run(project.root, "rm", "--quiet", "-r", "waymark/changes/add-limit")
+    project.write("changes/archive/2026-01-20-add-limit/proposal.md", proposal(outcome="Done."))
+    commit_all(project.root, "archive add-limit")
     run(project.root, "checkout", "--quiet", "main")
-    assert not git.is_merged(project.root, "add-limit", "main")
-    run(project.root, "push", "--quiet", "origin", "add-limit:main")
+    run(project.root, "merge", "--quiet", "--squash", "add-limit")
+    commit_all(project.root, "add-limit, squashed")
+    run(project.root, "push", "--quiet", "origin", "main")
     run(project.root, "fetch", "--quiet", "origin")
-    assert git.is_merged(project.root, "add-limit", "main")
-    assert not git.is_merged(project.root, "add-nothing", "main")
+    run(project.root, "checkout", "--quiet", "add-paging")
+    record = project.record()
+    assert "add-limit" in record.changes
+    place = Branches(record).of(record.changes["add-paging"])
+    assert (place.base, place.merged) == ("main", True)
 
 
 def test_scenario_change_without_a_dependency(project: Workspace) -> None:

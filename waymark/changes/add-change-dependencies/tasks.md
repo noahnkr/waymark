@@ -22,7 +22,7 @@
     - the payload schemas declare the fields, and `docs/cli.md` and `docs/json.md` are regenerated
   - Verify: tests in `tests/services/test_agent_interface.py`, `tests/services/test_ci_and_pr.py` and `tests/views/` for the scenarios "Change without a dependency", "Stacked change", "Pull request of a stacked change", "Status of a stacked change" and "Dependency merged"
 
-- [ ] 1.4 Count a dependency as merged when the default branch holds its archive
+- [x] 1.4 Count a dependency as merged when the default branch holds its archive
   - Criteria:
     - `git.archived_on` lists the folder names under the record's `changes/archive/` in `origin/<default>`, or in the local default branch without a remote, without checking anything out, and is empty when the branch or the folder exists nowhere
     - `record/branches.py` counts the change a change comes after as merged when it is archived in the record or the default branch holds a `<date>-<change>` folder for it, reading the archived names once per command; `git.is_merged` and its ancestor check are gone

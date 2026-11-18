@@ -81,21 +81,20 @@ def _first_ref(repository: Path, *refs: str) -> str | None:
     return None
 
 
-def is_merged(repository: Path, branch: str, into: str) -> bool:
-    """Whether a branch is already in another; False when either exists nowhere.
+def archived_on(repository: Path, branch: str, folder: str) -> frozenset[str]:
+    """The names of the folders under ``folder`` on a branch, read without checking it out.
 
-    The branch is read locally first, then from ``origin``; the branch it may be in is
-    read from ``origin`` first, where a merge lands, then locally.
+    The branch is read from ``origin`` first, where a merge lands, then locally; ``folder``
+    is relative to the repository's top. Empty when the branch or the folder exists nowhere.
     """
-    source = _first_ref(repository, f"refs/heads/{branch}", f"refs/remotes/origin/{branch}")
-    target = _first_ref(repository, f"refs/remotes/origin/{into}", f"refs/heads/{into}")
-    if source is None or target is None:
-        return False
+    ref = _first_ref(repository, f"refs/remotes/origin/{branch}", f"refs/heads/{branch}")
+    if ref is None:
+        return frozenset()
     try:
-        _run(repository, "merge-base", "--is-ancestor", source, target)
+        listed = _run(repository, "ls-tree", "--name-only", ref, f"{folder.rstrip('/')}/")
     except GitError:
-        return False
-    return True
+        return frozenset()
+    return frozenset(line.rsplit("/", 1)[-1] for line in listed.splitlines() if line)
 
 
 def version() -> str | None:
