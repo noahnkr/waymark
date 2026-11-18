@@ -46,12 +46,22 @@ When tiny work turns out to change a requirement, the skill SHALL have the plann
 - THEN they put a change with open questions on the full path, with the questions under the design's `## Open questions`
 
 ### Requirement: Explore's closing offers
-The `wm-explore` skill SHALL close with four offers: do nothing, save an exploration, start a proposal of any size with `wm-propose`, or start a milestone.
+The `wm-explore` skill SHALL close with four offers. For a new idea: do nothing, save an exploration, start a proposal of any size with `wm-propose`, or start a milestone. For a resumed exploration: do nothing, leaving it open; update it, revising its sections or dropping it with `wm exploration drop`; start a proposal with `wm-propose`; or start a milestone. When the work comes from a saved exploration, the change SHALL be created with `wm new change --from <exploration>` and the milestone with `wm new milestone --from <exploration>`, and neither skill SHALL write an exploration's Status line by hand.
 
 #### Scenario: No tiny-path offer
 - GIVEN the installed `wm-explore` skill
 - WHEN its closing offers are read
 - THEN there are four, and none names `wm-fix`
+
+#### Scenario: Offers for a resumed exploration
+- GIVEN the installed `wm-explore` skill
+- WHEN its closing offers for a resumed exploration are read
+- THEN there are four: do nothing, update or drop it with `wm exploration drop`, a proposal, and a milestone with `--from`
+
+#### Scenario: Proposal from an exploration
+- GIVEN the installed `wm-propose` skill
+- WHEN its naming step is read
+- THEN it passes `--from <exploration>` to `wm new change` when the work comes from a saved exploration
 
 ### Requirement: Branches in the skills
 The skills SHALL keep one branch shape. `wm-explore`, when it starts a milestone, SHALL put the milestone on its own branch and offer a plan pull request into the default branch before any member change is proposed. `wm-propose` SHALL create a change's branch from the base `wm` gives it before running `wm new change`, and SHALL pass `--after <change>` when the change needs another that isn't merged. `wm-apply` and `wm-pr` SHALL use the branch and base `wm` gives, and `wm-pr` SHALL open the pull request into the base. In an atlas, the skills SHALL use the same branch name in every repository a change touches.
@@ -70,3 +80,11 @@ The skills SHALL keep one branch shape. `wm-explore`, when it starts a milestone
 - GIVEN the installed `wm-pr` skill
 - WHEN its steps are read
 - THEN it opens the pull request into the base `wm pr` gives
+
+### Requirement: Resuming an exploration
+The `wm-explore` skill SHALL resume a saved exploration when it is started with an active exploration's name, or when the idea matches an active exploration and the human confirms it is that one. It SHALL read the exploration with `wm show`, tell the human what in the record has changed that bears on it since it was written, such as specs, changes in flight and archived changes it touches, and continue from the exploration's Questions and Approaches rather than from a blank page.
+
+#### Scenario: Started with an exploration's name
+- GIVEN the installed `wm-explore` skill
+- WHEN its steps are read
+- THEN a first step reads a named active exploration with `wm show`, reports what in the record changed since, and continues from its Questions and Approaches
