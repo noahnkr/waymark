@@ -11,7 +11,7 @@
   - Verify:
     - `test_scenario_background_set_by_a_delta`, `test_scenario_background_replaced` and `test_scenario_empty_background`, beside the existing delta and archive tests
     - `wm check` passes on this repository
-- [ ] 1.2 Background in the packs
+- [x] 1.2 Background in the packs
   - Criteria:
     - the implement and review packs hold `backgrounds`, one `{"spec", "text"}` entry for each spec the change has a delta for with a Background in the delta or the spec, the delta's first; specs with neither are left out
     - the text output shows each Background under its spec's name, and no schema version changes

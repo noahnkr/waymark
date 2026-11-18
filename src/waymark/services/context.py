@@ -243,6 +243,17 @@ def _touched_requirements(record: Record, change: Change) -> list[dict[str, Any]
     return touched
 
 
+def _backgrounds(record: Record, change: Change) -> list[dict[str, str]]:
+    """Each touched spec's Background as it will read once the change is archived."""
+    found: list[dict[str, str]] = []
+    for domain, delta in sorted(change.deltas.items()):
+        spec = record.specs.get(domain)
+        text = delta.background or (spec.background if spec else None)
+        if text:
+            found.append({"spec": domain, "text": text})
+    return found
+
+
 def _refuse(role: str, target: str, problems: list[str]) -> None:
     if problems:
         more = f" ({len(problems) - 1} more; see wm check)" if len(problems) > 1 else ""
@@ -270,6 +281,7 @@ def _implement_pack(record: Record, change_name: str, number: str) -> dict[str, 
         "proposal": dict(proposal.sections) if proposal else None,
         "deltas": _deltas(change),
         "requirements": _touched_requirements(record, change),
+        "backgrounds": _backgrounds(record, change),
         "design": _text(change.design.doc) if change.design else None,
         "stopping_rules": list(STOPPING_RULES),
         "ends_with": _ENDINGS[IMPLEMENT],
@@ -303,6 +315,7 @@ def _review_pack(record: Record, change_name: str) -> dict[str, Any]:
         "resources": _serving_resources(record, change),
         "rules": charter.rules.get(Step.REVIEW, "") if charter else "",
         "deltas": _deltas(change),
+        "backgrounds": _backgrounds(record, change),
         "design": _text(change.design.doc) if change.design else None,
         "severity_rubric": list(SEVERITY_RUBRIC),
         "ends_with": _ENDINGS[REVIEW],

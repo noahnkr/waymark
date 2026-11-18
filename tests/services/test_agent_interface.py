@@ -920,6 +920,54 @@ def test_scenario_retired_resource(project: Workspace) -> None:
     assert "heroku" not in render.to_text(built, PLAIN).casefold()
 
 
+def with_background(text: str, background: str) -> str:
+    return text.replace("## Requirements", f"## Background\n\n{background}\n\n## Requirements")
+
+
+def test_scenario_background_of_a_touched_spec(project: Workspace) -> None:
+    """Requirement "Background in the packs": only the specs the change has a delta for."""
+    billing_change(project)
+    billing = spec(title="Billing", purpose="How billing behaves.")
+    mail = spec(title="Notifications", purpose="Mail.")
+    project.write("specs/billing.md", with_background(billing, "Invoices go out monthly."))
+    project.write("specs/notifications.md", with_background(mail, "Mail goes through Mailgun."))
+    built = pack(project, "implement")
+    assert built["backgrounds"] == [{"spec": "billing", "text": "Invoices go out monthly."}]
+    text = render.to_text(built, PLAIN)
+    assert "### billing\n\nInvoices go out monthly." in text
+    assert "Mailgun" not in text
+
+
+def test_scenario_background_from_the_delta(project: Workspace) -> None:
+    project.write(
+        "specs/billing.md",
+        with_background(spec(title="Billing", purpose="How billing."), "Invoices go out monthly."),
+    )
+    impact = "- Specs: `billing`\n- User-visible: refunds\n- Code: billing\n"
+    text = proposal(impact=impact).replace(
+        "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Review: independent\n"
+    )
+    added = delta(title="Billing", added=(requirement("Refunds"),))
+    added = added.replace("## ADDED", "## Background\n\nInvoices go out weekly.\n\n## ADDED")
+    accepted(project, proposal_text=text, deltas={"billing": added})
+    weekly = [{"spec": "billing", "text": "Invoices go out weekly."}]
+    assert pack(project, "implement")["backgrounds"] == weekly
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    built = pack(project, "review")
+    assert built["backgrounds"] == weekly
+    text = render.to_text(built, PLAIN)
+    assert "### billing\n\nInvoices go out weekly." in text
+    assert "monthly" not in text
+
+
+def test_specs_with_no_background_leave_the_packs_without_one(project: Workspace) -> None:
+    billing_change(project)
+    built = pack(project, "implement")
+    assert built["backgrounds"] == []
+    assert "## Background" not in render.to_text(built, PLAIN)
+
+
 def test_scenario_explore_index(project: Workspace) -> None:
     project.write("specs/billing.md", spec(title="Billing", purpose="How billing behaves."))
     project.write("resources/stripe.md", a_resource("Stripe", "billing"))

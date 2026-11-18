@@ -335,6 +335,7 @@ _PACK_ITEM = _object(
     {**_DEFINITION, "notes": NAMES, "reviews": _array(_PACK_REVIEW), "resolutions": NAMES}
 )
 _DELTAS = _array(_object({"spec": STRING, "text": STRING}))
+_BACKGROUNDS = _array(_object({"spec": STRING, "text": STRING}))
 
 
 _PACK_MILESTONE = _nullable(_object({"name": STRING, "goal": STRING, "non_goals": STRING}))
@@ -366,6 +367,7 @@ def _implement_pack() -> Schema:
             "proposal": _nullable(SECTIONS),
             "deltas": _DELTAS,
             "requirements": _array(_object({"spec": STRING, "name": STRING, "text": STRING})),
+            "backgrounds": _BACKGROUNDS,
             "design": TEXT_OR_NULL,
             "stopping_rules": NAMES,
             "ends_with": STRING,
@@ -389,6 +391,7 @@ def _review_pack() -> Schema:
             "resources": _PACK_RESOURCES,
             "rules": STRING,
             "deltas": _DELTAS,
+            "backgrounds": _BACKGROUNDS,
             "design": TEXT_OR_NULL,
             "severity_rubric": NAMES,
             "ends_with": STRING,
