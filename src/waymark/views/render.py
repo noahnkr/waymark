@@ -511,17 +511,28 @@ def context_delegated(payload: Payload, _: Style) -> str:
         lines += ["", "## Deltas"]
         for delta in payload["deltas"]:
             lines += ["", f"### Spec: {delta['spec']}", "", *_fenced(delta["text"])]
-    if payload.get("requirements"):
-        lines += ["", "## Requirements as they stand today"]
-        for requirement in payload["requirements"]:
-            title = f"### {requirement['spec']}: {requirement['name']}"
-            lines += ["", title, "", *_fenced(requirement["text"])]
+    lines += _spec_lines(payload)
     if payload["design"]:
         lines += ["", "## Design", "", *_fenced(payload["design"])]
     lines += _listed("Severity rubric", payload.get("severity_rubric", []))
     lines += _listed("When to stop", payload.get("stopping_rules", []))
     lines += ["", "## How to finish", "", payload["ends_with"]]
     return "\n".join(lines)
+
+
+def _spec_lines(payload: Payload) -> list[str]:
+    """The living requirements the change touches, then each touched spec's Background."""
+    lines: list[str] = []
+    if payload.get("requirements"):
+        lines += ["", "## Requirements as they stand today"]
+        for requirement in payload["requirements"]:
+            title = f"### {requirement['spec']}: {requirement['name']}"
+            lines += ["", title, "", *_fenced(requirement["text"])]
+    if payload.get("backgrounds"):
+        lines += ["", "## Background"]
+        for background in payload["backgrounds"]:
+            lines += ["", f"### {background['spec']}", "", background["text"]]
+    return lines
 
 
 def context_explore(payload: Payload, _: Style) -> str:

@@ -33,6 +33,7 @@ from waymark.services.context import RESULT_LINE, VERDICT_LINE, context_pack, de
 from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
 from waymark.services.instructions import (
     CHECKLISTS,
+    FACT_RULE,
     SHARED_RULES,
     SIZING_RULES,
     WRITING_RULES,
@@ -188,6 +189,16 @@ def test_scenario_specs_step(project: Workspace) -> None:
     assert list(WRITING_RULES) == guidance[-len(WRITING_RULES) :]
     assert any("an outcome someone else can check" in line for line in guidance)
     assert not set(SIZING_RULES) & set(guidance)
+
+
+def test_scenario_specs_step_says_where_a_fact_goes(project: Workspace) -> None:
+    """Requirement "Spec background": the specs step gives the four places a fact goes."""
+    project.change(deltas={}, design=None, tasks=None)
+    guidance = valid(at(project))["guidance"]
+    assert FACT_RULE in guidance
+    for place in ("requirement", "Background", "resource", "charter's Context"):
+        assert place in FACT_RULE
+    assert FACT_RULE not in at(project, "tasks")["guidance"]
 
 
 def test_scenario_tasks_step(project: Workspace) -> None:
@@ -918,6 +929,54 @@ def test_scenario_retired_resource(project: Workspace) -> None:
     built = pack(project, "review")
     assert built["resources"] == []
     assert "heroku" not in render.to_text(built, PLAIN).casefold()
+
+
+def with_background(text: str, background: str) -> str:
+    return text.replace("## Requirements", f"## Background\n\n{background}\n\n## Requirements")
+
+
+def test_scenario_background_of_a_touched_spec(project: Workspace) -> None:
+    """Requirement "Background in the packs": only the specs the change has a delta for."""
+    billing_change(project)
+    billing = spec(title="Billing", purpose="How billing behaves.")
+    mail = spec(title="Notifications", purpose="Mail.")
+    project.write("specs/billing.md", with_background(billing, "Invoices go out monthly."))
+    project.write("specs/notifications.md", with_background(mail, "Mail goes through Mailgun."))
+    built = pack(project, "implement")
+    assert built["backgrounds"] == [{"spec": "billing", "text": "Invoices go out monthly."}]
+    text = render.to_text(built, PLAIN)
+    assert "### billing\n\nInvoices go out monthly." in text
+    assert "Mailgun" not in text
+
+
+def test_scenario_background_from_the_delta(project: Workspace) -> None:
+    project.write(
+        "specs/billing.md",
+        with_background(spec(title="Billing", purpose="How billing."), "Invoices go out monthly."),
+    )
+    impact = "- Specs: `billing`\n- User-visible: refunds\n- Code: billing\n"
+    text = proposal(impact=impact).replace(
+        "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Review: independent\n"
+    )
+    added = delta(title="Billing", added=(requirement("Refunds"),))
+    added = added.replace("## ADDED", "## Background\n\nInvoices go out weekly.\n\n## ADDED")
+    accepted(project, proposal_text=text, deltas={"billing": added})
+    weekly = [{"spec": "billing", "text": "Invoices go out weekly."}]
+    assert pack(project, "implement")["backgrounds"] == weekly
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    built = pack(project, "review")
+    assert built["backgrounds"] == weekly
+    text = render.to_text(built, PLAIN)
+    assert "### billing\n\nInvoices go out weekly." in text
+    assert "monthly" not in text
+
+
+def test_specs_with_no_background_leave_the_packs_without_one(project: Workspace) -> None:
+    billing_change(project)
+    built = pack(project, "implement")
+    assert built["backgrounds"] == []
+    assert "## Background" not in render.to_text(built, PLAIN)
 
 
 def test_scenario_explore_index(project: Workspace) -> None:

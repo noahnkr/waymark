@@ -2329,6 +2329,25 @@ Printed by `wm context <change> <item> --for implement`.
         "additionalProperties": false
       }
     },
+    "backgrounds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "spec": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "spec",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
     "design": {
       "type": [
         "string",
@@ -2358,6 +2377,7 @@ Printed by `wm context <change> <item> --for implement`.
     "proposal",
     "deltas",
     "requirements",
+    "backgrounds",
     "design",
     "stopping_rules",
     "ends_with"
@@ -2628,6 +2648,25 @@ Printed by `wm context <change> --for review`.
         "additionalProperties": false
       }
     },
+    "backgrounds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "spec": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "spec",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
     "design": {
       "type": [
         "string",
@@ -2659,6 +2698,7 @@ Printed by `wm context <change> --for review`.
     "resources",
     "rules",
     "deltas",
+    "backgrounds",
     "design",
     "severity_rubric",
     "ends_with"

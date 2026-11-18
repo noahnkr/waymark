@@ -12,6 +12,15 @@
 <!-- Only when this delta creates the spec, or changes what the spec is for.
      Otherwise remove this section. -->
 
+## Background
+
+<!-- Facts about this spec's area that aren't requirements and can't be found in
+     the code. This section replaces the spec's Background whole.
+     Good: "Leads come from A Place for Mom, one email per lead."
+     Bad: "The funnel SHALL answer a new lead within an hour." It says what the
+     system does, so it is a requirement.
+     Remove this section unless the change sets the Background. -->
+
 ## ADDED Requirements
 
 ### Requirement: <name>

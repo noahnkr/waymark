@@ -42,6 +42,13 @@ All notable changes to Waymark, one entry per release.
   `resources` index, and the implement and review packs a `resources` field with
   the resources serving the change's specs. An implementer may edit resources,
   and `wm init` and `wm update` keep `resources/` in git.
+- **A spec may have a Background.** A `## Background` section, between Purpose
+  and Requirements, holds the facts about the spec's area that aren't
+  requirements. A delta's `## Background` replaces the spec's whole at archive or
+  sync. `wm check` reports an empty one. The implement and review packs gain a
+  `backgrounds` field with the Background of each spec the change has a delta
+  for, the delta's when it has one. The delta template and the specs step's
+  guidance say where a fact goes.
 
 ## [0.2.0] - 2026-11-16
 

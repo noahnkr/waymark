@@ -75,6 +75,13 @@ WRITING_RULES = (
 )
 """The rules for writing requirements, given at the specs step."""
 
+FACT_RULE = (
+    "Put each fact where it belongs: what the system does is a requirement; a fact about the "
+    "spec's area is its Background, set through the delta's '## Background'; a fact about an "
+    "outside system is a resource; a fact for the whole project is the charter's Context."
+)
+"""Where a fact goes, given at the specs step."""
+
 SIZING_RULES = (
     "Make one item per slice that can be built and verified on its own.",
     "Split an item whose criteria run past about five bullets, or that spans unrelated parts "
@@ -232,6 +239,7 @@ def _drafting(
             "Every requirement states what the system SHALL do and has at least one scenario.",
             "Requirements describe what the system does, as a user or another program sees it. "
             "Files the user doesn't touch, internals and mechanisms go in the design.",
+            FACT_RULE,
             *WRITING_RULES,
         ]
         return (

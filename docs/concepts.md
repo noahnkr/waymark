@@ -147,6 +147,18 @@ A search SHALL return at most fifty results.
 - THEN fifty results come back
 ```
 
+Each fact has one place to go:
+
+| The fact | Where it goes |
+|---|---|
+| What the system does | A requirement in the area's spec. |
+| A fact about one area that isn't a requirement, such as where its data comes from | The spec's `## Background`, set through a delta. |
+| A fact about something outside the repo, such as a service or a platform | A resource, `resources/<name>.md`. |
+| A fact every agent needs on every change | The charter's Context. |
+
+A spec's Background reaches only the agents working on a change with a delta for
+that spec. See [Spec](record.md#spec-specsareamd).
+
 A task item carries what an agent needs to build it, and the records `wm`
 writes about it. The records about the whole change sit in a `## Log` section at
 the end of the task list:
@@ -213,7 +225,7 @@ Every line `wm` writes is a dated record of one shape:
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
 | Is | the main agent session, working with you | a fresh agent, started for an item with a `- Build: delegate` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
-| Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules, its milestone's Goal and Non-goals, and when to stop | the criteria of the items to review, the deltas and their scenarios, the design, earlier reviews and what each covers, its milestone's Goal and Non-goals, the severity rubric, the code; **not** how it was built |
+| Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch and their specs' Background, the project's context and apply rules, its milestone's Goal and Non-goals, and when to stop | the criteria of the items to review, the deltas and their scenarios, their specs' Background, the design, earlier reviews and what each covers, its milestone's Goal and Non-goals, the severity rubric, the code; **not** how it was built |
 | May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
 

@@ -1,7 +1,7 @@
 """Deltas: a change's edits to one spec, and how they merge into it.
 
 A delta adds, modifies, removes or renames requirements. It may also carry the
-spec's title, purpose and repos; it must carry the purpose when it creates the
+spec's title, purpose, background and repos; it must carry the purpose when it creates the
 spec. A rename keeps the requirement's statement and scenarios; the same delta
 may also modify the requirement under its new name.
 """
@@ -17,11 +17,13 @@ from waymark.record.outline import (
 )
 from waymark.record.problems import Problem
 from waymark.record.specs import (
+    BACKGROUND,
     PURPOSE,
     REPOS_FACT,
     REQUIREMENTS,
     Requirement,
     Spec,
+    empty_background,
     named_blocks,
     parse_requirements,
     parse_spec,
@@ -82,6 +84,7 @@ class Delta:
     removed: tuple[Removal, ...]
     problems: tuple[Problem, ...]
     renamed: tuple[Rename, ...] = ()
+    background: str | None = None
 
     def touched(self) -> tuple[tuple[str, str], ...]:
         """The key and name of every requirement this delta adds, modifies, removes or renames."""
@@ -207,7 +210,11 @@ def parse_delta(domain: str, doc: Document) -> Delta:
                     )
                 )
     sections = collect_sections(
-        doc, (), problems, optional=(PURPOSE, ADDED, MODIFIED, REMOVED, RENAMED), strict=True
+        doc,
+        (),
+        problems,
+        optional=(PURPOSE, BACKGROUND, ADDED, MODIFIED, REMOVED, RENAMED),
+        strict=True,
     )
     purpose: str | None = None
     if PURPOSE in sections:
@@ -221,6 +228,11 @@ def parse_delta(domain: str, doc: Document) -> Delta:
                     f'"## {PURPOSE}" is empty. Write the purpose, or remove the section.',
                 )
             )
+    background: str | None = None
+    if BACKGROUND in sections:
+        background = doc.body(sections[BACKGROUND])
+        if not background:
+            problems.append(empty_background(doc, sections[BACKGROUND]))
     added = parse_requirements(doc, sections[ADDED], problems) if ADDED in sections else ()
     modified = parse_requirements(doc, sections[MODIFIED], problems) if MODIFIED in sections else ()
     removed = _parse_removals(doc, problems)
@@ -245,7 +257,7 @@ def parse_delta(domain: str, doc: Document) -> Delta:
                 )
             )
         seen.add(key)
-    if not seen and purpose is None and repos is None:
+    if not seen and purpose is None and background is None and repos is None:
         problems.append(
             Problem(
                 doc.path,
@@ -256,7 +268,17 @@ def parse_delta(domain: str, doc: Document) -> Delta:
             )
         )
     return Delta(
-        domain, doc, title, repos, purpose, added, modified, removed, tuple(problems), renamed
+        domain,
+        doc,
+        title,
+        repos,
+        purpose,
+        added,
+        modified,
+        removed,
+        tuple(problems),
+        renamed,
+        background,
     )
 
 
@@ -338,7 +360,8 @@ def delta_is_merged(spec: Spec | None, delta: Delta) -> bool:
     for rename in delta.renamed:
         if spec.requirement(rename.old) is not None or spec.requirement(rename.new) is None:
             return False
-    if delta.purpose is not None and spec.purpose != delta.purpose:
+    wholes = ((delta.purpose, spec.purpose), (delta.background, spec.background))
+    if any(wanted is not None and wanted != living for wanted, living in wholes):
         return False
     return delta.repos is None or spec.repos == delta.repos
 
@@ -348,7 +371,10 @@ def _new_spec_text(delta: Delta) -> str:
     lines = [f"# {delta.title}", ""]
     if delta.repos:
         lines += [f"{REPOS_FACT}: {', '.join(delta.repos)}", ""]
-    lines += [f"## {PURPOSE}", "", *(delta.purpose or "").split("\n"), "", f"## {REQUIREMENTS}"]
+    lines += [f"## {PURPOSE}", "", *(delta.purpose or "").split("\n"), ""]
+    if delta.background is not None:
+        lines += [f"## {BACKGROUND}", "", *delta.background.split("\n"), ""]
+    lines += [f"## {REQUIREMENTS}"]
     for requirement in delta.added:
         lines += ["", *requirement.block]
     return newline.join(lines) + newline
@@ -394,14 +420,27 @@ def _append_added(spec: Spec, delta: Delta, lines: list[str], newline: str) -> N
     lines[position:position] = new
 
 
-def _set_purpose(spec: Spec, purpose: str, lines: list[str], newline: str) -> None:
+def _set_body(spec: Spec, name: str, body: str, lines: list[str], newline: str) -> None:
+    """Replace the body of the spec's ``## <name>`` section, keeping its heading."""
     doc = _reparse(spec, lines)
-    section = next(s for s in doc.sections(2) if s.title.casefold() == PURPOSE.casefold())
+    section = next(s for s in doc.sections(2) if s.title.casefold() == name.casefold())
     end = doc.content_end(section.body_start, section.end)
     start = section.body_start
     while start < end and doc.lines[start].is_blank:
         start += 1
-    lines[start:end] = [text + newline for text in purpose.split("\n")]
+    lines[start:end] = [text + newline for text in body.split("\n")]
+
+
+def _set_background(spec: Spec, background: str, lines: list[str], newline: str) -> None:
+    """Replace the spec's Background, or insert one right before its Requirements."""
+    doc = _reparse(spec, lines)
+    sections = {s.title.casefold(): s for s in doc.sections(2)}
+    if BACKGROUND.casefold() in sections:
+        _set_body(spec, BACKGROUND, background, lines, newline)
+        return
+    position = sections[REQUIREMENTS.casefold()].start
+    body = [text + newline for text in background.split("\n")]
+    lines[position:position] = [f"## {BACKGROUND}{newline}", newline, *body, newline]
 
 
 def _set_repos(spec: Spec, repos: tuple[str, ...], lines: list[str], newline: str) -> None:
@@ -437,7 +476,9 @@ def merge_delta(spec: Spec | None, delta: Delta) -> Merge:
     if delta.added:
         _append_added(spec, delta, lines, newline)
     if delta.purpose is not None:
-        _set_purpose(spec, delta.purpose, lines, newline)
+        _set_body(spec, PURPOSE, delta.purpose, lines, newline)
+    if delta.background is not None:
+        _set_background(spec, delta.background, lines, newline)
     if delta.repos is not None:
         _set_repos(spec, delta.repos, lines, newline)
     while len(lines) > 1 and not lines[-1].strip():
