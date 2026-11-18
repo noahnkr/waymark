@@ -21,3 +21,6 @@
 
 - (accepted) 2026-11-17 fingerprint a9c3f8d8b312bd26 items 1.1 1.2 2.1 by Noah Roberts
 - (accepted) 2026-11-17 fingerprint 1a05f8493f2c062d items 1.1 1.2 2.1 by Noah Roberts
+- (self-review) 2026-11-17 covers 1.1 1.2 2.1 by Noah Roberts: Every criterion of 1.1, 1.2 and 2.1 holds and each scenario in the review and records deltas has a test; the items fit: the covers grammar feeds review_state, which drives the next step, the archive gate, the review pack and wm show. Full checks pass (1133 tests, ruff, mypy, codespell, docs).
+  - suggestion `src/waymark/services/check.py`: wm check doesn't report a covers that names an item the change doesn't have; such a record is read as covering a missing item
+  - suggestion `src/waymark/services/context.py`: the review pack's items now holds only the items to review while its version stays 2; a reader that assumed every item would see fewer, so the next release note should say so
