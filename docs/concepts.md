@@ -107,7 +107,7 @@ waymark/
   changes/<change>/    proposal.md, specs/<area>.md (deltas), design.md, tasks.md
   changes/archive/     archived changes, each in a dated folder
   milestones/<name>/   optional: milestone.md, a goal and a roadmap of changes
-  explorations/        saved thinking
+  explorations/        saved thinking; explorations/archive/ once it ends
   resources/<name>.md  facts about one thing outside the repo: a service, a platform, ...
 ```
 
@@ -352,7 +352,7 @@ and pull request, through the workflow `wm ci` writes.
 | **Sync** | Merging an applied change's deltas into the specs without archiving it yet. |
 | **Archive** | Finishing a change: its deltas merged into the specs, its outcome written, and its folder moved to a dated archive. |
 | **Owner** | The one person responsible for a change. |
-| **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion) that may lead to a change or be parked. |
+| **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion): `open` until it leads to a change or milestone or is dropped, then archived. |
 | **Resource** | The as-built facts about one thing outside the repo that the project depends on, such as a service, a platform or a dataset, in `resources/<name>.md`. A spec says what the system does and changes only through a change; a resource says what the outside world is, and is edited by hand when that world changes. See [the record](record.md#resource). |
 | **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. A member change names it in a `- Milestone:` line that `wm check` holds to the roadmap, is created with `wm new change <name> --milestone <milestone>`, and its agents see the milestone's Goal and Non-goals. The roadmap changes only through `wm roadmap add`, `drop` and `move`, each recorded in the milestone's Log, and `wm close` needs every line archived. See [the record](record.md#milestone). |
 | **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |

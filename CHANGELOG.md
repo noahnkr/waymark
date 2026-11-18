@@ -2,6 +2,37 @@
 
 All notable changes to Waymark, one entry per release.
 
+## [Unreleased]
+
+- **Behavior change: `parked` is no longer an exploration status.** An
+  exploration is `open`, `led-to <links>` or `dropped`, and `wm check` reports
+  `parked` as an unknown status. An open exploration's Conclusion may say what it
+  waits for. The record format is unchanged.
+- **`wm new change --from <exploration>` and `wm new milestone --from
+  <exploration>`** set the exploration's status to `led-to` the new change or
+  milestone. A second `--from` adds its link after the first.
+- **Explorations are archived with their work.** `wm archive` and `wm close`
+  move an exploration to `explorations/archive/YYYY-MM-DD-<name>.md` once
+  everything it led to is archived or closed, and re-aim the links to it.
+- **`wm exploration drop <exploration> --reason "<why>"`** ends an open
+  exploration that won't be acted on: it writes `dropped` and the reason, and
+  moves it to the archive.
+- **Agents can't edit an exploration's status line by hand.** The hooks refuse
+  the edit and name `--from` and `wm exploration drop`.
+- **Archived explorations in the views.** `wm show <exploration>` finds an
+  archived one by its name or dated name and says when it was archived, and
+  `wm ls explorations --archived` lists them. The explore context pack lists
+  active explorations only. The `wm.show.exploration` JSON is at version 2, with
+  an `archived_on` field, and `wm.context.explore` at version 2; both list
+  `dropped` instead of `parked`.
+- **`wm check` reports `exploration-not-archived`** for an active exploration
+  whose work is all archived.
+- **`wm init` and `wm update` write `explorations/archive/.gitkeep`.**
+- **`/wm-explore <exploration>` picks a saved exploration back up:** it reads it,
+  says what in the record has changed since, and goes on from its Questions and
+  Approaches. Its closing offers for a saved exploration are do nothing, update or
+  drop it, a proposal, or a milestone, the last two created with `--from`.
+
 ## [0.4.0] - 2026-11-18
 
 A first impression worth the name: `wm init` welcomes you and asks what to set

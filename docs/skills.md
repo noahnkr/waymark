@@ -88,24 +88,32 @@ archived.
 
 Helps you get from a fuzzy idea to a clear one, from the record. It writes
 nothing until you pick one of its closing offers. **Use it** when an idea is
-still fuzzy, or you don't know yet whether it's a change.
+still fuzzy, or you don't know yet whether it's a change. **Pick up** a saved
+exploration with `/wm-explore <exploration>`.
 
 **How it works**
 
-1. **What the record says:** the specs, changes in flight, milestones and saved
+1. **A saved exploration:** when you name one, or the idea matches one and you
+   say it is that one, it reads it with `wm show`, says what in the record has
+   changed since, and goes on from its Questions and Approaches.
+2. **What the record says:** the specs, changes in flight, milestones and saved
    explorations that bear on the idea, and which requirements it would touch.
-2. **The problem:** what it solves, and for whom.
-3. **The questions:** it answers what the record or the code can, and leaves the
+3. **The problem:** what it solves, and for whom.
+4. **The questions:** it answers what the record or the code can, and leaves the
    rest for you.
-4. **The approaches:** two or more, each with what speaks for and against it,
+5. **The approaches:** two or more, each with what speaks for and against it,
    and its cost.
-5. **A recommendation,** and what would change it.
-6. **The closing offers:** do nothing; save an exploration; start a proposal,
-   of any size; start a milestone.
+6. **A recommendation,** and what would change it.
+7. **The closing offers,** four of them:
+   - for a new idea: do nothing; save an exploration; start a proposal, of any
+     size; start a milestone;
+   - for a saved exploration: do nothing; update it, or drop it with
+     `wm exploration drop`; start a proposal; start a milestone. The proposal
+     and the milestone are created with `--from <exploration>`.
 
 | Reads | Writes, only on an offer |
 |---|---|
-| `wm context --for explore`; `wm show <spec\|change>`, with `--from <atlas>` for a referenced atlas; the code, without changing it | an exploration with a `- Status:` line; or a milestone with its Goal, and its Roadmap lines through `wm roadmap add`; `- Status: led-to <link>` on an exploration that led to a change |
+| `wm context --for explore`; `wm show <spec\|change\|exploration>`, with `--from <atlas>` for a referenced atlas; the code, without changing it | an exploration through `wm new exploration`, or its sections; `wm exploration drop`; or a milestone with its Goal, created with `--from` when it comes from an exploration, and its Roadmap lines through `wm roadmap add` |
 
 **Stops** when you pick an offer (it does that one only), when you want to stop
 (it makes the offers), or when the idea is already in flight or in the specs.

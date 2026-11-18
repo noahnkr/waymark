@@ -25,11 +25,13 @@ waymark/
   milestones/<name>/milestone.md
   milestones/archive/YYYY-MM-DD-<name>/
   explorations/<name>.md
+  explorations/archive/YYYY-MM-DD-<name>.md
   resources/<name>.md
 ```
 
-Each of the seven folders, `specs/`, `changes/`, `changes/archive/`,
-`explorations/`, `milestones/`, `milestones/archive/` and `resources/`, holds an empty
+Each of the eight folders, `specs/`, `changes/`, `changes/archive/`,
+`explorations/`, `explorations/archive/`, `milestones/`, `milestones/archive/` and
+`resources/`, holds an empty
 `.gitkeep`, so git keeps it while it holds nothing else. `wm init` writes them
 with a new record, and `wm update` adds any that are missing. No `wm` command
 removes one, and `wm check` doesn't read them.
@@ -343,12 +345,37 @@ changes aren't checked against roadmaps.
 Created by `wm new exploration <name>`, written by `/wm-explore` when you pick
 that offer.
 
-- **`- Status:`** under the title says where it stands: `open`, `parked`, or
-  `led-to <link>` to the change or milestone it led to. Only this line decides it.
-- **Sections:** Context, Questions, Approaches, Conclusion (empty while open; the
-  reason when parked), Related.
+- **`- Status:`** under the title says where it stands. Only this line decides it,
+  and only `wm` writes it; the hooks refuse an agent's hand edit to it.
+  - `open`: waiting to be decided or built. `wm new exploration` writes it.
+  - `led-to <links>`: its findings went into a change or milestone.
+    `wm new change <name> --from <exploration>` and
+    `wm new milestone <name> --from <exploration>` write it. A second `--from`
+    adds its link after the first, separated by a comma.
+  - `dropped`: it was weighed and won't be acted on.
+    `wm exploration drop <exploration> --reason "<why>"` writes it.
+- **Sections:** Context, Questions, Approaches, Conclusion (while open, what it
+  waits for, if anything; once it leads somewhere, what was decided), Related.
 
-**Checks:** `missing-status`, `unknown-status`, `parked-without-reason`.
+An exploration ends in `explorations/archive/YYYY-MM-DD-<name>.md`, and links to
+it are re-aimed:
+
+- **Led to work:** `wm archive` or `wm close` moves it once every change and
+  milestone it led to is archived or closed. A target still active keeps it
+  where it is.
+- **Dropped:** `wm exploration drop` adds the reason as the last paragraph of
+  its Conclusion and moves it in one step. An exploration that led somewhere is
+  refused: it ends when its work does.
+
+`wm show <name>` finds an archived exploration by its name or its dated name,
+and `wm ls explorations --archived` lists them. The explore context pack lists
+active explorations only. Archived explorations are read as written and not
+checked.
+
+**Checks:** `missing-status`, `unknown-status` (any value other than the three,
+`parked` included), `conclusion-unreadable` (a `led-to` link that doesn't lead
+to a change or milestone), `exploration-not-archived` (everything it led to is
+archived, and it is still active).
 
 ## Resource
 

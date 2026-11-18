@@ -81,7 +81,7 @@
   - Verify:
     - tests in `tests/test_skills.py` for Started with an exploration's name, Offers for a resumed exploration, Proposal from an exploration and No tiny-path offer
     - `uv run --no-sync pytest tests/test_skills.py tests/adapters`
-- [ ] 3.2 Update the docs and the CHANGELOG
+- [x] 3.2 Update the docs and the CHANGELOG
   - Criteria:
     - `docs/concepts.md` describes the three statuses, `--from`, archiving with the work, `wm exploration drop`, resuming with `/wm-explore <exploration>`, and `explorations/archive/` in the record layout, following the `waymark-write-docs` skill
     - `docs/cli.md` and `docs/json.md` are regenerated with `uv run --no-sync python -m tools.docs`
