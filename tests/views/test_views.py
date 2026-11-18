@@ -103,9 +103,19 @@ def busy(project: Workspace) -> Workspace:
     return project
 
 
+RESOURCE = (
+    "# Stripe\n\n- Kind: service\n- Serves: search\n- Status: active\n- Verified: 2026-11-17\n\n"
+    "## What it is\n\nPayments.\n\n## Access\n\nThe vault.\n\n## Interface\n\nNone.\n\n"
+    "## Data\n\nNone.\n\n## Configuration\n\n### dev\n\nTest mode.\n\n"
+    "## Verification\n\nA test charge.\n"
+)
+
+
 def test_every_payload_names_its_schema_and_version(project: Workspace) -> None:
-    record = busy(project).record()
+    busy(project).write("resources/stripe.md", RESOURCE)
+    record = project.record()
     built = [
+        payloads.show(record, "stripe"),
         payloads.status(record),
         payloads.inbox(record),
         payloads.check(record, NOW),

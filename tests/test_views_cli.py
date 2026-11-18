@@ -100,7 +100,9 @@ def test_check_exit_code_follows_its_errors_in_both_forms(terminal: Terminal) ->
 
 def test_show_refuses_an_unknown_name_with_exit_1(terminal: Terminal) -> None:
     refusal = terminal.run("show", "no-such-thing", expect=EXIT_REFUSED)
-    assert refusal.startswith("wm: There is no change, spec, milestone or exploration named")
+    assert refusal.startswith(
+        "wm: There is no change, spec, milestone, exploration or resource named"
+    )
 
 
 def test_show_takes_a_kind_when_a_name_is_shared(terminal: Terminal) -> None:
@@ -140,3 +142,55 @@ def test_close_runs_from_the_command_line(terminal: Terminal) -> None:
     assert "Closed the milestone" in terminal.run("close", "tidy-docs")
     assert terminal.json("ls", "milestones")["entries"] == []
     assert "tidy-docs" in terminal.run("ls", "milestones", "--archived")
+
+
+def resource_text(title: str, kind: str, serves: str, status: str) -> str:
+    return (
+        f"# {title}\n\n- Kind: {kind}\n- Serves: {serves}\n- Status: {status}\n"
+        "- Verified: 2026-11-17\n\n## What it is\n\nIt.\n\n## Access\n\nNone.\n\n"
+        "## Interface\n\nNone.\n\n## Data\n\nNone.\n\n## Configuration\n\n### prod\n\nLive.\n\n"
+        "## Verification\n\nNone.\n"
+    )
+
+
+def test_scenario_listing(terminal: Terminal) -> None:
+    """Requirement "Resource commands": wm ls resources gives kind, status and specs."""
+    terminal.project.write("specs/billing.md", spec())
+    terminal.project.write(
+        "resources/stripe.md", resource_text("Stripe", "service", "billing", "active")
+    )
+    terminal.project.write(
+        "resources/heroku.md", resource_text("Heroku", "platform", "none", "retired")
+    )
+    lines = terminal.run("ls", "resources").splitlines()
+    assert [line.split() for line in lines] == [
+        ["heroku", "retired", "platform,", "serves", "none"],
+        ["stripe", "active", "service,", "serves", "billing"],
+    ]
+    payload = terminal.json("ls", "resources")
+    assert payload["entries"] == [
+        {"name": "heroku", "state": "retired", "detail": "platform, serves none"},
+        {"name": "stripe", "state": "active", "detail": "service, serves billing"},
+    ]
+
+
+def test_show_a_resource_in_full(terminal: Terminal) -> None:
+    terminal.project.write("specs/billing.md", spec())
+    terminal.project.write(
+        "resources/stripe.md", resource_text("Stripe", "service", "billing", "active")
+    )
+    payload = terminal.json("show", "stripe", "--kind", "resource")
+    assert payload["schema"] == "wm.show.resource"
+    assert (payload["kind"], payload["serves"], payload["status"], payload["verified"]) == (
+        "service",
+        ["billing"],
+        "active",
+        "2026-11-17",
+    )
+    sections = payload["sections"]
+    assert isinstance(sections, dict)
+    assert sections["Configuration"] == "### prod\n\nLive."
+    text = terminal.run("show", "stripe", "--kind", "resource")
+    assert "Kind: service" in text
+    assert "Serves: billing" in text
+    assert "Live." in text

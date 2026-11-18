@@ -363,6 +363,18 @@ def show_exploration(payload: Payload, style: Style) -> str:
     return "\n".join(lines)
 
 
+def show_resource(payload: Payload, style: Style) -> str:
+    """A resource, as text: its lines at the top, then every section."""
+    lines = [style.rule(f"Resource: {payload['name']}"), f"  {payload['title']}"]
+    lines.append(f"  Kind: {payload['kind'] or 'unknown'}")
+    lines.append(f"  Serves: {', '.join(payload['serves']) or 'none'}")
+    lines.append(f"  Status: {payload['status'] or 'unknown'}")
+    lines.append(f"  Verified: {payload['verified'] or 'unknown'}")
+    for title, text in payload["sections"].items():
+        lines += _titled(title, text, style)
+    return "\n".join(lines)
+
+
 def _fenced(text: str) -> list[str]:
     """Record text quoted whole, so its own headings don't mix with the pack's."""
     return ["````markdown", *text.split("\n"), "````"]
@@ -589,6 +601,7 @@ _RENDERERS: dict[str, Callable[[Payload, Style], str]] = {
     "wm.show.spec": show_spec,
     "wm.show.milestone": show_milestone,
     "wm.show.exploration": show_exploration,
+    "wm.show.resource": show_resource,
     "wm.instructions": instructions,
     "wm.context.explore": context_explore,
     "wm.context.implement": context_delegated,

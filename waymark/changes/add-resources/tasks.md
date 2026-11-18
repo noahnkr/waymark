@@ -24,7 +24,7 @@
     - it refuses a name that is already a resource, leaving the file unchanged, and a missing or unknown kind, listing the six and writing nothing; `wm new change`, `milestone` and `exploration` refuse a kind argument
   - Verify:
     - `test_scenario_new_resource`, `test_scenario_name_taken` and `test_scenario_unknown_kind_given` in `tests/services/test_setup.py`
-- [ ] 1.4 `wm ls resources` and `wm show --kind resource`
+- [x] 1.4 `wm ls resources` and `wm show --kind resource`
   - Criteria:
     - `wm ls resources` lists every resource with its kind, status and the specs it serves (`none` when it serves none), in text and as JSON
     - `wm show <name> --kind resource` shows the resource in full, in text and as a new `wm.show.resource` JSON payload described in `views/schemas.py`

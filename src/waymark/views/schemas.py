@@ -294,6 +294,18 @@ SCHEMAS: dict[str, Schema] = {
             "sections": SECTIONS,
         },
     ),
+    "show.resource": _payload(
+        "show.resource",
+        {
+            "name": STRING,
+            "title": STRING,
+            "kind": TEXT_OR_NULL,
+            "serves": NAMES,
+            "status": TEXT_OR_NULL,
+            "verified": DATE_OR_NULL,
+            "sections": SECTIONS,
+        },
+    ),
 }
 """Every payload's schema, by the name after ``wm.`` in its ``schema`` field."""
 
