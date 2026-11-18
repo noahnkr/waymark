@@ -11,13 +11,14 @@
     - this holds for `wm review --self`, `wm verdict`, and a verdict the hook records for a reviewer
   - Verify:
     - `test_scenario_absolute_path_inside_the_project`, `test_scenario_relative_path_with_backslashes`, `test_scenario_code_repo_of_an_atlas` and `test_scenario_absolute_path_elsewhere`, beside the existing finding tests
-- [ ] 1.2 Repair the archived findings that hold an absolute path
+- [x] 1.2 Repair the archived findings that hold an absolute path
   - Criteria:
     - the four findings of `waymark/changes/archive/2026-11-17-link-milestone-changes/tasks.md` name their places relative to the project, and nothing else in the file changes
     - no file in `waymark/` holds the path of this machine's checkout
   - Verify:
     - `git diff` of the file shows only the four places changed, and a search of `waymark/` for `project-workspace` finds nothing
     - `wm check` passes
+  - (note) 2026-11-18 by Noah Roberts: The human ran the repair, since the hook refuses an agent's edit to Log records. The Verify search for project-workspace can't come back empty: this change's proposal and task list hold the word, the proposal as a redacted example and the task list in the Verify line itself. A search for the checkout's own path, with its user folder, finds nothing in waymark/, so the criterion holds
 
 ## 2. Docs
 
