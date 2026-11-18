@@ -22,7 +22,7 @@
 
 ## 2. Docs
 
-- [ ] 2.1 Docs for finding places
+- [x] 2.1 Docs for finding places
   - Criteria:
     - `docs/record.md` says a finding's place is a path relative to the project, or `<repo>/<path>` in an atlas, and that an absolute path is rewritten or refused
     - the CHANGELOG's Unreleased section notes it
