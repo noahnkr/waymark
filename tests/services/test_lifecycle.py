@@ -548,3 +548,11 @@ def test_drop_refuses_an_unknown_exploration_or_an_empty_reason(project: Workspa
     with pytest.raises(Refusal, match="--reason"):
         lifecycle.drop_exploration(project.root, "caching", "  ", DROP_DAY)
     assert project.path("explorations/caching.md").exists()
+
+
+def test_drop_refuses_an_exploration_without_a_conclusion(project: Workspace) -> None:
+    text = exploration().replace("## Conclusion\n\n", "")
+    project.write("explorations/result-paging.md", text)
+    with pytest.raises(Refusal, match="## Conclusion"):
+        lifecycle.drop_exploration(project.root, "result-paging", "Why.", DROP_DAY)
+    assert project.read("explorations/result-paging.md") == text

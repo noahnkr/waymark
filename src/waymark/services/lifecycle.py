@@ -577,11 +577,14 @@ def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | No
     return existing
 
 
-def _archive_explorations(record: Record, transaction: Transaction, today: datetime.date) -> None:
+def _archive_explorations(
+    record: Record, transaction: Transaction, today: datetime.date, folder: tuple[str, str]
+) -> None:
     """Stage the move of each exploration whose work the staged operation finishes.
 
     Run after the links are rewritten: an active exploration whose ``led-to`` targets
     all point into an archive, as staged, moves to ``explorations/archive/<date>-<name>.md``.
+    ``folder`` is the change or milestone folder the operation moves, as (source, target).
     """
     finished: list[Document] = []
     for name, exploration in sorted(record.explorations.items()):
@@ -590,16 +593,22 @@ def _archive_explorations(record: Record, transaction: Transaction, today: datet
         doc = Document.parse(path, staged) if staged is not None else exploration.doc
         if led_to_done(parse_exploration(name, doc)):
             finished.append(doc)
-    _move_explorations(record, transaction, finished, today)
+    _move_explorations(record, transaction, finished, today, folder)
 
 
 def _move_explorations(
-    record: Record, transaction: Transaction, moving: Sequence[Document], today: datetime.date
+    record: Record,
+    transaction: Transaction,
+    moving: Sequence[Document],
+    today: datetime.date,
+    folder: tuple[str, str] | None = None,
 ) -> None:
     """Stage moving explorations, as given, to the archive, and re-aim every link they break.
 
     Each moves to ``explorations/archive/<date>-<name>.md``, with its own links
     re-aimed from there; links to it from the rest of the active record follow it.
+    ``folder`` is a folder the same operation moves, as (source, target): its files'
+    staged text is aimed from the target, so their links are read from there.
     A file already at a target refuses the operation, before anything is written.
     """
     if not moving:
@@ -625,15 +634,18 @@ def _move_explorations(
         else:
             current = original
         path, text = current.path, current.text
+        if folder is not None and (path == folder[0] or path.startswith(f"{folder[0]}/")):
+            path = folder[1] + path[len(folder[0]) :]
+            current = Document.parse(path, text)
         for source, target in moves.items():
             text = rewrite_links(Document.parse(path, text), source, target)
             if path == source:
                 path = target
-        if path != original.path:
+        if path in moves.values():
             transaction.write(path, text)
             transaction.delete(original.path)
         elif text != current.text:
-            transaction.write(path, text)
+            transaction.write(original.path, text)
 
 
 def drop_exploration(start: Path, name: str, reason: str, today: datetime.date) -> Done:
@@ -655,6 +667,11 @@ def drop_exploration(start: Path, name: str, reason: str, today: datetime.date) 
         )
     if not reason.strip():
         raise Refusal('Say why the exploration is dropped: --reason "<why>".')
+    if not any(s.title.casefold() == "conclusion" for s in exploration.doc.sections(2)):
+        raise Refusal(
+            f'The exploration "{name}" has no "## Conclusion" section for the reason. Add the '
+            "heading, then drop it."
+        )
     text = with_dropped(exploration, reason.strip())
     transaction = Transaction(record.files)
     _move_explorations(record, transaction, [Document.parse(exploration.doc.path, text)], today)
@@ -716,7 +733,7 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
             text = append_milestone_log(Document.parse(doc.path, text), archived_line)
         if text != doc.text:
             transaction.write(doc.path, text)
-    _archive_explorations(record, transaction, today)
+    _archive_explorations(record, transaction, today, (source, target))
     transaction.move(source, target)
     paths = commit(transaction)
     return Done(f'Archived "{name}" as {target}. Its deltas are now part of the specs.', paths)
@@ -768,7 +785,7 @@ def close_milestone(start: Path, name: str, today: datetime.date) -> Done:
         text = rewrite_links(doc, source, target)
         if text != doc.text:
             transaction.write(doc.path, text)
-    _archive_explorations(record, transaction, today)
+    _archive_explorations(record, transaction, today, (source, target))
     transaction.move(source, target)
     paths = commit(transaction)
     return Done(f'Closed the milestone "{name}" as {target}.', paths)

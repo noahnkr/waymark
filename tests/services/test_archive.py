@@ -307,6 +307,20 @@ def test_scenario_its_only_change_archived(project: Workspace) -> None:
     assert link_problems(record) == ()
 
 
+def test_archived_change_follows_its_exploration_to_the_archive(project: Workspace) -> None:
+    """The archived change's own link to the exploration it came from is re-aimed too."""
+    link = "From [paging](../../explorations/paging.md).\n\n"
+    applied(project, proposal_text=proposal().replace("## Why\n\n", f"## Why\n\n{link}", 1))
+    project.write(
+        "explorations/paging.md",
+        exploration("led-to [add-limit](../changes/add-limit/proposal.md)"),
+    )
+    lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    archived = project.read(f"{ARCHIVED}/proposal.md")
+    assert "[paging](../../../explorations/archive/2026-02-01-paging.md)" in archived
+    assert project.path("explorations/archive/2026-02-01-paging.md").is_file()
+
+
 def test_scenario_one_of_two_changes_archived(project: Workspace) -> None:
     applied(project)
     project.change("add-page-cursor")

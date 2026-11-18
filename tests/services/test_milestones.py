@@ -120,6 +120,22 @@ def test_scenario_its_milestone_closed(project: Workspace) -> None:
     assert [(entry.name, entry.date) for entry in record.archived_explorations] == [("speed", DAY)]
 
 
+def test_closed_milestone_follows_its_exploration_to_the_archive(project: Workspace) -> None:
+    """The closed milestone's own link to the exploration it came from is re-aimed too."""
+    project.write(f"{ARCHIVED_CHANGE}/proposal.md", proposal(outcome="Done."))
+    milestone(project, f"- [x] [Limit](../../{ARCHIVED_CHANGE}/proposal.md)\n")
+    path = f"milestones/{NAME}/milestone.md"
+    link = "From [speed](../../explorations/speed.md).\n\n"
+    project.write(path, project.read(path).replace("## Goal\n\n", f"## Goal\n\n{link}", 1))
+    project.write(
+        "explorations/speed.md",
+        exploration(f"led-to [Faster search](../milestones/{NAME}/milestone.md)"),
+    )
+    lifecycle.close_milestone(project.root, NAME, DAY)
+    closed = project.read(f"milestones/archive/2026-02-01-{NAME}/milestone.md")
+    assert "[speed](../../../explorations/archive/2026-02-01-speed.md)" in closed
+
+
 def test_close_refused_when_an_exploration_of_the_name_was_archived_that_day(
     project: Workspace,
 ) -> None:

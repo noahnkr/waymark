@@ -12,7 +12,7 @@
   - Verify:
     - tests in `tests/record/test_authored_formats.py` (or a new `tests/record/artifacts/test_explorations.py`) for the three scenarios
     - `uv run --no-sync pytest tests/record tests/services/test_check.py`
-- [x] 1.2 Read archived explorations, show and list them, and keep their folder in git
+- [ ] 1.2 Read archived explorations, show and list them, and keep their folder in git
   - Criteria:
     - `explorations/archive/` is not reported as an unexpected file, and its `<date>-<name>.md` files are read as archived explorations, never checked or fixed; a file whose name doesn't parse is reported as `invalid-name`
     - `wm show <name>` and `wm show <date>-<name>` find an archived exploration and print "Archived on <date>"; its JSON has an `archived` date, null for an active one
@@ -23,6 +23,7 @@
     - tests in `tests/views/test_views.py` for Show an archived exploration and List with the archived ones
     - tests in `tests/services/test_setup.py` for the four Record folders kept in git scenarios
     - `uv run --no-sync pytest tests/views tests/services/test_setup.py tests/record`
+  - (reopened) 2026-11-18 by Noah Roberts
 - [x] 1.3 Report a led-to exploration left active, and archive `lighter-workflow`
   - Criteria:
     - `wm check` reports an active exploration whose `led-to` targets are all archived or closed as an error, `exploration-not-archived`, that names `explorations/archive/`
@@ -53,6 +54,7 @@
     - `uv run --no-sync pytest tests/services`
   - Build: delegate
   - (note) 2026-11-18 by wm-implementer: Links from other active documents to an exploration moved by wm archive or wm close are not re-aimed; the record asks only for the exploration's own links. A spec or active change linking the exploration would then fail wm check's link check.
+  - (reopened) 2026-11-18 by Noah Roberts
 - [x] 2.3 Add `wm exploration drop <exploration> --reason "<why>"`
   - Criteria:
     - an open exploration gets `- Status: dropped`, the reason as its Conclusion's last paragraph after any text already there, and moves to `explorations/archive/<date>-<name>.md`, in one transaction
@@ -81,7 +83,7 @@
   - Verify:
     - tests in `tests/test_skills.py` for Started with an exploration's name, Offers for a resumed exploration, Proposal from an exploration and No tiny-path offer
     - `uv run --no-sync pytest tests/test_skills.py tests/adapters`
-- [x] 3.2 Update the docs and the CHANGELOG
+- [ ] 3.2 Update the docs and the CHANGELOG
   - Criteria:
     - `docs/concepts.md` describes the three statuses, `--from`, archiving with the work, `wm exploration drop`, resuming with `/wm-explore <exploration>`, and `explorations/archive/` in the record layout, following the `waymark-write-docs` skill
     - `docs/cli.md` and `docs/json.md` are regenerated with `uv run --no-sync python -m tools.docs`
@@ -89,6 +91,7 @@
   - Verify:
     - `uv run --no-sync python -m tools.docs --check`
     - the full checks: `pytest`, `ruff format --check .`, `ruff check .`, `mypy`, `codespell`
+  - (reopened) 2026-11-18 by Noah Roberts
 
 ## Log
 
