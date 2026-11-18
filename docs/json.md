@@ -951,6 +951,12 @@ Printed by `wm show` for a change.
                     "type": "string"
                   }
                 },
+                "covers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
                 "findings": {
                   "type": "array",
                   "items": {
@@ -986,6 +992,7 @@ Printed by `wm show` for a change.
                 "verdict",
                 "text",
                 "items",
+                "covers",
                 "findings"
               ],
               "additionalProperties": false
@@ -1091,6 +1098,12 @@ Printed by `wm show` for a change.
               "type": "string"
             }
           },
+          "covers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "findings": {
             "type": "array",
             "items": {
@@ -1126,6 +1139,7 @@ Printed by `wm show` for a change.
           "verdict",
           "text",
           "items",
+          "covers",
           "findings"
         ],
         "additionalProperties": false
@@ -1952,6 +1966,12 @@ Printed by `wm context <change> <item> --for implement`.
                   "type": "string"
                 }
               },
+              "covers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "findings": {
                 "type": "array",
                 "items": {
@@ -1985,6 +2005,7 @@ Printed by `wm context <change> <item> --for implement`.
               "verdict",
               "text",
               "items",
+              "covers",
               "findings"
             ],
             "additionalProperties": false
@@ -2135,6 +2156,9 @@ Printed by `wm context <change> --for review`.
         "none"
       ]
     },
+    "uncovered_only": {
+      "type": "boolean"
+    },
     "items": {
       "type": "array",
       "items": {
@@ -2208,6 +2232,12 @@ Printed by `wm context <change> --for review`.
               "type": "string"
             }
           },
+          "covers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "findings": {
             "type": "array",
             "items": {
@@ -2241,6 +2271,7 @@ Printed by `wm context <change> --for review`.
           "verdict",
           "text",
           "items",
+          "covers",
           "findings"
         ],
         "additionalProperties": false
@@ -2299,6 +2330,7 @@ Printed by `wm context <change> --for review`.
     "for",
     "change",
     "review_level",
+    "uncovered_only",
     "items",
     "reviews",
     "resolutions",

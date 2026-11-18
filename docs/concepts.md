@@ -142,7 +142,7 @@ the end of the task list:
 ## Log
 
 - (accepted) 2026-01-15 fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
-- (review) 2026-01-16 pass by wm-reviewer: the boundary is covered
+- (review) 2026-01-16 pass covers 1.1 by wm-reviewer: the boundary is covered
   - suggestion `docs/search.md`: name the limit in the help text
 ```
 
@@ -178,6 +178,9 @@ Every line `wm` writes is a dated record of one shape:
   a `(resolved)` record and the blocker stays.
 - **Notes:** `wm note <change> <item> "<text>"` writes one under an unticked
   item.
+- **Covers:** a `(review)` or `(self-review)` record names the items it covers,
+  as `covers <item>...` before `by`. A record without `covers`, written before
+  Waymark had it, covers every item.
 - **Layout:** `wm check --fix` puts the record in its standard layout: list
   markers, blank lines before headings, trailing spaces, the final line break
   and the records' own shape. It never changes wording, fenced code, comments
@@ -188,7 +191,7 @@ Every line `wm` writes is a dated record of one shape:
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
 | Is | the main agent session, working with you | a fresh agent, started for an item with a `- Build: delegate` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
-| Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules, and when to stop | every item's criteria, the deltas and their scenarios, the design, earlier reviews, the severity rubric, the code; **not** how it was built |
+| Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch, the project's context and apply rules, and when to stop | the criteria of the items to review, the deltas and their scenarios, the design, earlier reviews and what each covers, the severity rubric, the code; **not** how it was built |
 | May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
 
@@ -249,8 +252,14 @@ The change's level is the `- Review:` line in its proposal, or the project's
   ``<severity> `<place>`: <text>``. A place that holds `: ` is given in
   backticks. A `pass` or a self-review with a critical finding is refused.
 - **Changes:** a `changes` verdict names the items to rebuild, such as
-  `(review) 2026-01-15 changes 1.2 2.1 by wm-reviewer: <reasons>`. Those items are reopened
-  and built again, and the change then needs an independent review.
+  `(review) 2026-01-15 changes 1.2 2.1 covers 1.1 1.2 2.1 by wm-reviewer: <reasons>`. Those
+  items are reopened and built again, and the change then needs an independent review.
+- **Added items:** an item added after a passing review is reviewed on its own.
+  Once it is ticked, the next step is a review of the items no passing review
+  covers, at the change's level. The reviewer's pack holds only those items, and
+  the record covers just them, such as
+  `(review) 2026-01-20 pass covers 1.3 by wm-reviewer: <reasons>`. The items the
+  earlier review passed aren't reviewed again.
 - **To you:** a second `changes` verdict, or a `spec-gap`, goes to you. You
   record your decision with `wm resolve <change> review "<what was decided>"`.
 - **Warning:** `wm check` warns when a change modifies or removes a requirement
@@ -263,7 +272,7 @@ The change's level is the `- Review:` line in its proposal, or the project's
 |---|---|---|
 | **Accept** | applying any item of a change that isn't accepted, or whose acceptance was withdrawn | only you, with `wm accept` |
 | **Delegation** | starting an implementer unless the prompt names exactly one item that has criteria; starting a reviewer unless the prompt names one change whose items are all ticked and which needs an independent review it lacks; either while the record around it isn't sound | no one; fix the record |
-| **Archive** | archiving a change that isn't accepted, has unbuilt items, isn't reviewed, or has a delta that no longer applies | only a missing review can be overridden, by you, with a reason that is recorded |
+| **Archive** | archiving a change that isn't accepted, has unbuilt items, isn't reviewed, has an item no passing review covers, or has a delta that no longer applies | only a missing review can be overridden, by you, with a reason that is recorded |
 
 **Evidence is written only by `wm`**: ticks and records. The planner records
 its own results with `wm tick`, `wm block`, `wm gap`, `wm note` and

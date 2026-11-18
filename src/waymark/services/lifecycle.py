@@ -288,7 +288,7 @@ def self_review(
     findings: Sequence[str] = (),
     by: str | None = None,
 ) -> Done:
-    """Record the planner's own review of the whole change."""
+    """Record the planner's own review of the change, or of the items no review covers yet."""
     record, change, state = _open(start, name)
     _require_accepted(state)
     text = one_line(summary, "a summary of the review")
@@ -309,7 +309,13 @@ def self_review(
             "A review with a critical finding can't count as done. Fix what it found and "
             f'review again, or name the items to rebuild with "wm verdict {name} changes".'
         )
-    entry = records.Record(RecordKind.SELF_REVIEW, today, who=_who(record, by), text=text)
+    entry = records.Record(
+        RecordKind.SELF_REVIEW,
+        today,
+        who=_who(record, by),
+        text=text,
+        covers=state.review.to_review,
+    )
     new_text = append_log(_tasks(change), _render(entry), written)
     paths = _write_tasks(record, change, new_text)
     return Done(f"Recorded the self-review of {name}.", paths)
@@ -326,7 +332,7 @@ def verdict(  # noqa: PLR0913 - the verdict, and the items and findings it names
     findings: Sequence[str] = (),
     by: str | None = None,
 ) -> Done:
-    """Record a reviewer's verdict on the whole change."""
+    """Record a reviewer's verdict on the change, or on the items no review covers yet."""
     record, change, state = _open(start, name)
     _require_accepted(state)
     text = one_line(reasons, "the reviewer's reasons")
@@ -353,6 +359,7 @@ def verdict(  # noqa: PLR0913 - the verdict, and the items and findings it names
         verdict=result,
         items=tuple(dict.fromkeys(items)) or None,
         text=text,
+        covers=state.review.to_review,
     )
     new_text = append_log(_tasks(change), _render(entry), written)
     paths = _write_tasks(record, change, new_text)
@@ -486,6 +493,12 @@ def _archive_gate(state: ChangeState, override: str | None) -> None:
             "This can't be overridden; apply the items first."
         )
     unreviewed = not state.review.reviewed
+    if unreviewed and override is None and state.review.uncovered:
+        raise Refusal(
+            f'"{name}" can\'t be archived: {_listed(list(state.review.uncovered))} not reviewed: '
+            "no passing review covers them. Review them, or the human can archive anyway with "
+            f'"wm archive {name} --override "<reason>"".'
+        )
     if unreviewed and override is None:
         raise Refusal(
             f'"{name}" can\'t be archived: it is missing the {state.review.level} review of the '

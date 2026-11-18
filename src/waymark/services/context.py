@@ -2,10 +2,11 @@
 
 An implementer gets its item, the change's proposal, deltas and design, the
 requirements those deltas touch, and the project's context and apply rules. A
-reviewer gets the whole change: every item with its criteria and verification,
-the deltas and their scenarios, the design, the earlier reviews of the change,
-and the project's context and review rules; it does not get the notes left
-while building, or the proposal.
+reviewer gets the items to review with their criteria and verification (every
+item, or once a review has passed, the items no passing review covers), the
+deltas and their scenarios, the design, the earlier reviews of the change with
+the items each covers, and the project's context and review rules; it does not
+get the notes left while building, or the proposal.
 
 Building a pack for an implementer or reviewer is also the delegation gate. An
 implementer's pack is refused unless the change is accepted, the item has
@@ -178,12 +179,14 @@ def delegation_problems(record: Record, change: Change, item: Item | None, role:
     return warnings
 
 
-def _review(record: ReviewRecord) -> dict[str, Any]:
+def _review(record: ReviewRecord, numbers: tuple[str, ...]) -> dict[str, Any]:
+    """An earlier review; one without ``covers`` covers every item, ``numbers``."""
     return {
         "date": record.date.isoformat(),
         "verdict": record.verdict.value if record.verdict else None,
         "text": record.text,
         "items": list(record.items),
+        "covers": list(record.covers or numbers),
         "findings": [
             {"severity": f.severity.value, "place": f.place, "text": f.text}
             for f in record.findings
@@ -207,10 +210,11 @@ def _definition(item: Item, location: Location | None) -> dict[str, Any]:
 def _item(record: Record, change: Change, item: Item) -> dict[str, Any]:
     """An implementer's item: its definition, its notes, and the reviews that named it."""
     records = change.tasks.review_records if change.tasks else ()
+    numbers = tuple(i.number for i in change.tasks.items) if change.tasks else ()
     return {
         **_definition(item, item_location(record, item)),
         "notes": list(item.notes),
-        "reviews": [_review(r) for r in records if item.number in r.items],
+        "reviews": [_review(r, numbers) for r in records if item.number in r.items],
         "resolutions": [r.text for r in item.records if r.kind is RecordKind.RESOLVED],
     }
 
@@ -275,6 +279,7 @@ def _review_pack(record: Record, change_name: str) -> dict[str, Any]:
     charter = record.charter
     tasks = change.tasks
     records = tasks.review_records if tasks else ()
+    numbers = tuple(item.number for item in tasks.items) if tasks else ()
     return {
         "schema": f"wm.context.{REVIEW}",
         "version": DELEGATED_VERSION,
@@ -284,8 +289,10 @@ def _review_pack(record: Record, change_name: str) -> dict[str, Any]:
         "items": [
             _definition(item, item_location(record, item))
             for item in (tasks.items if tasks else ())
+            if item.number in state.review.to_review
         ],
-        "reviews": [_review(r) for r in records if r.kind is RecordKind.REVIEW],
+        "uncovered_only": bool(state.review.uncovered),
+        "reviews": [_review(r, numbers) for r in records if r.kind is RecordKind.REVIEW],
         "resolutions": [r.text for r in records if r.kind is RecordKind.RESOLVED],
         "context": charter.context if charter else "",
         "rules": charter.rules.get(Step.REVIEW, "") if charter else "",

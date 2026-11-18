@@ -114,6 +114,7 @@ RECORD = _object(
         "verdict": _enum(Verdict, nullable=True),
         "text": STRING,
         "items": NAMES,
+        "covers": NAMES,
         "findings": _array(
             _object({"severity": _enum(ReviewSeverity), "place": STRING, "text": STRING})
         ),
@@ -309,6 +310,7 @@ _PACK_REVIEW = _object(
         "verdict": _enum(Verdict, nullable=True),
         "text": STRING,
         "items": NAMES,
+        "covers": NAMES,
         "findings": _array(
             _object({"severity": _enum(ReviewSeverity), "place": STRING, "text": STRING})
         ),
@@ -346,6 +348,7 @@ def _review_pack() -> Schema:
             "for": {"const": "review"},
             "change": STRING,
             "review_level": _enum(ReviewLevel),
+            "uncovered_only": BOOLEAN,
             "items": _array(_object(_DEFINITION)),
             "reviews": _array(_PACK_REVIEW),
             "resolutions": NAMES,

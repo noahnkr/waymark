@@ -125,15 +125,21 @@ class ReviewState:
 
     ``level`` is the review the change now needs: its own level, or independent
     once a review has asked for changes. ``reviewed`` is true once every item is
-    ticked and the review the level asks for is recorded. ``reopen`` lists the
-    items the last request for changes named that still wait to be reopened.
-    ``escalated`` says why the review has gone to the human, if it has.
+    ticked, the review the level asks for is recorded, and that review or an
+    earlier one covers each item. ``reopen`` lists the items the last request
+    for changes named that still wait to be reopened. ``uncovered`` lists the
+    ticked items no passing review covers, once some review has passed: items
+    added after it, which need a review of their own. ``to_review`` lists the
+    items the next review is of: ``uncovered`` when there are any, else every
+    item. ``escalated`` says why the review has gone to the human, if it has.
     """
 
     level: ReviewLevel
     reviewed: bool
     reopen: tuple[str, ...]
     escalated: str | None
+    uncovered: tuple[str, ...] = ()
+    to_review: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -255,20 +261,36 @@ def review_state(change: Change, default: ReviewLevel) -> ReviewState:
     reopen = tuple(
         item.number for item in items if escalated is None and item_state(item, records).redo
     )
-    passed = last is not None and last.verdict is Verdict.PASS
-    if level is ReviewLevel.NONE:
-        recorded = True
-    elif level is ReviewLevel.SELF:
-        recorded = passed or (last is not None and last.kind is RecordKind.SELF_REVIEW)
-    else:
-        recorded = passed
+    passing = [record for record in records if _counts_at(record, level)]
+    recorded = level is ReviewLevel.NONE or (last is not None and _counts_at(last, level))
+    numbers = tuple(item.number for item in items)
+    uncovered: tuple[str, ...] = ()
+    if passing and level is not ReviewLevel.NONE:
+        covered = {number for record in passing for number in _covered(record, numbers)}
+        uncovered = tuple(
+            item.number for item in items if item.ticked and item.number not in covered
+        )
     every_item = bool(items) and all(item.ticked for item in items)
     return ReviewState(
         level=level,
-        reviewed=every_item and recorded,
+        reviewed=every_item and recorded and not uncovered,
         reopen=reopen,
         escalated=escalated,
+        uncovered=uncovered,
+        to_review=uncovered or numbers,
     )
+
+
+def _counts_at(record: ReviewRecord, level: ReviewLevel) -> bool:
+    """Whether a record is a passing review at the level: a pass, or at self also a self-review."""
+    if record.verdict is Verdict.PASS:
+        return True
+    return level is ReviewLevel.SELF and record.kind is RecordKind.SELF_REVIEW
+
+
+def _covered(record: ReviewRecord, numbers: tuple[str, ...]) -> tuple[str, ...]:
+    """The items a review covers: those it names, or every item when it names none."""
+    return record.covers or numbers
 
 
 def acceptance_state(record: Record, change: Change) -> AcceptanceState:
@@ -363,6 +385,11 @@ def _artifact_step(change: Change) -> tuple[Phase, NextStep] | None:
     return None
 
 
+def _named(numbers: tuple[str, ...]) -> str:
+    """Item numbers as a sentence names them: "item 1.3" or "items 1.3, 1.4"."""
+    return f"item {numbers[0]}" if len(numbers) == 1 else f"items {', '.join(numbers)}"
+
+
 def _item_step(items: tuple[ItemState, ...], review: ReviewState) -> NextStep:
     """The next item to apply, the change's review, or what waits on the human."""
     if review.escalated:
@@ -383,7 +410,10 @@ def _item_step(items: tuple[ItemState, ...], review: ReviewState) -> NextStep:
         why = first.escalated or f"blocked: {first.blocked}"
         return NextStep(StepKind.RESOLVE_ITEMS, first.number, human=True, reason=why)
     if not review.reviewed:
-        return NextStep(StepKind.REVIEW, reason=f"Review level: {review.level}.")
+        reason = f"Review level: {review.level}."
+        if review.uncovered:
+            reason += f" Review {_named(review.uncovered)} only: no passing review covers them."
+        return NextStep(StepKind.REVIEW, reason=reason)
     return NextStep(StepKind.ARCHIVE, human=True)
 
 

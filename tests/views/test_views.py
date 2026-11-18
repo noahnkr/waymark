@@ -309,18 +309,20 @@ def test_show_change_gives_the_changes_review_and_its_findings(project: Workspac
     }
     accepted, review = payload["log"]
     assert (accepted["kind"], accepted["items"]) == ("accepted", ["1.1"])
-    assert {key: review[key] for key in ("kind", "date", "verdict", "text", "findings")} == {
+    keys = ("kind", "date", "verdict", "text", "covers", "findings")
+    assert {key: review[key] for key in keys} == {
         "kind": "review",
         "date": "2026-01-15",
         "verdict": "pass",
         "text": "edge covered",
+        "covers": ["1.1"],
         "findings": [
             {"severity": "suggestion", "place": "docs/search.md", "text": "name the edge"}
         ],
     }
     text = render.to_text(payload, PLAIN)
     assert "Level: independent; reviewed" in text
-    assert f"(review) 2026-01-15 pass by {review['by']}: edge covered" in text
+    assert f"(review) 2026-01-15 pass covers 1.1 by {review['by']}: edge covered" in text
     assert "suggestion `docs/search.md`: name the edge" in text
 
 
@@ -482,3 +484,42 @@ def test_instructions_text_shows_shared_rules_guidance_then_checklist(project: W
     assert text.index("Shared rules") < text.index("What to do") < text.index("Checklist")
     assert "  wm  Every requirement says SHALL." in text
     assert "  [ ] Each THEN can be checked by someone who didn't write it." in text
+
+
+def test_scenario_older_review_records_shown_as_covering_every_item(project: Workspace) -> None:
+    tasks = "changes/add-limit/tasks.md"
+    project.change()
+    lifecycle.accept(project.root, "add-limit", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.2")
+    project.write(
+        tasks, project.read(tasks) + "- (self-review) 2026-01-15 by Sam Doe: before covers\n"
+    )
+    lifecycle.archive(project.root, "add-limit", DAY, built="Shipped.")
+    payload = valid(payloads.show(project.record(), "add-limit"))
+    review = payload["log"][-1]
+    assert (review["kind"], review["covers"]) == ("self-review", ["1.1", "1.2"])
+    assert payload["problems"] == []
+    text = render.to_text(payload, PLAIN)
+    assert "(self-review) 2026-01-15 covers 1.1 1.2 by Sam Doe: before covers" in text
+
+
+def test_show_change_gives_what_a_review_of_added_items_covers(project: Workspace) -> None:
+    tasks = "changes/add-limit/tasks.md"
+    project.change()
+    lifecycle.accept(project.root, "add-limit", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.2")
+    lifecycle.self_review(project.root, "add-limit", "fine", DAY)
+    project.replace(
+        tasks,
+        "  - Verify: read the help text\n",
+        "  - Verify: read the help text\n"
+        "- [ ] 1.3 Name it\n  - Criteria: named\n  - Verify: a test\n",
+    )
+    lifecycle.tick(project.root, "add-limit", "1.3")
+    lifecycle.self_review(project.root, "add-limit", "named well", DAY)
+    payload = valid(payloads.show(project.record(), "add-limit"))
+    assert [record["covers"] for record in payload["log"]] == [[], ["1.1", "1.2"], ["1.3"]]
+    text = render.to_text(payload, PLAIN)
+    assert "(self-review) 2026-01-15 covers 1.3 by Sam Doe: named well" in text

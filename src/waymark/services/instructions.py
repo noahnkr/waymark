@@ -301,8 +301,19 @@ def _working(  # noqa: PLR0911 - one return per step
         return guidance, commands
     if step is StepKind.REVIEW:
         finding = '--finding "<critical|warning|suggestion>: <place>: <text>"'
+        uncovered = state.review.uncovered
+        scope = (
+            [
+                f"Review only {_numbers(uncovered)}: no passing review covers "
+                f"{'it' if len(uncovered) == 1 else 'them'}, while the change's earlier reviews "
+                "cover the rest. The review's record covers just these items."
+            ]
+            if uncovered
+            else []
+        )
         if state.review.level is ReviewLevel.INDEPENDENT:
             guidance = [
+                *scope,
                 f"Start a reviewer for {name} with the change's name and nothing else.",
                 "The reviewer begins from its context pack and ends with a CHANGE line and a "
                 "VERDICT line.",
@@ -316,6 +327,7 @@ def _working(  # noqa: PLR0911 - one return per step
             ]
             return guidance, commands
         guidance = [
+            *scope,
             f"Review {name} as a whole against its deltas' scenarios, its design and each "
             "item's criteria: is it complete, correct and coherent?",
             "Record the self-review with what you found, each finding with its severity and "
@@ -454,3 +466,7 @@ def instructions(record: Record, step: str | None, change_name: str | None) -> d
         "shared_rules": list(SHARED_RULES),
         "severity_rubric": list(SEVERITY_RUBRIC) if kind is StepKind.REVIEW else [],
     }
+
+
+def _numbers(numbers: tuple[str, ...]) -> str:
+    return f"item {numbers[0]}" if len(numbers) == 1 else f"items {', '.join(numbers)}"

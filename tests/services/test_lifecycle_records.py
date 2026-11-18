@@ -148,7 +148,7 @@ def test_a_note_needs_an_accepted_change(latest: Workspace) -> None:
 def test_scenario_explicit_author(latest: Workspace) -> None:
     built(latest)
     lifecycle.self_review(latest.root, NAME, "<summary>", DAY, by="Ada and Grace")
-    assert "- (self-review) 2026-11-20 by Ada and Grace: <summary>\n" in log(latest)
+    assert "- (self-review) 2026-11-20 covers 1.1 1.2 by Ada and Grace: <summary>\n" in log(latest)
 
 
 def test_a_name_with_a_colon_is_refused(latest: Workspace) -> None:
@@ -166,7 +166,8 @@ def test_scenario_self_review_with_a_finding(latest: Workspace) -> None:
     )
     text = latest.read(TASKS_FILE)
     assert text.endswith(
-        "- (self-review) 2026-11-20 by Sam Doe: <summary>\n  - warning `src/a.py:12`: <text>\n"
+        "- (self-review) 2026-11-20 covers 1.1 1.2 by Sam Doe: <summary>\n"
+        "  - warning `src/a.py:12`: <text>\n"
     )
 
 
@@ -203,8 +204,9 @@ def test_a_changes_verdict_and_reopening_are_records(latest: Workspace) -> None:
         items=["1.1"],
         by="wm-reviewer",
     )
-    assert "- (review) 2026-11-20 changes 1.1 by wm-reviewer: the cap is off by one\n" in log(
-        latest
+    assert (
+        "- (review) 2026-11-20 changes 1.1 covers 1.1 1.2 by wm-reviewer: the cap is off by one\n"
+        in log(latest)
     )
     lifecycle.reopen(latest.root, NAME, "1.1", NEXT)
     assert "  - (reopened) 2026-11-21 by Sam Doe\n" in latest.read(TASKS_FILE)

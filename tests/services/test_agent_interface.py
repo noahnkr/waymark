@@ -481,6 +481,7 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
             "verdict": "changes",
             "text": "off by one",
             "items": ["1.1"],
+            "covers": ["1.1"],
             "findings": [
                 {"severity": "critical", "place": "src/search.py:12", "text": "fifty-one come back"}
             ],
@@ -508,6 +509,7 @@ def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
             "verdict": "changes",
             "text": "off by one",
             "items": ["1.1"],
+            "covers": ["1.1"],
             "findings": [],
         }
     ]
@@ -730,3 +732,40 @@ def test_specs_instructions_ask_for_functional_requirements(project: Workspace) 
         and "internals and mechanisms go in the design" in line
         for line in step["guidance"]
     )
+
+
+def test_reviewer_pack_holds_only_the_items_added_after_a_pass(project: Workspace) -> None:
+    accepted(project, proposal_text=INDEPENDENT)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="wm-reviewer")
+    assert "already has the review it needs" in refused(project, "review")
+    project.replace(
+        f"{FOLDER}/tasks.md",
+        "  - Verify: read the help text\n",
+        "  - Verify: read the help text\n"
+        "- [ ] 1.3 Name it\n  - Criteria: named\n  - Verify: a test\n",
+    )
+    lifecycle.tick(project.root, NAME, "1.3")
+    built = pack(project, "review")
+    assert built["uncovered_only"] is True
+    assert [item["number"] for item in built["items"]] == ["1.3"]
+    assert [(review["verdict"], review["covers"]) for review in built["reviews"]] == [
+        ("pass", ["1.1", "1.2"])
+    ]
+    assert built["deltas"]
+    assert built["design"]
+    text = render.to_text(built, PLAIN)
+    assert "Review only the items below, at level independent" in text
+    assert "- Earlier review (2026-01-15, pass, covers 1.1 1.2): fine" in text
+    assert "Cap the result count" not in text
+
+
+def test_reviewer_pack_holds_every_item_for_a_first_review(project: Workspace) -> None:
+    accepted(project, proposal_text=INDEPENDENT)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    built = pack(project, "review")
+    assert built["uncovered_only"] is False
+    assert [item["number"] for item in built["items"]] == ["1.1", "1.2"]
+    assert "Review the whole change at level independent" in render.to_text(built, PLAIN)

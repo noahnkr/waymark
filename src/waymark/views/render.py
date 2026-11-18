@@ -219,9 +219,10 @@ def _item_lines(item: Payload, style: Style) -> list[str]:
 def _record_lines(record: Payload, indent: str, style: Style) -> list[str]:
     verdict = f" {record['verdict']}" if record["verdict"] else ""
     named = f" {' '.join(record['items'])}" if record["items"] else ""
+    covers = f" covers {' '.join(record['covers'])}" if record.get("covers") else ""
     text = f": {record['text']}" if record["text"] else ""
     by = f" by {record['by']}" if record["by"] else ""
-    head = f"{indent}({record['kind']}) {record['date']}{verdict}{named}{by}{text}"
+    head = f"{indent}({record['kind']}) {record['date']}{verdict}{named}{covers}{by}{text}"
     lines = [style.paint(head, DIM)]
     for finding in record["findings"]:
         color = RED if finding["severity"] == "critical" else YELLOW
@@ -422,7 +423,9 @@ def _definition_lines(item: Payload) -> list[str]:
 
 def _review_lines(review: Payload) -> list[str]:
     named = f" {' '.join(review['items'])}" if review["items"] else ""
-    lines = [f"- Earlier review ({review['date']}, {review['verdict']}{named}): {review['text']}"]
+    covers = f", covers {' '.join(review['covers'])}" if review["covers"] else ""
+    head = f"({review['date']}, {review['verdict']}{named}{covers})"
+    lines = [f"- Earlier review {head}: {review['text']}"]
     lines += [
         f"  - {finding['severity']}: {finding['place']}: {finding['text']}"
         for finding in review["findings"]
@@ -441,7 +444,14 @@ def _pack_item(item: Payload) -> list[str]:
 
 def _review_head(payload: Payload) -> list[str]:
     lines = [f"# Context pack: review {payload['change']}", ""]
-    lines += [f"Review the whole change at level {payload['review_level']}.", ""]
+    if payload["uncovered_only"]:
+        lines += [
+            f"Review only the items below, at level {payload['review_level']}: no passing "
+            "review covers them, while the earlier reviews cover the rest of the change.",
+            "",
+        ]
+    else:
+        lines += [f"Review the whole change at level {payload['review_level']}.", ""]
     lines.append("## Its items")
     for item in payload["items"]:
         lines += ["", *_definition_lines(item)]

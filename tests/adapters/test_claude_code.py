@@ -376,7 +376,10 @@ def test_reviewers_verdict_is_written_as_the_review_record(hooks: Hooks) -> None
     )
     assert "Recorded the verdict changes" in reply["systemMessage"]
     text = hooks.project.read(TASKS_FILE)
-    assert f"- (review) {today} changes 1.1 by wm-reviewer: off by one at fifty\n" in text
+    assert (
+        f"- (review) {today} changes 1.1 covers 1.1 1.2 by wm-reviewer: off by one at fifty\n"
+        in text
+    )
 
 
 def test_agent_already_asked_once_is_released_with_a_notice(hooks: Hooks) -> None:
@@ -399,7 +402,7 @@ def test_reviewers_handed_back_verdict_is_written_as_the_review_record(hooks: Ho
     reply = hooks.handback("wm-reviewer", "CHANGE: add-limit\nVERDICT: pass: caps at fifty")
     assert "Recorded the verdict pass" in reply["systemMessage"]
     text = hooks.project.read(TASKS_FILE)
-    assert f"- (review) {today} pass by wm-reviewer: caps at fifty\n" in text
+    assert f"- (review) {today} pass covers 1.1 1.2 by wm-reviewer: caps at fifty\n" in text
 
 
 def test_handed_back_report_without_its_ending_is_denied(hooks: Hooks) -> None:
