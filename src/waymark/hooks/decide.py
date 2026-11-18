@@ -14,7 +14,11 @@ from waymark.hooks.events import ALLOW, Decision, Event, EventKind, Role
 from waymark.record.artifacts.config import CONFIG_FILE, parse_config
 from waymark.record.evidence import agents
 from waymark.record.evidence.commits import commit_problem
-from waymark.record.evidence.evidence import evidence_changes, is_active_milestone
+from waymark.record.evidence.evidence import (
+    evidence_changes,
+    is_active_exploration,
+    is_active_milestone,
+)
 from waymark.record.evidence.records import IMPLEMENTER, REVIEWER, parse_finding_argument
 from waymark.record.machine.atlas import contains
 from waymark.record.machine.files import RecordFiles
@@ -57,6 +61,20 @@ _ROADMAP_COMMANDS = (
     'wm roadmap add <milestone> <change> "<description>", wm roadmap drop <milestone> '
     '<change> --reason "<why>" or wm roadmap move <milestone> <change> --after <change>|--first'
 )
+
+_EXPLORATION_COMMANDS = (
+    "wm new change <name> --from <exploration>, wm new milestone <name> --from <exploration> "
+    'or wm exploration drop <exploration> --reason "<why>"'
+)
+
+
+def _commands_for(relative: str) -> str:
+    """The commands that write the evidence in a record file."""
+    if is_active_milestone(relative):
+        return _ROADMAP_COMMANDS
+    if is_active_exploration(relative):
+        return _EXPLORATION_COMMANDS
+    return _EVIDENCE_COMMANDS
 
 
 def _refuse(reason: str) -> Decision:
@@ -236,7 +254,7 @@ def _edit(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one re
         return _refuse(
             f"This edit {changed[0]}. That is evidence, and only wm writes evidence. "
             f"Leave those lines as they are and use a command instead: "
-            f"{_ROADMAP_COMMANDS if is_active_milestone(relative) else _EVIDENCE_COMMANDS}."
+            f"{_commands_for(relative)}."
         )
     return ALLOW
 

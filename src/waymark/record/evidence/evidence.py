@@ -2,8 +2,9 @@
 
 Used to tell whether an edit adds, changes or removes evidence. The evidence
 is every tick in a task list, every record wm writes under an item or in the
-Log, and every finding under a review in the Log; and, in an active milestone,
-every roadmap line and every line of its Log.
+Log, and every finding under a review in the Log; in an active milestone,
+every roadmap line and every line of its Log; and, in an active exploration,
+its status line.
 """
 
 import re
@@ -14,11 +15,12 @@ from waymark.record.artifacts.milestones import LOG, MILESTONE_FILE, ROADMAP
 from waymark.record.artifacts.tasks import LOG_SECTION
 from waymark.record.evidence import records
 from waymark.record.markdown.text import Document
-from waymark.record.record import MILESTONES
+from waymark.record.record import EXPLORATIONS, MILESTONES
 
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+\.\d+)\s")
 _HEADING = re.compile(r"^## (.*)$")
 _LIST_LINE = re.compile(r"^\s*[-*] (.*)$")
+_STATUS_LINE = re.compile(r"^\s*[-*]\s+Status:")
 
 
 def _milestone_evidence(relative: str, text: str) -> Counter[str]:
@@ -43,6 +45,29 @@ def _milestone_evidence(relative: str, text: str) -> Counter[str]:
     return found
 
 
+def _exploration_evidence(relative: str, text: str) -> Counter[str]:
+    """An active exploration's status line, under its title and before its first section."""
+    found: Counter[str] = Counter()
+    in_comment = False
+    for line in Document.parse(relative, text).lines:
+        if line.in_fence:
+            continue
+        if _HEADING.match(line.text):
+            break
+        if in_comment or line.text.lstrip().startswith("<!--"):
+            in_comment = "-->" not in line.text
+            continue
+        if _STATUS_LINE.match(line.text):
+            found[f'the status line "{line.text.strip()}"'] += 1
+    return found
+
+
+def is_active_exploration(relative: str) -> bool:
+    """Whether a path is an active exploration, not an archived one."""
+    parts = relative.split("/")
+    return len(parts) == 2 and parts[0] == EXPLORATIONS and parts[1].endswith(".md")  # noqa: PLR2004
+
+
 def is_active_milestone(relative: str) -> bool:
     """Whether a path is an active milestone's ``milestone.md``, not an archived one."""
     parts = relative.split("/")
@@ -50,9 +75,11 @@ def is_active_milestone(relative: str) -> bool:
 
 
 def evidence(relative: str, text: str) -> Counter[str]:
-    """Every piece of evidence in a task list or an active milestone, each named to report it."""
+    """Every piece of evidence in a task list, an active milestone or an active exploration."""
     if is_active_milestone(relative):
         return _milestone_evidence(relative, text)
+    if is_active_exploration(relative):
+        return _exploration_evidence(relative, text)
     found: Counter[str] = Counter()
     if relative.rsplit("/", 1)[-1] != TASKS_FILE:
         return found

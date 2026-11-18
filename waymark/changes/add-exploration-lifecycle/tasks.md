@@ -61,7 +61,7 @@
     - tests in `tests/services/test_lifecycle.py` for Drop an open exploration, Conclusion kept and Drop an exploration that led to a change
     - a CLI test in `tests/test_lifecycle_cli.py`
     - `uv run --no-sync pytest tests/services tests/test_lifecycle_cli.py`
-- [ ] 2.4 Refuse an agent's hand edit to an exploration's Status line
+- [x] 2.4 Refuse an agent's hand edit to an exploration's Status line
   - Criteria:
     - an agent edit that adds, changes or removes an active exploration's `- Status:` line is refused with a reason that names `--from` and `wm exploration drop`
     - edits to an exploration's other lines are allowed, and archived explorations aren't guarded
