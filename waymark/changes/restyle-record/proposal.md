@@ -15,7 +15,8 @@ This record is Waymark's only instance, so the layouts can change in place: the 
 - `wm check` reports a known label written plain, showing the bold form, and `wm check --fix` makes it bold.
 - **Every task item has a Build line**, `- **Build:** planner` or `- **Build:** delegate`, and an item's lines come in the order Build, Repo, Criteria, Verify. `wm check` reports a missing Build line and a line out of order, and `wm check --fix` puts the lines in order.
 - **A decision's options are a nested list**, one option per bullet, at least two; a one-line `Options:` is reported.
-- **Item lists in records are separated by commas**, and two lists in one record by `; `: `(accepted) <date> fingerprint <digest> items 1.1, 1.2 by Ada` and `(review) <date> changes 1.2, 2.2; covers 1.1, 1.2, 2.2 by wm-reviewer: …`. Records keep their parentheses and the word `fingerprint`.
+- **A record starts with its date**, then its kind: `<date> (<kind>) [<args>] [by <who>]: <text>`, so the dates line up and a Log reads as a timeline.
+- **Item lists in records are separated by commas**, and two lists in one record by `; `: `<date> (accepted) fingerprint <digest> items 1.1, 1.2 by Ada` and `<date> (review) changes 1.2, 2.2; covers 1.1, 1.2, 2.2 by wm-reviewer: …`. Records keep their parentheses and the word `fingerprint`.
 - **A finding's severity is in brackets**: ``- [critical] `src/a.py:12`: the limit is not checked``.
 - The templates, the skills, the agent definitions and the docs use the new layouts.
 - This record moves to the new layouts: the active files by `wm check --fix` and by hand, and the archived changes, milestones and explorations once, by a script that is run and not committed. The record stays at format 1.
@@ -30,11 +31,12 @@ This record is Waymark's only instance, so the layouts can change in place: the 
 
 ## Impact
 
-- Specs: `acceptance`, `authored-formats`, `branches`, `building`, `explorations`, `formatting`, `milestones`, `paths`, `records`, `resources`, `review` (all modified)
+- Specs: `acceptance`, `agent-results`, `authored-formats`, `branches`, `building`, `explorations`, `formatting`, `milestones`, `paths`, `records`, `resources`, `review` (all modified)
 - User-visible:
   - the record's label lines are bold, colon inside, and the glossary's terms too
   - every task item has a `Build:` line, `planner` or `delegate`, first among its lines
   - a decision's options are a nested list
+  - every record, in a change and in a milestone's Log, starts with its date: `<date> (<kind>) …`
   - item lists in records are separated by commas, and a review's two lists by `; `
   - a finding's severity is written in brackets, `[critical]`
   - `wm check` reports a plain label, a missing Build line, an item's lines out of order and a one-line Options; `wm check --fix` fixes the first and third

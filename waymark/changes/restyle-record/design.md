@@ -17,8 +17,8 @@
 3. **Writers.** The templates, `setup.py`, `lifecycle.py`, `explorations.py` and `deltas.py` write the bold form through `label_line`. The task template writes `- **Build:** planner` first in each item. The design template writes Options as a nested list.
 4. **Build line.** `tasks.py` reads `planner` and `delegate`. `services/instructions.py` reads an item's Build value instead of the presence of the tag. `wm check` reports a missing Build line (`item-incomplete`, naming the values) and the item's label lines out of order (`item-order`). The fingerprint hashes the build value, so an absent line and `planner` no longer hash the same.
 5. **Options.** `design.py` drops `_OPTION_SPLIT` and counts only the nested bullets. An Options line with text of its own is reported as `decision-options`, asking for one option per bullet.
-6. **Records and findings.** In `records.py`, `_arguments` joins item lists with `, ` and ends a list with `;` when `covers` follows it. The parser reads a comma-separated list, and in step 2's transition also reads the space-separated one. `render_finding` writes `[<severity>]`, `_FINDING` reads it, and `layout.py` `_FINDING_LINE` follows. The record shapes in `KINDS` show the commas.
-7. **`--fix` and the conversion of this record.** `layout.standard_layout` gains two fixes: plain labels made bold (`Fix.LABEL`), and an item's label lines put in order with the lines nested under each (`Fix.ITEM_ORDER`). `--fix` also covers `resources/`. The active record (the charter's glossary, this change's own files, any active exploration) is converted with `wm check --fix`, and the glossary by hand. The archived changes, milestones and explorations are converted by a one-off Python script run from the scratchpad and never committed. It rewrites only line-start labels, item lists in records and finding severities, and leaves everything else, including one-line Options and items without a Build line, as written.
+6. **Records and findings.** In `records.py`, `render` writes the date first, then the kind, and `_START` and `_HEAD` read a record as a date followed by `(<kind>)`; in the transition they also read the kind first. `layout.py` `_RECORD_LINE` and the hook's evidence detection follow, and the milestone Log uses the same functions. `_arguments` joins item lists with `, ` and ends a list with `;` when `covers` follows it. The parser reads a comma-separated list, and in step 2's transition also reads the space-separated one. `render_finding` writes `[<severity>]`, `_FINDING` reads it, and `layout.py` `_FINDING_LINE` follows. The record shapes in `KINDS` show the commas.
+7. **`--fix` and the conversion of this record.** `layout.standard_layout` gains two fixes: plain labels made bold (`Fix.LABEL`), and an item's label lines put in order with the lines nested under each (`Fix.ITEM_ORDER`). `--fix` also covers `resources/`. The active record (the charter's glossary, this change's own files, any active exploration) is converted with `wm check --fix`, and the glossary by hand. The archived changes, milestones and explorations are converted by a one-off Python script run from the scratchpad and never committed. It rewrites only line-start labels, the order of each record's date and kind, item lists in records and finding severities, and leaves everything else, including one-line Options and items without a Build line, as written.
 8. **Remove the old forms.** Once the record is converted, the readers drop the plain label form and the space-separated item list, and the plain-label check of step 2 is turned on.
 9. **Assets and docs.** The skills, the agent definition, the README and the docs show the new layouts. `wm-propose` tells the planner to give every item a Build line, `planner` or `delegate`. The generated docs are refreshed with `tools.docs`, and the CHANGELOG gets the User-visible lines.
 
@@ -72,6 +72,16 @@
 - Choice: commas, with `;`
 - Why: a review's two lists become easy to tell apart, without the clutter of parentheses; the word `fingerprint` stays, since it says what the digest is.
 
+### Decision: Where a record's date goes
+- Status: decided
+- Decided by: human
+- Options:
+  - after the kind, `(note) 2026-11-20 …`, as today
+  - first, bare, `2026-11-20 (note) …`
+  - first, in brackets, `[2026-11-20] (note) …`
+- Choice: first, bare
+- Why: the dates line up in a column, so a Log reads as a timeline, and the kind sits next to its arguments; brackets now mark a finding's severity, and the date is distinct without them.
+
 ### Decision: The archive script
 - Status: decided
 - Decided by: human
@@ -85,7 +95,7 @@
 - Status: decided
 - Decided by: planner
 - Options:
-  - only what the new readers need: labels, item lists in records, finding severities
+  - only what the new readers need: labels, the record's date first, item lists in records, finding severities
   - full conformance, also adding Build lines, ordering item lines and turning one-line Options into lists
 - Choice: only what the readers need
 - Why: archived changes are read as they were written and aren't checked against the new rules; adding Build lines or splitting options would put words in the archive that nobody wrote, and the old "or" split is the bug this change removes.

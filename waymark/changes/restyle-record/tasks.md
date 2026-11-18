@@ -43,12 +43,12 @@
 
 ## 3. Records
 
-- [ ] 3.1 Write item lists with commas and findings with bracketed severities
+- [ ] 3.1 Write records date first, item lists with commas and findings with bracketed severities
   - Criteria:
-    - `(accepted)`, `(review)` and `(self-review)` records write their item lists separated by `, `, and a `changes` list followed by `covers` ends with `;`; the record shapes in messages show the commas
-    - those records are read with commas, and with spaces as before
+    - every record, in a change and in a milestone's Log, is written `<date> (<kind>) …`, and read in that order and the old one; `--fix` and the hook's evidence detection recognize both
+    - `(accepted)`, `(review)` and `(self-review)` records write their item lists separated by `, `, and a `changes` list followed by `covers` ends with `;`; they are read with commas, and with spaces as before; the record shapes in messages show the new order and the commas
     - findings are written ``- [<severity>] `<place>`: <text>`` and read in that form and the old one; `--fix` recognizes both
-    - the tests for the scenarios Blocked item, Reviewer's verdict, Explicit author, Acceptance in the Log, Item added, Accepted again, Two items named, Item added after a pass, Place with a line number, Self-review with a finding, Absolute path inside the project, Relative path with backslashes and Code repo of an atlas expect the new shapes
+    - the tests for the scenarios Blocked item, Resolved item keeps its blocker, Implementer partly done, Log of a plan's changes, Member change archived, Planned roadmap line, Reviewer's verdict, Explicit author, Acceptance in the Log, Item added, Accepted again, Two items named, Item added after a pass, Place with a line number, Self-review with a finding, Absolute path inside the project, Relative path with backslashes and Code repo of an atlas expect the new shapes
   - Verify:
     - `uv run --no-sync pytest tests/record/evidence tests/services tests/test_agent_cli.py`
     - `wm check`
@@ -66,7 +66,7 @@
     - `wm check`
 - [ ] 4.2 Rewrite the archive once with an uncommitted script
   - Criteria:
-    - a Python script run from the scratchpad, never committed, rewrites every archived change, milestone and exploration: line-start labels into the bold form (and the glossary form where one appears), item lists in records into commas with `;` before `covers`, and finding severities into brackets
+    - a Python script run from the scratchpad, never committed, rewrites every archived change, milestone and exploration: line-start labels into the bold form (and the glossary form where one appears), each record into date-first order, item lists in records into commas with `;` before `covers`, and finding severities into brackets
     - it changes nothing else: one-line Options, items without a Build line and old layouts stay as written
     - every archived change shows its items, records and findings with `wm show <change>`, and `wm check` is healthy
   - Verify:
@@ -87,8 +87,8 @@
 - [ ] 5.2 Require the Build line and the item order, and read only the new record shapes
   - Criteria:
     - `wm check` reports an item of an active change without a Build line as `item-incomplete`, naming `- **Build:**` and the values `planner` and `delegate`, and an item whose label lines are out of order as `item-order`, naming the order
-    - item lists in records are read only with commas, and a finding only with a bracketed severity; `wm check` reports an old-shaped record or finding in an active change, showing the shape
-    - the tests for the scenarios Item without verification, Item without a Build line, Build line last, Lines in order, Malformed record, Item list without commas and Severity without brackets pass
+    - records are read only date first, item lists only with commas, and a finding only with a bracketed severity; `wm check` reports an old-shaped record or finding in an active change or an active milestone, showing the shape
+    - the tests for the scenarios Item without verification, Item without a Build line, Build line last, Lines in order, Malformed record, Kind before the date, Item list without commas and Severity without brackets pass
   - Verify:
     - tests in `tests/services/test_check.py` and `tests/record/test_tasks_records.py` for those scenarios
     - `uv run --no-sync pytest` and `wm check`
