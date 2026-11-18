@@ -384,3 +384,21 @@ def test_every_criterion_hangs_under_its_bullet(terminal: Terminal) -> None:
     assert "  │   Criteria:" not in plain
     assert "  |   Criteria:" in plain
     assert "  |   Verify: a test" in plain
+
+
+def test_check_wraps_its_messages_on_a_terminal(terminal: Terminal) -> None:
+    """Item: wm check wraps each finding's message under where it starts."""
+    terminal.project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- [add-order](../../changes/add-order/proposal.md): order\n"),
+    )
+    payload = payloads.check(terminal.project.record(), NOW)
+    lines = render.to_text(payload, Style(width=80)).split("\n")
+    head = next(i for i, line in enumerate(lines) if "milestone-missing: " in line)
+    hang = lines[head].index("milestone-missing: ") + len("milestone-missing: ")
+    assert lines[head + 1].startswith(" " * hang)
+    assert lines[head + 1][hang] != " "
+    assert all(len(line) <= 80 for line in lines if " " in line.strip())
+    plain = render.to_text(payload, Style()).split("\n")
+    finding = next(line for line in plain if "milestone-missing: " in line)
+    assert finding.endswith("or remove the link from the roadmap.")

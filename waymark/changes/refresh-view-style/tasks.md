@@ -40,7 +40,7 @@
     - with `Style()` the lines are unchanged except that a list starts on the line after its label
   - Verify:
     - a test in `tests/test_views_cli.py` renders an item with two long criteria at width 80, and each criterion's wrapped lines hang under its text
-- [ ] 2.4 `wm check` wraps its messages on a terminal
+- [x] 2.4 `wm check` wraps its messages on a terminal
   - Criteria:
     - on a terminal, each finding's message in `wm check` wraps to the width under the finding, with its wrapped lines hung under the message's start
     - with no width, each finding stays on one line, as written

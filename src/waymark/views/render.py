@@ -189,7 +189,11 @@ def check(payload: Payload, style: Style) -> str:
                 finding["severity"], DANGER if finding["severity"] == "error" else ATTENTION
             )
             where = f"{finding['line']}: " if finding["line"] else ""
-            lines.append(f"  {severity}: {where}{finding['code']}: {finding['message']}")
+            lead = f"{where}{finding['code']}: "
+            # On a terminal the message wraps, its lines hung under where it starts.
+            hang = " " * len(f"  {finding['severity']}: {lead}")
+            message = style.wrap(finding["message"], hang)[len(hang) :]
+            lines.append(f"  {severity}: {lead}{message}")
     if payload["findings"]:
         worst = DANGER if payload["errors"] else ATTENTION
         counts = f"{payload['errors']} error(s), {payload['warnings']} warning(s)."
