@@ -480,3 +480,29 @@ def test_archiving_a_rename_renames_the_requirement_in_the_spec(project: Workspa
     living = project.record().specs["search"]
     assert [item.name for item in living.requirements] == ["Result limit"]
     assert living.requirements[0].scenarios
+
+
+def test_scenario_member_change_archived(project: Workspace) -> None:
+    """Requirement "Milestone log": archiving a member change writes (archived)."""
+    member = proposal().replace(
+        "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+    )
+    project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- [ ] [add-limit](../../changes/add-limit/proposal.md): cap\n"),
+    )
+    applied(project, proposal_text=member)
+    lifecycle.archive(project.root, NAME, LATER, built="Shipped.", by="Ada")
+    text = project.read("milestones/faster-search/milestone.md")
+    assert f"- [x] [add-limit](../../{ARCHIVED}/proposal.md): cap\n" in text
+    assert text.endswith("\n## Log\n\n- (archived) 2026-02-01 add-limit by Ada\n")
+
+
+def test_a_change_without_a_milestone_writes_no_milestone_record(project: Workspace) -> None:
+    project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- [ ] [add-limit](../../changes/add-limit/proposal.md): cap\n"),
+    )
+    applied(project)
+    lifecycle.archive(project.root, NAME, LATER, built="Shipped.")
+    assert "## Log" not in project.read("milestones/faster-search/milestone.md")

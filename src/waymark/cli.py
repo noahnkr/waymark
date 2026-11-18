@@ -125,7 +125,12 @@ def _new(args: argparse.Namespace) -> int:
     if args.kind == "change":
         return _report(
             setup.create_change(
-                _here(), args.name, short=args.short, owner=args.owner, milestone=args.milestone
+                _here(),
+                args.name,
+                short=args.short,
+                owner=args.owner,
+                milestone=args.milestone,
+                today=_today(),
             )
         )
     if args.short or args.owner or args.milestone:

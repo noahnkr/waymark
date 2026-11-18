@@ -13,7 +13,7 @@ from waymark.record.changes import Change
 from waymark.record.deltas import merge_delta
 from waymark.record.edits import append_log, edit_item, set_outcome
 from waymark.record.fingerprint import change_fingerprint
-from waymark.record.milestones import MILESTONE_FILE
+from waymark.record.milestones import MILESTONE_FILE, append_milestone_log
 from waymark.record.moves import rewrite_links, tick_roadmap_lines
 from waymark.record.names import ArchiveName
 from waymark.record.proposal import BUILT, DIFFERS, NONE, Proposal
@@ -579,6 +579,12 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
             "Archive this one tomorrow, or rename it."
         )
 
+    home = record.milestones.get(change.proposal.milestone or "")
+    home_file = f"{home.path}/{MILESTONE_FILE}" if home is not None else None
+    archived_line = _render(
+        records.Record(RecordKind.ARCHIVED, today, who=_who(record, by), change=name)
+    )
+
     transaction = Transaction(record.files)
     if change.synced is None:
         _merge_specs(record, change, transaction)
@@ -593,6 +599,8 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
             text = tick_roadmap_lines(current, source)
             current = Document.parse(doc.path, text)
         text = rewrite_links(current, source, target)
+        if doc.path == home_file:
+            text = append_milestone_log(Document.parse(doc.path, text), archived_line)
         if text != doc.text:
             transaction.write(doc.path, text)
     transaction.move(source, target)
@@ -603,8 +611,9 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
 def close_milestone(start: Path, name: str, today: datetime.date) -> Done:
     """Close a milestone: move it to the dated archive and rewrite the links to it.
 
-    Refused while a change its roadmap links to is still active or can't be
-    found. Lines for changes that were never proposed don't block.
+    Refused until every line on its roadmap links to an archived change: a change
+    still active, one that can't be found, or a planned line that was never
+    proposed keeps it open.
     """
     record = open_record(start, writing=True)
     milestone = record.milestones.get(name)
@@ -614,16 +623,24 @@ def close_milestone(start: Path, name: str, today: datetime.date) -> Done:
     lines = milestone_state(record, milestone).lines
     active = [line.change for line in lines if line.status is RoadmapStatus.ACTIVE]
     missing = [line.change for line in lines if line.status is RoadmapStatus.MISSING]
+    planned = [line.text for line in lines if line.status is RoadmapStatus.PLANNED]
     if active:
         raise Refusal(
             f'The milestone "{name}" stays open: {", ".join(filter(None, active))} '
-            "is still active. Archive it first, or take its line off the roadmap."
+            "is still active. Archive it first."
         )
     if missing:
         raise Refusal(
             f'The milestone "{name}" stays open: its roadmap links to '
             f"{', '.join(filter(None, missing))}, which can't be found. Fix the link, or "
-            "take the line off the roadmap."
+            f'drop the line with "wm roadmap drop {name} <change> --reason "<why>"".'
+        )
+    if planned:
+        raise Refusal(
+            f'The milestone "{name}" stays open: its roadmap has lines never proposed: '
+            f"{'; '.join(planned)}. Propose each with "
+            f'"wm new change <name> --milestone {name}", or drop it with '
+            f'"wm roadmap drop {name} <change> --reason "<why>"".'
         )
     source = milestone.path
     target = f"{MILESTONES}/{ARCHIVE}/{ArchiveName(today, name).folder}"
@@ -639,6 +656,4 @@ def close_milestone(start: Path, name: str, today: datetime.date) -> Done:
             transaction.write(doc.path, text)
     transaction.move(source, target)
     paths = commit(transaction)
-    dropped = [line.text for line in lines if line.status is RoadmapStatus.PLANNED]
-    note = f" Never proposed: {'; '.join(dropped)}." if dropped else ""
-    return Done(f'Closed the milestone "{name}" as {target}.{note}', paths)
+    return Done(f'Closed the milestone "{name}" as {target}.', paths)

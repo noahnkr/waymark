@@ -8,7 +8,7 @@ from tests.support import Workspace, proposal
 from tests.support import milestone as milestone_text
 from waymark.record.record import link_problems
 from waymark.record.state import ExplorationStatus
-from waymark.services import lifecycle
+from waymark.services import lifecycle, roadmap
 from waymark.services.common import Refusal
 
 DAY = datetime.date(2026, 2, 1)
@@ -44,19 +44,26 @@ def test_closing_moves_the_milestone_to_the_dated_archive(project: Workspace) ->
     milestone(
         project,
         f"- [x] [Limit](../../{ARCHIVED_CHANGE}/proposal.md)\n",
-        "- [ ] Paging, never proposed\n",
+        "- add-paging: never proposed\n",
     )
+    with pytest.raises(Refusal) as refusal:
+        lifecycle.close_milestone(project.root, NAME, DAY)
+    assert "add-paging: never proposed" in str(refusal.value)
+    assert "wm roadmap drop" in str(refusal.value)
+    assert NAME in project.record().milestones
+    roadmap.drop(project.root, NAME, "add-paging", "paging can wait", DAY)
     done = lifecycle.close_milestone(project.root, NAME, DAY)
     target = f"milestones/archive/2026-02-01-{NAME}"
     assert target in done.message
-    assert "Never proposed: Paging, never proposed." in done.message
     record = project.record()
     assert record.problems == ()
     assert record.milestones == {}
     assert [(entry.name, entry.date) for entry in record.archived_milestones] == [(NAME, DAY)]
-    assert project.read(f"{target}/milestone.md") == milestone_text(
-        f"- [x] [Limit](../../../{ARCHIVED_CHANGE}/proposal.md)\n- [ ] Paging, never proposed\n"
+    closed = project.read(f"{target}/milestone.md")
+    assert closed.startswith(
+        milestone_text(f"- [x] [Limit](../../../{ARCHIVED_CHANGE}/proposal.md)\n")
     )
+    assert closed.endswith("- (dropped) 2026-02-01 add-paging by Sam Doe: paging can wait\n")
 
 
 def test_closing_rewrites_links_to_the_milestone(project: Workspace) -> None:

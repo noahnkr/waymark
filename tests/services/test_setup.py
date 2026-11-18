@@ -749,13 +749,15 @@ def faster_search(roadmap: str, *, newline: str = "\n") -> str:
 def test_scenario_planned_roadmap_line(project: Workspace) -> None:
     """Requirement "New change in a milestone": a planned line becomes a link."""
     project.write(MILESTONE_FILE, faster_search("- add-limit: cap the results\n- add-cache\n"))
-    done = setup.create_change(project.root, "add-limit", milestone="faster-search")
+    done = setup.create_change(
+        project.root, "add-limit", milestone="faster-search", today=datetime.date(2026, 11, 20)
+    )
     assert 'linked from the roadmap of "faster-search"' in done.message
     proposal_text = project.read("changes/add-limit/proposal.md")
     assert "- Owner: Sam Doe\n- Milestone: faster-search\n\n" in proposal_text
     assert project.read(MILESTONE_FILE).endswith(
         "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"
-        "- add-cache\n"
+        "- add-cache\n\n## Log\n\n- (proposed) 2026-11-20 add-limit by Sam Doe\n"
     )
     found = check.check(project.root, datetime.datetime(2026, 3, 1, tzinfo=datetime.UTC))
     assert [f.code for f in found if "milestone" in f.code] == []
@@ -764,25 +766,26 @@ def test_scenario_planned_roadmap_line(project: Workspace) -> None:
 def test_a_planned_line_with_only_the_name_becomes_a_link(project: Workspace) -> None:
     project.write(MILESTONE_FILE, faster_search("- [ ] add-limit\n"))
     setup.create_change(project.root, "add-limit", milestone="faster-search")
-    assert project.read(MILESTONE_FILE).endswith(
-        "- [ ] [add-limit](../../changes/add-limit/proposal.md)\n"
+    assert "- [ ] [add-limit](../../changes/add-limit/proposal.md)\n\n## Log\n" in project.read(
+        MILESTONE_FILE
     )
 
 
 def test_scenario_change_not_on_the_roadmap(project: Workspace) -> None:
     project.write(MILESTONE_FILE, faster_search("- add-limits-v2: not this one\n\n"))
     setup.create_change(project.root, "add-limit", milestone="faster-search")
-    assert project.read(MILESTONE_FILE).endswith(
+    assert (
         "- add-limits-v2: not this one\n- [add-limit](../../changes/add-limit/proposal.md)\n\n"
-    )
+        "## Log\n"
+    ) in project.read(MILESTONE_FILE)
 
 
 def test_a_change_joins_an_empty_roadmap(project: Workspace) -> None:
     project.write(MILESTONE_FILE, faster_search(""))
     setup.create_change(project.root, "add-limit", milestone="faster-search")
-    assert project.read(MILESTONE_FILE).endswith(
-        "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md)\n"
-    )
+    assert (
+        "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md)\n\n## Log\n"
+    ) in project.read(MILESTONE_FILE)
 
 
 def test_the_milestone_keeps_its_line_endings(project: Workspace) -> None:
@@ -790,7 +793,7 @@ def test_the_milestone_keeps_its_line_endings(project: Workspace) -> None:
     setup.create_change(project.root, "add-limit", milestone="faster-search", short=True)
     text = project.read(MILESTONE_FILE)
     assert "\n" not in text.replace("\r\n", "")
-    assert text.endswith("- [add-limit](../../changes/add-limit/proposal.md): cap\r\n")
+    assert "- [add-limit](../../changes/add-limit/proposal.md): cap\r\n\r\n## Log\r\n" in text
     proposal_text = project.read("changes/add-limit/proposal.md")
     assert "- Milestone: faster-search\n- Path: short\n" in proposal_text
 
