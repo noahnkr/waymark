@@ -328,7 +328,7 @@ def _read(root: Path, relative: str) -> str:
 
 
 def _status(root: Path) -> str:
-    from waymark.record.project import find_project  # noqa: PLC0415
+    from waymark.record.machine.project import find_project  # noqa: PLC0415
     from waymark.record.record import load_record  # noqa: PLC0415
 
     return render.to_text(payloads.status(load_record(find_project(root))), Style(unicode=True))
