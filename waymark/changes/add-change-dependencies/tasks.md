@@ -37,3 +37,6 @@
 ## Log
 
 - (accepted) 2026-11-17 fingerprint 7293ac9130dea93b items 1.1 1.2 1.3 2.1 by Noah Roberts
+- (review) 2026-11-17 pass covers 1.1 1.2 1.3 2.1 by wm-reviewer: every item's criteria and every delta scenario hold, and tests, lint, format, types, spelling, docs freshness and wm check are all clean; the two warnings are untested or unlisted edges of the git merge check
+  - warning `src/waymark/record/git.py:321 is_merged`: a dependency branch with no commits beyond the default branch is an ancestor of it and counts as merged, so a just-created dependency gives the stacked change the default branch as its base and a false after-merged warning; untested (tests/record/test_branches.py commits on add-limit first)
+  - warning `src/waymark/record/branches.py:70 _is_merged`: a dependency merged by squash or rebase is never seen as merged (not an ancestor, and its archive isn't in the stacked branch's record until rebased), so after-merged never fires and the base keeps naming the dependency; not listed in the design's risks
