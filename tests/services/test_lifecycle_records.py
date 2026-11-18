@@ -1,10 +1,13 @@
 """The commands that write records: dated records under items and in the Log."""
 
 import datetime
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
 
 from tests.support import TASKS, Workspace
+from waymark.record import records
+from waymark.record.atlas import Found, Location
 from waymark.record.records import RecordKind
 from waymark.record.state import AcceptanceState, StepKind
 from waymark.record.terms import Verdict
@@ -263,3 +266,94 @@ def test_the_archived_change_reads_back_its_records(latest: Workspace) -> None:
     assert change.problems == ()
     assert change.tasks is not None
     assert [r.kind for r in change.tasks.log] == [RecordKind.ACCEPTED, RecordKind.SELF_REVIEW]
+
+
+SHOP = (("", PureWindowsPath("C:/work/shop")),)
+ATLAS = (("", PurePosixPath("/work/atlas")), ("api", PurePosixPath("/home/sam/api")))
+
+
+def self_review_with(latest: Workspace, finding: str) -> None:
+    built(latest)
+    lifecycle.self_review(latest.root, NAME, "fine", DAY, findings=[finding])
+
+
+def test_scenario_absolute_path_inside_the_project(latest: Workspace) -> None:
+    """Requirement "Finding places relative to the project"."""
+    assert records.relative_place(r"C:\work\shop\src\limit.py:12", SHOP) == "src/limit.py:12"
+    assert records.relative_place(r"c:\WORK\Shop\src\limit.py", SHOP) == "src/limit.py"
+    place = f"{latest.root / 'src' / 'limit.py'}:12"
+    self_review_with(latest, f"warning: {place}: the limit is not checked")
+    assert "  - warning `src/limit.py:12`: the limit is not checked\n" in log(latest)
+
+
+def test_an_absolute_place_keeps_what_follows_its_path(latest: Workspace) -> None:
+    assert (
+        records.relative_place(r"C:\work\shop\src\views\render.py: _spec_lines", SHOP)
+        == "src/views/render.py: _spec_lines"
+    )
+    place = f"`{latest.root / 'src' / 'render.py'}: check`"
+    self_review_with(latest, f"suggestion: {place}: group the findings")
+    assert "  - suggestion `src/render.py: check`: group the findings\n" in log(latest)
+
+
+def test_scenario_relative_path_with_backslashes(latest: Workspace) -> None:
+    self_review_with(latest, r"suggestion: src\limit.py: name the constant")
+    assert "  - suggestion `src/limit.py`: name the constant\n" in log(latest)
+
+
+def test_a_place_that_isnt_a_path_is_kept(latest: Workspace) -> None:
+    assert records.relative_place("the README's install section", SHOP) == (
+        "the README's install section"
+    )
+    self_review_with(latest, "suggestion: docs: setup wording: say it once")
+    assert "  - suggestion `docs`: setup wording: say it once\n" in log(latest)
+
+
+def test_scenario_code_repo_of_an_atlas(
+    latest: Workspace, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    assert records.relative_place("/home/sam/api/src/limit.py:12", ATLAS) == "api/src/limit.py:12"
+    api = tmp_path / "api"
+    api.mkdir()
+    here = Location("api", api, Found.REGISTRY)
+    monkeypatch.setattr(lifecycle, "repo_locations", lambda _: {"api": here})
+    built(latest)
+    lifecycle.verdict(
+        latest.root,
+        NAME,
+        Verdict.PASS,
+        "fine",
+        DAY,
+        findings=[f"warning: {api / 'src' / 'limit.py'}:12: the limit is not checked"],
+        by="wm-reviewer",
+    )
+    assert "  - warning `api/src/limit.py:12`: the limit is not checked\n" in log(latest)
+
+
+def test_scenario_absolute_path_elsewhere(latest: Workspace, tmp_path: Path) -> None:
+    assert records.relative_place("/home/sam/elsewhere/a.py", ATLAS) is None
+    assert records.relative_place(r"D:\other\a.py", SHOP) is None
+    built(latest)
+    before = log(latest)
+    elsewhere = tmp_path / "elsewhere" / "limit.py"
+    with pytest.raises(Refusal, match="relative to the project"):
+        lifecycle.self_review(
+            latest.root,
+            NAME,
+            "fine",
+            DAY,
+            findings=[f"warning: {elsewhere}:12: the limit is not checked"],
+        )
+    assert log(latest) == before
+
+
+def test_a_place_with_a_backslash_in_prose_is_kept() -> None:
+    """Requirement "Finding places relative to the project": a place that isn't a path."""
+    assert records.relative_place(r"`re \d+` pattern", SHOP) == r"`re \d+` pattern"
+    assert records.relative_place(r"src\limit.py:3", SHOP) == "src/limit.py:3"
+
+
+def test_an_absolute_path_through_dot_dot_is_resolved() -> None:
+    assert records.relative_place(r"C:\work\shop\..\shop\src\a.py", SHOP) == "src/a.py"
+    assert records.relative_place(r"C:\work\shop\..\other\a.py", SHOP) is None
+    assert records.relative_place("/home/sam/api/../api/b.py", ATLAS) == "api/b.py"

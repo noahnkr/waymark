@@ -41,6 +41,7 @@ from waymark.services.common import (
     find_item,
     one_line,
     open_record,
+    repo_locations,
     state_of,
 )
 
@@ -240,10 +241,24 @@ def add_note(
     return Done(f'Wrote "{line}" under item {number} of {name}. It is still to apply.', paths)
 
 
-def _findings(findings: Sequence[str]) -> tuple[list[str], bool]:
-    """The findings as wm writes them, the place in backticks, and whether one is critical."""
+def _place_roots(record: Record) -> list[tuple[str, Path]]:
+    """Where a finding's absolute path may point: the project, and each code repo here."""
+    roots: list[tuple[str, Path]] = [("", record.project.root)]
+    for name, location in repo_locations(record).items():
+        if location.folder is not None:
+            roots.append((name, location.folder))
+    return roots
+
+
+def _findings(record: Record, findings: Sequence[str]) -> tuple[list[str], bool]:
+    """The findings as wm writes them, the place in backticks, and whether one is critical.
+
+    A place's absolute path is written relative to the project, or as
+    ``<repo>/<path>`` in an atlas code repo; any other absolute path is refused.
+    """
     written: list[str] = []
     critical = False
+    roots: list[tuple[str, Path]] | None = None
     for finding in findings:
         parsed = records.parse_finding_argument(one_line(finding, "a finding"))
         if parsed is None:
@@ -251,6 +266,16 @@ def _findings(findings: Sequence[str]) -> tuple[list[str], bool]:
                 f'"{finding}" is not a finding. Write it as "{records.FINDING_ARGUMENT}", '
                 'with the place in backticks when it holds ": ".'
             )
+        if roots is None:
+            roots = _place_roots(record)
+        place = records.relative_place(parsed.place, roots)
+        if place is None:
+            raise Refusal(
+                f'The place "{parsed.place}" is a path outside this project. Give the place '
+                "relative to the project's top folder, such as src/limit.py:12, or in an atlas "
+                "as <repo>/<path>."
+            )
+        parsed = records.Finding(parsed.severity, place, parsed.text)
         critical = critical or parsed.severity is ReviewSeverity.CRITICAL
         try:
             written.append(records.render_finding(parsed))
@@ -292,7 +317,7 @@ def self_review(
     record, change, state = _open(start, name)
     _require_accepted(state)
     text = one_line(summary, "a summary of the review")
-    written, critical = _findings(findings)
+    written, critical = _findings(record, findings)
     _require_reviewable(name, state)
     level = state.review.level
     if level is ReviewLevel.NONE:
@@ -336,7 +361,7 @@ def verdict(  # noqa: PLR0913 - the verdict, and the items and findings it names
     record, change, state = _open(start, name)
     _require_accepted(state)
     text = one_line(reasons, "the reviewer's reasons")
-    written, critical = _findings(findings)
+    written, critical = _findings(record, findings)
     for number in items:
         find_item(change, number)
     if result is Verdict.CHANGES and not items:

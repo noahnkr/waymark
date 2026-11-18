@@ -4,6 +4,11 @@ All notable changes to Waymark, one entry per release.
 
 ## [Unreleased]
 
+- **Finding places are relative to the project.** `wm review` and `wm verdict`
+  write an absolute path in a finding's place relative to the project, with
+  forward slashes, or as `<repo>/<path>` for a code repo in an atlas, and refuse
+  any other absolute path. Before, a reviewer's absolute path went into the
+  record as given, home folder included.
 - **An interactive `wm init`.** On a terminal, `wm init` opens with a welcome
   screen: the Waymark star, which grows in and twinkles, the tagline, what it
   sets up, and the skills to run next. It then asks whether the repository is a

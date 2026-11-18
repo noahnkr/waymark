@@ -240,6 +240,12 @@ syncs and reviews.
   `(self-review)`, `(review)`, `(resolved)`, `(override)`. A review's findings sit
   under it as ``- <severity> `<place>`: <text>``.
 
+A finding's place is a path relative to the project's top folder, such as
+`src/limit.py:12`, or `<repo>/<path>` for a code repo in an atlas. When
+`wm review` or `wm verdict` is given an absolute path inside the project or a
+registered code repo, it writes the path that way, with forward slashes. Any
+other absolute path is refused, so no machine's folders reach the record.
+
 The acceptance names the items it covers: **adding** an item keeps it, while
 **changing** or removing an accepted item withdraws it.
 

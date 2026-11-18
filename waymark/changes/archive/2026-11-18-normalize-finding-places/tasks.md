@@ -1,0 +1,36 @@
+# Tasks
+
+## 1. Finding places
+
+- [x] 1.1 Write a finding's path relative to the project
+  - Criteria:
+    - a place starting with an absolute path inside the project is written relative to its top folder with forward slashes, followed by the rest of the place as given; both Windows (`C:\...`) and POSIX (`/...`) absolute paths are recognized on every platform
+    - in an atlas, a place inside a code repo registered on this machine is written as `<repo>/<path>`
+    - a place starting with any other absolute path is refused before anything is written, saying to give the place relative to the project
+    - a relative path is written with forward slashes, and a place that isn't a path is written as given
+    - this holds for `wm review --self`, `wm verdict`, and a verdict the hook records for a reviewer
+  - Verify:
+    - `test_scenario_absolute_path_inside_the_project`, `test_scenario_relative_path_with_backslashes`, `test_scenario_code_repo_of_an_atlas` and `test_scenario_absolute_path_elsewhere`, beside the existing finding tests
+- [x] 1.2 Repair the archived findings that hold an absolute path
+  - Criteria:
+    - the four findings of `waymark/changes/archive/2026-11-17-link-milestone-changes/tasks.md` name their places relative to the project, and nothing else in the file changes
+    - no file in `waymark/` holds the path of this machine's checkout
+  - Verify:
+    - `git diff` of the file shows only the four places changed, and a search of `waymark/` for `project-workspace` finds nothing
+    - `wm check` passes
+  - (note) 2026-11-18 by Noah Roberts: The human ran the repair, since the hook refuses an agent's edit to Log records. The Verify search for project-workspace can't come back empty: this change's proposal and task list hold the word, the proposal as a redacted example and the task list in the Verify line itself. A search for the checkout's own path, with its user folder, finds nothing in waymark/, so the criterion holds
+
+## 2. Docs
+
+- [x] 2.1 Docs for finding places
+  - Criteria:
+    - `docs/record.md` says a finding's place is a path relative to the project, or `<repo>/<path>` in an atlas, and that an absolute path is rewritten or refused
+    - the CHANGELOG's Unreleased section notes it
+  - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and codespell pass
+
+## Log
+
+- (accepted) 2026-11-18 fingerprint a7274f347a6b4e35 items 1.1 1.2 2.1 by Noah Roberts
+- (self-review) 2026-11-18 covers 1.1 1.2 2.1 by Noah Roberts: Every criterion of 1.1, 1.2 and 2.1 holds and every scenario of Finding places relative to the project has a passing test; the full checks pass. The review found that a place that isn't a path lost its backslashes, as in a regex, against the requirement, and that a path through .. came out as ../; both fixed in 814918f with tests
+  - suggestion `src/waymark/record/records.py`: relative_place: a Git Bash style path such as /c/Users/... is refused on Windows instead of being read as C:/Users/...; a reviewer would have to give a Windows or relative path
+  - suggestion `waymark/changes/normalize-finding-places/tasks.md`: item 1.2's Verify searches for a word this change's own files hold, so it can't come back empty; the criterion was checked with the full checkout path, as noted on the item
