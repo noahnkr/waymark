@@ -97,6 +97,28 @@ accepted again before it can be archived.
 **A decision is reversed by a new change.** The specs are always the sum of the
 archived changes, and the archive keeps the history of why.
 
+## Explorations
+
+An exploration is saved thinking on an idea that isn't a change yet: research,
+or an idea kept for later. `/wm-explore` saves one when you pick that offer. Its
+`- Status:` line says where it stands, and only `wm` writes it.
+
+| Status | Means | Written by |
+|---|---|---|
+| `open` | waiting to be decided or built | `wm new exploration <name>` |
+| `led-to <links>` | its findings went into a change or milestone | `wm new change <name> --from <exploration>` or `wm new milestone <name> --from <exploration>` |
+| `dropped` | weighed, and won't be acted on | `wm exploration drop <exploration> --reason "<why>"` |
+
+- **Picking one back up:** `/wm-explore <exploration>` reads it, says what in
+  the record has changed since, and goes on from its Questions and Approaches.
+  It ends with four offers: do nothing, update it or drop it, start a proposal,
+  or start a milestone.
+- **Ending:** an exploration that led to work moves to `explorations/archive/`
+  when `wm archive` or `wm close` finishes everything it led to. A dropped one
+  moves there at once. Links to it are re-aimed, so nothing is left to tidy.
+
+[The record](record.md#exploration) covers its sections and checks.
+
 ## The files
 
 ```
@@ -185,8 +207,9 @@ the end of the task list:
 You and your agents write sections of prose and `- Label:` lines: a proposal's
 `- Owner:` and its Impact's `- Specs:`, `- User-visible:` and `- Code:`; an
 item's `- Criteria:`, `- Verify:` and `- Build: delegate`; a decision's
-`- Status:` and `- Decided by:`; an exploration's `- Status:`. Each note has a
-fixed set of sections, and `wm check` holds it to them.
+`- Status:` and `- Decided by:`. An exploration's `- Status:` is written by `wm`
+(see [Explorations](#explorations)). Each note has a fixed set of sections, and
+`wm check` holds it to them.
 [The record](record.md) covers every note in detail: its sections, the lines it
 can hold, who writes and updates it, and its checks.
 
