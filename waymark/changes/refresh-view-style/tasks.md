@@ -24,13 +24,14 @@
   - Verify:
     - view tests in `tests/test_views_cli.py` and `tests/services/test_doctor.py` with a fixed `Style(color=True, unicode=True, width=80)`, and the existing plain-output tests still pass
   - (note) 2026-11-18 by Noah Roberts: In wm status a milestone's marks count its planned roadmap lines as open too, since they are on the roadmap and not archived; the bar now colors its filled part ok and its empty part muted in Style.bar
-- [ ] 2.2 Show views in the new style
+- [x] 2.2 Show views in the new style
   - Criteria:
     - `wm show <change>` draws items as a tree with `├─`, `└─` and `│`, records muted on the stem, and wraps the proposal's sections and each item's criteria
     - `wm show <milestone>` marks roadmap lines `◆` archived, `◇` active and a muted `○` planned
     - with an encoding of `cp437`, the same views use only the ASCII stand-ins and keep their layout
   - Verify:
     - `test_scenario_legacy_console`, `test_scenario_narrow_terminal` and `test_scenario_piped` in `tests/test_views_cli.py` or `tests/views/`
+  - (note) 2026-11-18 by Noah Roberts: Prose is wrapped in the change, spec, milestone and exploration show views; a resource's sections are left unwrapped because they hold code and settings that wrapping would break. A roadmap line that is neither archived nor active (planned or missing) gets the muted open circle
 
 ## 3. Docs
 

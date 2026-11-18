@@ -1,6 +1,7 @@
 """The read commands through the command line: text, ``--json`` and exit codes."""
 
 import datetime
+import io
 import json
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from waymark import __version__
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
 from waymark.services import lifecycle
 from waymark.views import payloads, render
+from waymark.views.payloads import Payload
 from waymark.views.schemas import SCHEMAS
 from waymark.views.style import Style
 
@@ -221,6 +223,14 @@ def test_scenario_json(terminal: Terminal, monkeypatch: pytest.MonkeyPatch) -> N
     assert "\x1b[" not in terminal.run("status", "--json")
 
 
+class LegacyConsole(io.StringIO):
+    """Output whose encoding is cp437, as on a legacy Windows console."""
+
+    @property
+    def encoding(self) -> str:  # type: ignore[override]
+        return "cp437"
+
+
 STYLED = Style(color=True, unicode=True, width=80)
 """A terminal 80 columns wide that shows color and glyphs."""
 NOW = datetime.datetime.now(datetime.UTC)
@@ -265,3 +275,77 @@ def test_inbox_wraps_its_summaries(terminal: Terminal) -> None:
     assert all(len(line) <= 80 and line.startswith("      ") for line in summary)
     plain = render.to_text(payload, Style()).split("\n")
     assert len([line for line in plain if "product owner" in line]) == 1
+
+
+WHY = " ".join(["Long result lists are slow to read and slower to load"] * 6)
+"""One paragraph of about 300 characters."""
+
+
+def long_why(terminal: Terminal) -> Payload:
+    """The add-order change, with its Why one paragraph of about 300 characters."""
+    folder = terminal.project.path("changes/add-order")
+    text = (folder / "proposal.md").read_text(encoding="utf-8")
+    text = text.replace("Long result lists are slow.", WHY)
+    (folder / "proposal.md").write_text(text, encoding="utf-8")
+    assert len(WHY) >= 300
+    return payloads.show(terminal.project.record(), "add-order")
+
+
+def test_scenario_legacy_console(terminal: Terminal) -> None:
+    """Requirement "ASCII on consoles without the glyphs": a change with two items."""
+    style = Style.detect(LegacyConsole(), {})
+    assert not style.unicode
+    payload = payloads.show(terminal.project.record(), "add-order")
+    assert len(payload["items"]) == 2
+    text = render.to_text(payload, style)
+    text.encode("cp437")
+    assert "  |- o 1.1" in text
+    assert "  `- o 1.2" in text
+    assert "  |   Criteria:" in text
+
+
+def test_scenario_narrow_terminal(terminal: Terminal) -> None:
+    """Requirement "Prose wrapped on a terminal": at 80 columns."""
+    text = render.to_text(long_why(terminal), Style(unicode=True, width=80))
+    lines = text.split("\n")
+    start = lines.index("Why") + 1
+    why = []
+    for line in lines[start:]:
+        if not line:
+            break
+        why.append(line)
+    assert len(why) > 1
+    assert all(len(line) <= 80 and line.startswith("  ") for line in why)
+    assert " ".join(line.strip() for line in why) == WHY
+
+
+def test_scenario_piped(terminal: Terminal) -> None:
+    text = render.to_text(long_why(terminal), Style())
+    assert f"\n  {WHY}\n" in text
+
+
+def test_items_are_a_tree_with_records_on_the_stem(terminal: Terminal) -> None:
+    lifecycle.accept(terminal.project.root, "add-order", datetime.date(2026, 1, 15))
+    lifecycle.block(terminal.project.root, "add-order", "1.1", "waiting for the wording")
+    payload = payloads.show(terminal.project.record(), "add-order")
+    text = render.to_text(payload, Style(unicode=True, width=80))
+    assert "  ├─ ○ 1.1" in text
+    assert "  └─ ○ 1.2" in text
+    assert "  │   (blocked)" in text
+    colored = render.to_text(payload, STYLED)
+    assert "\x1b[2m  │   (blocked)" in colored
+
+
+def test_milestone_roadmap_marks(terminal: Terminal) -> None:
+    terminal.project.write(
+        "milestones/faster-search/milestone.md",
+        milestone(
+            "- [add-order](../../changes/add-order/proposal.md): order\n- add-cache: a cache\n"
+        ),
+    )
+    payload = payloads.show(terminal.project.record(), "faster-search")
+    text = render.to_text(payload, Style(unicode=True))
+    assert "  ◇ add-order" in text
+    assert "  ○ add-cache" in text
+    ascii_text = render.to_text(payload, Style())
+    assert "  o add-order" in ascii_text

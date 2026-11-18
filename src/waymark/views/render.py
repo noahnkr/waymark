@@ -214,31 +214,42 @@ def ls(payload: Payload, style: Style) -> str:
     return "\n".join(lines)
 
 
-def _titled(title: str, text: str | None, style: Style) -> list[str]:
+def _titled(title: str, text: str | None, style: Style, *, wrap: bool = False) -> list[str]:
+    """A titled section; ``wrap`` wraps its prose to the terminal, for the show views."""
     if not text:
         return []
-    return ["", style.paint(title, STRONG), *_indent(text, "  ")]
+    body = style.wrap(text, "  ").split("\n") if wrap else _indent(text, "  ")
+    return ["", style.paint(title, STRONG), *body]
 
 
-def _item_lines(item: Payload, style: Style) -> list[str]:
+def _painted(text: str, style: Style, *roles: str) -> list[str]:
+    """Each line of wrapped text, painted on its own so a color never spans a line break."""
+    return [style.paint(line, *roles) for line in text.split("\n")]
+
+
+def _item_lines(item: Payload, style: Style, *, last: bool) -> list[str]:
+    """One item of a change's tree: its head on a branch, everything under it on the stem."""
     mark = style.symbol("done") if item["ticked"] else style.symbol("todo")
     tags = ["build: delegate"] if item["delegate"] else []
     if item["repo"]:
         tags.append(f"repo: {item['repo']}")
-    head = f"  {mark} {style.paint(item['number'], STRONG)} {item['title']}"
+    branch = style.symbol("last" if last else "branch")
+    stem = "      " if last else f"  {style.symbol('stem')}   "
+    head = f"  {branch} {mark} {style.paint(item['number'], STRONG)} {item['title']}"
     lines = [head + (style.paint(f"   ({', '.join(tags)})", MUTED) if tags else "")]
     for label, key in (("Criteria", "criteria"), ("Verify", "verify")):
         if item[key]:
-            lines.append(f"      {label}: {item[key]}".replace("\n", "\n        "))
+            text = f"{label}: {item[key]}".replace("\n", "\n  ")
+            lines += style.wrap(text, stem).split("\n")
     for label, key, color in (
         ("Blocked", "blocked", ATTENTION),
         ("Spec gap", "spec_gap", ATTENTION),
         ("Needs you", "needs_human", ATTENTION),
     ):
         if item[key]:
-            lines.append(style.paint(f"      {label}: {item[key]}", color))
+            lines += _painted(style.wrap(f"{label}: {item[key]}", stem), style, color)
     for record in item["records"]:
-        lines += _record_lines(record, "      ", style)
+        lines += _record_lines(record, stem, style)
     return lines
 
 
@@ -248,12 +259,12 @@ def _record_lines(record: Payload, indent: str, style: Style) -> list[str]:
     covers = f" covers {' '.join(record['covers'])}" if record.get("covers") else ""
     text = f": {record['text']}" if record["text"] else ""
     by = f" by {record['by']}" if record["by"] else ""
-    head = f"{indent}({record['kind']}) {record['date']}{verdict}{named}{covers}{by}{text}"
-    lines = [style.paint(head, MUTED)]
+    head = f"({record['kind']}) {record['date']}{verdict}{named}{covers}{by}{text}"
+    lines = _painted(style.wrap(head, indent), style, MUTED)
     for finding in record["findings"]:
         color = DANGER if finding["severity"] == "critical" else ATTENTION
-        line = f"{indent}  {finding['severity']} `{finding['place']}`: {finding['text']}"
-        lines.append(style.paint(line, color))
+        line = f"  {finding['severity']} `{finding['place']}`: {finding['text']}"
+        lines += _painted(style.wrap(line, indent), style, color)
     return lines
 
 
@@ -310,8 +321,8 @@ def show_change(payload: Payload, style: Style) -> str:  # noqa: PLR0912 - one p
     for conflict in state["conflicts"] if state else []:
         lines.append(style.paint(f"  {style.symbol('warning')} {conflict['message']}", ATTENTION))
     for title, text in (payload["proposal"] or {}).items():
-        lines += _titled(title, text, style)
-    lines += _titled("Outcome", payload["outcome"], style)
+        lines += _titled(title, text, style, wrap=True)
+    lines += _titled("Outcome", payload["outcome"], style, wrap=True)
     if payload["deltas"]:
         lines += ["", style.paint("Deltas", STRONG)]
         lines += [f"  {delta['spec']}: {_delta_names(delta)}" for delta in payload["deltas"]]
@@ -320,8 +331,8 @@ def show_change(payload: Payload, style: Style) -> str:  # noqa: PLR0912 - one p
         lines += ["", style.paint("Design", STRONG), f"  Decisions: {decisions}"]
     if payload["items"]:
         lines += ["", style.paint("Tasks", STRONG)]
-        for item in payload["items"]:
-            lines += _item_lines(item, style)
+        for index, item in enumerate(payload["items"]):
+            lines += _item_lines(item, style, last=index == len(payload["items"]) - 1)
         lines += _review_section(payload["review"], style)
     lines += _log_section(payload["log"], style)
     if payload["problems"]:
@@ -339,7 +350,7 @@ def show_spec(payload: Payload, style: Style) -> str:
     lines = [style.rule(f"Spec: {payload['name']}{source}"), f"  {payload['title']}"]
     if payload["repos"]:
         lines.append(f"  Repos: {', '.join(payload['repos'])}")
-    lines += _titled("Purpose", payload["purpose"], style)
+    lines += _titled("Purpose", payload["purpose"], style, wrap=True)
     lines += ["", style.paint("Requirements", STRONG)]
     for requirement in payload["requirements"]:
         lines.append(f"  {style.symbol('bullet')} {style.paint(requirement['name'], STRONG)}")
@@ -366,10 +377,15 @@ def show_milestone(payload: Payload, style: Style) -> str:
     bar = style.bar(payload["archived"], payload["total"])
     lines.append(f"  {bar} {payload['archived']}/{payload['total']} changes archived")
     for title, text in (payload["goal"] or {}).items():
-        lines += _titled(title, text, style)
+        lines += _titled(title, text, style, wrap=True)
     lines += ["", style.paint("Roadmap", STRONG)]
     for line in payload["lines"]:
-        mark = style.symbol("done") if line["status"] == "archived" else style.symbol("todo")
+        if line["status"] == "archived":
+            mark = style.paint(style.symbol("milestone_done"), OK)
+        elif line["status"] == "active":
+            mark = style.symbol("milestone_open")
+        else:
+            mark = style.paint(style.symbol("todo"), MUTED)
         status_text = style.paint(f"({line['status']})", MUTED)
         lines.append(f"  {mark} {line['change'] or line['text']} {status_text}")
     if not payload["lines"]:
@@ -383,7 +399,7 @@ def show_exploration(payload: Payload, style: Style) -> str:
     detail = f": {payload['detail']}" if payload["detail"] else ""
     lines.append(f"  {payload['status']}{detail}")
     for title, text in payload["sections"].items():
-        lines += _titled(title, text, style)
+        lines += _titled(title, text, style, wrap=True)
     return "\n".join(lines)
 
 
