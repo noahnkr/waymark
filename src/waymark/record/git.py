@@ -57,6 +57,46 @@ def current_branch(folder: Path) -> str | None:
         return None
 
 
+DEFAULT_BRANCH = "main"
+"""The default branch when the repository has no ``origin`` HEAD to say otherwise."""
+
+
+def default_branch(repository: Path) -> str:
+    """The branch the ``origin`` remote's HEAD points at, or ``main`` without one."""
+    try:
+        ref = _run(repository, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
+    except GitError:
+        return DEFAULT_BRANCH
+    return ref.strip().removeprefix("origin/") or DEFAULT_BRANCH
+
+
+def _first_ref(repository: Path, *refs: str) -> str | None:
+    """The first of the refs that exists; None when none does."""
+    for ref in refs:
+        try:
+            _run(repository, "rev-parse", "--verify", "--quiet", ref)
+        except GitError:
+            continue
+        return ref
+    return None
+
+
+def archived_on(repository: Path, branch: str, folder: str) -> frozenset[str]:
+    """The names of the folders under ``folder`` on a branch, read without checking it out.
+
+    The branch is read from ``origin`` first, where a merge lands, then locally; ``folder``
+    is relative to the repository's top. Empty when the branch or the folder exists nowhere.
+    """
+    ref = _first_ref(repository, f"refs/remotes/origin/{branch}", f"refs/heads/{branch}")
+    if ref is None:
+        return frozenset()
+    try:
+        listed = _run(repository, "ls-tree", "--name-only", ref, f"{folder.rstrip('/')}/")
+    except GitError:
+        return frozenset()
+    return frozenset(line.rsplit("/", 1)[-1] for line in listed.splitlines() if line)
+
+
 def version() -> str | None:
     """The installed git's version line; None when git can't be run."""
     try:

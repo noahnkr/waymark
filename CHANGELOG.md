@@ -26,6 +26,14 @@ All notable changes to Waymark, one entry per release.
 - **Behavior change: `wm close` needs every roadmap line archived.** A planned
   line that was never proposed now keeps a milestone open, until it is proposed
   or dropped with `wm roadmap drop`.
+- **Each change has a branch and a base.** A proposal may say which change it
+  comes after, in an `- After: <change>` line written by
+  `wm new change <name> --after <change>`. `wm instructions`, `wm pr` and
+  `wm status` show each change's branch and base, `wm pr`'s JSON has a `base` for
+  the pull request to target, and `wm check` warns when the change it comes after
+  has merged. The default branch comes from the `origin` remote's HEAD, or is
+  `main`. The skills open a plan pull request for a new milestone and create
+  each change's branch from its base.
 
 ## [0.2.0] - 2026-11-16
 

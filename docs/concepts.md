@@ -35,6 +35,27 @@ If the pull request needs more work, the archive commit is reverted and the
 change archived again. Specs come before design: first agree on what the system does, then
 on how.
 
+## Branches
+
+Each change lives on a branch named after it, and merges on its own.
+
+- **Base:** a change branches from the default branch, the `origin` remote's HEAD
+  or `main`. A change that needs another change not merged yet says so with an
+  `- After: <change>` line, written by `wm new change <name> --after <change>`,
+  and branches from that change's branch instead.
+- **Shown:** `wm instructions` and `wm pr` give a change's branch and base, and
+  its pull request goes into the base. `wm status` adds an `on <base>` line under
+  a change whose base isn't the default branch.
+- **Merged base:** once the change it comes after is archived or merged, `wm
+  check` warns: rebase onto the default branch, retarget the pull request, and
+  take the `- After:` line off.
+- **Milestones:** a new milestone goes on a `plan-<milestone>` branch and lands
+  on the default branch in a plan pull request before its changes are proposed.
+
+`wm` names branches; it never creates, switches, rebases or pushes them. The
+skills do that with git. In an atlas, a change uses the same branch name in every
+repo.
+
 ## Paths
 
 | Path | For | What it takes |

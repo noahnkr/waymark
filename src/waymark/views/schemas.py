@@ -79,6 +79,8 @@ CONFLICT = _object(
 CHANGE_STATE = _object(
     {
         "name": STRING,
+        "branch": STRING,
+        "base": STRING,
         "owner": TEXT_OR_NULL,
         "phase": _enum(Phase),
         "short_path": BOOLEAN,
@@ -155,6 +157,7 @@ SCHEMAS: dict[str, Schema] = {
             "wm_version": STRING,
             "pinned_version": TEXT_OR_NULL,
             "writable": BOOLEAN,
+            "default_branch": STRING,
             "changes": _array(CHANGE_STATE),
             "milestones": _array(
                 _object({"name": STRING, "archived": INTEGER, "total": INTEGER, "planned": INTEGER})
@@ -373,6 +376,8 @@ SCHEMAS.update(
             "instructions",
             {
                 "change": TEXT_OR_NULL,
+                "branch": TEXT_OR_NULL,
+                "base": TEXT_OR_NULL,
                 "step": {"enum": _STEPS},
                 "item": TEXT_OR_NULL,
                 "ready": BOOLEAN,
@@ -439,6 +444,7 @@ SCHEMAS.update(
                 "change": STRING,
                 "repo": TEXT_OR_NULL,
                 "branch": STRING,
+                "base": STRING,
                 "title": STRING,
                 "body": STRING,
                 "links": _array(_object({"name": STRING, "url": STRING})),

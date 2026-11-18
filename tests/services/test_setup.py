@@ -820,3 +820,16 @@ def test_a_change_joins_a_new_milestone_from_the_template(project: Workspace) ->
     assert {problem.code for problem in problems} <= {"empty-section"}
     found = check.check(project.root, datetime.datetime(2026, 3, 1, tzinfo=datetime.UTC))
     assert [f.code for f in found if "milestone" in f.code] == []
+
+
+def test_scenario_change_written_after_another(project: Workspace) -> None:
+    """Requirement "Change comes after another": wm new change --after writes the line."""
+    setup.create_change(project.root, "add-limit")
+    project.write(MILESTONE_FILE, faster_search(""))
+    setup.create_change(project.root, "add-paging", milestone="faster-search", after="add-limit")
+    assert "- Owner: Sam Doe\n- Milestone: faster-search\n- After: add-limit\n\n" in project.read(
+        "changes/add-paging/proposal.md"
+    )
+    with pytest.raises(Refusal, match="not a valid change name"):
+        setup.create_change(project.root, "add-sort", after="Add_Limit")
+    assert not project.path("changes/add-sort").exists()

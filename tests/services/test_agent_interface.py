@@ -810,3 +810,35 @@ def test_scenario_change_without_a_milestone(project: Workspace) -> None:
     built = pack(project, "implement")
     assert built["milestone"] is None
     assert "## Milestone" not in render.to_text(built, PLAIN)
+
+
+def comes_after(other: str) -> str:
+    return proposal().replace("- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- After: {other}\n")
+
+
+def test_scenario_change_without_a_dependency_in_the_instructions(project: Workspace) -> None:
+    """Requirement "Branch and base": a change without `- After:` is based on main."""
+    project.change()
+    payload = valid(instructions(project.record(), None, NAME))
+    assert (payload["branch"], payload["base"]) == (NAME, "main")
+    assert f"Branch {NAME}, based on main." in render.to_text(payload, PLAIN)
+
+
+def test_scenario_stacked_change_in_the_instructions(project: Workspace) -> None:
+    project.change()
+    project.change("add-paging", proposal_text=comes_after(NAME))
+    payload = valid(instructions(project.record(), None, "add-paging"))
+    assert (payload["branch"], payload["base"]) == ("add-paging", NAME)
+    assert f"Branch add-paging, based on {NAME}." in render.to_text(payload, PLAIN)
+
+
+def test_scenario_dependency_merged_in_the_instructions(project: Workspace) -> None:
+    project.write(f"changes/archive/2026-01-20-{NAME}/proposal.md", proposal(outcome="Done."))
+    project.change("add-paging", proposal_text=comes_after(NAME))
+    payload = valid(instructions(project.record(), None, "add-paging"))
+    assert payload["base"] == "main"
+
+
+def test_explore_instructions_have_no_branch(project: Workspace) -> None:
+    payload = valid(instructions(project.record(), "explore", None))
+    assert (payload["branch"], payload["base"]) == (None, None)

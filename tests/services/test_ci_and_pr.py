@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from tests.conftest import git_init
-from tests.support import ATLAS_CONFIG, CONFIG, Workspace, delta, requirement
+from tests.support import ATLAS_CONFIG, CONFIG, Workspace, delta, proposal, requirement
 from tests.views.validator import errors
 from waymark import __version__
 from waymark.record.terms import Verdict
@@ -271,3 +271,19 @@ def test_pr_in_a_code_repo_for_an_archived_change(suite: Workspace) -> None:
     assert "- [x] 1.1 Add the endpoint" in payload["body"]
     assert "1.2" not in payload["body"]
     assert [link["name"] for link in payload["links"]] == ["change", "suite"]
+
+
+def test_scenario_pull_request_of_a_stacked_change(project: Workspace) -> None:
+    """Requirement "Views show branch and base": the pull request goes into the base."""
+    project.change()
+    project.change(
+        "add-paging",
+        proposal_text=proposal().replace(
+            "- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- After: {NAME}\n"
+        ),
+    )
+    payload = describe(project.record(), "add-paging")
+    assert (payload["branch"], payload["base"]) == ("add-paging", NAME)
+    assert describe(project.record(), NAME)["base"] == "main"
+    text = render.to_text(payload, Style(color=False, unicode=False))
+    assert f"from add-paging into {NAME}" in text

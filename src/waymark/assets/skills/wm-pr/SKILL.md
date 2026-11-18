@@ -19,8 +19,8 @@ You are the planner. A pull request is an outward action, so you open one only w
 
 1. Check that the work is committed on the change's branch; the branch is named after the change. A change is usually archived on its branch before its pull request, with the `wm-archive` skill; if it isn't yet, offer that first.
 2. Run `wm pr <name> --json` for the title and description. In a project that spans several repositories, run it once per repository: without `--repo` for the atlas, which carries the record, and with `--repo <repo>` for each code repo the change's items name. The description already says why, what changes, the specs touched, the items, the change's review with its findings, the outcome once the change is archived, and links to the change and to the other repositories' pull requests. `wm pr` works the same on a change archived on the branch.
-3. Show the human the title and description, and ask whether to open the pull request, and against which branch.
-4. Only after they say yes: push the branch and open the pull request with the git host's own command-line tool, using that title and description.
+3. Show the human the title, the description and the target: the `base` that `wm pr --json` gives, the default branch or the unmerged change this one comes after. Ask whether to open the pull request.
+4. Only after they say yes: push the branch and open the pull request into that base with the git host's own command-line tool, using that title and description. In an atlas, each repo's pull request goes from the same branch name into the same base.
 5. Give the human the link.
 
 ## Quality bar
@@ -35,7 +35,7 @@ Before opening:
 
 - **Title:** as `wm pr` gives it.
 - **Description:** in full, or its sections in short, with any line you added.
-- **Target:** the branch it merges into.
+- **Target:** the base `wm pr` gives, the branch it merges into.
 
 After opening: the link.
 

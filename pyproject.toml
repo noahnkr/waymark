@@ -69,7 +69,9 @@ filterwarnings = ["error"]
 builtin = "clear,rare,en-GB_to_en-US"
 check-hidden = true
 check-filenames = true
-skip = ".git,.venv,dist,uv.lock,.mypy_cache,.pytest_cache,.ruff_cache,__pycache__"
+# Archived changes and milestones are history: their records can't be edited, so a word an
+# agent recorded there could never be fixed.
+skip = ".git,.venv,dist,uv.lock,.mypy_cache,.pytest_cache,.ruff_cache,__pycache__,./waymark/changes/archive,./waymark/milestones/archive"
 
 [tool.mypy]
 strict = true
