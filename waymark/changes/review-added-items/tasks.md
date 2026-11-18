@@ -14,3 +14,7 @@
 - [ ] 2.1 Say that an added item needs its own review
   - Criteria: `wm-apply`, `wm-update` and the `wm-reviewer` definition say that an item added after a review is reviewed on its own, and the reviewer reviews only the items its pack holds; concepts describes `covers`; the changelog has the line; the docs follow the `waymark-write-docs` skill
   - Verify: `uv run --no-sync pytest tests/adapters tests/test_docs.py`, codespell and `wm check`
+
+## Log
+
+- (accepted) 2026-11-17 fingerprint a9c3f8d8b312bd26 items 1.1 1.2 2.1 by Noah Roberts
