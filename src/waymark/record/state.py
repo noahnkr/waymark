@@ -549,6 +549,20 @@ def milestone_state(record: Record, milestone: Milestone) -> MilestoneState:
     return MilestoneState(milestone.name, tuple(lines), done, len(members))
 
 
+def led_to_done(exploration: Exploration) -> bool:
+    """Whether every target on a ``led-to`` line is an archived change or a closed milestone."""
+    if exploration.status != "led-to" or not exploration.status_links:
+        return False
+    for target in exploration.status_links:
+        members = (
+            _member(exploration.doc.path, target, folder) for folder in (CHANGES, MILESTONES)
+        )
+        member = next((found for found in members if found is not None), None)
+        if member is None or not member.archived:
+            return False
+    return True
+
+
 def exploration_state(record: Record, exploration: Exploration) -> ExplorationState:
     """Derive an exploration's state from its status line."""
     if exploration.status is None:

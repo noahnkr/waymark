@@ -23,7 +23,7 @@
     - tests in `tests/views/test_views.py` for Show an archived exploration and List with the archived ones
     - tests in `tests/services/test_setup.py` for the four Record folders kept in git scenarios
     - `uv run --no-sync pytest tests/views tests/services/test_setup.py tests/record`
-- [ ] 1.3 Report a led-to exploration left active, and archive `lighter-workflow`
+- [x] 1.3 Report a led-to exploration left active, and archive `lighter-workflow`
   - Criteria:
     - `wm check` reports an active exploration whose `led-to` targets are all archived or closed as an error, `exploration-not-archived`, that names `explorations/archive/`
     - an archived exploration with `- Status: parked` is not reported

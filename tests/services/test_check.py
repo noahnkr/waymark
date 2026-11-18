@@ -244,6 +244,38 @@ def test_exploration_without_a_status_line_is_missing_its_status(project: Worksp
     assert findings(project) == [("error", "explorations/paging.md", "missing-status")]
 
 
+def exploration(status: str) -> str:
+    return (
+        f"# P\n\n- Status: {status}\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        "## Conclusion\n\n## Related\n"
+    )
+
+
+def test_scenario_exploration_whose_milestone_closed(project: Workspace) -> None:
+    project.write("milestones/archive/2026-11-15-faster-search/milestone.md", milestone())
+    closed = "[faster-search](../milestones/archive/2026-11-15-faster-search/milestone.md)"
+    project.write("explorations/speed.md", exploration(f"led-to {closed}"))
+    result = check(project.root, NOW)
+    assert [(f.severity, f.path, f.code) for f in result] == [
+        (Severity.ERROR, "explorations/speed.md", "exploration-not-archived")
+    ]
+    assert "explorations/archive/" in result[0].message
+
+
+def test_exploration_with_work_still_active_is_not_reported(project: Workspace) -> None:
+    project.change("add-paging")
+    project.write("milestones/archive/2026-11-15-faster-search/milestone.md", milestone())
+    closed = "[faster-search](../milestones/archive/2026-11-15-faster-search/milestone.md)"
+    active = "[add-paging](../changes/add-paging/proposal.md)"
+    project.write("explorations/speed.md", exploration(f"led-to {closed}, {active}"))
+    assert findings(project) == []
+
+
+def test_scenario_archived_exploration_with_an_old_status(project: Workspace) -> None:
+    project.write("explorations/archive/2026-11-01-paging.md", exploration("parked"))
+    assert findings(project) == []
+
+
 def test_change_untouched_for_a_while_is_a_warning(project: Workspace) -> None:
     order = delta(title="Order", added=(requirement("Result order"),), purpose="How order works.")
     impact = IMPACT.replace("`search`", "`order`")

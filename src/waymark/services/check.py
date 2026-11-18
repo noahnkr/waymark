@@ -17,6 +17,7 @@ from waymark.record.state import (
     ExplorationStatus,
     RecordState,
     derive_state,
+    led_to_done,
     milestone_links,
 )
 from waymark.record.terms import ReviewLevel
@@ -74,6 +75,18 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
                     WHOLE_FILE,
                     "conclusion-unreadable",
                     exploration.detail or "",
+                )
+            )
+        elif led_to_done(record.explorations[name]):
+            found.append(
+                Finding(
+                    Severity.ERROR,
+                    record.explorations[name].doc.path,
+                    WHOLE_FILE,
+                    "exploration-not-archived",
+                    f'Everything the exploration "{name}" led to is archived, so it belongs in '
+                    "explorations/archive/. wm archive and wm close move it there; move this one "
+                    "to explorations/archive/<date>-<name>.md, dated the day its work was archived.",
                 )
             )
     return found
