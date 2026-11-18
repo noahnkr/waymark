@@ -28,6 +28,16 @@ from waymark.services.common import Done, Refusal, commit, open_record
 _ATLAS_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
 
+def atlas_name_problem(name: str) -> str | None:
+    """Why ``name`` can't name an atlas, or None when it can."""
+    if _ATLAS_NAME.fullmatch(name):
+        return None
+    return (
+        f'"{name}" can\'t be an atlas name. Use letters, digits, dots, hyphens or '
+        "underscores, starting with a letter or digit."
+    )
+
+
 def init_project(
     start: Path,
     atlas: str | None = None,
@@ -53,11 +63,9 @@ def init_project(
     _refuse_in_a_code_repo(files)
     if files.is_file(f"{RECORD_DIR}/{CONFIG_FILE}"):
         return _set_up_clone(root, atlas, tools)
-    if atlas is not None and not _ATLAS_NAME.fullmatch(atlas):
-        raise Refusal(
-            f'"{atlas}" can\'t be an atlas name. Use letters, digits, dots, hyphens or '
-            "underscores, starting with a letter or digit."
-        )
+    problem = atlas_name_problem(atlas) if atlas is not None else None
+    if problem is not None:
+        raise Refusal(problem)
     chosen = adapters.names() if tools is None else tools
     integration.require_tools(chosen)
     config = templates.render(

@@ -8,13 +8,14 @@
     - `init_project(..., ci=True)` writes `.github/workflows/waymark.yml` in the same transaction as the record, and `ci=False` writes what `wm init` wrote before
   - Verify:
     - tests for `detect` with and without `.claude/`, and for `init_project` with `ci=True` and `ci=False`, in `tests/services/test_setup.py`
-- [ ] 1.2 Prompts as state machines
+- [x] 1.2 Prompts as state machines
   - Criteria:
     - `Select`, `Checklist`, `Confirm` and `TextInput` in `views/prompts.py` take key names and render lines with a `Style`, with no terminal access
     - `Checklist` refuses Enter with nothing selected, keeping the question open with a reason; `TextInput` refuses Enter while its validator gives a reason, showing it
     - `escape` from any prompt gives a canceled state
   - Verify:
     - tests feeding key sequences in a new `tests/views/test_prompts.py`, including `test_scenario_nothing_selected` and `test_scenario_invalid_atlas_name`
+  - (note) 2026-11-18 by Noah Roberts: setup.atlas_name_problem() now holds the atlas-name rule that init_project refused with, so the TextInput can validate with the same rule; Select also takes a typed number, for the line fallback
 - [ ] 1.3 Raw keys, redraws and the line fallback
   - Criteria:
     - `views/terminal.py` reads keys in raw mode on Windows and POSIX, mapping arrows, Space, Enter, Backspace, Esc and Ctrl+C to key names, and restores the terminal mode and cursor in a `finally`
@@ -55,3 +56,4 @@
 ## Log
 
 - (accepted) 2026-11-18 fingerprint e4640089b6be55b8 items 1.1 1.2 1.3 1.4 2.1 3.1 by Noah Roberts
+- (accepted) 2026-11-18 fingerprint fb25b46e5fa16a1a items 1.1 1.2 1.3 1.4 2.1 3.1 by Noah Roberts
