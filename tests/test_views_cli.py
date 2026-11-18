@@ -194,3 +194,24 @@ def test_show_a_resource_in_full(terminal: Terminal) -> None:
     assert "Kind: service" in text
     assert "Serves: billing" in text
     assert "Live." in text
+
+
+def test_scenario_piped_output(terminal: Terminal, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requirement "Color on a terminal": through the command line."""
+    monkeypatch.delenv("FORCE_COLOR", raising=False)
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    assert "\x1b[" not in terminal.run("status")
+
+
+def test_scenario_forced_color(terminal: Terminal, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setenv("FORCE_COLOR", "1")
+    assert "\x1b[" in terminal.run("status")
+    monkeypatch.setenv("NO_COLOR", "1")
+    assert "\x1b[" not in terminal.run("status")
+
+
+def test_scenario_json(terminal: Terminal, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setenv("FORCE_COLOR", "1")
+    assert "\x1b[" not in terminal.run("status", "--json")

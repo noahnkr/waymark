@@ -2,7 +2,7 @@
 
 ## 1. Style
 
-- [ ] 1.1 Palette, glyphs, FORCE_COLOR and width in `Style`
+- [x] 1.1 Palette, glyphs, FORCE_COLOR and width in `Style`
   - Criteria:
     - `Style` paints by the roles accent, ok, attention, danger, muted and strong, mapped to cyan, green, yellow, red, dim and bold; no view in `render.py` names a color code
     - the glyphs `branch`, `last`, `stem`, `milestone_done`, `milestone_open` and `star` exist with ASCII stand-ins, and the encoding check covers every glyph
@@ -11,6 +11,7 @@
   - Verify:
     - `test_scenario_piped_output`, `test_scenario_forced_color`, `test_scenario_no_color_wins` and `test_scenario_json` in `tests/views/test_style.py` and `tests/test_views_cli.py`
     - tests for `wrap` at width 60 and with `None`, beside them
+  - (note) 2026-11-18 by Noah Roberts: wrap(text, indent) with no width still puts the indent before each line, one line per paragraph, so piped output keeps its layout; the design's 'returns the text unchanged' is read as 'not wrapped'. Section rules are now drawn in accent, per the design's palette
 
 ## 2. Views
 
@@ -37,3 +38,7 @@
     - `tools/docs.py` writes an "Environment" section into `docs/cli.md` naming `NO_COLOR`, `FORCE_COLOR` and wrapping on a terminal, and `docs/cli.md` is regenerated
     - the CHANGELOG's Unreleased section notes the new look, `FORCE_COLOR` and wrapping
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and codespell pass
+
+## Log
+
+- (accepted) 2026-11-18 fingerprint 991db444e526cae4 items 1.1 2.1 2.2 3.1 by Noah Roberts
