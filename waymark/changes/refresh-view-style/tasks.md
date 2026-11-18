@@ -33,6 +33,19 @@
   - Verify:
     - `test_scenario_legacy_console`, `test_scenario_narrow_terminal` and `test_scenario_piped` in `tests/test_views_cli.py` or `tests/views/`
   - (note) 2026-11-18 by Noah Roberts: Prose is wrapped in the change, spec, milestone and exploration show views; a resource's sections are left unwrapped because they hold code and settings that wrapping would break. A roadmap line that is neither archived nor active (planned or missing) gets the muted open circle
+- [ ] 2.3 Every criterion of an item hangs under its bullet
+  - Criteria:
+    - in `wm show <change>`, an item's Criteria and Verify that are a list start the list on the line after their label, so the first bullet wraps under its own text like the others
+    - a Criteria or Verify of one line stays on its label's line
+    - with `Style()` the lines are unchanged except that a list starts on the line after its label
+  - Verify:
+    - a test in `tests/test_views_cli.py` renders an item with two long criteria at width 80, and each criterion's wrapped lines hang under its text
+- [ ] 2.4 `wm check` wraps its messages on a terminal
+  - Criteria:
+    - on a terminal, each finding's message in `wm check` wraps to the width under the finding, with its wrapped lines hung under the message's start
+    - with no width, each finding stays on one line, as written
+  - Verify:
+    - a test in `tests/test_views_cli.py` renders a long finding at width 80 and with `Style()`
 
 ## 3. Docs
 
