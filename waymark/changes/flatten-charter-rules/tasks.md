@@ -22,7 +22,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Skills and docs for one list of rules
+- [x] 2.1 Skills and docs for one list of rules
   - Criteria:
     - `wm-kickoff` asks for the project's rules as one list; `wm-explore` and `wm-apply` no longer speak of rules for a step
     - `docs/record.md` describes `## Rules` as a numbered list every agent gets at every step, and `docs/concepts.md` no longer says an implementer sees only the apply rules

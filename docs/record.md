@@ -67,7 +67,7 @@ values and keep the keys.
 ## Charter: `charter.md`
 
 What the project is, and the facts and rules every agent works from. Its Context
-goes into every context pack, and each step's agent gets only that step's Rules.
+and its Rules go into every context pack and every step's instructions.
 
 | Section | What goes in it |
 |---|---|
@@ -77,12 +77,13 @@ goes into every context pack, and each step's agent gets only that step's Rules.
 | `## Constraints` | A numbered list: platforms, dependencies, budgets, what must never happen. |
 | `## Glossary` | One term per line: `- **<term>**: <meaning>`. |
 | `## Context` | Where things live, how to build and test, who owns what. |
-| `## Rules` | One capitalized heading per step (`### Explore`, `### Propose`, `### Specs`, `### Design`, `### Tasks`, `### Apply`, `### Review`, `### Archive`). A step with no rules may leave its heading out. |
+| `## Rules` | A numbered list, `1. <rule>`, of the project's own rules. Every agent gets the whole list at every step, under "Project rules". May be empty. |
 
 An indented line under a numbered item continues it. **Written by**
 `/wm-kickoff` with you; it isn't changed through a change.
 **Checks:** `missing-section`, `numbered-list-format`, `glossary-format`,
-`old-layout` (a `Term: meaning` glossary line), `unknown-step`, `duplicate-section`.
+`old-layout` (a `Term: meaning` glossary line), `duplicate-section`. A heading or a
+bullet under Rules is a `numbered-list-format` error.
 
 ```markdown
 ## Goals

@@ -49,6 +49,13 @@ All notable changes to Waymark, one entry per release.
   `backgrounds` field with the Background of each spec the change has a delta
   for, the delta's when it has one. The delta template and the specs step's
   guidance say where a fact goes.
+- **Behavior change: the charter's Rules are one numbered list.** `## Rules`
+  holds `1. <rule>` lines, like Goals and Constraints, and every agent gets the
+  whole list at every step: `wm instructions` and every `wm context` pack show
+  it under "Project rules", and `rules` in their JSON holds all of it. A step
+  heading or a bullet under Rules is a `numbered-list-format` error, and the
+  `unknown-step` problem is gone. A charter with step headings must be rewritten
+  by hand. `wm init` writes Rules without step headings.
 
 ## [0.2.0] - 2026-11-16
 

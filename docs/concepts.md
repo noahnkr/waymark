@@ -225,7 +225,7 @@ Every line `wm` writes is a dated record of one shape:
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
 | Is | the main agent session, working with you | a fresh agent, started for an item with a `- Build: delegate` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
-| Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch and their specs' Background, the project's context and apply rules, its milestone's Goal and Non-goals, and when to stop | the criteria of the items to review, the deltas and their scenarios, their specs' Background, the design, earlier reviews and what each covers, its milestone's Goal and Non-goals, the severity rubric, the code; **not** how it was built |
+| Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch and their specs' Background, the project's context and rules, its milestone's Goal and Non-goals, and when to stop | the criteria of the items to review, the deltas and their scenarios, their specs' Background, the design, earlier reviews and what each covers, its milestone's Goal and Non-goals, the severity rubric, the code; **not** how it was built |
 | May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
 
@@ -335,7 +335,7 @@ and pull request, through the workflow `wm ci` writes.
 | Term | Meaning |
 |---|---|
 | **Record** | Everything Waymark keeps in plain markdown: the charter, specs, changes, milestones and explorations. The single source of truth agents work from. |
-| **Charter** | What the project is: vision, goals, non-goals, constraints and glossary, plus the facts every agent must know (Context) and project rules for each workflow step (Rules). |
+| **Charter** | What the project is: vision, goals, non-goals, constraints and glossary, plus the facts every agent must know (Context) and the project's rules, one numbered list every agent gets at every step (Rules). |
 | **Spec** | The living description of what one area of the system does. It changes only when a change is archived or synced. |
 | **Requirement** | One statement in a spec of what the system SHALL do, with at least one scenario. Its heading is its key. |
 | **Scenario** | A GIVEN / WHEN / THEN example of a requirement. Reviews check work against scenarios. |
