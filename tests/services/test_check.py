@@ -449,7 +449,8 @@ def test_scenario_unknown_change_named(project: Workspace) -> None:
 def test_an_after_line_may_name_an_archived_change(project: Workspace) -> None:
     project.write("changes/archive/2026-01-20-add-index/proposal.md", proposal(outcome="Done."))
     project.change("add-limit", proposal_text=after_named("add-index"))
-    assert [code for _, _, code, _, _ in after_findings(project)] == []
+    found = after_findings(project)
+    assert [code for severity, _, code, _, _ in found if severity == "error"] == []
 
 
 def test_a_change_after_itself(project: Workspace) -> None:
@@ -466,3 +467,26 @@ def test_scenario_cycle(project: Workspace) -> None:
         ("changes/add-b/proposal.md", "after-cycle"),
     ]
     assert "add-a -> add-b -> add-a" in found[0][4]
+
+
+def test_scenario_dependency_merged(project: Workspace) -> None:
+    """Requirement "Merged base reported": a change after an archived one is warned about."""
+    project.write("changes/archive/2026-01-20-add-limit/proposal.md", proposal(outcome="Done."))
+    project.change("add-paging", proposal_text=after_named("add-limit"))
+    [(severity, path, code, line, message)] = after_findings(project)
+    assert (severity, path, code, line) == (
+        "warning",
+        "changes/add-paging/proposal.md",
+        "after-merged",
+        4,
+    )
+    assert '"add-limit"' in message
+    assert "Rebase" in message
+    assert "pull request" in message
+    assert '"- After:"' in message
+
+
+def test_an_unmerged_dependency_is_not_warned_about(project: Workspace) -> None:
+    project.change("add-limit")
+    project.change("add-paging", proposal_text=after_named("add-limit"))
+    assert after_findings(project) == []

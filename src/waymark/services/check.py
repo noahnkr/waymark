@@ -7,6 +7,7 @@ from pathlib import Path
 
 from waymark import __version__
 from waymark.record import git
+from waymark.record.branches import Branches
 from waymark.record.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
 from waymark.record.problems import WHOLE_FILE
 from waymark.record.project import RECORD_DIR
@@ -112,6 +113,34 @@ def _after_findings(record: Record) -> list[Finding]:
         if problem is not None:
             code, message = problem
             found.append(Finding(Severity.ERROR, proposal.doc.path, line, code, message))
+    return found
+
+
+def _merged_base_findings(record: Record) -> list[Finding]:
+    """A change that comes after one already merged should be based on the default branch."""
+    branches = Branches(record)
+    found: list[Finding] = []
+    for name, change in sorted(record.changes.items()):
+        proposal = change.proposal
+        if proposal is None or proposal.after is None:
+            continue
+        place = branches.of(change)
+        if not place.merged:
+            continue
+        message = (
+            f'The change "{name}" comes after "{place.after}", which is merged. Rebase '
+            f'"{name}" onto {branches.default}, retarget its pull request to '
+            f'{branches.default}, and take the "- After:" line off its proposal.'
+        )
+        found.append(
+            Finding(
+                Severity.WARNING,
+                proposal.doc.path,
+                proposal.after_line or WHOLE_FILE,
+                "after-merged",
+                message,
+            )
+        )
     return found
 
 
@@ -246,6 +275,7 @@ def check_record(record: Record, now: datetime.datetime) -> tuple[Finding, ...]:
     found += _state_findings(record, derive_state(record))
     found += _milestone_findings(record)
     found += _after_findings(record)
+    found += _merged_base_findings(record)
     found += _stale_findings(record, now)
     found += _setup_findings(record)
     return tuple(sorted(found))

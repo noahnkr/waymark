@@ -8,7 +8,7 @@
     - `wm new change <name> --after <change>` writes `- After: <change>` after `- Milestone:`, refuses an invalid name, and `--after` is refused for a milestone or an exploration
     - `wm check` reports `unknown-after`, `after-self` and `after-cycle` as errors on an active change's proposal, each naming the change or the cycle
   - Verify: tests in `tests/record/`, `tests/services/test_setup.py`, `tests/services/test_check.py` and `tests/test_cli.py` for the scenarios "Change written after another", "Unknown change named", "Cycle", "New change" and "Fact without a bullet"
-- [ ] 1.2 Work out each change's branch and base, and warn about a merged base
+- [x] 1.2 Work out each change's branch and base, and warn about a merged base
   - Criteria:
     - `git.default_branch` gives the `origin` remote's HEAD without its prefix, or `main`; `git.is_merged` tells whether a branch, local or on `origin`, is in the default branch, and is false for a branch that exists nowhere
     - `record/branches.py` gives each active change its branch, its base and whether the change it comes after is merged, asking git once for the default branch and once per stacked change

@@ -57,6 +57,47 @@ def current_branch(folder: Path) -> str | None:
         return None
 
 
+DEFAULT_BRANCH = "main"
+"""The default branch when the repository has no ``origin`` HEAD to say otherwise."""
+
+
+def default_branch(repository: Path) -> str:
+    """The branch the ``origin`` remote's HEAD points at, or ``main`` without one."""
+    try:
+        ref = _run(repository, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
+    except GitError:
+        return DEFAULT_BRANCH
+    return ref.strip().removeprefix("origin/") or DEFAULT_BRANCH
+
+
+def _first_ref(repository: Path, *refs: str) -> str | None:
+    """The first of the refs that exists; None when none does."""
+    for ref in refs:
+        try:
+            _run(repository, "rev-parse", "--verify", "--quiet", ref)
+        except GitError:
+            continue
+        return ref
+    return None
+
+
+def is_merged(repository: Path, branch: str, into: str) -> bool:
+    """Whether a branch is already in another; False when either exists nowhere.
+
+    The branch is read locally first, then from ``origin``; the branch it may be in is
+    read from ``origin`` first, where a merge lands, then locally.
+    """
+    source = _first_ref(repository, f"refs/heads/{branch}", f"refs/remotes/origin/{branch}")
+    target = _first_ref(repository, f"refs/remotes/origin/{into}", f"refs/heads/{into}")
+    if source is None or target is None:
+        return False
+    try:
+        _run(repository, "merge-base", "--is-ancestor", source, target)
+    except GitError:
+        return False
+    return True
+
+
 def version() -> str | None:
     """The installed git's version line; None when git can't be run."""
     try:
