@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The layouts of what humans and the planner write in the record: the proposal's facts, Impact and Outcome, the charter's glossary, goals, constraints and rule headings, a task item's criteria, verification and build line, a delta's sections, a design's decisions and open questions, a milestone's file, an exploration's status, and the examples the templates carry. What `wm` writes is in the `records` spec.
+The layouts of what humans and the planner write in the record: the proposal's facts, Impact and Outcome, the charter's glossary, goals, constraints and rule headings, a task item's criteria, verification and build line, a delta's sections, a design's decisions and open questions, a milestone's file, and the examples the templates carry. What `wm` writes is in the `records` spec, and an exploration's status in the `explorations` spec.
 
 ## Requirements
 
@@ -57,29 +57,6 @@ A delta's sections SHALL be `## ADDED Requirements`, `## MODIFIED Requirements`,
 - GIVEN an active change whose delta has the heading `## Added Requirements`
 - WHEN `wm check` runs
 - THEN it reports an error on that heading that shows `## ADDED Requirements`, and no message names `wm update`
-
-### Requirement: Exploration status
-An exploration SHALL say where it stands in a `- Status:` line under its title: `open`, `parked`, or `led-to` followed by a link to the change or milestone it led to. The `- Status:` line alone SHALL say whether it is parked. A parked exploration SHALL say why in its Conclusion. `wm check` SHALL report a missing status as `missing-status`, an unknown status, a parked exploration with an empty Conclusion, and a `led-to` link that doesn't resolve.
-
-#### Scenario: Parked exploration
-- GIVEN an exploration with `- Status: parked` and the Conclusion "Waits for a second user."
-- WHEN the planner runs `wm context --for explore`
-- THEN the exploration is listed as parked
-
-#### Scenario: Parked without a reason
-- GIVEN an exploration with `- Status: parked` and an empty Conclusion
-- WHEN `wm check` runs
-- THEN it reports an error that asks for the reason in the Conclusion
-
-#### Scenario: Missing status
-- GIVEN an exploration with no `- Status:` line
-- WHEN `wm check` runs
-- THEN it reports `missing-status`, and the message asks for a `- Status:` line without naming `wm update`
-
-#### Scenario: Parked in the Conclusion only
-- GIVEN an exploration with `- Status: open` and the Conclusion "Parked: waits for a second user."
-- WHEN the planner runs `wm context --for explore`
-- THEN the exploration is listed as open
 
 ### Requirement: Record format 1
 This version of `wm` SHALL write and read only record format 1, and no command SHALL migrate a record. A record in any other format, older or newer, SHALL be refused by `wm update`, by `wm init` in a clone and by every command that writes the record, and reported by `wm check` and `wm doctor`, each with one reason: it names the record's format, says this `wm` reads only format 1, and says to install the `wm` version that wrote it. A refusal SHALL change nothing.

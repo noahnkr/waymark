@@ -252,11 +252,20 @@ def test_archived_name_can_be_reused(project: Workspace) -> None:
     assert record.problems == ()
 
 
+def exploration(status: str, context: str = "") -> str:
+    return (
+        f"# Paging\n\n- Status: {status}\n\n## Context\n\n{context}\n\n"
+        "## Questions\n\n## Approaches\n\n## Conclusion\n\n## Related\n"
+    )
+
+
 def test_archive_rewrites_links_that_point_into_the_moved_folder(project: Workspace) -> None:
     applied(project)
+    project.change("add-order")
     project.write(
         "explorations/paging.md",
-        "# Paging\n\n- Status: led-to [add-limit](../changes/add-limit/)\n\n"
+        "# Paging\n\n- Status: led-to [add-limit](../changes/add-limit/), "
+        "[add-order](../changes/add-order/proposal.md)\n\n"
         "## Context\n\nSee the [tasks](../changes/add-limit/tasks.md#limit).\n\n"
         "## Questions\n\n## Approaches\n\n"
         "## Conclusion\n\n[add-limit](../changes/add-limit/)\n\n## Related\n",
@@ -269,6 +278,95 @@ def test_archive_rewrites_links_that_point_into_the_moved_folder(project: Worksp
     assert link_problems(record) == ()
     state = project.state().explorations["paging"]
     assert (state.status, state.detail) == (ExplorationStatus.LED_TO, "change add-limit")
+
+
+def test_scenario_its_only_change_archived(project: Workspace) -> None:
+    applied(project)
+    project.write("specs/export.md", spec(title="Export"))
+    project.write(
+        "explorations/paging.md",
+        exploration(
+            "led-to [add-limit](../changes/add-limit/proposal.md)",
+            "See [export](../specs/export.md).",
+        ),
+    )
+    done = lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    moved = "explorations/archive/2026-02-01-paging.md"
+    assert moved in done.paths
+    assert not project.path("explorations/paging.md").exists()
+    assert project.read(moved) == exploration(
+        f"led-to [add-limit](../../{ARCHIVED}/proposal.md)",
+        "See [export](../../specs/export.md).",
+    )
+    record = project.record()
+    assert record.problems == ()
+    assert record.explorations == {}
+    assert [(entry.date, entry.name, entry.path) for entry in record.archived_explorations] == [
+        (LATER, "paging", moved)
+    ]
+    assert link_problems(record) == ()
+
+
+def test_archived_change_follows_its_exploration_to_the_archive(project: Workspace) -> None:
+    """The archived change's own link to the exploration it came from is re-aimed too."""
+    link = "From [paging](../../explorations/paging.md).\n\n"
+    applied(project, proposal_text=proposal().replace("## Why\n\n", f"## Why\n\n{link}", 1))
+    project.write(
+        "explorations/paging.md",
+        exploration("led-to [add-limit](../changes/add-limit/proposal.md)"),
+    )
+    lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    archived = project.read(f"{ARCHIVED}/proposal.md")
+    assert "[paging](../../../explorations/archive/2026-02-01-paging.md)" in archived
+    assert project.path("explorations/archive/2026-02-01-paging.md").is_file()
+
+
+def test_scenario_one_of_two_changes_archived(project: Workspace) -> None:
+    applied(project)
+    project.change("add-page-cursor")
+    project.write(
+        "explorations/paging.md",
+        exploration(
+            "led-to [add-limit](../changes/add-limit/proposal.md), "
+            "[add-page-cursor](../changes/add-page-cursor/proposal.md)"
+        ),
+    )
+    lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    assert project.read("explorations/paging.md") == exploration(
+        f"led-to [add-limit](../{ARCHIVED}/proposal.md), "
+        "[add-page-cursor](../changes/add-page-cursor/proposal.md)"
+    )
+    record = project.record()
+    assert "paging" in record.explorations
+    assert record.archived_explorations == ()
+    assert link_problems(record) == ()
+
+
+def test_scenario_change_in_a_milestone_the_exploration_led_to(project: Workspace) -> None:
+    applied(project)
+    project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- [ ] [Limit](../../changes/add-limit/proposal.md)\n"),
+    )
+    status = "led-to [faster-search](../milestones/faster-search/milestone.md)"
+    project.write("explorations/paging.md", exploration(status))
+    lifecycle.archive(project.root, NAME, LATER, built="Done.")
+    assert project.read("explorations/paging.md") == exploration(status)
+    assert project.record().archived_explorations == ()
+
+
+def test_archive_refused_when_an_exploration_of_the_name_was_archived_that_day(
+    project: Workspace,
+) -> None:
+    applied(project)
+    project.write(
+        "explorations/paging.md",
+        exploration("led-to [add-limit](../changes/add-limit/proposal.md)"),
+    )
+    project.write("explorations/archive/2026-02-01-paging.md", exploration("dropped"))
+    message = refused(project, built="Done.")
+    assert "explorations/archive/2026-02-01-paging.md" in message
+    assert '"paging"' in message
 
 
 def test_archive_rewrites_links_inside_the_moved_files(project: Workspace) -> None:

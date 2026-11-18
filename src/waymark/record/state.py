@@ -77,11 +77,11 @@ class RoadmapStatus(StrEnum):
 
 
 class ExplorationStatus(StrEnum):
-    """Where an exploration went, read from its conclusion."""
+    """Where an exploration stands, read from its status line."""
 
     OPEN = "open"
-    PARKED = "parked"
     LED_TO = "led-to"
+    DROPPED = "dropped"
     UNREADABLE = "unreadable"
 
 
@@ -190,7 +190,7 @@ class MilestoneState:
 
 @dataclass(frozen=True)
 class ExplorationState:
-    """An exploration's state, and what it led to or why it was parked."""
+    """An exploration's state, and what it led to or why it was dropped."""
 
     name: str
     status: ExplorationStatus
@@ -549,6 +549,20 @@ def milestone_state(record: Record, milestone: Milestone) -> MilestoneState:
     return MilestoneState(milestone.name, tuple(lines), done, len(members))
 
 
+def led_to_done(exploration: Exploration) -> bool:
+    """Whether every target on a ``led-to`` line is an archived change or a closed milestone."""
+    if exploration.status != "led-to" or not exploration.status_links:
+        return False
+    for target in exploration.status_links:
+        members = (
+            _member(exploration.doc.path, target, folder) for folder in (CHANGES, MILESTONES)
+        )
+        member = next((found for found in members if found is not None), None)
+        if member is None or not member.archived:
+            return False
+    return True
+
+
 def exploration_state(record: Record, exploration: Exploration) -> ExplorationState:
     """Derive an exploration's state from its status line."""
     if exploration.status is None:
@@ -557,8 +571,9 @@ def exploration_state(record: Record, exploration: Exploration) -> ExplorationSt
 
 
 def _state_from_status(exploration: Exploration) -> ExplorationState:
-    if exploration.status == "parked":
-        return ExplorationState(exploration.name, ExplorationStatus.PARKED, exploration.parked)
+    if exploration.status == "dropped":
+        reason = exploration.conclusion.strip() or None
+        return ExplorationState(exploration.name, ExplorationStatus.DROPPED, reason)
     if exploration.status == "led-to":
         for target in exploration.status_links:
             for folder in (CHANGES, MILESTONES):

@@ -189,14 +189,17 @@ def _new(args: argparse.Namespace) -> int:
                 milestone=args.milestone,
                 after=args.after,
                 today=_today(),
+                source=args.source,
             )
         )
     if args.short or args.owner or args.milestone or args.after:
         raise Refusal("--short, --owner, --milestone and --after apply to a change only.")
+    if args.kind == "milestone":
+        return _report(setup.create_milestone(_here(), args.name, args.source))
+    if args.source:
+        raise Refusal("--from applies to a change or a milestone only.")
     if args.kind == "resource":
         return _report(setup.create_resource(_here(), args.name, args.resource_kind, _today()))
-    if args.kind == "milestone":
-        return _report(setup.create_milestone(_here(), args.name))
     return _report(setup.create_exploration(_here(), args.name))
 
 
@@ -286,6 +289,10 @@ def _roadmap_drop(args: argparse.Namespace) -> int:
     return _report(
         roadmap.drop(_here(), args.milestone, args.change, args.reason, _today(), by=args.by)
     )
+
+
+def _exploration_drop(args: argparse.Namespace) -> int:
+    return _report(lifecycle.drop_exploration(_here(), args.exploration, args.reason, _today()))
 
 
 def _roadmap_move(args: argparse.Namespace) -> int:
@@ -517,6 +524,12 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         metavar="CHANGE",
         help="the change this one comes after; its unmerged branch is this one's base",
     )
+    new.add_argument(
+        "--from",
+        dest="source",
+        metavar="EXPLORATION",
+        help="the exploration a change or milestone comes from; its status then leads to it",
+    )
     new.set_defaults(handler=_new)
 
     summary = "Accept a change, so its items can be applied. For the human to run."
@@ -642,6 +655,18 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     where.add_argument("--first", action="store_true", help="put it at the top of the roadmap")
     _by(move).set_defaults(handler=_roadmap_move)
 
+    summary = "End an exploration that won't be acted on: drop it, with the reason."
+    exploration_parser = commands.add_parser("exploration", help=summary, description=summary)
+    exploration_commands = exploration_parser.add_subparsers(
+        title="exploration commands", metavar="<command>"
+    )
+    exploration_parser.set_defaults(handler=lambda _: _usage(exploration_parser))
+    summary = "Drop an open exploration with the reason, and move it to the archive."
+    drop_exploration = exploration_commands.add_parser("drop", help=summary, description=summary)
+    drop_exploration.add_argument("exploration", help="the exploration's name")
+    drop_exploration.add_argument("--reason", required=True, help="why it won't be acted on")
+    drop_exploration.set_defaults(handler=_exploration_drop)
+
     _view_command(
         commands, "status", _status, "Show where things stand: changes, milestones, what needs you."
     )
@@ -649,7 +674,9 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     show = _view_command(
         commands, "show", _show, "Show everything about one change, spec, milestone or exploration."
     )
-    show.add_argument("name", help="its name; an archived change also by its dated folder name")
+    show.add_argument(
+        "name", help="its name; an archived change or exploration also by its dated name"
+    )
     show.add_argument(
         "--kind", choices=list(payloads.KINDS), help="which kind, if the name is shared"
     )
@@ -662,7 +689,9 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     ls = _view_command(commands, "ls", _ls, "List changes, specs, milestones or explorations.")
     ls.add_argument("kind", choices=[f"{kind}s" for kind in payloads.KINDS])
     ls.add_argument(
-        "--archived", action="store_true", help="include archived changes or milestones"
+        "--archived",
+        action="store_true",
+        help="include archived changes, milestones or explorations",
     )
     ls.add_argument(
         "--from",

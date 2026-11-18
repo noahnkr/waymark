@@ -406,6 +406,8 @@ def show_exploration(payload: Payload, style: Style) -> str:
     lines = [style.rule(f"Exploration: {payload['name']}"), f"  {payload['title']}"]
     detail = f": {payload['detail']}" if payload["detail"] else ""
     lines.append(f"  {payload['status']}{detail}")
+    if payload["archived_on"]:
+        lines.append(f"  Archived on {payload['archived_on']}")
     for title, text in payload["sections"].items():
         lines += _titled(title, text, style, wrap=True)
     return "\n".join(lines)

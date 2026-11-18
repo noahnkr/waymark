@@ -151,6 +151,7 @@ RECORD_FOLDERS = (
     "changes",
     "changes/archive",
     "explorations",
+    "explorations/archive",
     "milestones",
     "milestones/archive",
     "resources",
@@ -583,6 +584,65 @@ def test_new_exploration_starts_open(project: Workspace) -> None:
     assert derive_state(record).explorations["paging"].status is ExplorationStatus.OPEN
     with pytest.raises(Refusal, match="already is an exploration"):
         setup.create_exploration(project.root, "paging")
+
+
+def status_line(project: Workspace, name: str) -> str:
+    return next(
+        line
+        for line in project.read(f"explorations/{name}.md").splitlines()
+        if line.startswith("- Status:")
+    )
+
+
+def test_scenario_change_from_an_open_exploration(project: Workspace) -> None:
+    setup.create_exploration(project.root, "result-paging")
+    before = project.read("explorations/result-paging.md")
+    done = setup.create_change(project.root, "add-search-limit", source="result-paging")
+    assert project.read("changes/add-search-limit/proposal.md")
+    assert status_line(project, "result-paging") == (
+        "- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md)"
+    )
+    after = project.read("explorations/result-paging.md")
+    assert [a for a, b in zip(before.splitlines(), after.splitlines(), strict=True) if a != b] == [
+        "- Status: open"
+    ]
+    assert "result-paging" in done.message
+    record = project.record()
+    assert [p for p in record.problems if p.path.startswith("explorations/")] == []
+    state = derive_state(record).explorations["result-paging"]
+    assert (state.status, state.detail) == (ExplorationStatus.LED_TO, "change add-search-limit")
+
+
+def test_scenario_a_second_change_from_the_same_exploration(project: Workspace) -> None:
+    setup.create_exploration(project.root, "result-paging")
+    setup.create_change(project.root, "add-search-limit", source="result-paging")
+    setup.create_change(project.root, "add-page-cursor", source="result-paging")
+    assert status_line(project, "result-paging") == (
+        "- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md), "
+        "[add-page-cursor](../changes/add-page-cursor/proposal.md)"
+    )
+    problems = project.record().problems
+    assert [p for p in problems if p.path.startswith("explorations/")] == []
+
+
+def test_scenario_milestone_from_an_exploration(project: Workspace) -> None:
+    setup.create_exploration(project.root, "faster-search-ideas")
+    setup.create_milestone(project.root, "faster-search", "faster-search-ideas")
+    assert status_line(project, "faster-search-ideas") == (
+        "- Status: led-to [faster-search](../milestones/faster-search/milestone.md)"
+    )
+    state = derive_state(project.record()).explorations["faster-search-ideas"]
+    assert (state.status, state.detail) == (ExplorationStatus.LED_TO, "milestone faster-search")
+
+
+def test_scenario_unknown_exploration(project: Workspace) -> None:
+    with pytest.raises(Refusal, match="result-paging"):
+        setup.create_change(project.root, "add-search-limit", source="result-paging")
+    assert not project.path("changes/add-search-limit").exists()
+    project.write("explorations/archive/2026-11-01-result-paging.md", "# Result paging\n")
+    with pytest.raises(Refusal, match="result-paging"):
+        setup.create_milestone(project.root, "faster-search", "result-paging")
+    assert not project.path("milestones/faster-search").exists()
 
 
 def test_writes_are_refused_when_the_pinned_version_differs(project: Workspace) -> None:

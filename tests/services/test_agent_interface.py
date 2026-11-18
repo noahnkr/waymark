@@ -697,7 +697,7 @@ def test_explore_pack_holds_the_charter_and_an_index_of_the_record(project: Work
         {"name": "add-order", "title": "Limit the results", "phase": "planned"}
     ]
     assert built["explorations"] == [
-        {"name": "paging", "title": "Paging", "status": "parked", "detail": "later"}
+        {"name": "paging", "title": "Paging", "status": "open", "detail": None}
     ]
     text = render.to_text(built, PLAIN)
     assert "## Vision" in text

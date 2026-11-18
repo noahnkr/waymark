@@ -818,6 +818,40 @@ def test_agent_may_not_edit_a_milestone_log(accepted: Workspace) -> None:
     assert "milestone's Log" in decision.reason
 
 
+EXPLORATION_PATH = "explorations/result-paging.md"
+EXPLORATION = (
+    "# Result paging\n\n- Status: open\n\n## Context\n\n## Questions\n\n- Cursor?\n\n"
+    "## Approaches\n\n## Conclusion\n\n## Related\n"
+)
+
+
+def test_scenario_agent_writes_led_to_by_hand(accepted: Workspace) -> None:
+    accepted.write(EXPLORATION_PATH, EXPLORATION)
+    led_to = "- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md)"
+    decision = replace(accepted, EXPLORATION_PATH, "- Status: open", led_to)
+    assert not decision.allow
+    assert "--from" in decision.reason
+    assert "wm exploration drop" in decision.reason
+    assert "wm note" not in decision.reason
+
+
+def test_scenario_agent_edits_the_questions(accepted: Workspace) -> None:
+    accepted.write(EXPLORATION_PATH, EXPLORATION)
+    decision = replace(accepted, EXPLORATION_PATH, "- Cursor?\n", "- Cursor?\n- Page size?\n")
+    assert decision.allow
+
+
+def test_agent_may_not_remove_an_exploration_status(accepted: Workspace) -> None:
+    accepted.write(EXPLORATION_PATH, EXPLORATION)
+    assert not replace(accepted, EXPLORATION_PATH, "- Status: open\n\n", "").allow
+
+
+def test_archived_exploration_status_is_not_guarded(accepted: Workspace) -> None:
+    path = "explorations/archive/2026-11-01-result-paging.md"
+    accepted.write(path, EXPLORATION)
+    assert replace(accepted, path, "- Status: open", "- Status: dropped").allow
+
+
 RESOURCE_FILE = "resources/nightly-sync.md"
 NIGHTLY = (
     "# Nightly sync\n\n- Kind: platform\n- Serves: none\n- Status: active\n"

@@ -97,6 +97,28 @@ accepted again before it can be archived.
 **A decision is reversed by a new change.** The specs are always the sum of the
 archived changes, and the archive keeps the history of why.
 
+## Explorations
+
+An exploration is saved thinking on an idea that isn't a change yet: research,
+or an idea kept for later. `/wm-explore` saves one when you pick that offer. Its
+`- Status:` line says where it stands, and only `wm` writes it.
+
+| Status | Means | Written by |
+|---|---|---|
+| `open` | waiting to be decided or built | `wm new exploration <name>` |
+| `led-to <links>` | its findings went into a change or milestone | `wm new change <name> --from <exploration>` or `wm new milestone <name> --from <exploration>` |
+| `dropped` | weighed, and won't be acted on | `wm exploration drop <exploration> --reason "<why>"` |
+
+- **Picking one back up:** `/wm-explore <exploration>` reads it, says what in
+  the record has changed since, and goes on from its Questions and Approaches.
+  It ends with four offers: do nothing, update it or drop it, start a proposal,
+  or start a milestone.
+- **Ending:** an exploration that led to work moves to `explorations/archive/`
+  when `wm archive` or `wm close` finishes everything it led to. A dropped one
+  moves there at once. Links to it are re-aimed, so nothing is left to tidy.
+
+[The record](record.md#exploration) covers its sections and checks.
+
 ## The files
 
 ```
@@ -107,7 +129,7 @@ waymark/
   changes/<change>/    proposal.md, specs/<area>.md (deltas), design.md, tasks.md
   changes/archive/     archived changes, each in a dated folder
   milestones/<name>/   optional: milestone.md, a goal and a roadmap of changes
-  explorations/        saved thinking
+  explorations/        saved thinking; explorations/archive/ once it ends
   resources/<name>.md  facts about one thing outside the repo: a service, a platform, ...
 ```
 
@@ -185,8 +207,9 @@ the end of the task list:
 You and your agents write sections of prose and `- Label:` lines: a proposal's
 `- Owner:` and its Impact's `- Specs:`, `- User-visible:` and `- Code:`; an
 item's `- Criteria:`, `- Verify:` and `- Build: delegate`; a decision's
-`- Status:` and `- Decided by:`; an exploration's `- Status:`. Each note has a
-fixed set of sections, and `wm check` holds it to them.
+`- Status:` and `- Decided by:`. An exploration's `- Status:` is written by `wm`
+(see [Explorations](#explorations)). Each note has a fixed set of sections, and
+`wm check` holds it to them.
 [The record](record.md) covers every note in detail: its sections, the lines it
 can hold, who writes and updates it, and its checks.
 
@@ -352,7 +375,7 @@ and pull request, through the workflow `wm ci` writes.
 | **Sync** | Merging an applied change's deltas into the specs without archiving it yet. |
 | **Archive** | Finishing a change: its deltas merged into the specs, its outcome written, and its folder moved to a dated archive. |
 | **Owner** | The one person responsible for a change. |
-| **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion) that may lead to a change or be parked. |
+| **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion): `open` until it leads to a change or milestone or is dropped, then archived. |
 | **Resource** | The as-built facts about one thing outside the repo that the project depends on, such as a service, a platform or a dataset, in `resources/<name>.md`. A spec says what the system does and changes only through a change; a resource says what the outside world is, and is edited by hand when that world changes. See [the record](record.md#resource). |
 | **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. A member change names it in a `- Milestone:` line that `wm check` holds to the roadmap, is created with `wm new change <name> --milestone <milestone>`, and its agents see the milestone's Goal and Non-goals. The roadmap changes only through `wm roadmap add`, `drop` and `move`, each recorded in the milestone's Log, and `wm close` needs every line archived. See [the record](record.md#milestone). |
 | **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |

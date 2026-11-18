@@ -204,13 +204,7 @@ def test_exploration_with_an_empty_conclusion_is_open() -> None:
     exploration = explore("")
     assert exploration.problems == ()
     assert exploration.conclusion == ""
-    assert exploration.parked is None
     assert exploration.sections["Questions"] == "- Is a cursor needed?"
-
-
-def test_exploration_parked_conclusion_gives_a_reason() -> None:
-    assert explore("not needed this year", "parked").parked == "not needed this year"
-    assert [problem.code for problem in explore("", "parked").problems] == ["parked-without-reason"]
 
 
 def test_exploration_conclusion_links_are_collected() -> None:

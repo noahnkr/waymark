@@ -29,6 +29,7 @@ from waymark.record.record import (
     ArchiveEntry,
     Record,
     load_archived_change,
+    load_archived_exploration,
     spec_history,
 )
 from waymark.record.state import (
@@ -65,7 +66,7 @@ VERSIONS = {
     "show.change": 3,
     "show.spec": 1,
     "show.milestone": 1,
-    "show.exploration": 1,
+    "show.exploration": 2,
     "show.resource": 1,
     "instructions": INSTRUCTIONS_VERSION,
     "context.explore": CONTEXT_VERSION,
@@ -390,6 +391,11 @@ def ls(record: Record, kind: str, *, archived: bool = False, source: str | None 
             {"name": name, "state": exploration.status.value, "detail": exploration.detail or ""}
             for name, exploration in sorted(state.explorations.items())
         ]
+        if archived:
+            entries.extend(
+                {"name": entry.name, "state": "archived", "detail": entry.date.isoformat()}
+                for entry in sorted(record.archived_explorations, reverse=True)
+            )
     return {**_header("ls"), "kind": kind, "from": source, "entries": entries}
 
 
@@ -561,8 +567,10 @@ def show_milestone(record: Record, milestone: Milestone) -> Payload:
     }
 
 
-def show_exploration(record: Record, exploration: Exploration) -> Payload:
-    """An exploration and where it went."""
+def show_exploration(
+    record: Record, exploration: Exploration, archived_on: datetime.date | None = None
+) -> Payload:
+    """An exploration and where it went, with the day it was archived, if it was."""
     state = exploration_state(record, exploration)
     return {
         **_header("show.exploration"),
@@ -570,6 +578,7 @@ def show_exploration(record: Record, exploration: Exploration) -> Payload:
         "title": exploration.title,
         "status": state.status.value,
         "detail": state.detail,
+        "archived_on": archived_on.isoformat() if archived_on else None,
         "sections": dict(exploration.sections),
     }
 
@@ -588,11 +597,14 @@ def show_resource(resource: Resource) -> Payload:
     }
 
 
-def _archived(record: Record, name: str) -> ArchiveEntry | None:
+def _archived(
+    name: str, entries: tuple[ArchiveEntry, ...], suffix: str = ""
+) -> ArchiveEntry | None:
+    """The latest archived entry a name refers to: its own name, or its dated name."""
     matches = [
         entry
-        for entry in record.archived_changes
-        if name in (entry.name, entry.path.rsplit("/", 1)[-1])
+        for entry in entries
+        if name in (entry.name, entry.path.rsplit("/", 1)[-1].removesuffix(suffix))
     ]
     return max(matches) if matches else None
 
@@ -605,7 +617,7 @@ def show(record: Record, name: str, kind: str | None = None) -> Payload:
     """
     found: dict[str, Payload] = {}
     if kind in (None, "change"):
-        archived = _archived(record, name)
+        archived = _archived(name, record.archived_changes)
         if name in record.changes:
             found["change"] = show_change(record, record.changes[name])
         elif archived is not None:
@@ -614,8 +626,8 @@ def show(record: Record, name: str, kind: str | None = None) -> Payload:
         found["spec"] = show_spec(record, record.specs[name])
     if kind in (None, "milestone") and name in record.milestones:
         found["milestone"] = show_milestone(record, record.milestones[name])
-    if kind in (None, "exploration") and name in record.explorations:
-        found["exploration"] = show_exploration(record, record.explorations[name])
+    if kind in (None, "exploration"):
+        _find_exploration(record, name, found)
     if kind in (None, "resource") and name in record.resources:
         found["resource"] = show_resource(record.resources[name])
     if not found:
@@ -628,6 +640,17 @@ def show(record: Record, name: str, kind: str | None = None) -> Payload:
             f"wm show {name} --kind {next(iter(found))}"
         )
     return next(iter(found.values()))
+
+
+def _find_exploration(record: Record, name: str, found: dict[str, Payload]) -> None:
+    """An active exploration by name, else an archived one by its name or dated name."""
+    if name in record.explorations:
+        found["exploration"] = show_exploration(record, record.explorations[name])
+        return
+    entry = _archived(name, record.archived_explorations, ".md")
+    exploration = load_archived_exploration(record, entry) if entry else None
+    if entry is not None and exploration is not None:
+        found["exploration"] = show_exploration(record, exploration, entry.date)
 
 
 def doctor(report: "Report") -> Payload:

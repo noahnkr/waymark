@@ -10,6 +10,7 @@ from pathlib import Path
 
 from waymark.record.artifacts.changes import Change
 from waymark.record.artifacts.deltas import merge_delta
+from waymark.record.artifacts.explorations import LED_TO, OPEN, parse_exploration, with_dropped
 from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log
 from waymark.record.artifacts.proposal import BUILT, DIFFERS, NONE, Proposal
 from waymark.record.artifacts.specs import Spec, parse_spec
@@ -20,7 +21,7 @@ from waymark.record.evidence.records import RecordError, RecordKind
 from waymark.record.machine import git
 from waymark.record.markdown.text import Document
 from waymark.record.names import ArchiveName
-from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, SPECS, Record
+from waymark.record.record import ARCHIVE, CHANGES, EXPLORATIONS, MILESTONES, SPECS, Record
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -28,6 +29,7 @@ from waymark.record.state import (
     ItemState,
     RoadmapStatus,
     StepKind,
+    led_to_done,
     milestone_state,
 )
 from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
@@ -575,6 +577,108 @@ def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | No
     return existing
 
 
+def _archive_explorations(
+    record: Record, transaction: Transaction, today: datetime.date, folder: tuple[str, str]
+) -> None:
+    """Stage the move of each exploration whose work the staged operation finishes.
+
+    Run after the links are rewritten: an active exploration whose ``led-to`` targets
+    all point into an archive, as staged, moves to ``explorations/archive/<date>-<name>.md``.
+    ``folder`` is the change or milestone folder the operation moves, as (source, target).
+    """
+    finished: list[Document] = []
+    for name, exploration in sorted(record.explorations.items()):
+        path = exploration.doc.path
+        staged = transaction.staged(path)
+        doc = Document.parse(path, staged) if staged is not None else exploration.doc
+        if led_to_done(parse_exploration(name, doc)):
+            finished.append(doc)
+    _move_explorations(record, transaction, finished, today, folder)
+
+
+def _move_explorations(
+    record: Record,
+    transaction: Transaction,
+    moving: Sequence[Document],
+    today: datetime.date,
+    folder: tuple[str, str] | None = None,
+) -> None:
+    """Stage moving explorations, as given, to the archive, and re-aim every link they break.
+
+    Each moves to ``explorations/archive/<date>-<name>.md``, with its own links
+    re-aimed from there; links to it from the rest of the active record follow it.
+    ``folder`` is a folder the same operation moves, as (source, target): its files'
+    staged text is aimed from the target, so their links are read from there.
+    A file already at a target refuses the operation, before anything is written.
+    """
+    if not moving:
+        return
+    moves: dict[str, str] = {}
+    for doc in moving:
+        name = doc.path.rsplit("/", 1)[-1].removesuffix(".md")
+        target = f"{EXPLORATIONS}/{ARCHIVE}/{ArchiveName(today, name).folder}.md"
+        if record.files.path(target).exists():
+            raise Refusal(
+                f'The exploration "{name}" would move to {target}, but an exploration of that '
+                "name was already archived today. Nothing was changed; rename the exploration, "
+                "then try again."
+            )
+        moves[doc.path] = target
+    given = {doc.path: doc for doc in moving}
+    for original in record.documents():
+        staged = transaction.staged(original.path)
+        if original.path in given:
+            current = given[original.path]
+        elif staged is not None:
+            current = Document.parse(original.path, staged)
+        else:
+            current = original
+        path, text = current.path, current.text
+        if folder is not None and (path == folder[0] or path.startswith(f"{folder[0]}/")):
+            path = folder[1] + path[len(folder[0]) :]
+            current = Document.parse(path, text)
+        for source, target in moves.items():
+            text = rewrite_links(Document.parse(path, text), source, target)
+            if path == source:
+                path = target
+        if path in moves.values():
+            transaction.write(path, text)
+            transaction.delete(original.path)
+        elif text != current.text:
+            transaction.write(original.path, text)
+
+
+def drop_exploration(start: Path, name: str, reason: str, today: datetime.date) -> Done:
+    """Drop an open exploration: write its status and reason, and move it to the archive."""
+    record = open_record(start, writing=True)
+    exploration = record.explorations.get(name)
+    if exploration is None:
+        known = ", ".join(sorted(record.explorations)) or "none"
+        raise Refusal(f'There is no active exploration "{name}". Active explorations: {known}.')
+    if exploration.status == LED_TO:
+        raise Refusal(
+            f'The exploration "{name}" led to a change or milestone, so it is not dropped: it '
+            "ends when its work is archived, and wm archive or wm close moves it then."
+        )
+    if exploration.status != OPEN or exploration.status_index is None:
+        raise Refusal(
+            f'Only an open exploration is dropped. Give "{name}" the line "- Status: open" '
+            "first, then drop it."
+        )
+    if not reason.strip():
+        raise Refusal('Say why the exploration is dropped: --reason "<why>".')
+    if not any(s.title.casefold() == "conclusion" for s in exploration.doc.sections(2)):
+        raise Refusal(
+            f'The exploration "{name}" has no "## Conclusion" section for the reason. Add the '
+            "heading, then drop it."
+        )
+    text = with_dropped(exploration, reason.strip())
+    transaction = Transaction(record.files)
+    _move_explorations(record, transaction, [Document.parse(exploration.doc.path, text)], today)
+    target = f"{EXPLORATIONS}/{ARCHIVE}/{ArchiveName(today, name).folder}.md"
+    return Done(f'Dropped the exploration "{name}" as {target}.', commit(transaction))
+
+
 def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
     start: Path,
     name: str,
@@ -629,6 +733,7 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
             text = append_milestone_log(Document.parse(doc.path, text), archived_line)
         if text != doc.text:
             transaction.write(doc.path, text)
+    _archive_explorations(record, transaction, today, (source, target))
     transaction.move(source, target)
     paths = commit(transaction)
     return Done(f'Archived "{name}" as {target}. Its deltas are now part of the specs.', paths)
@@ -680,6 +785,7 @@ def close_milestone(start: Path, name: str, today: datetime.date) -> Done:
         text = rewrite_links(doc, source, target)
         if text != doc.text:
             transaction.write(doc.path, text)
+    _archive_explorations(record, transaction, today, (source, target))
     transaction.move(source, target)
     paths = commit(transaction)
     return Done(f'Closed the milestone "{name}" as {target}.', paths)

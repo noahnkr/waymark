@@ -487,3 +487,72 @@ def test_accept_refuses_a_bad_by_name_without_blaming_git(project: Workspace) ->
     assert "git" not in str(refusal.value)
     with pytest.raises(Refusal, match="empty"):
         lifecycle.accept(project.root, NAME, DAY, by="")
+
+
+def exploration(status: str = "open", conclusion: str = "") -> str:
+    body = f"{conclusion}\n\n" if conclusion else ""
+    return (
+        f"# Result paging\n\n- Status: {status}\n\n## Context\n\n## Questions\n\n"
+        f"## Approaches\n\n## Conclusion\n\n{body}## Related\n\n- [Search](../specs/search.md)\n"
+    )
+
+
+DROPPED = "explorations/archive/2026-12-01-result-paging.md"
+DROP_DAY = datetime.date(2026, 12, 1)
+
+
+def test_scenario_drop_an_open_exploration(project: Workspace) -> None:
+    project.write("specs/search.md", spec())
+    project.write("explorations/result-paging.md", exploration())
+    project.write(
+        "explorations/other.md", exploration().replace("../specs/search.md", "result-paging.md")
+    )
+    done = lifecycle.drop_exploration(
+        project.root, "result-paging", "Results never pass fifty.", DROP_DAY
+    )
+    assert DROPPED in done.message
+    assert not project.path("explorations/result-paging.md").exists()
+    text = project.read(DROPPED)
+    assert "\n- Status: dropped\n" in text
+    assert "## Conclusion\n\nResults never pass fifty.\n\n## Related\n" in text
+    assert "[Search](../../specs/search.md)" in text
+    assert "(archive/2026-12-01-result-paging.md)" in project.read("explorations/other.md")
+    record = project.record()
+    assert record.problems == ()
+    assert [entry.name for entry in record.archived_explorations] == ["result-paging"]
+
+
+def test_scenario_conclusion_kept(project: Workspace) -> None:
+    project.write("specs/search.md", spec())
+    project.write("explorations/result-paging.md", exploration(conclusion="Paging needs a cursor."))
+    lifecycle.drop_exploration(project.root, "result-paging", "Results never pass fifty.", DROP_DAY)
+    text = project.read(DROPPED)
+    assert "Paging needs a cursor.\n\nResults never pass fifty.\n\n## Related" in text
+
+
+def test_scenario_drop_an_exploration_that_led_to_a_change(project: Workspace) -> None:
+    project.change("add-search-limit")
+    led_to = "led-to [add-search-limit](../changes/add-search-limit/proposal.md)"
+    project.write("explorations/result-paging.md", exploration(led_to))
+    before = project.read("explorations/result-paging.md")
+    with pytest.raises(Refusal, match="ends when its work is archived"):
+        lifecycle.drop_exploration(project.root, "result-paging", "Not needed.", DROP_DAY)
+    assert project.read("explorations/result-paging.md") == before
+    assert not project.path(DROPPED).exists()
+
+
+def test_drop_refuses_an_unknown_exploration_or_an_empty_reason(project: Workspace) -> None:
+    project.write("explorations/caching.md", exploration())
+    with pytest.raises(Refusal, match="Active explorations: caching"):
+        lifecycle.drop_exploration(project.root, "result-paging", "Why.", DROP_DAY)
+    with pytest.raises(Refusal, match="--reason"):
+        lifecycle.drop_exploration(project.root, "caching", "  ", DROP_DAY)
+    assert project.path("explorations/caching.md").exists()
+
+
+def test_drop_refuses_an_exploration_without_a_conclusion(project: Workspace) -> None:
+    text = exploration().replace("## Conclusion\n\n", "")
+    project.write("explorations/result-paging.md", text)
+    with pytest.raises(Refusal, match="## Conclusion"):
+        lifecycle.drop_exploration(project.root, "result-paging", "Why.", DROP_DAY)
+    assert project.read("explorations/result-paging.md") == text

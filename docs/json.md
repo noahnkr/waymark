@@ -13,10 +13,10 @@ Every read command takes `--json`. Each payload starts with `schema` (its name) 
 | [`wm.show.change`](#wmshowchange) | 3 | `wm show` for a change |
 | [`wm.show.spec`](#wmshowspec) | 1 | `wm show` for a spec |
 | [`wm.show.milestone`](#wmshowmilestone) | 1 | `wm show` for a milestone |
-| [`wm.show.exploration`](#wmshowexploration) | 1 | `wm show` for an exploration |
+| [`wm.show.exploration`](#wmshowexploration) | 2 | `wm show` for an exploration |
 | [`wm.show.resource`](#wmshowresource) | 1 | `wm show` for a resource |
 | [`wm.instructions`](#wminstructions) | 1 | `wm instructions` |
-| [`wm.context.explore`](#wmcontextexplore) | 1 | `wm context --for explore` |
+| [`wm.context.explore`](#wmcontextexplore) | 2 | `wm context --for explore` |
 | [`wm.context.implement`](#wmcontextimplement) | 2 | `wm context <change> <item> --for implement` |
 | [`wm.context.review`](#wmcontextreview) | 2 | `wm context <change> --for review` |
 | [`wm.pr`](#wmpr) | 1 | `wm pr` |
@@ -1505,7 +1505,7 @@ Printed by `wm show` for an exploration.
       "const": "wm.show.exploration"
     },
     "version": {
-      "const": 1
+      "const": 2
     },
     "name": {
       "type": "string"
@@ -1516,8 +1516,8 @@ Printed by `wm show` for an exploration.
     "status": {
       "enum": [
         "open",
-        "parked",
         "led-to",
+        "dropped",
         "unreadable"
       ]
     },
@@ -1526,6 +1526,13 @@ Printed by `wm show` for an exploration.
         "string",
         "null"
       ]
+    },
+    "archived_on": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "sections": {
       "type": "object",
@@ -1541,6 +1548,7 @@ Printed by `wm show` for an exploration.
     "title",
     "status",
     "detail",
+    "archived_on",
     "sections"
   ],
   "additionalProperties": false
@@ -1801,7 +1809,7 @@ Printed by `wm context --for explore`.
       "const": "wm.context.explore"
     },
     "version": {
-      "const": 1
+      "const": 2
     },
     "for": {
       "const": "explore"
@@ -1913,8 +1921,8 @@ Printed by `wm context --for explore`.
           "status": {
             "enum": [
               "open",
-              "parked",
               "led-to",
+              "dropped",
               "unreadable"
             ]
           },
