@@ -28,7 +28,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Describe the `- Milestone:` line, its check and `--milestone`
+- [x] 2.1 Describe the `- Milestone:` line, its check and `--milestone`
   - Criteria:
     - `wm-propose` drafts a member change with `wm new change <name> --milestone <milestone>`
     - `docs/concepts.md` and `docs/record.md` describe the `- Milestone:` line, the check and the flag, and say the packs carry the milestone's Goal and Non-goals

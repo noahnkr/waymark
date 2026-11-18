@@ -11,6 +11,13 @@ All notable changes to Waymark, one entry per release.
   passing review covers, and the reviewer's pack holds only those. `wm archive`
   refuses a change with such an item unless you override it with a reason.
   `wm show` and the JSON payloads give what each review covers.
+- **A change names its milestone.** A proposal may have a `- Milestone: <name>`
+  line. For an active change, `wm check` reports an error when that line and the
+  milestones' roadmaps disagree, including a roadmap that links a change whose
+  proposal has no such line. `wm new change <name> --milestone <milestone>`
+  writes the line and links the change from the roadmap. The implement and
+  review context packs carry the milestone's Goal and Non-goals, in a new
+  `milestone` field.
 
 ## [0.2.0] - 2026-11-16
 
