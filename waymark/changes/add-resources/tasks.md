@@ -53,7 +53,7 @@
 
 ## 3. Skills and docs
 
-- [ ] 3.1 Skills that know about resources
+- [x] 3.1 Skills that know about resources
   - Criteria:
     - `wm-propose` says a fact about an outside system belongs in a resource, not a spec, and that a change that sets up or alters something outside the repo gets an item to create or update its resource
     - `wm-explore` says to read the resources the explore pack lists when the idea touches one
