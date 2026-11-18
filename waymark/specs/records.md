@@ -23,14 +23,14 @@ Every line `wm` writes as evidence SHALL be a record of the shape `(<kind>) <YYY
 A record SHALL name who wrote it: the git user for a command run in the session, `wm-implementer` or `wm-reviewer` for an agent's ending, or the value of `--by` when a command is given one. Every command that writes a record SHALL accept `--by <who>`. When no git user is set and no `--by` is given, the record SHALL be written without the `by` part. `wm accept` SHALL still refuse without a git user, as before.
 
 #### Scenario: Reviewer's verdict
-- GIVEN a change waiting for an independent review
+- GIVEN a change with items 1.1 and 1.2, waiting for an independent review
 - WHEN its reviewer ends with `CHANGE: <change>` and `VERDICT: pass: <reasons>` on 2026-11-20
-- THEN the change's Log holds `(review) 2026-11-20 pass by wm-reviewer: <reasons>`
+- THEN the change's Log holds `(review) 2026-11-20 pass covers 1.1 1.2 by wm-reviewer: <reasons>`
 
 #### Scenario: Explicit author
-- GIVEN an accepted change with every item ticked, at review level `self`
+- GIVEN an accepted change with items 1.1 and 1.2, every item ticked, at review level `self`
 - WHEN the planner runs `wm review <change> --self "<summary>" --by "Ada and Grace"`
-- THEN the self-review record reads `(self-review) <date> by Ada and Grace: <summary>`
+- THEN the self-review record reads `(self-review) <date> covers 1.1 1.2 by Ada and Grace: <summary>`
 
 ### Requirement: Item records
 `wm` SHALL write the records about one item under that item: `(blocked)` from `wm block`, `(gap)` from `wm gap`, `(note)` from `wm note`, `(reopened)` from `wm reopen` and `(resolved)` from `wm resolve <change> <item>`. An item SHALL be blocked while it has a `(blocked)` or `(gap)` record with no `(resolved)` record after it. Resolving an item SHALL add the `(resolved)` record and keep the records it resolves.
