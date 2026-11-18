@@ -29,5 +29,5 @@
 - User-visible:
   - `wm init` on a terminal shows a welcome screen and asks for the repository kind, the agent tools and the CI workflow
   - `wm init --yes` runs without questions; `--atlas` and `--tool` also skip them
-  - cancelling at a question writes nothing
+  - canceling at a question writes nothing
 - Code: a new terminal module and prompt module and welcome screen in `views/`, `cli.py` (`wm init` and `--yes`), `services/setup.py` (CI workflow at init), `services/ci.py`, `adapters/` (a detection hook per adapter), the tests, and the docs (`getting-started.md`, `cli.md` generated, the CHANGELOG)

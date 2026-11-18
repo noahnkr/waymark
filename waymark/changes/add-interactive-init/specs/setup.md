@@ -33,13 +33,13 @@ The interactive tool question SHALL list every agent tool `wm` has an adapter fo
 - WHEN the human presses Enter
 - THEN the question stays open with the reason that at least one tool is needed
 
-### Requirement: Cancelled init writes nothing
-Pressing Esc or Ctrl+C at the welcome screen or at any question SHALL end `wm init` with nothing written, print `Setup cancelled. Nothing was written.`, and exit with a non-zero status.
+### Requirement: Canceled init writes nothing
+Pressing Esc or Ctrl+C at the welcome screen or at any question SHALL end `wm init` with nothing written, print `Setup canceled. Nothing was written.`, and exit with a non-zero status.
 
-#### Scenario: Cancelled at the tools
+#### Scenario: Canceled at the tools
 - GIVEN `wm init` run on a terminal, at the tool question
 - WHEN the human presses Esc
-- THEN no file in the repository is created or changed, and the output ends with `Setup cancelled. Nothing was written.`
+- THEN no file in the repository is created or changed, and the output ends with `Setup canceled. Nothing was written.`
 
 ### Requirement: Init without questions
 `wm init` SHALL ask nothing, and SHALL do what it did before this requirement, when its input or its output isn't a terminal, or when it is given `--atlas`, `--tool` or `--yes`. In a clone that already has a record, `wm init` SHALL ask nothing; on a terminal it SHALL show the welcome screen first, and then set up the machine from the record's settings.

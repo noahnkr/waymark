@@ -12,7 +12,7 @@
   - Criteria:
     - `Select`, `Checklist`, `Confirm` and `TextInput` in `views/prompts.py` take key names and render lines with a `Style`, with no terminal access
     - `Checklist` refuses Enter with nothing selected, keeping the question open with a reason; `TextInput` refuses Enter while its validator gives a reason, showing it
-    - `escape` from any prompt gives a cancelled state
+    - `escape` from any prompt gives a canceled state
   - Verify:
     - tests feeding key sequences in a new `tests/views/test_prompts.py`, including `test_scenario_nothing_selected` and `test_scenario_invalid_atlas_name`
 - [ ] 1.3 Raw keys, redraws and the line fallback
@@ -38,10 +38,10 @@
     - `wm init` is interactive only when input and output are terminals and none of `--atlas`, `--tool`, `--yes` is given; `--yes` is a new flag
     - interactively, in a repository with no record, it shows the welcome screen, then the repository, tools and CI questions under the step indicator, then calls `init_project` with the answers and prints what it created and the next step
     - a tool question lists every adapter, selecting the detected ones, or all when none is detected, and marking detected ones "found"
-    - Esc or Ctrl+C at any point prints `Setup cancelled. Nothing was written.`, exits 1, and writes nothing
+    - Esc or Ctrl+C at any point prints `Setup canceled. Nothing was written.`, exits 1, and writes nothing
     - in a clone with a record, it shows the welcome screen, then sets up the machine with no question
   - Verify:
-    - `test_scenario_project_with_claude_code_and_ci`, `test_scenario_atlas`, `test_scenario_tool_detected`, `test_scenario_cancelled_at_the_tools`, `test_scenario_run_by_an_agent`, `test_scenario_yes_flag_on_a_terminal` and `test_scenario_clone_on_a_terminal`, with fake terminal streams and key sequences, in `tests/test_cli.py` or beside the setup tests
+    - `test_scenario_project_with_claude_code_and_ci`, `test_scenario_atlas`, `test_scenario_tool_detected`, `test_scenario_canceled_at_the_tools`, `test_scenario_run_by_an_agent`, `test_scenario_yes_flag_on_a_terminal` and `test_scenario_clone_on_a_terminal`, with fake terminal streams and key sequences, in `tests/test_cli.py` or beside the setup tests
     - by hand: a full interactive `wm init` in a fresh repository on Windows, added to `docs/smoke-test.md`
 
 ## 3. Docs
