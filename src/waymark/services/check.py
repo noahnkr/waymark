@@ -85,8 +85,9 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
                     WHOLE_FILE,
                     "exploration-not-archived",
                     f'Everything the exploration "{name}" led to is archived, so it belongs in '
-                    "explorations/archive/. wm archive and wm close move it there; move this one "
-                    "to explorations/archive/<date>-<name>.md, dated the day its work was archived.",
+                    "explorations/archive/. wm archive and wm close move it there; move this "
+                    "one to explorations/archive/<date>-<name>.md, dated the day its work was "
+                    "archived.",
                 )
             )
     return found
