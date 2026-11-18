@@ -4,8 +4,10 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from waymark.record import records
 from waymark.record.outline import collect_sections, content, require_title
 from waymark.record.problems import WHOLE_FILE, Problem
+from waymark.record.records import Record
 from waymark.record.text import BOM, Document
 
 MILESTONE_FILE = "milestone.md"
@@ -14,9 +16,11 @@ GOAL = "Goal"
 DONE_WHEN = "Done when"
 NON_GOALS = "Non-goals"
 ROADMAP = "Roadmap"
+LOG = "Log"
 REQUIRED_SECTIONS = (GOAL, DONE_WHEN, NON_GOALS)
 
 _ENTRY = re.compile(r"^\s*[-*]\s+(?:\[([ xX])\]\s+)?(\S.*)$")
+_LOG_LINE = re.compile(r"^[-*]\s+(\S.*)$")
 
 
 @dataclass(frozen=True)
@@ -41,11 +45,14 @@ class RoadmapEntry:
 
 @dataclass(frozen=True)
 class Roadmap:
-    """The changes a milestone expects."""
+    """The changes a milestone expects, and the records of how the plan changed."""
 
     doc: Document
     entries: tuple[RoadmapEntry, ...]
     problems: tuple[Problem, ...]
+    log: tuple[Record, ...] = ()
+    """The records in the milestone's ``## Log``, in order; lines that aren't records are
+    skipped."""
 
 
 @dataclass(frozen=True)
@@ -63,7 +70,7 @@ def parse_milestone(doc: Document) -> tuple[Goal, Roadmap]:
     """Read ``milestone.md``: its goal sections, and the roadmap entries under ``## Roadmap``."""
     problems: list[Problem] = []
     title = require_title(doc, problems)
-    found = collect_sections(doc, (*REQUIRED_SECTIONS, ROADMAP), problems)
+    found = collect_sections(doc, (*REQUIRED_SECTIONS, ROADMAP), problems, optional=(LOG,))
     sections = {name: content(doc, found, name, problems) for name in REQUIRED_SECTIONS}
     present = [name for name in (*REQUIRED_SECTIONS, ROADMAP) if name in found]
     if [found[name].start for name in present] != sorted(found[name].start for name in present):
@@ -94,8 +101,53 @@ def parse_milestone(doc: Document) -> tuple[Goal, Roadmap]:
                 entries.append(
                     RoadmapEntry(match.group(2).strip(), targets.get(index), checked, index)
                 )
+    log: list[Record] = []
+    if LOG in found:
+        section = found[LOG]
+        if any(other.start > section.start for other in doc.sections(2)):
+            problems.append(
+                Problem(
+                    doc.path,
+                    section.start + 1,
+                    "log-section-last",
+                    f'The "## {LOG}" section is the last section of {MILESTONE_FILE}. '
+                    "Move the sections after it above it.",
+                )
+            )
+        for index in range(section.body_start, section.end):
+            listed = _LOG_LINE.match(doc.lines[index].text)
+            parsed = records.parse(listed.group(1)) if listed else None
+            if isinstance(parsed, Record):
+                log.append(parsed)
     all_problems = tuple(problems)
-    return Goal(doc, title, sections, all_problems), Roadmap(doc, tuple(entries), ())
+    roadmap = Roadmap(doc, tuple(entries), (), tuple(log))
+    return Goal(doc, title, sections, all_problems), roadmap
+
+
+def append_milestone_log(doc: Document, line: str) -> str:
+    """The milestone's text with a record added at the end of its ``## Log``, line endings kept.
+
+    The section is created at the end of the file when there is none.
+    """
+    newline = doc.newline
+    lines = [text.text for text in doc.lines]
+    endings = [text.ending for text in doc.lines]
+    section = next((s for s in doc.sections(2) if s.title.casefold() == LOG.casefold()), None)
+    if section is None:
+        while lines and not lines[-1].strip():
+            lines.pop()
+            endings.pop()
+        added, at = ["", f"## {LOG}", "", f"- {line}"], len(lines)
+    else:
+        filled = [i for i in range(section.start + 1, section.end) if lines[i].strip()]
+        at = filled[-1] + 1 if filled else section.start + 1
+        added = [f"- {line}"] if filled else ["", f"- {line}"]
+    if at > 0 and not endings[at - 1]:
+        endings[at - 1] = newline
+    lines[at:at] = added
+    endings[at:at] = [newline] * len(added)
+    body = "".join(text + ending for text, ending in zip(lines, endings, strict=True))
+    return (BOM if doc.bom else "") + body
 
 
 def roadmap_lines(doc: Document) -> range:

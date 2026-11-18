@@ -14,8 +14,8 @@ from waymark.record.deltas import delta_is_merged, delta_mismatches
 from waymark.record.explorations import Exploration
 from waymark.record.fingerprint import change_fingerprint
 from waymark.record.links import resolve
-from waymark.record.milestones import Milestone
-from waymark.record.names import parse_archive_name
+from waymark.record.milestones import Milestone, RoadmapEntry
+from waymark.record.names import is_valid_name, parse_archive_name
 from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, Record
 from waymark.record.records import RecordKind
 from waymark.record.tasks import Item, ReviewRecord
@@ -486,6 +486,15 @@ def _member(doc_path: str, target: str, kind: str) -> _Member | None:
         if archived is not None:
             return _Member(archived.name, "/".join(parts[:3]), archived=True)
     return None
+
+
+def entry_change(doc_path: str, entry: RoadmapEntry) -> str | None:
+    """The change a roadmap line is for: the one it links, or a planned line's leading name."""
+    if entry.target is not None:
+        member = _member(doc_path, entry.target, CHANGES)
+        return member.name if member else None
+    name = entry.text.split(":", 1)[0].strip()
+    return name if is_valid_name(name) else None
 
 
 def milestone_links(record: Record) -> dict[str, tuple[str, ...]]:

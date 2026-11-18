@@ -233,3 +233,47 @@ def test_findings_refuse_what_is_not_one() -> None:
     assert parse_finding_argument("warning: no place") is None
     with pytest.raises(RecordError):
         render_finding(Finding(ReviewSeverity.WARNING, "a`b", "x"))
+
+
+MILESTONE_RECORDS = [
+    Record(RecordKind.ADDED, DAY, who="Ada", text="cache hot queries", change="add-cache"),
+    Record(RecordKind.DROPPED, DAY, who="Ada", text="fast enough", change="add-cache"),
+    Record(RecordKind.MOVED, DAY, who="Ada", change="add-cache", after="add-index"),
+    Record(RecordKind.MOVED, DAY, change="add-cache"),
+    Record(RecordKind.PROPOSED, DAY, who="Ada Lovelace", change="add-cache"),
+    Record(RecordKind.ARCHIVED, DAY, change="add-cache"),
+]
+
+
+@pytest.mark.parametrize("record", MILESTONE_RECORDS, ids=render)
+def test_milestone_records_read_back_the_same(record: Record) -> None:
+    """Requirement "Milestone log": each kind renders and reads back the same."""
+    assert parse(render(record)) == record
+
+
+def test_milestone_records_have_the_shapes_of_the_milestone_log() -> None:
+    assert [render(record) for record in MILESTONE_RECORDS] == [
+        "(added) 2026-11-20 add-cache by Ada: cache hot queries",
+        "(dropped) 2026-11-20 add-cache by Ada: fast enough",
+        "(moved) 2026-11-20 add-cache after add-index by Ada",
+        "(moved) 2026-11-20 add-cache first",
+        "(proposed) 2026-11-20 add-cache by Ada Lovelace",
+        "(archived) 2026-11-20 add-cache",
+    ]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "(added) 2026-11-20 by Ada: no change named",
+        "(added) 2026-11-20 add-cache by Ada",
+        "(added) 2026-11-20 Add_Cache: not a name",
+        "(proposed) 2026-11-20 add-cache extra by Ada",
+        "(proposed) 2026-11-20 add-cache: no text",
+        "(moved) 2026-11-20 add-cache by Ada",
+        "(moved) 2026-11-20 add-cache after by Ada",
+        "(moved) 2026-11-20 add-cache before add-index",
+    ],
+)
+def test_malformed_milestone_records_are_refused(text: str) -> None:
+    assert isinstance(parse(text), ParseError)

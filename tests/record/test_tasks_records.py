@@ -106,6 +106,13 @@ def test_records_in_the_wrong_place_are_reported() -> None:
     ]
 
 
+def test_milestone_records_in_a_task_list_are_reported() -> None:
+    assert codes(HEAD + ITEM + "  - (proposed) 2026-11-20 add-cache\n") == ["misplaced-record"]
+    assert codes(HEAD + ITEM + "\n## Log\n\n- (archived) 2026-11-20 add-cache\n") == [
+        "misplaced-record"
+    ]
+
+
 def test_the_log_section_comes_last() -> None:
     text = HEAD + ITEM + "\n## Log\n\n- (synced) 2026-11-20\n\n## 2. Docs\n\n- [ ] 2.1 Say so\n"
     assert codes(text) == ["log-section-last"]

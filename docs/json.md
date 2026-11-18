@@ -921,7 +921,12 @@ Printed by `wm show` for a change.
                     "reopened",
                     "blocked",
                     "gap",
-                    "note"
+                    "note",
+                    "added",
+                    "dropped",
+                    "moved",
+                    "proposed",
+                    "archived"
                   ]
                 },
                 "date": {
@@ -1068,7 +1073,12 @@ Printed by `wm show` for a change.
               "reopened",
               "blocked",
               "gap",
-              "note"
+              "note",
+              "added",
+              "dropped",
+              "moved",
+              "proposed",
+              "archived"
             ]
           },
           "date": {

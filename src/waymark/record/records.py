@@ -16,6 +16,7 @@ from enum import Enum, StrEnum
 from pathlib import Path
 
 from waymark.record import git
+from waymark.record.names import is_valid_name
 from waymark.record.terms import ReviewSeverity, Verdict
 
 IMPLEMENTER = "wm-implementer"
@@ -41,14 +42,21 @@ class RecordKind(StrEnum):
     BLOCKED = "blocked"
     GAP = "gap"
     NOTE = "note"
+    ADDED = "added"
+    DROPPED = "dropped"
+    MOVED = "moved"
+    PROPOSED = "proposed"
+    ARCHIVED = "archived"
 
 
 class Level(Enum):
-    """Where a kind of record goes: under an item, in the change's Log, or either."""
+    """Where a kind of record goes: under an item, in the change's Log, either, or in a
+    milestone's Log."""
 
     ITEM = "item"
     CHANGE = "change"
     BOTH = "both"
+    MILESTONE = "milestone"
 
 
 class Grammar(Enum):
@@ -63,6 +71,10 @@ class Grammar(Enum):
     """``fingerprint <hex16>``, then ``items <number> <number>...``."""
     SYNC = "sync"
     """Optionally ``fingerprint <hex16>``: the acceptance stamped again for the merged specs."""
+    CHANGE_NAME = "change-name"
+    """A change's name: the roadmap line a milestone record is about."""
+    MOVE = "move"
+    """A change's name, then ``after <change>`` or ``first``: where its roadmap line went."""
 
 
 @dataclass(frozen=True)
@@ -133,6 +145,36 @@ KINDS: dict[RecordKind, KindSpec] = {
     RecordKind.NOTE: KindSpec(
         Grammar.NONE, has_text=True, level=Level.ITEM, shape="(note) YYYY-MM-DD [by <who>]: <text>"
     ),
+    RecordKind.ADDED: KindSpec(
+        Grammar.CHANGE_NAME,
+        has_text=True,
+        level=Level.MILESTONE,
+        shape="(added) YYYY-MM-DD <change> [by <who>]: <description>",
+    ),
+    RecordKind.DROPPED: KindSpec(
+        Grammar.CHANGE_NAME,
+        has_text=True,
+        level=Level.MILESTONE,
+        shape="(dropped) YYYY-MM-DD <change> [by <who>]: <reason>",
+    ),
+    RecordKind.MOVED: KindSpec(
+        Grammar.MOVE,
+        has_text=False,
+        level=Level.MILESTONE,
+        shape="(moved) YYYY-MM-DD <change> after <change>|first [by <who>]",
+    ),
+    RecordKind.PROPOSED: KindSpec(
+        Grammar.CHANGE_NAME,
+        has_text=False,
+        level=Level.MILESTONE,
+        shape="(proposed) YYYY-MM-DD <change> [by <who>]",
+    ),
+    RecordKind.ARCHIVED: KindSpec(
+        Grammar.CHANGE_NAME,
+        has_text=False,
+        level=Level.MILESTONE,
+        shape="(archived) YYYY-MM-DD <change> [by <who>]",
+    ),
 }
 
 _START = re.compile(r"^\(([a-z][a-z-]*)\)(?=\s|$)")
@@ -156,6 +198,10 @@ class Record:
     fingerprint: str | None = None
     covers: tuple[str, ...] | None = None
     """The items a review or a self-review was of; None when absent, which covers every item."""
+    change: str | None = None
+    """The change whose roadmap line a milestone record is about."""
+    after: str | None = None
+    """For ``(moved)``, the change the line went after; None when it went first."""
 
 
 @dataclass(frozen=True)
@@ -176,7 +222,7 @@ def looks_like_record(text: str) -> bool:
     return _START.match(text) is not None
 
 
-def _arguments(record: Record) -> list[str]:
+def _arguments(record: Record) -> list[str]:  # noqa: PLR0911 - one return per grammar
     grammar = KINDS[record.kind].grammar
     if grammar is Grammar.VERDICT:
         assert record.verdict is not None
@@ -191,6 +237,12 @@ def _arguments(record: Record) -> list[str]:
         if record.items is not None:
             parts += ["items", *record.items]
         return parts
+    if grammar is Grammar.CHANGE_NAME:
+        assert record.change is not None
+        return [record.change]
+    if grammar is Grammar.MOVE:
+        assert record.change is not None
+        return [record.change, *(["after", record.after] if record.after else ["first"])]
     return []
 
 
@@ -254,6 +306,13 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
     words, who = _split_who(body.strip())
     if who == "":
         return _fail(kind, 'The name after "by" is missing.')
+    text_value = line_text.strip() if spec.has_text else None
+    if spec.grammar in (Grammar.CHANGE_NAME, Grammar.MOVE):
+        place = _change_arguments(kind, spec.grammar, words)
+        if isinstance(place, ParseError):
+            return place
+        change, after = place
+        return Record(kind, date, who=who, text=text_value, change=change, after=after)
     found = _read_arguments(kind, spec.grammar, words)
     if isinstance(found, ParseError):
         return found
@@ -298,6 +357,24 @@ def _read_arguments(
     if words:
         return _fail(kind, f'"{" ".join(words)}" is not expected before "by" or the colon.')
     return None, None, None, None
+
+
+def _change_arguments(
+    kind: RecordKind, grammar: Grammar, words: list[str]
+) -> tuple[str, str | None] | ParseError:
+    """A milestone record's change name, and for ``(moved)`` the change it went after."""
+    if not words or not is_valid_name(words[0]):
+        return _fail(kind, "The change's name is missing or not a valid name.")
+    rest = words[1:]
+    if grammar is Grammar.CHANGE_NAME:
+        if rest:
+            return _fail(kind, f'"{" ".join(rest)}" is not expected after the change\'s name.')
+        return words[0], None
+    if rest == ["first"]:
+        return words[0], None
+    if len(rest) == 2 and rest[0] == "after" and is_valid_name(rest[1]):  # noqa: PLR2004
+        return words[0], rest[1]
+    return _fail(kind, 'After the change\'s name comes "after <change>" or "first".')
 
 
 def _covers_arguments(kind: RecordKind, words: list[str]) -> tuple[str, ...] | ParseError | None:

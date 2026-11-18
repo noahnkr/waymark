@@ -261,12 +261,40 @@ roadmap that lists them, in one file. Created by `wm new milestone <name>`.
 | `## Done when` | How anyone can tell it has been reached. |
 | `## Non-goals` | What it leaves out. |
 | `## Roadmap` | One list line per change. Only lines here, outside comments, are roadmap entries. |
+| `## Log` | Optional, always last, written by `wm`: a record for each change to the plan. |
 
 A change not proposed yet is a plain line, such as `- add-cache: cache hot
 queries`; a proposed one links to its proposal. Archiving a change ticks its
-line and rewrites the link, and `wm status` counts the progress. `wm close
-<milestone>` moves it to `milestones/archive/YYYY-MM-DD-<name>/` once every
-linked change is archived, and rewrites links to it.
+line and rewrites the link, and `wm status` counts the progress.
+
+You change the roadmap only through `wm`. An agent's edit that adds, changes or
+removes a roadmap line or a Log record is refused; edits to the other sections
+are allowed.
+
+| Command | What it does |
+|---|---|
+| `wm roadmap add <milestone> <change> "<description>"` | Adds `- <change>: <description>` at the end of the roadmap. Refused for a name already on it. |
+| `wm roadmap drop <milestone> <change> --reason "<why>"` | Removes the change's line. Refused for an active change whose proposal names the milestone: take its `- Milestone:` line off first. |
+| `wm roadmap move <milestone> <change> --after <change>` | Moves the line right after another's, or to the top with `--first`. |
+
+Each change to the plan writes a record in the milestone's `## Log`, which `wm`
+creates at the end of the file the first time:
+
+```
+(added) 2026-11-20 add-cache by Ada: cache hot queries
+(moved) 2026-11-20 add-cache first by Ada
+(proposed) 2026-11-21 add-limit by Ada
+(dropped) 2026-11-21 add-cache by Ada: the index is fast enough
+(archived) 2026-11-22 add-limit by Ada
+```
+
+`(proposed)` comes from `wm new change --milestone`, and `(archived)` from
+`wm archive` when the change's proposal names the milestone. Lines already on a
+roadmap before its Log began have no records.
+
+`wm close <milestone>` moves it to `milestones/archive/YYYY-MM-DD-<name>/` once
+every line on its roadmap links to an archived change, and rewrites links to
+it. A planned line keeps it open until it is proposed, or dropped with a reason.
 
 A change belongs to a milestone when its proposal has a `- Milestone: <name>`
 line, naming the milestone's folder, and the milestone's roadmap links the
@@ -282,7 +310,8 @@ proposal. A change without the line belongs to no milestone.
   carry the milestone's name, Goal and Non-goals, not its Done when or roadmap.
 
 **Checks:** `milestone-file` (a leftover `goal.md` or `roadmap.md`),
-`missing-file`, `section-order`, `missing-section`. On an active change's
+`missing-file`, `section-order`, `missing-section`, `log-section-last` (a
+`## Log` that isn't the last section). On an active change's
 proposal: `unknown-milestone` (no active milestone has that name),
 `milestone-unlinked` (the named milestone's roadmap doesn't link the change),
 `milestone-missing` (a roadmap links the change, and the proposal names no
@@ -322,6 +351,11 @@ Every line `wm` writes is a dated record. It names who it is by: your git name,
 | `(note)` | item | `wm note`, or an implementer's `partial` |
 | `(reopened)` | item | `wm reopen`: a review named it to rebuild |
 | `(resolved)` | item or Log | `wm resolve`: what you decided |
+| `(added)` | milestone Log | `wm roadmap add`: the change and its description |
+| `(dropped)` | milestone Log | `wm roadmap drop`: the change and the reason |
+| `(moved)` | milestone Log | `wm roadmap move`: the change, then `after <change>` or `first` |
+| `(proposed)` | milestone Log | `wm new change --milestone`: the change |
+| `(archived)` | milestone Log | `wm archive` of a member change: the change |
 
 ## What holds it together
 

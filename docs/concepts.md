@@ -274,7 +274,9 @@ The change's level is the `- Review:` line in its proposal, or the project's
 | **Delegation** | starting an implementer unless the prompt names exactly one item that has criteria; starting a reviewer unless the prompt names one change whose items are all ticked and which needs an independent review it lacks; either while the record around it isn't sound | no one; fix the record |
 | **Archive** | archiving a change that isn't accepted, has unbuilt items, isn't reviewed, has an item no passing review covers, or has a delta that no longer applies | only a missing review can be overridden, by you, with a reason that is recorded |
 
-**Evidence is written only by `wm`**: ticks and records. The planner records
+**Evidence is written only by `wm`**: ticks and records, and in a milestone its
+roadmap lines and its Log, which change only through `wm roadmap`,
+`wm new change --milestone` and `wm archive`. The planner records
 its own results with `wm tick`, `wm block`, `wm gap`, `wm note` and
 `wm review`. Implementers and reviewers report theirs in their last lines, and
 `wm`'s hooks write the records from them. An implementer edits nothing in the
@@ -317,7 +319,7 @@ and pull request, through the workflow `wm ci` writes.
 | **Archive** | Finishing a change: its deltas merged into the specs, its outcome written, and its folder moved to a dated archive. |
 | **Owner** | The one person responsible for a change. |
 | **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion) that may lead to a change or be parked. |
-| **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. A member change names it in a `- Milestone:` line that `wm check` holds to the roadmap, is created with `wm new change <name> --milestone <milestone>`, and its agents see the milestone's Goal and Non-goals. See [the record](record.md#milestone). |
+| **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. A member change names it in a `- Milestone:` line that `wm check` holds to the roadmap, is created with `wm new change <name> --milestone <milestone>`, and its agents see the milestone's Goal and Non-goals. The roadmap changes only through `wm roadmap add`, `drop` and `move`, each recorded in the milestone's Log, and `wm close` needs every line archived. See [the record](record.md#milestone). |
 | **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |
 | **Implementer** | A fresh agent that builds one task item with a `- Build: delegate` line, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one whole change against its scenarios, design and criteria, without seeing how it was built. |

@@ -1,21 +1,24 @@
 """Setting up a project, and creating changes, milestones and explorations from templates."""
 
+import datetime
 import re
 from pathlib import Path
 
 from waymark import __version__, adapters
-from waymark.record import git, templates
+from waymark.record import git, records, templates
 from waymark.record.changes import PROPOSAL_FILE
 from waymark.record.charter import CHARTER_FILE
 from waymark.record.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.files import RecordFiles
-from waymark.record.milestones import MILESTONE_FILE, link_change
+from waymark.record.milestones import MILESTONE_FILE, append_milestone_log, link_change
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.pointer import POINTER_FILE, is_pointer, parse_pointer
 from waymark.record.project import RECORD_DIR
 from waymark.record.proposal import MILESTONE, OWNER, PATH, SHORT
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES
+from waymark.record.records import RecordKind
 from waymark.record.store import Transaction
+from waymark.record.text import Document
 from waymark.services import integration
 from waymark.services.atlas import register_new_atlas
 from waymark.services.common import Done, Refusal, commit, open_record
@@ -143,6 +146,7 @@ def create_change(
     short: bool = False,
     owner: str | None = None,
     milestone: str | None = None,
+    today: datetime.date | None = None,
 ) -> Done:
     """Create a change folder with a proposal skeleton, linked from its milestone if it has one."""
     record = open_record(start, writing=True)
@@ -174,7 +178,14 @@ def create_change(
     if member is not None and member.roadmap is not None:
         doc = member.roadmap.doc
         target = f"../../{CHANGES}/{name}/{PROPOSAL_FILE}"
-        transaction.write(doc.path, link_change(doc, name, target))
+        linked = Document.parse(doc.path, link_change(doc, name, target))
+        entry = records.Record(
+            RecordKind.PROPOSED,
+            today or datetime.date.today(),
+            who=records.who_for(record.project.root, None),
+            change=name,
+        )
+        transaction.write(doc.path, append_milestone_log(linked, records.render(entry)))
         message += f' It is linked from the roadmap of "{milestone}".'
     return Done(message, commit(transaction))
 

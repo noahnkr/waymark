@@ -269,6 +269,54 @@ wm close <milestone>
 
 - `milestone`: the milestone's name
 
+## wm roadmap
+
+Change a milestone's roadmap: add, drop or move a change's line, with a record.
+
+```
+wm roadmap <command>
+```
+
+## wm roadmap add
+
+Add a planned line for a change at the end of a milestone's roadmap.
+
+```
+wm roadmap add <milestone> <change> <description> [--by NAME]
+```
+
+- `milestone`: the milestone's name
+- `change`: the change's name, for example add-search-limit
+- `description`: what the change delivers toward the goal
+- `--by`: who the record names as its writer (default: your git name)
+
+## wm roadmap drop
+
+Take a change's line off a milestone's roadmap, with the reason.
+
+```
+wm roadmap drop <milestone> <change> --reason REASON [--by NAME]
+```
+
+- `milestone`: the milestone's name
+- `change`: the change's name
+- `--reason`: why the change is dropped (required)
+- `--by`: who the record names as its writer (default: your git name)
+
+## wm roadmap move
+
+Move a change's line on a milestone's roadmap.
+
+```
+wm roadmap move <milestone> <change> [--after CHANGE] [--first] [--by NAME]
+```
+
+- `milestone`: the milestone's name
+- `change`: the change's name
+- `--after`: put it right after this change's line
+- `--first`: put it at the top of the roadmap
+- `--by`: who the record names as its writer (default: your git name)
+
 ## wm status
 
 Show where things stand: changes, milestones, what needs you.

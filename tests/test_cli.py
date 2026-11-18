@@ -244,3 +244,31 @@ def test_wm_new_change_takes_a_milestone(
     assert not project.path("changes/add-cache").exists()
     assert main(["new", "milestone", "better-ranking", "--milestone", "x"]) == EXIT_REFUSED
     assert not project.path("milestones/better-ranking").exists()
+
+
+def test_wm_roadmap_commands(project: Workspace, monkeypatch: pytest.MonkeyPatch) -> None:
+    project.write(
+        "milestones/faster-search/milestone.md",
+        "# Faster search\n\n## Goal\n\nFast.\n\n## Done when\n\n- fast\n\n"
+        "## Non-goals\n\n- caching\n\n## Roadmap\n\n- add-limit: cap the results\n",
+    )
+    monkeypatch.chdir(project.root)
+    add = ["roadmap", "add", "faster-search", "add-cache", "cache hot queries", "--by", "Ada"]
+    assert main(add) == EXIT_OK
+    assert main(["roadmap", "move", "faster-search", "add-cache", "--first"]) == EXIT_OK
+    assert main(["roadmap", "move", "faster-search", "add-cache", "--after", "add-limit"]) == (
+        EXIT_OK
+    )
+    assert main(["roadmap", "drop", "faster-search", "add-cache", "--reason", "fast"]) == EXIT_OK
+    text = project.read("milestones/faster-search/milestone.md")
+    assert "- (added) " in text
+    assert "add-cache by Ada: cache hot queries" in text
+    assert main(["roadmap", "drop", "faster-search", "add-limit", "--reason", "x"]) == EXIT_OK
+    for usage in (
+        ["roadmap", "drop", "faster-search", "add-limit"],
+        ["roadmap", "move", "faster-search", "add-limit"],
+        ["roadmap", "move", "faster-search", "add-limit", "--first", "--after", "add-x"],
+    ):
+        with pytest.raises(SystemExit) as stopped:
+            main(usage)
+        assert stopped.value.code == EXIT_USAGE

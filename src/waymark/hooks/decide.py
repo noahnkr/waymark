@@ -15,7 +15,7 @@ from waymark.record import agents
 from waymark.record.atlas import contains
 from waymark.record.commits import commit_problem
 from waymark.record.config import CONFIG_FILE, parse_config
-from waymark.record.evidence import evidence_changes
+from waymark.record.evidence import evidence_changes, is_active_milestone
 from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
 from waymark.record.record import SPECS, Record, load_record
@@ -52,6 +52,10 @@ _HANDBACK_TRIES = 2
 _EVIDENCE_COMMANDS = (
     "wm tick, wm block, wm gap, wm note, wm review, wm verdict, wm reopen or wm resolve; "
     "accepting is for the human, with wm accept"
+)
+_ROADMAP_COMMANDS = (
+    'wm roadmap add <milestone> <change> "<description>", wm roadmap drop <milestone> '
+    '<change> --reason "<why>" or wm roadmap move <milestone> <change> --after <change>|--first'
 )
 
 
@@ -229,7 +233,8 @@ def _edit(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one re
     if changed:
         return _refuse(
             f"This edit {changed[0]}. That is evidence, and only wm writes evidence. "
-            f"Leave those lines as they are and use a command instead: {_EVIDENCE_COMMANDS}."
+            f"Leave those lines as they are and use a command instead: "
+            f"{_ROADMAP_COMMANDS if is_active_milestone(relative) else _EVIDENCE_COMMANDS}."
         )
     return ALLOW
 

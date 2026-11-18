@@ -1,6 +1,6 @@
 """Evidence in a task list: every tick and every record, and nothing a human writes."""
 
-from tests.support import TASKS
+from tests.support import TASKS, milestone
 from waymark.record.evidence import evidence, evidence_changes
 
 PATH = "changes/add-limit/tasks.md"
@@ -46,3 +46,35 @@ def test_changing_a_record_is_reported_both_ways() -> None:
 
 def test_other_files_hold_no_evidence() -> None:
     assert evidence("changes/add-limit/proposal.md", "Accepted: 2026-01-15 by Sam Doe\n") == {}
+
+
+MILESTONE_PATH = "milestones/faster-search/milestone.md"
+PLANNED = milestone(
+    "<!-- one line per change -->\n- add-limit: cap\n- [x] [add-index](../x/proposal.md)\n"
+) + ("\n## Log\n\n- (added) 2026-11-20 add-limit by Ada: cap\n")
+
+
+def test_roadmap_lines_and_the_milestone_log_are_evidence() -> None:
+    found = evidence(MILESTONE_PATH, PLANNED)
+    assert found['the roadmap line "add-limit: cap"'] == 1
+    assert found['the roadmap line "[x] [add-index](../x/proposal.md)"'] == 1
+    assert found['"- (added) 2026-11-20 add-limit by Ada: cap" in the milestone\'s Log'] == 1
+    assert len(found) == 3
+
+
+def test_editing_a_milestone_goal_changes_no_evidence() -> None:
+    edited = PLANNED.replace("Answers in a blink.", "Answers in a blink, every time.")
+    assert evidence_changes(MILESTONE_PATH, PLANNED, edited) == []
+
+
+def test_adding_or_rewording_a_roadmap_line_changes_evidence() -> None:
+    added = PLANNED.replace("- add-limit: cap\n", "- add-limit: cap\n- add-cache: cache\n")
+    assert evidence_changes(MILESTONE_PATH, PLANNED, added) == [
+        'adds the roadmap line "add-cache: cache"'
+    ]
+    reworded = PLANNED.replace("- add-limit: cap\n", "- add-limit: cap the results\n")
+    assert len(evidence_changes(MILESTONE_PATH, PLANNED, reworded)) == 2
+
+
+def test_an_archived_milestone_has_no_evidence() -> None:
+    assert evidence("milestones/archive/2026-01-01-faster-search/milestone.md", PLANNED) == {}
