@@ -4,6 +4,17 @@ All notable changes to Waymark, one entry per release.
 
 ## [Unreleased]
 
+- **An interactive `wm init`.** On a terminal, `wm init` opens with a welcome
+  screen: the Waymark star, which grows in and twinkles, the tagline, what it
+  sets up, and the skills to run next. It then asks whether the repository is a
+  project or an atlas (and the atlas's name), which agent tools to set up, with
+  the ones it finds already selected, and whether to add the CI workflow. Esc or
+  Ctrl+C cancels and writes nothing. Where the terminal can't read single keys,
+  the questions come as numbered choices. In a clone, it shows the welcome
+  screen and asks nothing.
+- **`wm init --yes`** asks nothing. So do `--atlas` and `--tool`, and so does
+  `wm init` when its input or output isn't a terminal, as when an agent runs it:
+  it does what it did before.
 - **A new look in the terminal.** The views use one palette of the 16 standard
   colors, by role: cyan for section rules and commands, green for done, yellow for
   what needs you and for warnings, red for errors, dim for dates and records, bold

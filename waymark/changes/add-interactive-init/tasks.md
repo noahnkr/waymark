@@ -50,7 +50,7 @@
 
 ## 3. Docs
 
-- [ ] 3.1 Docs for the interactive init
+- [x] 3.1 Docs for the interactive init
   - Criteria:
     - `docs/getting-started.md` shows the interactive `wm init` and says `--yes`, `--atlas` and `--tool` skip the questions
     - `docs/cli.md` is regenerated with `--yes`, and the CHANGELOG's Unreleased section notes the interactive init
