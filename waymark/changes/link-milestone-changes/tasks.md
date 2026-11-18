@@ -11,7 +11,7 @@
   - Verify:
     - tests in `tests/record/` and `tests/services/test_check.py` for the scenarios "Proposal and roadmap agree", "Roadmap doesn't link the change", "Linked change names no milestone" and "Unknown milestone", and for a change on two roadmaps
     - `wm check` here
-- [ ] 1.2 Create a change in a milestone with `wm new change --milestone`
+- [x] 1.2 Create a change in a milestone with `wm new change --milestone`
   - Criteria:
     - `wm new change <name> --milestone <milestone>` writes `- Milestone: <milestone>` under `- Owner:`, and links the change from the roadmap: a planned line starting with the name becomes a link and keeps its text, or a linked line is added at the end of the roadmap
     - the milestone file keeps its line endings, and the proposal and the roadmap are written together

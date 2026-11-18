@@ -227,3 +227,20 @@ def test_scenario_error_that_cant_be_fixed(
     assert "trailing spaces" in out
     assert "broken-link" in out
     assert "[the plan](missing.md)" in project.read("changes/add-limit/proposal.md")
+
+
+def test_wm_new_change_takes_a_milestone(
+    project: Workspace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project.write(
+        "milestones/faster-search/milestone.md",
+        "# Faster search\n\n## Goal\n\nFast.\n\n## Done when\n\n- fast\n\n"
+        "## Non-goals\n\n- caching\n\n## Roadmap\n\n- add-limit: cap the results\n",
+    )
+    monkeypatch.chdir(project.root)
+    assert main(["new", "change", "add-limit", "--milestone", "faster-search"]) == EXIT_OK
+    assert "- Milestone: faster-search\n" in project.read("changes/add-limit/proposal.md")
+    assert main(["new", "change", "add-cache", "--milestone", "no-such-one"]) == EXIT_REFUSED
+    assert not project.path("changes/add-cache").exists()
+    assert main(["new", "milestone", "better-ranking", "--milestone", "x"]) == EXIT_REFUSED
+    assert not project.path("milestones/better-ranking").exists()
