@@ -1,6 +1,6 @@
 ---
 name: waymark-check-docs
-description: Check Waymark's docs - the mechanical checks, then a fact check of each page against the code by a fresh agent that saw none of the writing. Run only when the human asks; not part of the drafting loop.
+description: Check Waymark's docs - the mechanical checks, then a fact check of each page against the code by a fresh agent that saw none of the writing. Run when the human asks, or when the waymark-release skill offers it before the smoke test.
 argument-hint: page, section, or "all"
 ---
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tools import install_skills
 
-NAMES = ["waymark-check-docs", "waymark-draft-docs", "waymark-release", "waymark-write-docs"]
+NAMES = ["waymark-check-docs", "waymark-release", "waymark-write-docs"]
 
 
 def test_the_maintainer_skills_live_in_tools_skills() -> None:
@@ -30,7 +30,7 @@ def test_install_again_replaces_a_stale_copy(tmp_path: Path) -> None:
     stale = tmp_path / ".claude/skills/waymark-release/old.md"
     stale.write_text("old\n", encoding="utf-8")
     report = install_skills.install(tmp_path)
-    assert report[2] == "updated: .claude/skills/waymark-release"
+    assert "updated: .claude/skills/waymark-release" in report
     assert not stale.exists()
 
 
