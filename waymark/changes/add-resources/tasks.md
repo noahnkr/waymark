@@ -40,7 +40,7 @@
     - the text output renders the same resources as the JSON, and no schema version changes
   - Verify:
     - `test_scenario_serving_resource_in_the_implement_pack`, `test_scenario_resource_for_another_spec`, `test_scenario_retired_resource` and `test_scenario_explore_index`, beside the existing context-pack tests
-- [ ] 2.2 Resources in the edit guard
+- [x] 2.2 Resources in the edit guard
   - Criteria:
     - a planner's edit, creation or removal under `resources/` is allowed, with or without a change in flight
     - an implementer's edit under `resources/` is allowed; any other implementer edit in the record is still refused with the reason that an implementer doesn't edit the record, and its hand-written notes with a reason naming `wm note`

@@ -18,7 +18,7 @@ from waymark.record.config import CONFIG_FILE, parse_config
 from waymark.record.evidence import evidence_changes, is_active_milestone
 from waymark.record.files import RecordFiles
 from waymark.record.project import RECORD_DIR, Project, ProjectNotFoundError, find_project
-from waymark.record.record import SPECS, Record, load_record
+from waymark.record.record import RESOURCES, SPECS, Record, load_record
 from waymark.record.records import IMPLEMENTER, REVIEWER, parse_finding_argument
 from waymark.record.state import AcceptanceState, StepKind, derive_state
 from waymark.record.terms import Layout, Verdict
@@ -220,6 +220,8 @@ def _edit(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one re
             "Specs are never edited by hand: they change only when a change is archived or "
             "synced. Write a delta in the change's specs folder instead."
         )
+    if parts[0] == RESOURCES:
+        return ALLOW
     if event.role is Role.IMPLEMENTER:
         return _refuse(
             "An implementer doesn't edit the record. Leave a note on your item with "
