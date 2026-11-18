@@ -411,7 +411,7 @@ def instructions(payload: Payload, style: Style) -> str:
     if payload["commands"]:
         lines += ["", style.paint("Commands", BOLD)]
         lines += [style.paint(f"  {command}", CYAN) for command in payload["commands"]]
-    lines += _titled("Rules for this step", payload["rules"], style)
+    lines += _titled("Project rules", payload["rules"], style)
     lines += _titled("Project context", payload["context"], style)
     if payload["read"]:
         lines += ["", style.paint("Read first", BOLD)]
@@ -502,7 +502,7 @@ def context_delegated(payload: Payload, _: Style) -> str:
         lines.append(milestone["non_goals"])
     lines += _resource_lines(payload["resources"])
     if payload["rules"]:
-        lines += ["", "## Rules for this step", "", payload["rules"]]
+        lines += ["", "## Project rules", "", payload["rules"]]
     if payload.get("proposal"):
         lines += ["", "## Proposal"]
         for title, text in payload["proposal"].items():
@@ -539,10 +539,11 @@ def context_explore(payload: Payload, _: Style) -> str:
     """The explore context pack, as markdown."""
     lines = ["# Context pack: explore"]
     for title, text in payload["charter"].items():
-        if text:
+        # The Rules are shown once, under "Project rules", as in every other pack.
+        if text and title != "Rules":
             lines += ["", f"## {title}", "", text]
     if payload["rules"]:
-        lines += ["", "## Rules for this step", "", payload["rules"]]
+        lines += ["", "## Project rules", "", payload["rules"]]
     lines += ["", "## Specs", ""]
     for spec in payload["specs"]:
         names = ", ".join(spec["requirements"]) or "no requirements"

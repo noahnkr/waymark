@@ -52,13 +52,8 @@ The search index is rebuilt nightly.
 
 ## Rules
 
-### apply
-
-Run the tests before reporting.
-
-### review
-
-Check every scenario.
+1. Run the tests before reporting.
+2. Check every scenario.
 """
 
 DESIGN = """# Design

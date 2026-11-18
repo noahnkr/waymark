@@ -16,7 +16,7 @@ from waymark.record.charter import CHARTER_FILE
 from waymark.record.project import RECORD_DIR
 from waymark.record.record import SPECS, Record
 from waymark.record.state import AcceptanceState, ChangeState, StepKind
-from waymark.record.terms import Layout, ReviewLevel, Step
+from waymark.record.terms import Layout, ReviewLevel
 from waymark.services.common import Refusal, find_change, state_of
 from waymark.services.guidance import SEVERITY_RUBRIC
 
@@ -393,7 +393,7 @@ def _explore(record: Record) -> dict[str, Any]:
         "ready": True,
         "reason": "",
         "outputs": [],
-        "rules": charter.rules.get(Step.EXPLORE, "") if charter else "",
+        "rules": charter.rules if charter else "",
         "context": charter.context if charter else "",
         "read": [_path(CHARTER_FILE)],
         "guidance": [
@@ -457,9 +457,7 @@ def instructions(record: Record, step: str | None, change_name: str | None) -> d
         guidance, commands = _working(change, state, kind)
 
     charter = record.charter
-    rules = ""
-    if charter and kind.value in set(Step):
-        rules = charter.rules.get(Step(kind.value), "")
+    rules = charter.rules if charter else ""
     place = Branches(record).of(change)
     return {
         "schema": "wm.instructions",

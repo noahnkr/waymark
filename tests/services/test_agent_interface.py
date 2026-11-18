@@ -49,7 +49,10 @@ DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 PLAIN = Style()
 FINDING = '--finding "<critical|warning|suggestion>: <place>: <text>"'
-RULES = CHARTER + "\n### tasks\n\nKeep items small.\n\n### explore\n\nAsk before assuming.\n"
+RULES = CHARTER + "3. Keep items small.\n4. Ask before assuming.\n"
+CHARTER_RULES = "1. Run the tests before reporting.\n2. Check every scenario."
+ALL_RULES = CHARTER_RULES + "\n3. Keep items small.\n4. Ask before assuming."
+TWO_RULES = "1. Run the full checks.\n2. Docs follow the house style."
 
 
 def valid(payload: dict[str, Any]) -> dict[str, Any]:
@@ -307,17 +310,13 @@ def test_every_drafting_step_has_a_checklist_and_its_codes_exist() -> None:
                 assert f'"{code}"' in source, code
 
 
-def test_instructions_carry_only_the_rules_of_their_step(project: Workspace) -> None:
+def test_instructions_carry_every_rule_at_every_step(project: Workspace) -> None:
     project.write("charter.md", RULES)
     accepted(project)
-    assert at(project, "tasks")["rules"] == "Keep items small."
-    assert at(project, "apply")["rules"] == "Run the tests before reporting."
-    assert at(project, "review")["rules"] == "Check every scenario."
-    assert at(project, "design")["rules"] == ""
-    for step in ("tasks", "apply", "review"):
-        assert at(project, step)["context"] == "The search index is rebuilt nightly."
+    for step in ("tasks", "apply", "review", "design"):
+        assert at(project, step)["rules"] == ALL_RULES
     explore = valid(instructions(project.record(), "explore", None))
-    assert explore["rules"] == "Ask before assuming."
+    assert explore["rules"] == ALL_RULES
     assert explore["change"] is None
     assert "wm context --for explore" in explore["commands"]
 
@@ -450,7 +449,7 @@ def test_implementer_pack_holds_the_item_the_change_and_the_touched_requirements
     assert [(r["spec"], r["name"]) for r in built["requirements"]] == [("search", "Result limit")]
     assert "at most fifty results" in built["requirements"][0]["text"]
     assert built["context"] == "The search index is rebuilt nightly."
-    assert built["rules"] == "Run the tests before reporting."
+    assert built["rules"] == CHARTER_RULES
     assert RESULT_LINE in built["ends_with"]
     text = render.to_text(built, PLAIN)
     assert text.startswith(f"# Context pack: implement {NAME} 1.1")
@@ -474,7 +473,7 @@ def test_reviewer_pack_holds_the_whole_change_but_not_how_it_was_built(
     assert "proposal" not in built
     assert built["design"].startswith("# Design")
     assert "#### Scenario: Many matches" in built["deltas"][0]["text"]
-    assert built["rules"] == "Check every scenario."
+    assert built["rules"] == CHARTER_RULES
     assert "CHANGE: <change>" in built["ends_with"]
     assert VERDICT_LINE in built["ends_with"]
     text = render.to_text(built, PLAIN)
@@ -685,7 +684,7 @@ def test_explore_pack_holds_the_charter_and_an_index_of_the_record(project: Work
     )
     built = valid(context_pack(project.record(), "explore"))
     assert built["charter"]["Vision"] == "Fast search for everyone."
-    assert built["rules"] == "Ask before assuming."
+    assert built["rules"] == ALL_RULES
     assert built["specs"] == [
         {
             "name": "search",
@@ -1003,3 +1002,46 @@ def test_scenario_explore_index(project: Workspace) -> None:
     text = render.to_text(built, PLAIN)
     assert "- heroku (service, retired, serves none): Heroku" in text
     assert "- stripe (service, active, serves billing): Stripe" in text
+
+
+def test_scenario_same_rules_at_two_steps(project: Workspace) -> None:
+    """Requirement "Project rules at every step": the whole list, the same at each step."""
+    project.write("charter.md", CHARTER.replace(CHARTER_RULES, TWO_RULES))
+    project.change(deltas={}, design=None, tasks=None)
+    specs = valid(at(project))
+    assert specs["step"] == "specs"
+    assert specs["rules"] == TWO_RULES
+    accepted(project)
+    applying = valid(at(project, "apply"))
+    assert applying["rules"] == TWO_RULES
+    text = render.to_text(applying, PLAIN)
+    assert "Project rules" in text
+    assert "Rules for this step" not in text
+    assert "2. Docs follow the house style." in text
+
+
+def test_scenario_no_rules(project: Workspace) -> None:
+    """Requirement "Project rules at every step": with no rules, no heading."""
+    commented = CHARTER.replace(CHARTER_RULES + "\n", "<!-- The project's own rules. -->\n")
+    project.write("charter.md", commented)
+    explore = valid(instructions(project.record(), "explore", None))
+    assert explore["rules"] == ""
+    assert "Project rules" not in render.to_text(explore, PLAIN)
+
+
+def test_scenario_reviewer_gets_every_rule(project: Workspace) -> None:
+    """Requirement "Project rules in every pack": the reviewer sees the whole list."""
+    hand_edit = "1. Never hand-edit generated docs."
+    billing_change(project, independent=True)
+    project.write("charter.md", CHARTER.replace(CHARTER_RULES, hand_edit))
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    built = pack(project, "review")
+    assert built["rules"] == hand_edit
+    text = render.to_text(built, PLAIN)
+    assert f"## Project rules\n\n{hand_edit}" in text
+    assert pack_text(project, "explore").count(hand_edit) == 1
+
+
+def pack_text(project: Workspace, role: str) -> str:
+    return render.to_text(valid(context_pack(project.record(), role)), PLAIN)

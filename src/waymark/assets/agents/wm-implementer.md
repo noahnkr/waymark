@@ -12,7 +12,7 @@ The planner builds most items itself. You are started for an item with a `- Buil
 Your prompt is a change name and an item number, such as `add-search-limit 1.2`.
 
 1. Run `wm context <change> <item> --for implement`.
-2. Read the whole context pack. It holds your item and its criteria, the proposal, the deltas, the design, the requirements the deltas touch as they stand today, the project's context, the rules for this step, and when to stop.
+2. Read the whole context pack. It holds your item and its criteria, the proposal, the deltas, the design, the requirements the deltas touch as they stand today, the project's context, the project's rules, and when to stop.
 
 If the command is refused, don't work around it: end with a `RESULT: blocked` line that quotes the refusal.
 

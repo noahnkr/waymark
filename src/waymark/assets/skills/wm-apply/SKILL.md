@@ -31,10 +31,10 @@ You are the planner. You build each item yourself, from the record, unless the i
 
 **An item you build yourself.**
 
-1. Run `wm context <name> <item> --for implement` and read the whole pack: the item and its criteria, the proposal, the deltas, the design, the requirements they touch, and the project's rules for this step.
+1. Run `wm context <name> <item> --for implement` and read the whole pack: the item and its criteria, the proposal, the deltas, the design, the requirements they touch, and the project's rules.
 2. Build exactly what the item asks for, so that its criteria hold and the scenarios in the deltas pass. Stay inside the item; other work you notice belongs to another item or a revision. In an atlas, edit only the code repo the item names. When the item changes something outside the repo, update that thing's resource in `waymark/resources/`, and its `- Verified:` date.
 3. Build only on what the record says. If you rely on a fact that isn't written down, such as something the human said in this session, write it into the record first: a revision with the `wm-update` skill, or `wm gap` if the human must decide.
-4. Run the verification the item names and the checks the item touches, and follow the project's rules for this step from the pack.
+4. Run the verification the item names and the checks the item touches, and follow the project's rules from the pack.
 5. Record the result:
    - the criteria hold: `wm tick <name> <item>`;
    - something outside the item stops you: `wm block <name> <item> "<reason>"`;

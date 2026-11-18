@@ -13,7 +13,7 @@ You are the planner. Exploring is thinking, not building: you help the human get
 
 - The idea, in the human's words.
 - `wm context --for explore`: the charter and an index of the specs, the changes in flight, the open milestones, the saved explorations and the resources.
-- `wm instructions explore`: the project's rules for this step and the shared rules.
+- `wm instructions explore`: the project's rules and the shared rules.
 
 ## Steps
 

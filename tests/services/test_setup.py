@@ -733,7 +733,8 @@ def test_every_template_is_written_in_the_current_layouts(tmp_path: Path) -> Non
     assert len(bullets) == 2
     assert record.explorations["paging"].status == "open"
     charter = (tmp_path / "waymark" / "charter.md").read_text(encoding="utf-8")
-    assert "### Apply\n" in charter
+    assert "## Rules\n" in charter
+    assert "### Apply\n" not in charter
 
 
 MILESTONE_FILE = "milestones/faster-search/milestone.md"

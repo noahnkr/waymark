@@ -52,7 +52,7 @@ charter is still a skeleton.
    Constraints, Glossary. Each answer is written in before the next question.
 3. Reads the repository for Context (layout, build and test commands,
    conventions), states what it found, and asks you to correct it.
-4. Asks for rules per step, under capitalized headings in Rules.
+4. Asks for the project's rules, as one numbered list in Rules.
 5. Settings: confirms the default review level, offers commit scopes, and in an
    atlas adds the repos and runs `wm atlas register` and `wm atlas doctor`.
 6. Runs `wm check`, shows you the charter, and revises until you approve.
@@ -276,7 +276,7 @@ RESULT: <done | partial | spec-gap | blocked>: <a short note>
 
 | Reads | Writes |
 |---|---|
-| the implement pack: the item and its criteria, the proposal, deltas, design, the requirements touched as they stand, Context, the Apply rules, the stopping rules | code in its item's repo; `wm note --by wm-implementer`, the one writing command it may run; its ending, which `wm` records as a tick, `(blocked)`, `(gap)` or `(note)` |
+| the implement pack: the item and its criteria, the proposal, deltas, design, the requirements touched as they stand, Context, the project's rules, the stopping rules | code in its item's repo; `wm note --by wm-implementer`, the one writing command it may run; its ending, which `wm` records as a tick, `(blocked)`, `(gap)` or `(note)` |
 
 ## `wm-reviewer`
 
@@ -299,4 +299,4 @@ VERDICT: <pass | changes <item>... | spec-gap>: <reasons>
 
 | Reads | Writes |
 |---|---|
-| the review pack: the items to review (every item, or those no passing review covers) with their criteria, verification and location, the deltas, the design, earlier reviews and resolutions, Context, the Review rules, the severity rubric; the code | nothing: `wm` records its ending as a `(review)` record with each finding under it; a `changes` verdict reopens the items it names; `wm` refuses a pass with a critical finding |
+| the review pack: the items to review (every item, or those no passing review covers) with their criteria, verification and location, the deltas, the design, earlier reviews and resolutions, Context, the project's rules, the severity rubric; the code | nothing: `wm` records its ending as a `(review)` record with each finding under it; a `changes` verdict reopens the items it names; `wm` refuses a pass with a critical finding |

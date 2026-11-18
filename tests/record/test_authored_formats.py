@@ -84,8 +84,6 @@ def test_glossary_as_a_list() -> None:
     assert [p.code for p in parse_charter(document(prose, "charter.md")).problems] == [
         "glossary-format"
     ]
-    capitalized = CHARTER.replace("### apply", "### Apply")
-    assert parse_charter(document(capitalized, "charter.md")).problems == ()
 
 
 def charter_problems(text: str) -> list[tuple[int, str]]:
@@ -97,6 +95,38 @@ def test_scenario_bulleted_goal() -> None:
     [problem] = parse_charter(document(bulleted, "charter.md")).problems
     assert problem.code == "numbered-list-format"
     assert "1. <text>" in problem.message
+
+
+def test_scenario_step_heading_under_rules() -> None:
+    """Requirement "Numbered goals, constraints and rules": a heading is reported."""
+    heading = CHARTER.replace(
+        "1. Run the tests before reporting.\n2. Check every scenario.\n",
+        "### Apply\n\n1. Run the full checks.\n",
+    )
+    doc = document(heading, "charter.md")
+    [problem] = parse_charter(doc).problems
+    assert problem.code == "numbered-list-format"
+    assert "1. <text>" in problem.message
+    assert doc.lines[problem.line - 1].text == "### Apply"
+
+
+def test_scenario_no_rules() -> None:
+    commented = CHARTER.replace(
+        "1. Run the tests before reporting.\n2. Check every scenario.\n",
+        "<!-- The project's own rules. -->\n",
+    )
+    charter = parse_charter(document(commented, "charter.md"))
+    assert charter.problems == ()
+
+
+def test_bulleted_rule_is_reported() -> None:
+    bulleted = CHARTER.replace(
+        "1. Run the tests before reporting.\n2. Check every scenario.\n",
+        "- Run the tests before reporting.\n",
+    )
+    [problem] = parse_charter(document(bulleted, "charter.md")).problems
+    assert problem.code == "numbered-list-format"
+    assert problem.message.startswith("Rules are a numbered list")
 
 
 def test_numbered_goals_and_constraints() -> None:

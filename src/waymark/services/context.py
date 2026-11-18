@@ -33,7 +33,7 @@ from waymark.record.state import (
     derive_state,
 )
 from waymark.record.tasks import Item, ReviewRecord
-from waymark.record.terms import Layout, ReviewLevel, Step
+from waymark.record.terms import Layout, ReviewLevel
 from waymark.record.text import Document
 from waymark.services.common import Refusal, find_change, find_item, repo_locations, state_of
 from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
@@ -277,7 +277,7 @@ def _implement_pack(record: Record, change_name: str, number: str) -> dict[str, 
         "context": charter.context if charter else "",
         "milestone": _milestone(record, change),
         "resources": _serving_resources(record, change),
-        "rules": charter.rules.get(Step.APPLY, "") if charter else "",
+        "rules": charter.rules if charter else "",
         "proposal": dict(proposal.sections) if proposal else None,
         "deltas": _deltas(change),
         "requirements": _touched_requirements(record, change),
@@ -313,7 +313,7 @@ def _review_pack(record: Record, change_name: str) -> dict[str, Any]:
         "context": charter.context if charter else "",
         "milestone": _milestone(record, change),
         "resources": _serving_resources(record, change),
-        "rules": charter.rules.get(Step.REVIEW, "") if charter else "",
+        "rules": charter.rules if charter else "",
         "deltas": _deltas(change),
         "backgrounds": _backgrounds(record, change),
         "design": _text(change.design.doc) if change.design else None,
@@ -361,7 +361,7 @@ def _explore_pack(record: Record) -> dict[str, Any]:
         "version": CONTEXT_VERSION,
         "for": EXPLORE,
         "charter": dict(charter.sections) if charter else {},
-        "rules": charter.rules.get(Step.EXPLORE, "") if charter else "",
+        "rules": charter.rules if charter else "",
         "specs": [
             {
                 "name": name,

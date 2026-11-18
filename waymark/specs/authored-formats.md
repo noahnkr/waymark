@@ -20,7 +20,7 @@ A proposal's facts SHALL be bullet lines between its title and its first section
 - THEN it reports that the proposal has no owner, and no message names `wm update`
 
 ### Requirement: Glossary as a list
-The charter's glossary SHALL be a list of `- **<term>**: <meaning>` lines. `wm check` SHALL report a glossary line in another form as an error that shows the form. Step headings under Rules SHALL be read in any case, the template SHALL write them capitalized, such as `### Apply`, and a step with no rules MAY leave its heading out.
+The charter's glossary SHALL be a list of `- **<term>**: <meaning>` lines. `wm check` SHALL report a glossary line in another form as an error that shows the form.
 
 #### Scenario: Old glossary line
 - GIVEN a charter whose glossary has the line `Record: everything in waymark/`
@@ -125,13 +125,23 @@ A proposal's `## Impact` section SHALL hold a `- Specs:` line, a `- User-visible
 - WHEN the planner runs `wm archive <change> --built "The result limit."`
 - THEN the archived proposal's Outcome has the line `- Differs: none`
 
-### Requirement: Numbered goals and constraints
-The charter's Goals and Constraints SHALL be numbered lists, `1. <text>`, numbered from 1 without gaps. `wm check` SHALL report a line in another form, or a number out of order, with the form expected.
+### Requirement: Numbered goals, constraints and rules
+The charter's Goals, Constraints and Rules SHALL be numbered lists, `1. <text>`, numbered from 1 without gaps; Rules MAY be empty. `wm check` SHALL report a line in another form, a heading under Rules included, or a number out of order, with the form expected.
 
 #### Scenario: Bulleted goal
 - GIVEN a charter whose Goals hold the line `- Answers in one step.`
 - WHEN `wm check` runs
 - THEN it reports an error on that line that shows the form `1. <text>`
+
+#### Scenario: Step heading under Rules
+- GIVEN a charter whose Rules hold the heading `### Apply` and the line `1. Run the full checks.`
+- WHEN `wm check` runs
+- THEN it reports an error on the heading that shows the form `1. <text>`
+
+#### Scenario: No rules
+- GIVEN a charter whose Rules section holds only a comment
+- WHEN `wm check` runs
+- THEN it reports nothing about the Rules
 
 ### Requirement: Settled decisions
 Each `### Decision:` in a design SHALL have a `- Status:` line, `proposed` or `decided`, and a `- Decided by:` line, `human` or `planner`. A design SHALL have an `## Open questions` section, holding a list of questions or the word `None.`. `wm check` SHALL report a missing or unknown value. `wm accept` SHALL refuse a change while a decision is `proposed` or an open question is listed, naming each one.
