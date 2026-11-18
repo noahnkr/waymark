@@ -14,6 +14,7 @@ from waymark.record.problems import Problem
 from waymark.record.text import Document, Section
 
 PURPOSE = "Purpose"
+BACKGROUND = "Background"
 REQUIREMENTS = "Requirements"
 REPOS_FACT = "Repos"
 
@@ -64,10 +65,21 @@ class Spec:
     purpose: str
     requirements: tuple[Requirement, ...]
     problems: tuple[Problem, ...]
+    background: str | None = None
 
     def requirement(self, name: str) -> Requirement | None:
         key = requirement_key(name)
         return next((item for item in self.requirements if item.key == key), None)
+
+
+def empty_background(doc: Document, section: Section) -> Problem:
+    """The problem an empty Background section is."""
+    return Problem(
+        doc.path,
+        section.start + 1,
+        "empty-section",
+        f'"## {BACKGROUND}" is empty. Write the facts about this area, or remove the section.',
+    )
 
 
 def requirement_key(name: str) -> str:
@@ -219,9 +231,16 @@ def parse_spec(domain: str, doc: Document) -> Spec:
     title = require_title(doc, problems)
     facts = parse_facts(doc, {REPOS_FACT}, problems, prose=False)
     repos = split_names(facts[REPOS_FACT].value) if REPOS_FACT in facts else ()
-    sections = collect_sections(doc, (PURPOSE, REQUIREMENTS), problems, strict=True)
+    sections = collect_sections(
+        doc, (PURPOSE, REQUIREMENTS), problems, optional=(BACKGROUND,), strict=True
+    )
     purpose = content(doc, sections, PURPOSE, problems)
+    background: str | None = None
+    if BACKGROUND in sections:
+        background = doc.body(sections[BACKGROUND])
+        if not background:
+            problems.append(empty_background(doc, sections[BACKGROUND]))
     requirements: tuple[Requirement, ...] = ()
     if REQUIREMENTS in sections:
         requirements = parse_requirements(doc, sections[REQUIREMENTS], problems)
-    return Spec(domain, doc, title, repos, purpose, requirements, tuple(problems))
+    return Spec(domain, doc, title, repos, purpose, requirements, tuple(problems), background)

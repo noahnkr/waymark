@@ -2,7 +2,7 @@
 
 ## 1. Code
 
-- [ ] 1.1 Background in specs and deltas
+- [x] 1.1 Background in specs and deltas
   - Criteria:
     - a spec and a delta may have a `## Background` section, read as text; a spec's Background after its Purpose and before its Requirements is healthy
     - an empty Background in a spec or a delta is reported as an error on its heading that says the Background is empty
@@ -38,3 +38,4 @@
 ## Log
 
 - (accepted) 2026-11-18 fingerprint b111aa8b43d96dd8 items 1.1 1.2 2.1 2.2 by Noah Roberts
+- (accepted) 2026-11-18 fingerprint 0398f7683dce131c items 1.1 1.2 2.1 2.2 by Noah Roberts

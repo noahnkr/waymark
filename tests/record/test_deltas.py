@@ -1,7 +1,7 @@
 """Deltas: parsing them and merging them into specs."""
 
 from tests.support import delta, document, requirement, spec
-from waymark.record.deltas import Delta, Merge, merge_delta, parse_delta
+from waymark.record.deltas import Delta, Merge, delta_is_merged, merge_delta, parse_delta
 from waymark.record.specs import Spec, parse_spec
 
 LIMIT = requirement()
@@ -274,3 +274,68 @@ def test_renames_are_pairs() -> None:
     parsed = parse(RENAME)
     assert [(r.old, r.new) for r in parsed.renamed] == [("Result cap", "Result limit")]
     assert ("result cap", "Result cap") in parsed.touched()
+
+
+APFM = "Leads come from A Place for Mom."
+BOTH = "Leads come from A Place for Mom and Caring.com."
+
+
+def with_background(spec_text: str, background: str) -> str:
+    return spec_text.replace("## Requirements", f"## Background\n\n{background}\n\n## Requirements")
+
+
+def background_delta(background: str) -> str:
+    return f"# Search\n\n## Background\n\n{background}\n"
+
+
+def test_scenario_background_set_by_a_delta() -> None:
+    """Requirement "Spec background": the section goes in after the Purpose."""
+    before = spec(LIMIT, EMPTY)
+    text = merged(before, background_delta(APFM))
+    result = living(text)
+    assert result.problems == ()
+    assert result.background == APFM
+    assert text == with_background(before, APFM)
+    assert [r.block for r in result.requirements] == [r.block for r in living(before).requirements]
+
+
+def test_scenario_background_replaced() -> None:
+    before = with_background(spec(LIMIT), APFM)
+    text = merged(before, background_delta(BOTH))
+    assert living(text).background == BOTH
+    assert text == with_background(spec(LIMIT), BOTH)
+
+
+def test_a_new_spec_takes_the_background_after_its_purpose() -> None:
+    text = merged(
+        None,
+        delta(purpose="How search behaves.", added=(LIMIT,)).replace(
+            "## ADDED", f"## Background\n\n{APFM}\n\n## ADDED"
+        ),
+    )
+    assert text == with_background(spec(LIMIT), APFM)
+
+
+def test_a_background_already_set_is_merged() -> None:
+    """A sync re-run writes nothing once the spec holds the delta's Background."""
+    target = living(with_background(spec(LIMIT), APFM))
+    assert delta_is_merged(target, parse(background_delta(APFM)))
+    assert not delta_is_merged(target, parse(background_delta(BOTH)))
+    assert not delta_is_merged(living(spec(LIMIT)), parse(background_delta(APFM)))
+
+
+def test_scenario_empty_background() -> None:
+    empty = "# Search\n\n## Background\n\n## ADDED Requirements\n\n" + EMPTY
+    problems = parse(empty).problems
+    assert [(p.code, p.line) for p in problems] == [("empty-section", 3)]
+    assert "Background" in problems[0].message
+    assert "empty" in problems[0].message
+    spec_problems = living(with_background(spec(LIMIT), "")).problems
+    assert [(p.code, p.line) for p in spec_problems] == [("empty-section", 7)]
+
+
+def test_a_spec_may_have_a_background() -> None:
+    result = living(with_background(spec(LIMIT), APFM))
+    assert result.problems == ()
+    assert result.background == APFM
+    assert living(spec(LIMIT)).background is None
