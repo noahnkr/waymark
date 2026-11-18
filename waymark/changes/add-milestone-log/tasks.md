@@ -32,7 +32,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Use `wm roadmap` in the skills, and describe it in the docs
+- [x] 2.1 Use `wm roadmap` in the skills, and describe it in the docs
   - Criteria:
     - `wm-explore` adds a new milestone's roadmap lines with `wm roadmap add`, and no skill says to write or edit a roadmap line by hand
     - `wm-archive` no longer says to link the archived change by hand, and says to change the roadmap with `wm roadmap` when the path changed

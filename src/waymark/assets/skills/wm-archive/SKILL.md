@@ -22,7 +22,7 @@ You are the planner. Archiving completes a change: its deltas become part of the
 3. Draft the outcome with the human, in two parts: what was built, and how it differs from the proposal, if it does. A sentence or two each.
 4. Ask the human to run `wm archive <name> --built "<what was built>" --differs "<how it differs>"`, or run it when they tell you to. Leave `--differs` out when nothing differs; `wm` writes `none`. The outcome lands in the proposal as `- Built:` and `- Differs:` lines under `## Outcome`.
 5. Run `wm check` and `wm status`.
-6. If the change belongs to a milestone, link the archived change in the `## Roadmap` section of its `milestone.md`, and ask whether the milestone's path changed: does the roadmap still fit, and is the milestone ready to close with `wm close <milestone>`?
+6. If the change belongs to a milestone, `wm archive` has already linked the archived change from its roadmap and written an `(archived)` record in its `## Log`. Ask whether the milestone's path changed: does the roadmap still fit? Change it only with `wm roadmap add`, `wm roadmap drop --reason` or `wm roadmap move`; a hand edit to a roadmap line is refused. A milestone closes with `wm close <milestone>` once every line on its roadmap is archived.
 7. Commit the record on the change's branch: the specs, the archived change and anything else `wm` rewrote.
 8. Offer the `wm-pr` skill. `wm pr` describes the archived change, with its outcome.
 
@@ -41,7 +41,7 @@ Revert the archive commit on the branch with `git revert`, so the change is acti
 
 - The outcome says what was built and every way it differs from the proposal, including findings left open.
 - `wm check` is healthy after the archive.
-- The milestone's roadmap links the archived change.
+- The milestone's roadmap links the archived change, and its Log records it.
 - The archive is one commit on the change's branch.
 
 ## Show the human

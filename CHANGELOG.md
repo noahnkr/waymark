@@ -18,6 +18,14 @@ All notable changes to Waymark, one entry per release.
   writes the line and links the change from the roadmap. The implement and
   review context packs carry the milestone's Goal and Non-goals, in a new
   `milestone` field.
+- **A milestone keeps a log, and its roadmap changes only through `wm`.**
+  `wm roadmap add`, `wm roadmap drop --reason` and `wm roadmap move --after|--first`
+  change the roadmap, and each writes a record in a `## Log` at the end of
+  `milestone.md`, as do `wm new change --milestone` and `wm archive`. An agent's
+  hand edit to a roadmap line or the Log is refused.
+- **Behavior change: `wm close` needs every roadmap line archived.** A planned
+  line that was never proposed now keeps a milestone open, until it is proposed
+  or dropped with `wm roadmap drop`.
 
 ## [0.2.0] - 2026-11-16
 

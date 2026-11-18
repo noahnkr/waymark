@@ -105,7 +105,7 @@ still fuzzy, or you don't know yet whether it's a change.
 
 | Reads | Writes, only on an offer |
 |---|---|
-| `wm context --for explore`; `wm show <spec\|change>`, with `--from <atlas>` for a referenced atlas; the code, without changing it | an exploration with a `- Status:` line; or a milestone with its Goal and plain Roadmap lines; `- Status: led-to <link>` on an exploration that led to a change |
+| `wm context --for explore`; `wm show <spec\|change>`, with `--from <atlas>` for a referenced atlas; the code, without changing it | an exploration with a `- Status:` line; or a milestone with its Goal, and its Roadmap lines through `wm roadmap add`; `- Status: led-to <link>` on an exploration that led to a change |
 
 **Stops** when you pick an offer (it does that one only), when you want to stop
 (it makes the offers), or when the idea is already in flight or in the specs.
@@ -228,12 +228,13 @@ is reviewed.
 you; drafts the outcome with you (what was built, and how it differs from the
 proposal); runs, or asks you to run,
 `wm archive <change> --built "…" --differs "…"`; runs `wm check` and `wm status`;
-links the archived change in its milestone's Roadmap and asks whether the
-milestone is ready to close; commits the record on the branch; offers `/wm-pr`.
+asks whether the milestone's roadmap still fits, changing it with `wm roadmap`,
+and whether the milestone is ready to close; commits the record on the branch;
+offers `/wm-pr`.
 
 | Reads | Writes |
 |---|---|
-| `wm instructions`; `wm show <change>`, for the outcome | the specs, through the merge; `## Outcome` with `- Built:` and `- Differs:`; the change folder moved to `changes/archive/`; the milestone's Roadmap line |
+| `wm instructions`; `wm show <change>`, for the outcome | the specs, through the merge; `## Outcome` with `- Built:` and `- Differs:`; the change folder moved to `changes/archive/`; through `wm archive`, the milestone's Roadmap line and an `(archived)` record in its Log |
 
 If the archive is refused for an unaccepted change, unticked items or a conflict,
 it goes back to `/wm-apply` or `/wm-update`; a missing review only you may
