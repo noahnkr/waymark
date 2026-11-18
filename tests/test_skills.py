@@ -107,6 +107,50 @@ def test_scenario_open_questions() -> None:
 def test_scenario_no_tiny_path_offer() -> None:
     """Requirement "Explore's closing offers": four offers, none naming wm-fix."""
     offers = section(assets.skill("wm-explore"), "Closing offers")
-    numbered = [line for line in offers.splitlines() if line[:1].isdigit()]
-    assert len(numbered) == 4
+    new, resumed = offer_lists(offers)
+    assert (len(new), len(resumed)) == (4, 4)
     assert "wm-fix" not in offers
+
+
+def offer_lists(offers: str) -> tuple[list[str], list[str]]:
+    """The numbered offers for a new idea and for a resumed exploration."""
+    new_part, _, resumed_part = offers.partition("For a resumed exploration:")
+    _, _, new_part = new_part.partition("For a new idea:")
+
+    def numbered(text: str) -> list[str]:
+        return [line for line in text.splitlines() if line[:1].isdigit()]
+
+    return numbered(new_part), numbered(resumed_part)
+
+
+def test_scenario_started_with_an_explorations_name() -> None:
+    """Requirement "Resuming an exploration": a named exploration is read and continued."""
+    first = section(assets.skill("wm-explore"), "Steps").split("\n2. ", 1)[0]
+    assert "name of an active exploration" in first
+    assert "`wm show <exploration>`" in first
+    assert "changed since" in first
+    assert "continue from its Questions and Approaches" in first
+
+
+def test_scenario_offers_for_a_resumed_exploration() -> None:
+    """Requirement "Explore's closing offers": the four offers for a resumed exploration."""
+    offers = section(assets.skill("wm-explore"), "Closing offers")
+    _, resumed = offer_lists(offers)
+    assert [line.split("**")[1] for line in resumed] == [
+        "Do nothing.",
+        "Update it.",
+        "Start a proposal.",
+        "Start a milestone",
+    ]
+    assert "wm exploration drop" in resumed[1]
+    assert "--from <exploration>" in resumed[2]
+    assert "--from <exploration>" in resumed[3]
+    assert "never edit it by hand" in offers
+    assert "led-to [" not in assets.skill("wm-explore")
+
+
+def test_scenario_proposal_from_an_exploration() -> None:
+    """Requirement "Explore's closing offers": wm-propose names the exploration with --from."""
+    steps = section(assets.skill("wm-propose"), "Steps")
+    naming = next(line for line in steps.splitlines() if line.startswith("3. **Name.**"))
+    assert "--from <exploration>" in naming

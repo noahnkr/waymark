@@ -72,7 +72,7 @@
 
 ## 3. Skills and docs
 
-- [ ] 3.1 Teach `wm-explore` to resume an exploration, and both skills to use `--from`
+- [x] 3.1 Teach `wm-explore` to resume an exploration, and both skills to use `--from`
   - Criteria:
     - `wm-explore` has a first step that, for a named active exploration or a matching one the human confirms, reads it with `wm show`, reports what changed in the record since, and continues from its Questions and Approaches
     - its closing offers for a resumed exploration are do nothing, update or drop it with `wm exploration drop`, a proposal, and a milestone with `--from`; no offer names `wm-fix`, and nothing tells the planner to write a Status line by hand
