@@ -296,6 +296,21 @@ def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:
     assert (state.milestones["tidy-docs"].archived, state.milestones["tidy-docs"].total) == (1, 1)
 
 
+def test_exploration_is_dropped_from_the_command_line(session: Session) -> None:
+    session.run("init")
+    session.run("new", "exploration", "result-paging")
+    output = session.run("exploration", "drop", "result-paging", "--reason", "Not needed.")
+    assert f"explorations/archive/{TODAY}-result-paging.md" in output
+    assert "- Status: dropped" in session.read(f"explorations/archive/{TODAY}-result-paging.md")
+    with pytest.raises(SystemExit) as exit_info:
+        main(["exploration", "drop", "result-paging"])
+    assert exit_info.value.code == EXIT_USAGE
+    session.capsys.readouterr()
+    assert "result-paging" in session.run(
+        "exploration", "drop", "result-paging", "--reason", "Again.", expect=EXIT_REFUSED
+    )
+
+
 def test_refused_command_exits_1_and_says_what_to_do(session: Session) -> None:
     refusal = session.run("new", "change", "add-limit", expect=EXIT_REFUSED)
     assert refusal.startswith("wm: No Waymark project found")

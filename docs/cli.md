@@ -330,6 +330,25 @@ wm roadmap move <milestone> <change> [--after CHANGE] [--first] [--by NAME]
 - `--first`: put it at the top of the roadmap
 - `--by`: who the record names as its writer (default: your git name)
 
+## wm exploration
+
+End an exploration that won't be acted on: drop it, with the reason.
+
+```
+wm exploration <command>
+```
+
+## wm exploration drop
+
+Drop an open exploration with the reason, and move it to the archive.
+
+```
+wm exploration drop <exploration> --reason REASON
+```
+
+- `exploration`: the exploration's name
+- `--reason`: why it won't be acted on (required)
+
 ## wm status
 
 Show where things stand: changes, milestones, what needs you.

@@ -53,7 +53,7 @@
     - `uv run --no-sync pytest tests/services`
   - Build: delegate
   - (note) 2026-11-18 by wm-implementer: Links from other active documents to an exploration moved by wm archive or wm close are not re-aimed; the record asks only for the exploration's own links. A spec or active change linking the exploration would then fail wm check's link check.
-- [ ] 2.3 Add `wm exploration drop <exploration> --reason "<why>"`
+- [x] 2.3 Add `wm exploration drop <exploration> --reason "<why>"`
   - Criteria:
     - an open exploration gets `- Status: dropped`, the reason as its Conclusion's last paragraph after any text already there, and moves to `explorations/archive/<date>-<name>.md`, in one transaction
     - a `led-to` exploration is refused with a reason that says it ends when its work is archived; an unknown one is refused naming the active explorations; a refusal changes nothing

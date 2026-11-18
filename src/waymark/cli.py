@@ -291,6 +291,10 @@ def _roadmap_drop(args: argparse.Namespace) -> int:
     )
 
 
+def _exploration_drop(args: argparse.Namespace) -> int:
+    return _report(lifecycle.drop_exploration(_here(), args.exploration, args.reason, _today()))
+
+
 def _roadmap_move(args: argparse.Namespace) -> int:
     after = None if args.first else args.after
     return _report(
@@ -650,6 +654,18 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     where.add_argument("--after", metavar="CHANGE", help="put it right after this change's line")
     where.add_argument("--first", action="store_true", help="put it at the top of the roadmap")
     _by(move).set_defaults(handler=_roadmap_move)
+
+    summary = "End an exploration that won't be acted on: drop it, with the reason."
+    exploration_parser = commands.add_parser("exploration", help=summary, description=summary)
+    exploration_commands = exploration_parser.add_subparsers(
+        title="exploration commands", metavar="<command>"
+    )
+    exploration_parser.set_defaults(handler=lambda _: _usage(exploration_parser))
+    summary = "Drop an open exploration with the reason, and move it to the archive."
+    drop_exploration = exploration_commands.add_parser("drop", help=summary, description=summary)
+    drop_exploration.add_argument("exploration", help="the exploration's name")
+    drop_exploration.add_argument("--reason", required=True, help="why it won't be acted on")
+    drop_exploration.set_defaults(handler=_exploration_drop)
 
     _view_command(
         commands, "status", _status, "Show where things stand: changes, milestones, what needs you."
