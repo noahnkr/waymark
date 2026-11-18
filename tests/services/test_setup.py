@@ -153,6 +153,7 @@ RECORD_FOLDERS = (
     "explorations",
     "milestones",
     "milestones/archive",
+    "resources",
 )
 
 

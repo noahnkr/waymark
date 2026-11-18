@@ -47,6 +47,7 @@ RECORD_FOLDERS = (
     EXPLORATIONS,
     MILESTONES,
     f"{MILESTONES}/{ARCHIVE}",
+    RESOURCES,
 )
 """The record's folders, each kept in git by a ``.gitkeep``."""
 

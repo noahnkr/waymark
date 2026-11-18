@@ -11,7 +11,7 @@
   - Verify:
     - `test_scenario_complete_resource`, `test_scenario_missing_section`, `test_scenario_date_in_another_form`, `test_scenario_unknown_kind` and `test_scenario_unknown_spec` in a new `tests/record/test_resources.py`
     - `wm check` passes on this repository
-- [ ] 1.2 Keep `resources/` in git
+- [x] 1.2 Keep `resources/` in git
   - Criteria:
     - `resources` is in `RECORD_FOLDERS`, so `wm init` writes `resources/.gitkeep` in a new record, and `wm update` writes it when it is missing and lists `created: waymark/resources/.gitkeep`
     - this repository's record gets `waymark/resources/.gitkeep` in the same commit

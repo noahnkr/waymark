@@ -185,6 +185,8 @@ waymark/
     .gitkeep
     archive/
       .gitkeep
+  resources/
+    .gitkeep
   specs/
     .gitkeep
     appearance.md                             the living spec, now with dark mode
