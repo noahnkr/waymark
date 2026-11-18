@@ -108,14 +108,15 @@ wm hook <tool> <event>
 
 ## wm new
 
-Create a change, milestone or exploration from the built-in template.
+Create a change, milestone, exploration or resource from the built-in template.
 
 ```
-wm new <change|milestone|exploration> <name> [--short] [--owner NAME] [--milestone MILESTONE] [--after CHANGE]
+wm new <change|milestone|exploration|resource> <name> [resource-kind] [--short] [--owner NAME] [--milestone MILESTONE] [--after CHANGE]
 ```
 
-- `kind`: one of `change`, `milestone`, `exploration`
+- `kind`: one of `change`, `milestone`, `exploration`, `resource`
 - `name`: a kebab-case name, for example add-search-limit
+- `resource_kind`: for a resource only: service, platform, account, database, dataset or document
 - `--short`: put a change on the short path
 - `--owner`: a change's owner (default: your git name)
 - `--milestone`: the milestone a change belongs to; links it from the milestone's roadmap
@@ -348,7 +349,7 @@ wm show [--json] <name> [--kind KIND] [--from ATLAS]
 
 - `--json`: print the view as JSON, with its schema version
 - `name`: its name; an archived change also by its dated folder name
-- `--kind`: which kind, if the name is shared; one of `change`, `spec`, `milestone`, `exploration`
+- `--kind`: which kind, if the name is shared; one of `change`, `spec`, `milestone`, `exploration`, `resource`
 - `--from`: read a spec from an atlas this project references
 
 ## wm ls
@@ -356,11 +357,11 @@ wm show [--json] <name> [--kind KIND] [--from ATLAS]
 List changes, specs, milestones or explorations.
 
 ```
-wm ls [--json] <changes|specs|milestones|explorations> [--archived] [--from ATLAS]
+wm ls [--json] <changes|specs|milestones|explorations|resources> [--archived] [--from ATLAS]
 ```
 
 - `--json`: print the view as JSON, with its schema version
-- `kind`: one of `changes`, `specs`, `milestones`, `explorations`
+- `kind`: one of `changes`, `specs`, `milestones`, `explorations`, `resources`
 - `--archived`: include archived changes or milestones
 - `--from`: list the specs of an atlas this project references
 

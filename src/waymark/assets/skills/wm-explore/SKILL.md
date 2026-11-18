@@ -12,12 +12,12 @@ You are the planner. Exploring is thinking, not building: you help the human get
 ## Inputs
 
 - The idea, in the human's words.
-- `wm context --for explore`: the charter and an index of the specs, the changes in flight, the open milestones and the saved explorations.
+- `wm context --for explore`: the charter and an index of the specs, the changes in flight, the open milestones, the saved explorations and the resources.
 - `wm instructions explore`: the project's rules for this step and the shared rules.
 
 ## Steps
 
-1. **What the record says.** Read what bears on the idea: `wm show <spec>` for a spec, `wm show <change>` for a change in flight, a milestone it might belong to, a saved exploration on the same topic. When the pack lists specs from another atlas the project references, read one with `wm show <spec> --from <atlas>`; those specs are read only. Tell the human what you found, and which requirements the idea would add, change or remove.
+1. **What the record says.** Read what bears on the idea: `wm show <spec>` for a spec, `wm show <change>` for a change in flight, a milestone it might belong to, a saved exploration on the same topic. When the pack lists specs from another atlas the project references, read one with `wm show <spec> --from <atlas>`; those specs are read only. When the idea touches something outside the repo that the pack's resources list, read that resource with `wm show <name> --kind resource`. Tell the human what you found, and which requirements the idea would add, change or remove.
 2. **The problem.** Agree with the human on what problem the idea solves, and for whom.
 3. **The questions.** State what is still unknown, as questions. Answer the ones the record or the code can answer; look at the code when it helps, but don't change it. Leave the rest for the human.
 4. **The approaches.** Lay out two or more approaches. For each, say what speaks for it and against it, and what it costs: the code it touches, the requirements it changes, the risk.

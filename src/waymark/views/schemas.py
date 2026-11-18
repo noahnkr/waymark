@@ -294,6 +294,18 @@ SCHEMAS: dict[str, Schema] = {
             "sections": SECTIONS,
         },
     ),
+    "show.resource": _payload(
+        "show.resource",
+        {
+            "name": STRING,
+            "title": STRING,
+            "kind": TEXT_OR_NULL,
+            "serves": NAMES,
+            "status": TEXT_OR_NULL,
+            "verified": DATE_OR_NULL,
+            "sections": SECTIONS,
+        },
+    ),
 }
 """Every payload's schema, by the name after ``wm.`` in its ``schema`` field."""
 
@@ -326,6 +338,18 @@ _DELTAS = _array(_object({"spec": STRING, "text": STRING}))
 
 
 _PACK_MILESTONE = _nullable(_object({"name": STRING, "goal": STRING, "non_goals": STRING}))
+_PACK_RESOURCES = _array(
+    _object(
+        {
+            "name": STRING,
+            "kind": TEXT_OR_NULL,
+            "what_it_is": STRING,
+            "access": STRING,
+            "outline": _array(_object({"level": INTEGER, "title": STRING})),
+            "command": STRING,
+        }
+    )
+)
 
 
 def _implement_pack() -> Schema:
@@ -337,6 +361,7 @@ def _implement_pack() -> Schema:
             "item": _PACK_ITEM,
             "context": STRING,
             "milestone": _PACK_MILESTONE,
+            "resources": _PACK_RESOURCES,
             "rules": STRING,
             "proposal": _nullable(SECTIONS),
             "deltas": _DELTAS,
@@ -361,6 +386,7 @@ def _review_pack() -> Schema:
             "resolutions": NAMES,
             "context": STRING,
             "milestone": _PACK_MILESTONE,
+            "resources": _PACK_RESOURCES,
             "rules": STRING,
             "deltas": _DELTAS,
             "design": TEXT_OR_NULL,
@@ -431,6 +457,17 @@ SCHEMAS.update(
                             "specs": _array(
                                 _object({"name": STRING, "title": STRING, "purpose": STRING})
                             ),
+                        }
+                    )
+                ),
+                "resources": _array(
+                    _object(
+                        {
+                            "name": STRING,
+                            "title": STRING,
+                            "kind": TEXT_OR_NULL,
+                            "status": TEXT_OR_NULL,
+                            "serves": NAMES,
                         }
                     )
                 ),

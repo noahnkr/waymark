@@ -28,6 +28,7 @@ from waymark.record.record import (
     spec_history,
 )
 from waymark.record.records import RecordKind
+from waymark.record.resources import Resource
 from waymark.record.specs import Spec
 from waymark.record.state import (
     AcceptanceState,
@@ -65,6 +66,7 @@ VERSIONS = {
     "show.spec": 1,
     "show.milestone": 1,
     "show.exploration": 1,
+    "show.resource": 1,
     "instructions": INSTRUCTIONS_VERSION,
     "context.explore": CONTEXT_VERSION,
     "context.implement": DELEGATED_VERSION,
@@ -74,7 +76,7 @@ VERSIONS = {
 }
 """The schema version of each payload. A breaking change to a payload bumps its number."""
 
-KINDS = ("change", "spec", "milestone", "exploration")
+KINDS = ("change", "spec", "milestone", "exploration", "resource")
 RECENT = 5
 
 
@@ -374,12 +376,25 @@ def ls(record: Record, kind: str, *, archived: bool = False, source: str | None 
                 {"name": entry.name, "state": "closed", "detail": entry.date.isoformat()}
                 for entry in sorted(record.archived_milestones, reverse=True)
             )
+    elif kind == "resource":
+        entries = [
+            {
+                "name": name,
+                "state": resource.status or "unknown",
+                "detail": f"{resource.kind or 'unknown'}, serves {_served(resource)}",
+            }
+            for name, resource in sorted(record.resources.items())
+        ]
     else:
         entries = [
             {"name": name, "state": exploration.status.value, "detail": exploration.detail or ""}
             for name, exploration in sorted(state.explorations.items())
         ]
     return {**_header("ls"), "kind": kind, "from": source, "entries": entries}
+
+
+def _served(resource: Resource) -> str:
+    return ", ".join(resource.serves) or "none"
 
 
 def _record(record: ReviewRecord, numbers: tuple[str, ...] = ()) -> Payload:
@@ -559,6 +574,20 @@ def show_exploration(record: Record, exploration: Exploration) -> Payload:
     }
 
 
+def show_resource(resource: Resource) -> Payload:
+    """A resource in full: its lines, then its sections."""
+    return {
+        **_header("show.resource"),
+        "name": resource.name,
+        "title": resource.title,
+        "kind": resource.kind,
+        "serves": list(resource.serves),
+        "status": resource.status,
+        "verified": resource.verified.isoformat() if resource.verified else None,
+        "sections": dict(resource.sections),
+    }
+
+
 def _archived(record: Record, name: str) -> ArchiveEntry | None:
     matches = [
         entry
@@ -587,8 +616,10 @@ def show(record: Record, name: str, kind: str | None = None) -> Payload:
         found["milestone"] = show_milestone(record, record.milestones[name])
     if kind in (None, "exploration") and name in record.explorations:
         found["exploration"] = show_exploration(record, record.explorations[name])
+    if kind in (None, "resource") and name in record.resources:
+        found["resource"] = show_resource(record.resources[name])
     if not found:
-        what = f"{kind} named" if kind else "change, spec, milestone or exploration named"
+        what = f"{kind} named" if kind else "change, spec, milestone, exploration or resource named"
         raise Refusal(f'There is no {what} "{name}". List what there is with "wm ls <kind>".')
     if len(found) > 1:
         kinds = " and ".join(found)

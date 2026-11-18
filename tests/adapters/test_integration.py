@@ -149,6 +149,7 @@ KEEPS = tuple(
         "explorations",
         "milestones",
         "milestones/archive",
+        "resources",
     )
 )
 
@@ -167,6 +168,18 @@ def test_update_adds_missing_record_folder_keeps(initialized: Path) -> None:
         assert keep in done.paths
     assert done.message.splitlines()[-1] == "Review the changes to waymark/ and commit them."
     assert load_record(find_project(initialized)).problems == ()
+
+
+def test_scenario_record_without_resources(initialized: Path) -> None:
+    """Scenario: Record without resources."""
+    (initialized / "waymark/resources/.gitkeep").unlink()
+    (initialized / "waymark/resources").rmdir()
+
+    done = integration.update(initialized)
+
+    assert (initialized / "waymark/resources/.gitkeep").read_bytes() == b""
+    created = [line for line in done.message.splitlines() if line.endswith(".gitkeep")]
+    assert created == ["created: waymark/resources/.gitkeep"]
 
 
 def test_update_leaves_record_folder_keeps_alone(initialized: Path) -> None:

@@ -23,6 +23,7 @@ from waymark.record.links import LinkChecker
 from waymark.record.milestones import GOAL, NON_GOALS
 from waymark.record.record import Record
 from waymark.record.records import RecordKind
+from waymark.record.resources import ACCESS, WHAT_IT_IS
 from waymark.record.state import (
     AcceptanceState,
     ChangeState,
@@ -264,6 +265,7 @@ def _implement_pack(record: Record, change_name: str, number: str) -> dict[str, 
         "item": _item(record, change, item),
         "context": charter.context if charter else "",
         "milestone": _milestone(record, change),
+        "resources": _serving_resources(record, change),
         "rules": charter.rules.get(Step.APPLY, "") if charter else "",
         "proposal": dict(proposal.sections) if proposal else None,
         "deltas": _deltas(change),
@@ -298,6 +300,7 @@ def _review_pack(record: Record, change_name: str) -> dict[str, Any]:
         "resolutions": [r.text for r in records if r.kind is RecordKind.RESOLVED],
         "context": charter.context if charter else "",
         "milestone": _milestone(record, change),
+        "resources": _serving_resources(record, change),
         "rules": charter.rules.get(Step.REVIEW, "") if charter else "",
         "deltas": _deltas(change),
         "design": _text(change.design.doc) if change.design else None,
@@ -379,7 +382,42 @@ def _explore_pack(record: Record) -> dict[str, Any]:
             for name, exploration in sorted(state.explorations.items())
         ],
         "references": _references(record),
+        "resources": [
+            {
+                "name": name,
+                "title": resource.title,
+                "kind": resource.kind,
+                "status": resource.status,
+                "serves": list(resource.serves),
+            }
+            for name, resource in sorted(record.resources.items())
+        ],
     }
+
+
+def _serving_resources(record: Record, change: Change) -> list[dict[str, Any]]:
+    """The active resources that serve a spec the change has a delta for: what each is and how
+    to reach it, with the outline of the rest to read on demand."""
+    specs = set(change.deltas)
+    found: list[dict[str, Any]] = []
+    for name, resource in sorted(record.resources.items()):
+        if not resource.active or not specs.intersection(resource.serves):
+            continue
+        found.append(
+            {
+                "name": name,
+                "kind": resource.kind,
+                "what_it_is": resource.sections[WHAT_IT_IS],
+                "access": resource.sections[ACCESS],
+                "outline": [
+                    {"level": heading.level, "title": heading.title}
+                    for heading in resource.outline
+                    if heading.title not in (WHAT_IT_IS, ACCESS) or heading.level != 2  # noqa: PLR2004
+                ],
+                "command": f"wm show {name} --kind resource",
+            }
+        )
+    return found
 
 
 def context_pack(

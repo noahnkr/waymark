@@ -816,3 +816,56 @@ def test_agent_may_not_edit_a_milestone_log(accepted: Workspace) -> None:
     decision = replace(accepted, MILESTONE_FILE_PATH, "- (proposed) 2026-11-20 add-limit\n", "")
     assert not decision.allow
     assert "milestone's Log" in decision.reason
+
+
+RESOURCE_FILE = "resources/nightly-sync.md"
+NIGHTLY = (
+    "# Nightly sync\n\n- Kind: platform\n- Serves: none\n- Status: active\n"
+    "- Verified: 2026-11-17\n\n## What it is\n\nA scheduled job.\n\n## Access\n\nNone.\n\n"
+    "## Interface\n\nNone.\n\n## Data\n\nNone.\n\n"
+    "## Configuration\n\n### prod\n\nRuns at 05:00.\n\n## Verification\n\nNone.\n"
+)
+
+
+def test_scenario_planner_edits_outside_a_change(project: Workspace) -> None:
+    """Requirement "Resources edited by hand": no change in flight, and the planner edits one."""
+    project.write(RESOURCE_FILE, NIGHTLY)
+    assert project.record().changes == {}
+    assert edit(project, RESOURCE_FILE, content=NIGHTLY.replace("A scheduled", "A nightly")).allow
+    assert edit(project, "resources/new-one.md", content=NIGHTLY).allow
+
+
+def test_scenario_implementer_edits_a_resource(accepted: Workspace) -> None:
+    accepted.write(RESOURCE_FILE, NIGHTLY)
+    decision = replace(
+        accepted, RESOURCE_FILE, "Runs at 05:00.", "Runs at 06:00.", Role.IMPLEMENTER
+    )
+    assert decision.allow
+
+
+def test_scenario_reviewer_edits_a_resource(accepted: Workspace) -> None:
+    accepted.write(RESOURCE_FILE, NIGHTLY)
+    decision = replace(accepted, RESOURCE_FILE, "Runs at 05:00.", "Runs at 06:00.", Role.REVIEWER)
+    assert not decision.allow
+    assert "A reviewer edits nothing" in decision.reason
+
+
+def test_scenario_implementer_edits_a_proposal(accepted: Workspace) -> None:
+    decision = replace(
+        accepted, f"{FOLDER}/proposal.md", "Long result lists", "Lists", Role.IMPLEMENTER
+    )
+    assert not decision.allow
+    assert "An implementer doesn't edit the record" in decision.reason
+
+
+def test_scenario_resource_updated_as_tiny_work(project: Workspace) -> None:
+    project.write(RESOURCE_FILE, NIGHTLY)
+    updated = NIGHTLY.replace("Runs at 05:00.", "Runs at 06:00.").replace(
+        "2026-11-17", "2026-11-18"
+    )
+    assert edit(project, RESOURCE_FILE, content=updated).allow
+    project.write(RESOURCE_FILE, updated)
+    record = project.record()
+    assert record.changes == {}
+    assert record.problems == ()
+    assert record.resources["nightly-sync"].sections["Configuration"].endswith("06:00.")

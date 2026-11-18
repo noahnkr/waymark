@@ -281,3 +281,15 @@ def test_wm_new_change_takes_after(project: Workspace, monkeypatch: pytest.Monke
     assert "- After: add-limit\n" in project.read("changes/add-paging/proposal.md")
     assert main(["new", "exploration", "paging", "--after", "add-limit"]) == EXIT_REFUSED
     assert not project.path("explorations/paging.md").exists()
+
+
+def test_wm_new_resource_and_its_kind(project: Workspace, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(project.root)
+    assert main(["new", "resource", "stripe", "service"]) == EXIT_OK
+    assert "- Kind: service\n" in project.read("resources/stripe.md")
+    assert main(["new", "resource", "mailgun"]) == EXIT_REFUSED
+    assert not project.path("resources/mailgun.md").exists()
+    for kind in ("change", "milestone", "exploration"):
+        assert main(["new", kind, "add-limit", "service"]) == EXIT_REFUSED
+    assert not project.path("changes/add-limit").exists()
+    assert not project.path("explorations/add-limit.md").exists()

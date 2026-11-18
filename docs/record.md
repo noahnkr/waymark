@@ -8,7 +8,7 @@ For how the notes fit into the workflow, read [Concepts](concepts.md).
 - [Two kinds of line](#two-kinds-of-line)
 - [Settings](#settings-configtoml) · [Charter](#charter-chartermd) · [Spec](#spec-specsareamd)
 - [Proposal](#proposal) · [Delta](#delta) · [Design](#design) · [Task list](#task-list)
-- [Milestone](#milestone) · [Exploration](#exploration)
+- [Milestone](#milestone) · [Exploration](#exploration) · [Resource](#resource)
 - [Records](#records) · [What holds it together](#what-holds-it-together)
 
 ```text
@@ -25,10 +25,11 @@ waymark/
   milestones/<name>/milestone.md
   milestones/archive/YYYY-MM-DD-<name>/
   explorations/<name>.md
+  resources/<name>.md
 ```
 
-Each of the six folders, `specs/`, `changes/`, `changes/archive/`,
-`explorations/`, `milestones/` and `milestones/archive/`, holds an empty
+Each of the seven folders, `specs/`, `changes/`, `changes/archive/`,
+`explorations/`, `milestones/`, `milestones/archive/` and `resources/`, holds an empty
 `.gitkeep`, so git keeps it while it holds nothing else. `wm init` writes them
 with a new record, and `wm update` adds any that are missing. No `wm` command
 removes one, and `wm check` doesn't read them.
@@ -337,6 +338,51 @@ that offer.
   reason when parked), Related.
 
 **Checks:** `missing-status`, `unknown-status`, `parked-without-reason`.
+
+## Resource
+
+`resources/<name>.md`. The as-built facts about one thing outside the repo that
+the project depends on: a service it talks to, a platform it runs on, an account
+it signs in with, a database, a dataset or a document. Created by
+`wm new resource <name> <kind>`, listed by `wm ls resources` and shown by
+`wm show <name> --kind resource`.
+
+**Never store a secret in a resource**: no passwords, keys, tokens or connection
+strings. Say where the secret lives instead. `wm` doesn't scan for secrets.
+
+One resource covers one account or one separate deployment. The environments of
+one deployment, such as dev and prod, are `###` subsections inside its sections.
+
+| Line | What it holds |
+|---|---|
+| `- Kind:` | `service`, `platform`, `account`, `database`, `dataset` or `document`. |
+| `- Serves:` | The specs it serves, separated by commas, or `none`. |
+| `- Status:` | `active`, or `retired` once nothing uses it. |
+| `- Verified:` | The day its facts were last checked, written `YYYY-MM-DD`. |
+
+| Section | What goes in it |
+|---|---|
+| `## What it is` | What it is, who runs it and what the project uses it for. |
+| `## Access` | How to reach it, and where its secrets live. |
+| `## Interface` | How the code talks to it: endpoints, formats, ids, limits, quirks. |
+| `## Data` | What it holds or returns that the project relies on. |
+| `## Configuration` | How it is set up for this project, one `###` per environment. |
+| `## Verification` | How to check its facts still hold. |
+
+All six sections are always there; one that doesn't apply holds `None.`.
+
+- **Who edits it:** you and the planner edit a resource by hand, inside a change
+  or outside one as tiny work, and an implementer may edit one while building
+  its item. A reviewer edits nothing. A resource never goes through deltas.
+- **In a change:** a change that sets up or alters something outside the repo
+  gets an item to create or update its resource and its `- Verified:` date.
+- **For agents:** the explore context pack lists every resource. The implement
+  and review packs carry each active resource that serves a spec the change has
+  a delta for: its What it is and Access sections and the outline of the rest,
+  which the agent reads with `wm show`. Retired resources are left out.
+
+**Checks:** `missing-line`, `missing-section`, `unknown-kind`, `unknown-status`,
+`invalid-date`, `unknown-spec` (a `- Serves:` name that isn't a spec).
 
 ## Records
 

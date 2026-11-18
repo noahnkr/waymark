@@ -14,6 +14,7 @@ Every read command takes `--json`. Each payload starts with `schema` (its name) 
 | [`wm.show.spec`](#wmshowspec) | 1 | `wm show` for a spec |
 | [`wm.show.milestone`](#wmshowmilestone) | 1 | `wm show` for a milestone |
 | [`wm.show.exploration`](#wmshowexploration) | 1 | `wm show` for an exploration |
+| [`wm.show.resource`](#wmshowresource) | 1 | `wm show` for a resource |
 | [`wm.instructions`](#wminstructions) | 1 | `wm instructions` |
 | [`wm.context.explore`](#wmcontextexplore) | 1 | `wm context --for explore` |
 | [`wm.context.implement`](#wmcontextimplement) | 2 | `wm context <change> <item> --for implement` |
@@ -423,7 +424,8 @@ Printed by `wm ls`.
         "change",
         "spec",
         "milestone",
-        "exploration"
+        "exploration",
+        "resource"
       ]
     },
     "from": {
@@ -1545,6 +1547,75 @@ Printed by `wm show` for an exploration.
 }
 ```
 
+## wm.show.resource
+
+Printed by `wm show` for a resource.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "wm.show.resource",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "wm.show.resource"
+    },
+    "version": {
+      "const": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "kind": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "serves": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "verified": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "version",
+    "name",
+    "title",
+    "kind",
+    "serves",
+    "status",
+    "verified",
+    "sections"
+  ],
+  "additionalProperties": false
+}
+```
+
 ## wm.instructions
 
 Printed by `wm instructions`.
@@ -1905,6 +1976,46 @@ Printed by `wm context --for explore`.
         ],
         "additionalProperties": false
       }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "serves": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "kind",
+          "status",
+          "serves"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
@@ -1917,7 +2028,8 @@ Printed by `wm context --for explore`.
     "changes",
     "milestones",
     "explorations",
-    "references"
+    "references",
+    "resources"
   ],
   "additionalProperties": false
 }
@@ -2105,6 +2217,60 @@ Printed by `wm context <change> <item> --for implement`.
         }
       ]
     },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "what_it_is": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string"
+          },
+          "outline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "integer"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "level",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "command": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "what_it_is",
+          "access",
+          "outline",
+          "command"
+        ],
+        "additionalProperties": false
+      }
+    },
     "rules": {
       "type": "string"
     },
@@ -2187,6 +2353,7 @@ Printed by `wm context <change> <item> --for implement`.
     "item",
     "context",
     "milestone",
+    "resources",
     "rules",
     "proposal",
     "deltas",
@@ -2385,6 +2552,60 @@ Printed by `wm context <change> --for review`.
         }
       ]
     },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "what_it_is": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string"
+          },
+          "outline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "integer"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "level",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "command": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "what_it_is",
+          "access",
+          "outline",
+          "command"
+        ],
+        "additionalProperties": false
+      }
+    },
     "rules": {
       "type": "string"
     },
@@ -2435,6 +2656,7 @@ Printed by `wm context <change> --for review`.
     "resolutions",
     "context",
     "milestone",
+    "resources",
     "rules",
     "deltas",
     "design",

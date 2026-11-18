@@ -34,6 +34,14 @@ All notable changes to Waymark, one entry per release.
   has merged. The default branch comes from the `origin` remote's HEAD, or is
   `main`. The skills open a plan pull request for a new milestone and create
   each change's branch from its base.
+- **Resources.** A new kind of note, `waymark/resources/<name>.md`, holds the
+  facts about one thing outside the repo: its kind, the specs it serves, its
+  status, the day it was verified, and six sections. `wm new resource <name>
+  <kind>`, `wm ls resources` and `wm show <name> --kind resource` work with them,
+  and `wm check` holds them to their layout. The explore context pack gains a
+  `resources` index, and the implement and review packs a `resources` field with
+  the resources serving the change's specs. An implementer may edit resources,
+  and `wm init` and `wm update` keep `resources/` in git.
 
 ## [0.2.0] - 2026-11-16
 

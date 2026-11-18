@@ -80,6 +80,8 @@ SIZING_RULES = (
     "Split an item whose criteria run past about five bullets, or that spans unrelated parts "
     "of the code.",
     "Give docs and skills a change makes stale their own item.",
+    "Give a change that sets up or alters something outside the repo an item to create or "
+    "update its resource.",
     "Order the items so the record stays healthy after each one is ticked.",
 )
 """The rules for sizing task items, given at the tasks step."""

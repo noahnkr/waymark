@@ -152,6 +152,7 @@ def json_reference() -> str:
         "show.spec": "`wm show` for a spec",
         "show.milestone": "`wm show` for a milestone",
         "show.exploration": "`wm show` for an exploration",
+        "show.resource": "`wm show` for a resource",
         "instructions": "`wm instructions`",
         "context.explore": "`wm context --for explore`",
         "context.implement": "`wm context <change> <item> --for implement`",

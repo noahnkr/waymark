@@ -28,6 +28,7 @@ GLOSSARY = (
     "Archive",
     "Owner",
     "Exploration",
+    "Resource",
     "Milestone",
     "Planner",
     "Implementer",

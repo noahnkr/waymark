@@ -45,6 +45,7 @@ The text output SHALL show them as "Shared rules", and the JSON output SHALL hol
 - one item per slice that can be built and verified on its own;
 - an item whose criteria run past about five bullets, or that spans unrelated parts of the code, is split;
 - docs and skills a change makes stale get their own item;
+- a change that sets up or alters something outside the repo gets an item to create or update its resource;
 - items come in an order where the record stays healthy after each is ticked.
 
 #### Scenario: Specs step
@@ -56,3 +57,8 @@ The text output SHALL show them as "Shared rules", and the JSON output SHALL hol
 - GIVEN a change whose next step is tasks
 - WHEN the planner runs `wm instructions --change <change> --json`
 - THEN its guidance holds the rule that an item whose criteria run past about five bullets is split
+
+#### Scenario: Resource item
+- GIVEN a change whose next step is tasks
+- WHEN the planner runs `wm instructions --change <change> --json`
+- THEN its guidance holds the rule that a change that alters something outside the repo gets an item to create or update its resource

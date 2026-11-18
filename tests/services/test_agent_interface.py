@@ -200,6 +200,18 @@ def test_scenario_tasks_step(project: Workspace) -> None:
     assert not set(WRITING_RULES + SIZING_RULES) & set(at(project, "design")["guidance"])
 
 
+def test_scenario_resource_item(project: Workspace) -> None:
+    """Requirement "Writing and sizing rules": the tasks step asks for a resource item."""
+    project.change(tasks=None)
+    guidance = valid(at(project))["guidance"]
+    rule = (
+        "Give a change that sets up or alters something outside the repo an item to create or "
+        "update its resource."
+    )
+    assert rule in guidance
+    assert rule not in at(project, "specs")["guidance"]
+
+
 ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n  - Verify: a test\n"
 
 
@@ -842,3 +854,93 @@ def test_scenario_dependency_merged_in_the_instructions(project: Workspace) -> N
 def test_explore_instructions_have_no_branch(project: Workspace) -> None:
     payload = valid(instructions(project.record(), "explore", None))
     assert (payload["branch"], payload["base"]) == (None, None)
+
+
+def a_resource(title: str, serves: str, status: str = "active") -> str:
+    return (
+        f"# {title}\n\n- Kind: service\n- Serves: {serves}\n- Status: {status}\n"
+        "- Verified: 2026-11-17\n\n"
+        f"## What it is\n\n{title} takes payments.\n\n"
+        f"## Access\n\nThe key is in the vault item {title}.\n\n"
+        "## Interface\n\nNone.\n\n## Data\n\nNone.\n\n"
+        "## Configuration\n\n### dev\n\nTest mode, secret settings.\n\n### prod\n\nLive mode.\n\n"
+        "## Verification\n\nA test charge.\n"
+    )
+
+
+def billing_change(project: Workspace, *, independent: bool = False) -> Workspace:
+    """An accepted change with a delta for the spec billing."""
+    project.write("specs/billing.md", spec(title="Billing", purpose="How billing behaves."))
+    project.write("specs/notifications.md", spec(title="Notifications", purpose="Mail."))
+    impact = "- Specs: `billing`\n- User-visible: refunds\n- Code: billing\n"
+    text = proposal(impact=impact)
+    if independent:
+        text = text.replace("- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Review: independent\n")
+    return accepted(
+        project,
+        proposal_text=text,
+        deltas={"billing": delta(title="Billing", added=(requirement("Refunds"),))},
+    )
+
+
+def test_scenario_serving_resource_in_the_implement_pack(project: Workspace) -> None:
+    """Requirement "Resources in context packs"."""
+    billing_change(project)
+    project.write("resources/stripe.md", a_resource("Stripe", "billing"))
+    built = pack(project, "implement")
+    [stripe] = built["resources"]
+    assert (stripe["name"], stripe["kind"]) == ("stripe", "service")
+    assert stripe["what_it_is"] == "Stripe takes payments."
+    assert stripe["access"] == "The key is in the vault item Stripe."
+    titles = [heading["title"] for heading in stripe["outline"]]
+    assert {"Configuration", "dev", "prod"} <= set(titles)
+    assert "What it is" not in titles
+    assert stripe["command"] == "wm show stripe --kind resource"
+    text = render.to_text(built, PLAIN)
+    assert "Stripe takes payments." in text
+    assert "wm show stripe --kind resource" in text
+    assert "secret settings" not in text
+
+
+def test_scenario_resource_for_another_spec(project: Workspace) -> None:
+    billing_change(project)
+    project.write("resources/mailgun.md", a_resource("Mailgun", "notifications"))
+    built = pack(project, "implement")
+    assert built["resources"] == []
+    assert "mailgun" not in render.to_text(built, PLAIN).casefold()
+
+
+def test_scenario_retired_resource(project: Workspace) -> None:
+    billing_change(project, independent=True)
+    project.write("resources/heroku.md", a_resource("Heroku", "billing", "retired"))
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    built = pack(project, "review")
+    assert built["resources"] == []
+    assert "heroku" not in render.to_text(built, PLAIN).casefold()
+
+
+def test_scenario_explore_index(project: Workspace) -> None:
+    project.write("specs/billing.md", spec(title="Billing", purpose="How billing behaves."))
+    project.write("resources/stripe.md", a_resource("Stripe", "billing"))
+    project.write("resources/heroku.md", a_resource("Heroku", "none", "retired"))
+    built = valid(context_pack(project.record(), "explore"))
+    assert built["resources"] == [
+        {
+            "name": "heroku",
+            "title": "Heroku",
+            "kind": "service",
+            "status": "retired",
+            "serves": [],
+        },
+        {
+            "name": "stripe",
+            "title": "Stripe",
+            "kind": "service",
+            "status": "active",
+            "serves": ["billing"],
+        },
+    ]
+    text = render.to_text(built, PLAIN)
+    assert "- heroku (service, retired, serves none): Heroku" in text
+    assert "- stripe (service, active, serves billing): Stripe" in text
