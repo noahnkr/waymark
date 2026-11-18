@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from tests.conftest import git_init
-from tests.support import ATLAS_CONFIG, CONFIG, DESIGN, TASKS, Workspace, proposal, spec
+from tests.support import ATLAS_CONFIG, CONFIG, DESIGN, TASKS, Workspace, milestone, proposal, spec
 from waymark import assets
 from waymark.hooks.decide import decide
 from waymark.hooks.events import Decision, Event, EventKind, Replacement, Role
@@ -786,3 +786,33 @@ def test_spec_edited_outside_a_change(project: Workspace) -> None:
     decision = edit(project, "specs/search.md", Role.PLANNER, content="# Search\n")
     assert not decision.allow
     assert "they change only when a change is archived or synced" in decision.reason
+
+
+MILESTONE_FILE_PATH = "milestones/faster-search/milestone.md"
+
+
+def test_scenario_agent_adds_a_roadmap_line_by_hand(accepted: Workspace) -> None:
+    accepted.write(MILESTONE_FILE_PATH, milestone("- add-limit: cap\n"))
+    decision = replace(
+        accepted, MILESTONE_FILE_PATH, "- add-limit: cap\n", "- add-limit: cap\n- add-cache: x\n"
+    )
+    assert not decision.allow
+    assert 'the roadmap line "add-cache: x"' in decision.reason
+    assert "wm roadmap add" in decision.reason
+    assert "wm note" not in decision.reason
+
+
+def test_scenario_agent_edits_the_goal(accepted: Workspace) -> None:
+    accepted.write(MILESTONE_FILE_PATH, milestone("- add-limit: cap\n"))
+    decision = replace(
+        accepted, MILESTONE_FILE_PATH, "Answers in a blink.", "Answers in a blink, always."
+    )
+    assert decision.allow
+
+
+def test_agent_may_not_edit_a_milestone_log(accepted: Workspace) -> None:
+    text = milestone("- add-limit: cap\n") + "\n## Log\n\n- (proposed) 2026-11-20 add-limit\n"
+    accepted.write(MILESTONE_FILE_PATH, text)
+    decision = replace(accepted, MILESTONE_FILE_PATH, "- (proposed) 2026-11-20 add-limit\n", "")
+    assert not decision.allow
+    assert "milestone's Log" in decision.reason

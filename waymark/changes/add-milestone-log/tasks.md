@@ -23,7 +23,7 @@
     - `wm close` refuses a milestone with a planned line, naming it and `wm roadmap drop`, and still refuses one with an active member
   - Verify: tests in `tests/services/test_setup.py`, `tests/services/test_archive.py` and `tests/services/test_lifecycle.py` for the scenarios "Planned roadmap line", "Change not on the roadmap", "Unknown milestone refused", "Member change archived", "Planned line keeps a milestone open" and "Every line archived"
   - (note) 2026-11-17 by Noah Roberts: The close scenarios, Planned line keeps a milestone open and Every line archived, are tested in tests/services/test_milestones.py, where the wm close tests live, not in tests/services/test_lifecycle.py.
-- [ ] 1.4 Refuse an agent's hand edits to roadmap lines and a milestone's Log
+- [x] 1.4 Refuse an agent's hand edits to roadmap lines and a milestone's Log
   - Criteria:
     - an agent's edit to an active milestone's `milestone.md` that adds, changes or removes a roadmap line or a Log record is refused, with a reason that names `wm roadmap`
     - an edit to the milestone's Goal, Done when or Non-goals is allowed
