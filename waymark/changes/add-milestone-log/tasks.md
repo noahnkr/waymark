@@ -44,3 +44,8 @@
 ## Log
 
 - (accepted) 2026-11-17 fingerprint a282e6c537287e9c items 1.1 1.2 1.3 1.4 2.1 by Noah Roberts
+- (review) 2026-11-17 pass covers 1.1 1.2 1.3 1.4 2.1 by wm-reviewer: every item's criteria and every delta scenario hold, and the tests, ruff, mypy, the docs-freshness test and wm check pass (codespell couldn't be run here); the warnings are an unparseable planned line that wm can't drop and a no-op move that still writes a record
+  - warning `src/waymark/services/lifecycle.py:614`: a planned roadmap line that doesn't start with a valid change name (e.g. `- [ ] Paging, never proposed`, a form older milestones use) blocks `wm close`, `wm roadmap drop` refuses it because `entry_change` returns None, and the hook refuses an agent's hand edit to it — so the refusal's advice can't be followed and only a human hand edit unblocks the milestone; untested
+  - warning `src/waymark/services/roadmap.py:801`: `move` writes a `(moved)` record even when the line doesn't change place (e.g. `--first` on the first line, or `--after` the line already before it); untested edge
+  - suggestion `waymark/changes/add-milestone-log/tasks.md item 1.3`: its verification names `tests/services/test_lifecycle.py` for "Planned line keeps a milestone open" and "Every line archived", but those cases are in `tests/services/test_milestones.py::test_closing_moves_the_milestone_to_the_dated_archive`
+  - suggestion `src/waymark/services/setup.py:876`: `wm new change --milestone` writes `(proposed)` with only the git user as its author and has no `--by`, unlike `wm roadmap` and `wm archive`
