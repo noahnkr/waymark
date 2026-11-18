@@ -28,6 +28,11 @@ from waymark.services.common import Done, Refusal, commit, open_record
 _ATLAS_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
 
+def has_record(root: Path) -> bool:
+    """Whether the repository at ``root`` already has a record, as a fresh clone does."""
+    return RecordFiles(root).is_file(f"{RECORD_DIR}/{CONFIG_FILE}")
+
+
 def atlas_name_problem(name: str) -> str | None:
     """Why ``name`` can't name an atlas, or None when it can."""
     if _ATLAS_NAME.fullmatch(name):

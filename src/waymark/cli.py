@@ -13,6 +13,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from waymark import __version__, adapters
+from waymark.record import git
 from waymark.record.terms import Step, Verdict
 from waymark.services import atlas as atlas_service
 from waymark.services import ci as ci_service
@@ -23,9 +24,10 @@ from waymark.services import instructions as instructions_service
 from waymark.services import integration, lifecycle, references, roadmap, setup
 from waymark.services import pr as pr_service
 from waymark.services.common import Done, Refusal, open_record, take_notices
-from waymark.views import payloads, render
+from waymark.views import init_flow, payloads, render, welcome
 from waymark.views.payloads import Payload
-from waymark.views.style import Style
+from waymark.views.style import STRONG, Style
+from waymark.views.terminal import RawModeUnavailable, RawTerminal
 
 EXIT_OK = 0
 """The command succeeded."""
@@ -55,9 +57,56 @@ def _today() -> datetime.date:
     return datetime.date.today()
 
 
+def _on_a_terminal() -> bool:
+    """Whether both input and output are a terminal, so wm init may ask questions."""
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
 def _init(args: argparse.Namespace) -> int:
     tools = tuple(args.tool) if args.tool else None
-    return _report(setup.init_project(_here(), args.atlas, tools))
+    if args.yes or args.atlas is not None or tools is not None or not _on_a_terminal():
+        return _report(setup.init_project(_here(), args.atlas, tools))
+    root = git.repository_root(_here())
+    if root is None:
+        return _report(setup.init_project(_here()))
+    style = Style.detect(sys.stdout, os.environ)
+    try:
+        with RawTerminal() as terminal:
+            answers = _init_answers(root, style, terminal)
+    except RawModeUnavailable:
+        answers = _init_answers(root, style, None)
+    # Raw mode is over by now, so what follows prints as ordinary lines.
+    if answers is None:
+        print(welcome.CANCELED)
+        return EXIT_REFUSED
+    if answers is _CLONE:
+        return _report(setup.init_project(root))
+    done = setup.init_project(root, answers.atlas, answers.tools, ci=answers.ci)
+    print(style.paint("Created:", STRONG))
+    for path in done.paths:
+        print(f"  {path}")
+    return _report(done)
+
+
+_CLONE = init_flow.Answers(None, (), ci=False)
+"""Stands for a clone: a record is already here, so no question is asked."""
+
+
+def _init_answers(
+    root: Path, style: Style, terminal: RawTerminal | None
+) -> init_flow.Answers | None:
+    """The welcome screen and the questions; None when they are canceled."""
+    started = welcome.play(terminal, style) if terminal else welcome.show_still(style)
+    if not started:
+        return None
+    if setup.has_record(root):
+        return _CLONE
+    tools = [
+        init_flow.Tool(name, adapters.get(name).title, adapters.get(name).detect(root))
+        for name in adapters.names()
+    ]
+    asker = init_flow.RawAsker(terminal, style) if terminal else init_flow.LineAsker(style)
+    return init_flow.ask_answers(asker, tools, setup.atlas_name_problem)
 
 
 def _update(_: argparse.Namespace) -> int:
@@ -386,6 +435,11 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         action="append",
         metavar="NAME",
         help=f"an agent tool to set up; repeatable (default: {', '.join(adapters.names())})",
+    )
+    init.add_argument(
+        "--yes",
+        action="store_true",
+        help="ask nothing, even on a terminal: a project with every agent tool, and no CI",
     )
     init.set_defaults(handler=_init)
 

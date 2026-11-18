@@ -11,6 +11,7 @@ from collections.abc import Callable
 from typing import Protocol
 
 from waymark.views.style import ACCENT, MUTED, STRONG, Style
+from waymark.views.terminal import read_line
 
 SIZE = 11
 CENTER = SIZE // 2
@@ -192,7 +193,7 @@ def play(terminal: Screen, style: Style) -> bool:
 
 
 def show_still(
-    style: Style, read: Callable[[str], str] = input, write: Callable[[str], None] = print
+    style: Style, read: Callable[[str], str] = read_line, write: Callable[[str], None] = print
 ) -> bool:
     """Draw the welcome screen once, still, and wait for Enter at a line; False when canceled."""
     for line in screen(style):

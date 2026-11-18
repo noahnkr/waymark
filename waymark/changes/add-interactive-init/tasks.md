@@ -36,7 +36,7 @@
 
 ## 2. The flow
 
-- [ ] 2.1 Interactive `wm init`
+- [x] 2.1 Interactive `wm init`
   - Criteria:
     - `wm init` is interactive only when input and output are terminals and none of `--atlas`, `--tool`, `--yes` is given; `--yes` is a new flag
     - interactively, in a repository with no record, it shows the welcome screen, then the repository, tools and CI questions under the step indicator, then calls `init_project` with the answers and prints what it created and the next step
@@ -46,6 +46,7 @@
   - Verify:
     - `test_scenario_project_with_claude_code_and_ci`, `test_scenario_atlas`, `test_scenario_tool_detected`, `test_scenario_canceled_at_the_tools`, `test_scenario_run_by_an_agent`, `test_scenario_yes_flag_on_a_terminal` and `test_scenario_clone_on_a_terminal`, with fake terminal streams and key sequences, in `tests/test_cli.py` or beside the setup tests
     - by hand: a full interactive `wm init` in a fresh repository on Windows, added to `docs/smoke-test.md`
+  - (note) 2026-11-18 by Noah Roberts: The questions live in views/init_flow.py; cli.py runs them in raw mode and writes and prints only after raw mode ends, so the output keeps its line breaks. The step indicator adds a current glyph (● or @). docs/cli.md was regenerated here for --yes so the docs test stays green; item 3.1 still owns the docs. The by-hand Windows run is in docs/smoke-test.md's first step
 
 ## 3. Docs
 

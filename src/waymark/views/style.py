@@ -58,6 +58,7 @@ _GLYPHS = {
     "milestone_done": ("◆", "*"),
     "milestone_open": ("◇", "o"),
     "star": ("✦", "*"),
+    "current": ("●", "@"),
 }
 
 

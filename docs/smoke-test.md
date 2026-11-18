@@ -15,7 +15,11 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       wheel, and check `wm --version`.
 - [ ] Note the Claude Code version: `claude --version`.
 - [ ] Make a scratch git repository with a little code in it (a small script and
-      a test are enough), and commit it. Run `wm init`: nothing is staged,
+      a test are enough), and commit it. On Windows, run `wm init` in Windows
+      Terminal: the welcome screen's star grows in, the text appears, and the
+      star twinkles until Enter. Answer the questions: a project, Claude Code
+      selected, and no to the CI workflow. `wm init` lists what it created and
+      ends with the next step. Then: nothing is staged,
       `git status` shows only `waymark/` and `.gitignore` as new, and
       `git config core.hooksPath` prints nothing. `waymark/specs/`,
       `changes/`, `changes/archive/`, `explorations/`, `milestones/` and

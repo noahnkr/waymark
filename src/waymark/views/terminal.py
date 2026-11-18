@@ -182,8 +182,13 @@ Reader = Callable[[str], str]
 """Reads a line after showing a prompt, as ``input`` does."""
 
 
+def read_line(hint: str) -> str:
+    """A line typed at the terminal, read with ``input`` when it is called."""
+    return input(hint)
+
+
 def ask_by_line(
-    prompt: Prompt, style: Style, read: Reader = input, write: Callable[[str], None] = print
+    prompt: Prompt, style: Style, read: Reader = read_line, write: Callable[[str], None] = print
 ) -> Outcome:
     """Ask one question at a line: numbered choices, Enter for the default, as raw mode would.
 

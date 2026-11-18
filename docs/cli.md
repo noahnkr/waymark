@@ -20,11 +20,12 @@ Exit codes: `0` success; `1` refused, or problems found; `2` usage error.
 Create the record, or set up this machine in a clone that has one.
 
 ```
-wm init [--atlas NAME] [--tool NAME]
+wm init [--atlas NAME] [--tool NAME] [--yes]
 ```
 
 - `--atlas`: make this repository an atlas: a record that several code repos share
 - `--tool`: an agent tool to set up; repeatable (default: claude-code)
+- `--yes`: ask nothing, even on a terminal: a project with every agent tool, and no CI
 
 ## wm update
 

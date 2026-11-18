@@ -1,15 +1,20 @@
 """The ``wm`` command runs, and follows the exit-code contract."""
 
+import shutil
 import subprocess
 import sys
 import sysconfig
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
+from tests.conftest import git_init
 from tests.support import Workspace, proposal
-from waymark import __version__
+from waymark import __version__, cli
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
+from waymark.services import setup
+from waymark.views.terminal import RawModeUnavailable
 
 
 def run_module(*args: str) -> subprocess.CompletedProcess[str]:
@@ -293,3 +298,206 @@ def test_wm_new_resource_and_its_kind(project: Workspace, monkeypatch: pytest.Mo
         assert main(["new", kind, "add-limit", "service"]) == EXIT_REFUSED
     assert not project.path("changes/add-limit").exists()
     assert not project.path("explorations/add-limit.md").exists()
+
+
+# The interactive wm init --------------------------------------------------------------------
+
+
+class FakeTerminal:
+    """A raw terminal that hands out queued key names and keeps what was drawn."""
+
+    keys: ClassVar[list[str]] = []
+    drawn: ClassVar[list[str]] = []
+    entered: ClassVar[list[bool]] = []
+
+    def __enter__(self) -> "FakeTerminal":
+        FakeTerminal.entered.append(True)
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        pass
+
+    def draw(self, lines: list[str]) -> None:
+        FakeTerminal.drawn.extend(lines)
+
+    def finish(self) -> None:
+        pass
+
+    def key_waiting(self, timeout: float) -> bool:
+        del timeout
+        return bool(FakeTerminal.keys)
+
+    def read_key(self) -> str:
+        assert FakeTerminal.keys, "the flow asked for more keys than the test gave"
+        return FakeTerminal.keys.pop(0)
+
+
+@pytest.fixture
+def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A fresh git repository as the current folder, on a terminal with a fake raw mode."""
+    root = tmp_path / "repo"
+    git_init(root)
+    monkeypatch.chdir(root)
+    monkeypatch.setattr(cli, "_on_a_terminal", lambda: True)
+    monkeypatch.setattr(cli, "RawTerminal", FakeTerminal)
+    FakeTerminal.keys.clear()
+    FakeTerminal.drawn.clear()
+    FakeTerminal.entered.clear()
+    return root
+
+
+def init_with(keys: list[str], capsys: pytest.CaptureFixture[str], *flags: str) -> tuple[int, str]:
+    FakeTerminal.keys[:] = keys
+    code = main(["init", *flags])
+    return code, capsys.readouterr().out
+
+
+def files_under(root: Path) -> dict[str, bytes]:
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file() and ".git" not in path.relative_to(root).parts
+    }
+
+
+CANCELED = "Setup canceled. Nothing was written."
+WELCOME = ["enter"]
+PROJECT = ["enter"]
+KEEP_TOOLS = ["enter"]
+YES = ["enter"]
+
+
+def test_scenario_project_with_claude_code_and_ci(
+    repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Requirement "Interactive init"."""
+    code, out = init_with([*WELCOME, *PROJECT, *KEEP_TOOLS, *YES], capsys)
+    assert code == EXIT_OK
+    assert (repo / "waymark" / "config.toml").is_file()
+    assert (repo / ".claude" / "settings.json").is_file()
+    assert (repo / ".github" / "workflows" / "waymark.yml").is_file()
+    assert "Created:" in out
+    assert "  .github/workflows/waymark.yml" in out
+    assert out.rstrip().splitlines()[-1].startswith("Next: run the wm-kickoff skill")
+    drawn = "\n".join(FakeTerminal.drawn)
+    assert "Leave a trail your agents can follow." in drawn
+    assert "Repository" in drawn
+
+
+def test_scenario_atlas(repo: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    keys = [*WELCOME, "down", "enter", *"shop-platform", "enter", *KEEP_TOOLS, "n"]
+    code, _ = init_with(keys, capsys)
+    assert code == EXIT_OK
+    other = tmp_path / "other"
+    git_init(other)
+    setup.init_project(other, atlas="shop-platform")
+    asked = (repo / "waymark" / "config.toml").read_text(encoding="utf-8")
+    flagged = (other / "waymark" / "config.toml").read_text(encoding="utf-8")
+    assert asked == flagged
+    assert not (repo / ".github").exists()
+
+
+def test_invalid_atlas_name_keeps_the_question_open(
+    repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    keys = [*WELCOME, "down", "enter", *"shop", "space", *"platform", "enter", "escape"]
+    code, out = init_with(keys, capsys)
+    assert code == EXIT_REFUSED
+    assert "can't be an atlas name" in "\n".join(FakeTerminal.drawn)
+    assert not (repo / "waymark").exists()
+    assert out.rstrip().endswith(CANCELED)
+
+
+def test_scenario_tool_detected(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Requirement "Agent tools to choose from"."""
+    (repo / ".claude").mkdir()
+    init_with([*WELCOME, *PROJECT, "escape"], capsys)
+    marks = ("  → ✓ Claude Code  found", "  -> x Claude Code  found")
+    assert any(mark in FakeTerminal.drawn for mark in marks)
+
+
+def test_scenario_canceled_at_the_tools(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Requirement "Canceled init writes nothing"."""
+    before = files_under(repo)
+    code, out = init_with([*WELCOME, *PROJECT, "escape"], capsys)
+    assert code == EXIT_REFUSED
+    assert files_under(repo) == before
+    assert out.rstrip().endswith(CANCELED)
+
+
+def test_escape_at_the_welcome_cancels(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    code, out = init_with(["escape"], capsys)
+    assert code == EXIT_REFUSED
+    assert not (repo / "waymark").exists()
+    assert out.rstrip().endswith(CANCELED)
+
+
+def test_scenario_run_by_an_agent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Requirement "Init without questions": output piped, nothing asked."""
+    root = tmp_path / "repo"
+    git_init(root)
+    monkeypatch.chdir(root)
+    assert main(["init"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Leave a trail" not in out
+    assert "Created:" not in out
+    assert (root / "waymark" / "config.toml").is_file()
+    assert (root / ".claude" / "settings.json").is_file()
+
+
+def test_scenario_yes_flag_on_a_terminal(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    code, out = init_with([], capsys, "--yes")
+    assert code == EXIT_OK
+    assert FakeTerminal.entered == []
+    assert FakeTerminal.drawn == []
+    assert "Leave a trail" not in out
+    assert (repo / ".claude" / "settings.json").is_file()
+    assert not (repo / ".github").exists()
+
+
+def test_flags_skip_the_questions(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    code, _ = init_with([], capsys, "--tool", "claude-code")
+    assert code == EXIT_OK
+    assert FakeTerminal.entered == []
+
+
+def test_scenario_clone_on_a_terminal(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["init", "--yes"]) == EXIT_OK
+    capsys.readouterr()
+    record = {k: v for k, v in files_under(repo).items() if k.startswith("waymark/")}
+    shutil.rmtree(repo / ".claude" / "skills")
+    code, out = init_with(WELCOME, capsys)
+    assert code == EXIT_OK
+    assert FakeTerminal.keys == []
+    drawn = "\n".join(FakeTerminal.drawn)
+    assert "Leave a trail your agents can follow." in drawn
+    assert "What is this repository?" not in drawn
+    assert any((repo / ".claude" / "skills").iterdir())
+    after = {k: v for k, v in files_under(repo).items() if k.startswith("waymark/")}
+    assert after == record
+    assert "Created:" not in out
+
+
+def test_questions_by_line_without_raw_mode(
+    repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Requirement "Questions without raw mode": the whole flow at a line."""
+
+    class NoRawMode:
+        def __enter__(self) -> None:
+            raise RawModeUnavailable("no console")
+
+        def __exit__(self, *_: object) -> None:
+            pass
+
+    monkeypatch.setattr(cli, "RawTerminal", NoRawMode)
+    typed = iter(["", "2", "shop-platform", "", "n"])
+    monkeypatch.setattr("builtins.input", lambda _: next(typed))
+    assert main(["init"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "What is the atlas's name?" in out
+    assert "  2. An atlas  (a record that several code repos share)" in out
+    config = (repo / "waymark" / "config.toml").read_text(encoding="utf-8")
+    assert '"shop-platform"' in config
