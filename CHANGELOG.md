@@ -2,8 +2,28 @@
 
 All notable changes to Waymark, one entry per release.
 
-## [Unreleased]
+## [0.3.0] - 2026-11-18
 
+Context beyond the code: resources, a spec's Background and one list of project
+rules give every fact an agent needs one place. Milestones link their changes and
+keep a log, changes have branches and bases, and the record format resets to 1.
+
+- **Behavior change: record format 1, with no migration.** `wm` reads and writes
+  only format 1, and this release's record is format 1. A record in any other
+  format, including the format 3 that 0.2.0 writes, is refused with one reason:
+  install the `wm` version that wrote it. `wm update` migrates nothing. It
+  regenerates the files `wm` owns and adds missing `.gitkeep` files. `wm check`
+  no longer reports older layouts on their own; such a line fails the check
+  that applies to it. `.waymark/atlas.toml` is no longer read as an atlas
+  pointer, and `wm doctor` no longer looks for `.waymark/hooks/`.
+- **Behavior change: `wm-fix` is gone; `/wm-propose` does work of any size.**
+  It reads the specs and the code and picks the path itself: tiny, built after
+  your yes; short, a change with no design; or full, a change with a design,
+  with any open question blocking acceptance. `wm init` and `wm update` remove
+  the `wm-*` skill folders `wm` no longer ships, and print `removed:` for each.
+- **Record folders stay in git.** `wm init` writes an empty `.gitkeep` into
+  `specs/`, `changes/`, `changes/archive/`, `explorations/`, `milestones/` and
+  `milestones/archive/`, and `wm update` adds any that are missing.
 - **Behavior change: an item added after a review is reviewed on its own.**
   `(review)` and `(self-review)` records now name the items they cover, as
   `covers <item>...`; a record without it covers every item. Once an item added
@@ -56,6 +76,8 @@ All notable changes to Waymark, one entry per release.
   heading or a bullet under Rules is a `numbered-list-format` error, and the
   `unknown-step` problem is gone. A charter with step headings must be rewritten
   by hand. `wm init` writes Rules without step headings.
+
+Smoke test: passed on 2026-11-18 with Claude Code 2.1.327 on Windows.
 
 ## [0.2.0] - 2026-11-16
 
