@@ -125,8 +125,9 @@ def cli_reference() -> str:
         "color even when it isn't going to a terminal.",
         "- `TERM=dumb`: no color on a terminal.",
         "- JSON output never carries color.",
-        f"- On a terminal, prose in `wm show`, `wm inbox` and `wm doctor` wraps to the "
-        f"terminal's width, from {MIN_WIDTH} to {MAX_WIDTH} columns. Output that isn't going "
+        "- On a terminal, prose in `wm show`, `wm inbox`, `wm check` and `wm doctor` wraps "
+        f"to the terminal's width, from {MIN_WIDTH} to {MAX_WIDTH} columns. Output that isn't "
+        "going "
         "to a terminal is never wrapped.",
         "- When the output's encoding can't show the glyphs, they're drawn in ASCII.",
     ]

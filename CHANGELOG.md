@@ -12,9 +12,9 @@ All notable changes to Waymark, one entry per release.
   items as a tree and marks a milestone's roadmap. `wm check` groups its findings
   under each file. `wm doctor` lines its checks up in one column. Each glyph has an
   ASCII stand-in for consoles that can't show it.
-- **Prose wraps on a terminal.** `wm show`, `wm inbox` and `wm doctor` wrap their
-  prose to the terminal's width, from 60 to 100 columns. Output that isn't going
-  to a terminal is not wrapped, so agents read whole lines.
+- **Prose wraps on a terminal.** `wm show`, `wm inbox`, `wm check` and
+  `wm doctor` wrap their prose to the terminal's width, from 60 to 100 columns.
+  Output that isn't going to a terminal is not wrapped, so agents read whole lines.
 - **`FORCE_COLOR`.** Set to any value but empty or `0`, it turns color on when the
   output isn't a terminal. `NO_COLOR` still turns color off, and wins. JSON output
   never carries color.

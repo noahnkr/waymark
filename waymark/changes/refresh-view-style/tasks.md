@@ -54,7 +54,7 @@
     - `tools/docs.py` writes an "Environment" section into `docs/cli.md` naming `NO_COLOR`, `FORCE_COLOR` and wrapping on a terminal, and `docs/cli.md` is regenerated
     - the CHANGELOG's Unreleased section notes the new look, `FORCE_COLOR` and wrapping
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and codespell pass
-- [ ] 3.2 Docs name `wm check` among the views that wrap
+- [x] 3.2 Docs name `wm check` among the views that wrap
   - Criteria:
     - the Environment section of `docs/cli.md` and the CHANGELOG's Unreleased entry name `wm check` among the views whose prose wraps on a terminal, and `docs/cli.md` is regenerated
   - Verify: `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync pytest tests/test_docs.py` and codespell pass
