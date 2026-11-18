@@ -20,7 +20,7 @@ from waymark.services import context as context_service
 from waymark.services import doctor as doctor_service
 from waymark.services import fix as fix_service
 from waymark.services import instructions as instructions_service
-from waymark.services import integration, lifecycle, references, setup
+from waymark.services import integration, lifecycle, references, roadmap, setup
 from waymark.services import pr as pr_service
 from waymark.services.common import Done, Refusal, open_record, take_notices
 from waymark.views import payloads, render
@@ -209,6 +209,25 @@ def _archive(args: argparse.Namespace) -> int:
         by=args.by,
     )
     return _report(done)
+
+
+def _roadmap_add(args: argparse.Namespace) -> int:
+    return _report(
+        roadmap.add(_here(), args.milestone, args.change, args.description, _today(), by=args.by)
+    )
+
+
+def _roadmap_drop(args: argparse.Namespace) -> int:
+    return _report(
+        roadmap.drop(_here(), args.milestone, args.change, args.reason, _today(), by=args.by)
+    )
+
+
+def _roadmap_move(args: argparse.Namespace) -> int:
+    after = None if args.first else args.after
+    return _report(
+        roadmap.move(_here(), args.milestone, args.change, _today(), after=after, by=args.by)
+    )
 
 
 def _close(args: argparse.Namespace) -> int:
@@ -516,6 +535,31 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     close = commands.add_parser("close", help=summary, description=summary)
     close.add_argument("milestone", help="the milestone's name")
     close.set_defaults(handler=_close)
+
+    summary = "Change a milestone's roadmap: add, drop or move a change's line, with a record."
+    roadmap_parser = commands.add_parser("roadmap", help=summary, description=summary)
+    roadmap_commands = roadmap_parser.add_subparsers(title="roadmap commands", metavar="<command>")
+    roadmap_parser.set_defaults(handler=lambda _: _usage(roadmap_parser))
+    summary = "Add a planned line for a change at the end of a milestone's roadmap."
+    add = roadmap_commands.add_parser("add", help=summary, description=summary)
+    add.add_argument("milestone", help="the milestone's name")
+    add.add_argument("change", help="the change's name, for example add-search-limit")
+    add.add_argument("description", help="what the change delivers toward the goal")
+    _by(add).set_defaults(handler=_roadmap_add)
+    summary = "Take a change's line off a milestone's roadmap, with the reason."
+    drop = roadmap_commands.add_parser("drop", help=summary, description=summary)
+    drop.add_argument("milestone", help="the milestone's name")
+    drop.add_argument("change", help="the change's name")
+    drop.add_argument("--reason", required=True, help="why the change is dropped")
+    _by(drop).set_defaults(handler=_roadmap_drop)
+    summary = "Move a change's line on a milestone's roadmap."
+    move = roadmap_commands.add_parser("move", help=summary, description=summary)
+    move.add_argument("milestone", help="the milestone's name")
+    move.add_argument("change", help="the change's name")
+    where = move.add_mutually_exclusive_group(required=True)
+    where.add_argument("--after", metavar="CHANGE", help="put it right after this change's line")
+    where.add_argument("--first", action="store_true", help="put it at the top of the roadmap")
+    _by(move).set_defaults(handler=_roadmap_move)
 
     _view_command(
         commands, "status", _status, "Show where things stand: changes, milestones, what needs you."

@@ -164,6 +164,7 @@ WRITES = frozenset(
         "sync",
         "archive",
         "close",
+        "roadmap",
         "atlas",
         "ci",
     }

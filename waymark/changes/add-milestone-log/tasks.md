@@ -9,7 +9,7 @@
     - a helper appends a record to a milestone's Log, creating the section at the end when there is none, with the file's line endings kept
     - `wm new milestone` still writes no `## Log`
   - Verify: tests in `tests/record/test_records.py` and `tests/record/` for the milestone file, for the scenarios "New milestone" and "Log not last"
-- [ ] 1.2 Change the roadmap with `wm roadmap add`, `drop` and `move`
+- [x] 1.2 Change the roadmap with `wm roadmap add`, `drop` and `move`
   - Criteria:
     - each command edits the roadmap and appends its record to the Log in one write, keeping line endings, and takes `--by`
     - `add` refuses an invalid name or one already on the roadmap; `drop` needs `--reason` and refuses a change not on the roadmap or an active change that names the milestone; `move` takes `--after <change>` or `--first`, and refuses a change or target not on the roadmap
