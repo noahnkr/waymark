@@ -110,3 +110,7 @@
   - Verify:
     - `uv run --no-sync python -m tools.docs --check`
     - the full checks: `pytest`, `ruff format --check .`, `ruff check .`, `mypy`, `codespell`
+
+## Log
+
+- (accepted) 2026-11-18 fingerprint ab2018a35172d5de items 1.1 1.2 2.1 2.2 3.1 4.1 4.2 5.1 5.2 6.1 6.2 by Noah Roberts
