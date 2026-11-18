@@ -54,3 +54,4 @@
   - warning `src/waymark/record/branches.py:70 _is_merged`: a change name can be reused after archiving (services/setup.py:155 refuses only active names), so an old `<date>-<name>` folder on the default branch marks a new active dependency of that name as merged, giving the stacked change the default branch as its base and a false after-merged warning; untested and not in the design's risks
   - warning `tests/record/test_branches.py:63`: git.archived_on is only tested with an origin remote; the criterion's fallback to the local default branch when there is no remote is never exercised
 - (accepted) 2026-11-17 fingerprint 68ce0b48ab289ce6 items 1.1 1.2 1.3 1.4 1.5 2.1 by Noah Roberts
+- (accepted) 2026-11-17 fingerprint ad94015e43800b1f items 1.1 1.2 1.3 1.4 2.1 by Noah Roberts
