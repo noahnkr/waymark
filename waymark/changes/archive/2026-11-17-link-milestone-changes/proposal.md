@@ -34,3 +34,8 @@ This is the first change of the `stronger-milestones` milestone. The later ones,
   - `wm new change` takes `--milestone <milestone>`, and links the change from the roadmap;
   - the implement and review context packs, and their JSON, carry the change's milestone with its Goal and Non-goals.
 - Code: the proposal facts (`record/proposal.py`), the milestone and roadmap checks (`record/milestones.py`, `record/record.py` or `services/check.py`), `wm new change` (`cli.py`, `services/setup.py`), the context packs (`services/context.py`) and their views (`views/`), the `wm-propose` skill, and the docs.
+
+## Outcome
+
+- Built: A proposal can name its milestone in a "- Milestone: <name>" line, and wm check reports an active change whose line and the roadmaps disagree, with five errors. wm new change <name> --milestone <milestone> writes the line and links the change from the roadmap. The implement and review packs carry the milestone name, Goal and Non-goals. A new milestones spec holds milestone behavior, with "Milestone as one file" moved there from authored-formats.
+- Differs: The independent review passed with four findings left open: the packs carry a milestone the proposal names even when its roadmap does not link the change (wm check reports that case), which is broader than the spec; no test covers --milestone being refused for an exploration; a planned roadmap line becomes a link only when it is the name or starts with "<name>:", not any line starting with the name; and the refusal for a milestone folder without milestone.md suggests a wm new milestone command that would also be refused.
