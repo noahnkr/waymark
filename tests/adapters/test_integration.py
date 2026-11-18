@@ -147,6 +147,7 @@ KEEPS = tuple(
         "changes",
         "changes/archive",
         "explorations",
+        "explorations/archive",
         "milestones",
         "milestones/archive",
         "resources",
@@ -180,6 +181,18 @@ def test_scenario_record_without_resources(initialized: Path) -> None:
     assert (initialized / "waymark/resources/.gitkeep").read_bytes() == b""
     created = [line for line in done.message.splitlines() if line.endswith(".gitkeep")]
     assert created == ["created: waymark/resources/.gitkeep"]
+
+
+def test_scenario_record_without_an_explorations_archive(initialized: Path) -> None:
+    """Scenario: Record without an explorations archive."""
+    (initialized / "waymark/explorations/archive/.gitkeep").unlink()
+    (initialized / "waymark/explorations/archive").rmdir()
+
+    done = integration.update(initialized)
+
+    assert (initialized / "waymark/explorations/archive/.gitkeep").read_bytes() == b""
+    created = [line for line in done.message.splitlines() if line.endswith(".gitkeep")]
+    assert created == ["created: waymark/explorations/archive/.gitkeep"]
 
 
 def test_update_leaves_record_folder_keeps_alone(initialized: Path) -> None:

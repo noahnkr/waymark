@@ -649,7 +649,9 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     show = _view_command(
         commands, "show", _show, "Show everything about one change, spec, milestone or exploration."
     )
-    show.add_argument("name", help="its name; an archived change also by its dated folder name")
+    show.add_argument(
+        "name", help="its name; an archived change or exploration also by its dated name"
+    )
     show.add_argument(
         "--kind", choices=list(payloads.KINDS), help="which kind, if the name is shared"
     )
@@ -662,7 +664,9 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     ls = _view_command(commands, "ls", _ls, "List changes, specs, milestones or explorations.")
     ls.add_argument("kind", choices=[f"{kind}s" for kind in payloads.KINDS])
     ls.add_argument(
-        "--archived", action="store_true", help="include archived changes or milestones"
+        "--archived",
+        action="store_true",
+        help="include archived changes, milestones or explorations",
     )
     ls.add_argument(
         "--from",

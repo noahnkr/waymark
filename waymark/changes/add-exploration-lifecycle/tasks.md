@@ -12,7 +12,7 @@
   - Verify:
     - tests in `tests/record/test_authored_formats.py` (or a new `tests/record/artifacts/test_explorations.py`) for the three scenarios
     - `uv run --no-sync pytest tests/record tests/services/test_check.py`
-- [ ] 1.2 Read archived explorations, show and list them, and keep their folder in git
+- [x] 1.2 Read archived explorations, show and list them, and keep their folder in git
   - Criteria:
     - `explorations/archive/` is not reported as an unexpected file, and its `<date>-<name>.md` files are read as archived explorations, never checked or fixed; a file whose name doesn't parse is reported as `invalid-name`
     - `wm show <name>` and `wm show <date>-<name>` find an archived exploration and print "Archived on <date>"; its JSON has an `archived` date, null for an active one

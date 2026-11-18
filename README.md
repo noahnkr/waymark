@@ -181,6 +181,8 @@ waymark/
           appearance.md                       the change to the spec
   explorations/
     .gitkeep
+    archive/
+      .gitkeep
   milestones/
     .gitkeep
     archive/

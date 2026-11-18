@@ -45,6 +45,7 @@ RECORD_FOLDERS = (
     CHANGES,
     f"{CHANGES}/{ARCHIVE}",
     EXPLORATIONS,
+    f"{EXPLORATIONS}/{ARCHIVE}",
     MILESTONES,
     f"{MILESTONES}/{ARCHIVE}",
     RESOURCES,
@@ -85,6 +86,7 @@ class Record:
     explorations: Mapping[str, Exploration]
     problems: tuple[Problem, ...]
     resources: Mapping[str, Resource] = field(default_factory=dict)
+    archived_explorations: tuple[ArchiveEntry, ...] = ()
 
     @property
     def files(self) -> RecordFiles:
@@ -166,6 +168,8 @@ def _load_markdown_folder(
     for entry in files.entries(folder):
         relative = f"{folder}/{entry.name}"
         name = entry.name.removesuffix(".md")
+        if folder == EXPLORATIONS and entry.is_dir and entry.name == ARCHIVE:
+            continue
         if entry.is_dir or not entry.name.endswith(".md"):
             problems.append(
                 Problem(
@@ -307,6 +311,8 @@ def load_record(project: Project) -> Record:
         explorations[name] = parse_exploration(name, doc)
         problems.extend(explorations[name].problems)
 
+    archived_explorations = _archived_files(files, EXPLORATIONS, "exploration", problems)
+
     resources: dict[str, Resource] = {}
     for name, doc in _load_markdown_folder(files, RESOURCES, "resource", problems).items():
         resources[name] = parse_resource(name, doc)
@@ -325,7 +331,38 @@ def load_record(project: Project) -> Record:
         explorations=explorations,
         problems=tuple(sorted(problems)),
         resources=resources,
+        archived_explorations=tuple(archived_explorations),
     )
+
+
+def _archived_files(
+    files: RecordFiles, folder: str, kind: str, problems: list[Problem]
+) -> list[ArchiveEntry]:
+    """The archived files under ``<folder>/archive/``, each named ``YYYY-MM-DD-<name>.md``."""
+    archived: list[ArchiveEntry] = []
+    for entry in files.entries(f"{folder}/{ARCHIVE}"):
+        relative = f"{folder}/{ARCHIVE}/{entry.name}"
+        stem = entry.name.removesuffix(".md")
+        parsed = None if entry.is_dir or stem == entry.name else parse_archive_name(stem)
+        if parsed is None:
+            problems.append(
+                Problem(
+                    relative,
+                    WHOLE_FILE,
+                    "invalid-name",
+                    f"An archived {kind} is a file named YYYY-MM-DD-<name>.md. The archive is "
+                    "written by wm; rename this to match, or remove it.",
+                )
+            )
+        else:
+            archived.append(ArchiveEntry(parsed.date, parsed.name, relative))
+    return sorted(archived)
+
+
+def load_archived_exploration(record: Record, entry: ArchiveEntry) -> Exploration | None:
+    """Read one archived exploration, as it was written; None when it can't be read."""
+    doc = record.files.document(entry.path, [])
+    return parse_exploration(entry.name, doc) if doc is not None else None
 
 
 def load_archived_change(record: Record, entry: ArchiveEntry) -> Change:

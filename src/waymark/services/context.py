@@ -39,7 +39,7 @@ from waymark.services.common import Refusal, find_change, find_item, repo_locati
 from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
 from waymark.services.references import reference_record
 
-CONTEXT_VERSION = 1
+CONTEXT_VERSION = 2
 DELEGATED_VERSION = 2
 """The version of the implementer's and reviewer's packs; 2 reviews the whole change."""
 EXPLORE = "explore"

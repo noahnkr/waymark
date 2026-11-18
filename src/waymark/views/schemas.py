@@ -291,6 +291,7 @@ SCHEMAS: dict[str, Schema] = {
             "title": STRING,
             "status": _enum(ExplorationStatus),
             "detail": TEXT_OR_NULL,
+            "archived_on": DATE_OR_NULL,
             "sections": SECTIONS,
         },
     ),

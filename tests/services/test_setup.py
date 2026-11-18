@@ -151,6 +151,7 @@ RECORD_FOLDERS = (
     "changes",
     "changes/archive",
     "explorations",
+    "explorations/archive",
     "milestones",
     "milestones/archive",
     "resources",

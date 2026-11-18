@@ -375,6 +375,43 @@ def test_show_milestone_and_exploration(project: Workspace) -> None:
     assert exploration["sections"]["Questions"] == "- Where to cache?"
 
 
+ARCHIVED_EXPLORATION = (
+    "# Result paging\n\n- Status: dropped\n\n## Context\n\n## Questions\n\n"
+    "## Approaches\n\n## Conclusion\n\nResults never pass fifty.\n\n## Related\n"
+)
+
+
+def test_scenario_show_an_archived_exploration(project: Workspace) -> None:
+    project.write("explorations/archive/2026-12-01-result-paging.md", ARCHIVED_EXPLORATION)
+    record = project.record()
+    for name in ("result-paging", "2026-12-01-result-paging"):
+        payload = valid(payloads.show(record, name))
+        assert (payload["status"], payload["archived_on"]) == ("dropped", "2026-12-01")
+    text = render.to_text(payloads.show(record, "result-paging"), PLAIN)
+    assert "dropped: Results never pass fifty." in text
+    assert "Archived on 2026-12-01" in text
+
+
+def test_scenario_list_with_the_archived_ones(project: Workspace) -> None:
+    busy(project)
+    project.write("explorations/archive/2026-12-01-result-paging.md", ARCHIVED_EXPLORATION)
+    record = project.record()
+    assert record.problems == ()
+    assert valid(payloads.ls(record, "exploration", archived=True))["entries"] == [
+        {"name": "caching", "state": "open", "detail": ""},
+        {"name": "result-paging", "state": "archived", "detail": "2026-12-01"},
+    ]
+    assert [e["name"] for e in payloads.ls(record, "exploration")["entries"]] == ["caching"]
+    pack = context_pack(record, "explore")
+    assert [e["name"] for e in pack["explorations"]] == ["caching"]
+
+
+def test_archived_exploration_with_a_bad_name_is_reported(project: Workspace) -> None:
+    project.write("explorations/archive/result-paging.md", ARCHIVED_EXPLORATION)
+    [problem] = project.record().problems
+    assert (problem.code, problem.path) == ("invalid-name", "explorations/archive/result-paging.md")
+
+
 def test_show_refuses_an_unknown_name_and_a_name_shared_by_two_kinds(project: Workspace) -> None:
     busy(project)
     project.write("explorations/search.md", project.read("explorations/caching.md"))

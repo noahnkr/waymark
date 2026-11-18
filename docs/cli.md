@@ -358,7 +358,7 @@ wm show [--json] <name> [--kind KIND] [--from ATLAS]
 ```
 
 - `--json`: print the view as JSON, with its schema version
-- `name`: its name; an archived change also by its dated folder name
+- `name`: its name; an archived change or exploration also by its dated name
 - `--kind`: which kind, if the name is shared; one of `change`, `spec`, `milestone`, `exploration`, `resource`
 - `--from`: read a spec from an atlas this project references
 
@@ -372,7 +372,7 @@ wm ls [--json] <changes|specs|milestones|explorations|resources> [--archived] [-
 
 - `--json`: print the view as JSON, with its schema version
 - `kind`: one of `changes`, `specs`, `milestones`, `explorations`, `resources`
-- `--archived`: include archived changes or milestones
+- `--archived`: include archived changes, milestones or explorations
 - `--from`: list the specs of an atlas this project references
 
 ## wm instructions
