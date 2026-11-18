@@ -25,13 +25,14 @@
     - tests of the key mapping from raw byte sequences of both platforms, and `test_scenario_numbered_choices` with a fake input, in a new `tests/views/test_terminal.py`
     - by hand: arrows, Space, Enter and Esc on Windows Terminal and one POSIX terminal, added to `docs/smoke-test.md`
   - (note) 2026-11-18 by Noah Roberts: The by-hand check of arrows, Space, Enter, Backspace and Esc on Windows Terminal and a POSIX terminal is in docs/smoke-test.md under Keys in a raw terminal; it runs at the release's smoke test, once 2.1 wires the questions into wm init. style.enable_escape_sequences is now public for the raw terminal
-- [ ] 1.4 The welcome screen
+- [x] 1.4 The welcome screen
   - Criteria:
     - `views/welcome.py` draws the 11-row star with its ring, the name, the tagline "Leave a trail your agents can follow.", what `wm init` sets up and the skills to run next, the star's center row level with the middle of the text; below 90 columns, the text is under the star
     - on a terminal with color it grows in through four frames about 120 ms apart, any key skipping to the full screen, then twinkles until Enter; without raw mode or color it is drawn once, still
     - with ASCII glyphs, the star is drawn with `#`
   - Verify:
     - tests of the full screen at 100 and 80 columns, of the frames, and of the ASCII star, in a new `tests/views/test_welcome.py`
+  - (note) 2026-11-18 by Noah Roberts: The star is drawn from the design's description, four tapering arms around a ring with a gap, not traced from the banner SVG, which has no pixel grid; its pixels use the full glyph, so ASCII draws it with #. Without color but with raw mode it is drawn once and waits for Enter; without raw mode show_still waits at a line
 
 ## 2. The flow
 
