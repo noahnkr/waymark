@@ -2,21 +2,27 @@
 
 All notable changes to Waymark, one entry per release.
 
-## [Unreleased]
+## [0.4.0] - 2026-11-18
 
-- **Finding places are relative to the project.** `wm review` and `wm verdict`
-  write an absolute path in a finding's place relative to the project, with
-  forward slashes, or as `<repo>/<path>` for a code repo in an atlas, and refuse
-  any other absolute path. Before, a reviewer's absolute path went into the
-  record as given, home folder included.
-- **An interactive `wm init`.** On a terminal, `wm init` opens with a welcome
-  screen: the Waymark star, which grows in and twinkles, the tagline, what it
-  sets up, and the skills to run next. It then asks whether the repository is a
-  project or an atlas (and the atlas's name), which agent tools to set up, with
-  the ones it finds already selected, and whether to add the CI workflow. Esc or
-  Ctrl+C cancels and writes nothing. Where the terminal can't read single keys,
-  the questions come as numbered choices. In a clone, it shows the welcome
-  screen and asks nothing.
+A first impression worth the name: `wm init` welcomes you and asks what to set
+up, and every terminal view has one palette, tree lines and wrapped prose.
+Review findings name their places relative to the project. The record format is
+unchanged.
+
+- **Behavior change: `wm init` asks on a terminal.** With both its input and its
+  output a terminal, and none of `--atlas`, `--tool` or the new `--yes`, it opens
+  with a welcome screen: the Waymark star, which grows in and twinkles, the
+  tagline, what it sets up, and the skills to run next. It then asks whether the
+  repository is a project or an atlas (and the atlas's name), which agent tools
+  to set up, with the ones it finds already selected, and whether to add the CI
+  workflow. Esc or Ctrl+C cancels and writes nothing. Where the terminal can't
+  read single keys, the questions come as numbered choices. In a clone, it shows
+  the welcome screen and asks nothing.
+- **Behavior change: `wm check` groups its findings by file.** Each file's path
+  is on a line of its own, with its findings under it as
+  `  <severity>: <line>: <code>: <message>`, instead of one
+  `<severity>: <path>:<line>: <code>: <message>` line per finding. A script that
+  reads the text output should read `wm check --json`, which is unchanged.
 - **`wm init --yes`** asks nothing. So do `--atlas` and `--tool`, and so does
   `wm init` when its input or output isn't a terminal, as when an agent runs it:
   it does what it did before.
@@ -25,15 +31,21 @@ All notable changes to Waymark, one entry per release.
   what needs you and for warnings, red for errors, dim for dates and records, bold
   for names. `wm status` colors each change's phase and progress bar and marks each
   milestone's roadmap lines `◆` archived and `◇` open. `wm show` draws a change's
-  items as a tree and marks a milestone's roadmap. `wm check` groups its findings
-  under each file. `wm doctor` lines its checks up in one column. Each glyph has an
-  ASCII stand-in for consoles that can't show it.
+  items as a tree and marks a milestone's roadmap. `wm doctor` lines its checks up
+  in one column. Each glyph has an ASCII stand-in for consoles that can't show it.
 - **Prose wraps on a terminal.** `wm show`, `wm inbox`, `wm check` and
   `wm doctor` wrap their prose to the terminal's width, from 60 to 100 columns.
   Output that isn't going to a terminal is not wrapped, so agents read whole lines.
 - **`FORCE_COLOR`.** Set to any value but empty or `0`, it turns color on when the
   output isn't a terminal. `NO_COLOR` still turns color off, and wins. JSON output
   never carries color.
+- **Finding places are relative to the project.** `wm review` and `wm verdict`
+  write an absolute path in a finding's place relative to the project, with
+  forward slashes, or as `<repo>/<path>` for a code repo in an atlas, and refuse
+  any other absolute path. Before, a reviewer's absolute path went into the
+  record as given, home folder included.
+
+Smoke test: passed on 2026-11-18 with Claude Code 2.1.327 on Windows.
 
 ## [0.3.0] - 2026-11-18
 
