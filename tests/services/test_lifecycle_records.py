@@ -345,3 +345,15 @@ def test_scenario_absolute_path_elsewhere(latest: Workspace, tmp_path: Path) -> 
             findings=[f"warning: {elsewhere}:12: the limit is not checked"],
         )
     assert log(latest) == before
+
+
+def test_a_place_with_a_backslash_in_prose_is_kept() -> None:
+    """Requirement "Finding places relative to the project": a place that isn't a path."""
+    assert records.relative_place(r"`re \d+` pattern", SHOP) == r"`re \d+` pattern"
+    assert records.relative_place(r"src\limit.py:3", SHOP) == "src/limit.py:3"
+
+
+def test_an_absolute_path_through_dot_dot_is_resolved() -> None:
+    assert records.relative_place(r"C:\work\shop\..\shop\src\a.py", SHOP) == "src/a.py"
+    assert records.relative_place(r"C:\work\shop\..\other\a.py", SHOP) is None
+    assert records.relative_place("/home/sam/api/../api/b.py", ATLAS) == "api/b.py"

@@ -10,6 +10,8 @@ Findings sit under a review record as ``<severity> `<place>`: <text>``.
 """
 
 import datetime
+import ntpath
+import posixpath
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -500,9 +502,12 @@ def relative_place(place: str, roots: Sequence[tuple[str, PurePath]]) -> str | N
     path, rest = _split_place(place)
     windows = bool(_WINDOWS_ABSOLUTE.match(path))
     if not windows and not path.startswith("/"):
-        return path.replace("\\", "/") + rest
+        # Only a single word reads as a path; prose such as "`re \d+` pattern" is kept.
+        if path and not any(char.isspace() or char == "`" for char in path):
+            path = path.replace("\\", "/")
+        return path + rest
     flavor: type[PurePath] = PureWindowsPath if windows else PurePosixPath
-    given = flavor(path)
+    given = flavor((ntpath if windows else posixpath).normpath(path))
     for prefix, folder in roots:
         base = flavor(folder)
         if not base.is_absolute() or not given.is_relative_to(base):
