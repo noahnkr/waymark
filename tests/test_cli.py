@@ -432,6 +432,28 @@ def test_escape_at_the_welcome_cancels(repo: Path, capsys: pytest.CaptureFixture
     assert out.rstrip().endswith(CANCELED)
 
 
+def test_ctrl_c_as_an_interrupt_cancels(
+    repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """On Windows Ctrl+C arrives as KeyboardInterrupt, not as a key."""
+
+    def interrupted(_: FakeTerminal) -> str:
+        raise KeyboardInterrupt
+
+    FakeTerminal.keys[:] = [*WELCOME, *PROJECT, "pending"]
+    monkeypatch.setattr(
+        FakeTerminal,
+        "read_key",
+        lambda self: (
+            FakeTerminal.keys.pop(0) if FakeTerminal.keys[0] != "pending" else interrupted(self)
+        ),
+    )
+    before = files_under(repo)
+    assert main(["init"]) == EXIT_REFUSED
+    assert files_under(repo) == before
+    assert capsys.readouterr().out.rstrip().endswith(CANCELED)
+
+
 def test_scenario_run_by_an_agent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

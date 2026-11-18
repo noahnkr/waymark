@@ -71,10 +71,14 @@ def _init(args: argparse.Namespace) -> int:
         return _report(setup.init_project(_here()))
     style = Style.detect(sys.stdout, os.environ)
     try:
-        with RawTerminal() as terminal:
-            answers = _init_answers(root, style, terminal)
-    except RawModeUnavailable:
-        answers = _init_answers(root, style, None)
+        try:
+            with RawTerminal() as terminal:
+                answers = _init_answers(root, style, terminal)
+        except RawModeUnavailable:
+            answers = _init_answers(root, style, None)
+    except KeyboardInterrupt:
+        # Windows delivers Ctrl+C as an interrupt, not a key; it cancels all the same.
+        answers = None
     # Raw mode is over by now, so what follows prints as ordinary lines.
     if answers is None:
         print(welcome.CANCELED)
