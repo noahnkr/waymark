@@ -27,6 +27,16 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       `waymark/`. `git status` is clean, and `wm doctor` has no errors. Delete
       the clone.
 
+## Keys in a raw terminal
+
+- [ ] On Windows Terminal, and on one POSIX terminal (macOS Terminal or a Linux
+      terminal), run `wm init` in a fresh scratch repository. At its questions:
+      the up and down arrows move the pointer, Space toggles a tool, Enter
+      answers, and Backspace erases a letter of the atlas name. Run it again and
+      press Esc at a question: `wm init` ends with
+      `Setup canceled. Nothing was written.`, and `git status` shows nothing new.
+      After each run, the terminal shows its cursor and echoes what you type.
+
 ## Session start and kickoff
 
 - [ ] Start Claude Code in the repository. Its first context includes the

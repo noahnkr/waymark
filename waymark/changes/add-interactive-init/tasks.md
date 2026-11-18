@@ -16,7 +16,7 @@
   - Verify:
     - tests feeding key sequences in a new `tests/views/test_prompts.py`, including `test_scenario_nothing_selected` and `test_scenario_invalid_atlas_name`
   - (note) 2026-11-18 by Noah Roberts: setup.atlas_name_problem() now holds the atlas-name rule that init_project refused with, so the TextInput can validate with the same rule; Select also takes a typed number, for the line fallback
-- [ ] 1.3 Raw keys, redraws and the line fallback
+- [x] 1.3 Raw keys, redraws and the line fallback
   - Criteria:
     - `views/terminal.py` reads keys in raw mode on Windows and POSIX, mapping arrows, Space, Enter, Backspace, Esc and Ctrl+C to key names, and restores the terminal mode and cursor in a `finally`
     - it redraws a prompt in place, and raises when raw mode can't be entered
@@ -24,6 +24,7 @@
   - Verify:
     - tests of the key mapping from raw byte sequences of both platforms, and `test_scenario_numbered_choices` with a fake input, in a new `tests/views/test_terminal.py`
     - by hand: arrows, Space, Enter and Esc on Windows Terminal and one POSIX terminal, added to `docs/smoke-test.md`
+  - (note) 2026-11-18 by Noah Roberts: The by-hand check of arrows, Space, Enter, Backspace and Esc on Windows Terminal and a POSIX terminal is in docs/smoke-test.md under Keys in a raw terminal; it runs at the release's smoke test, once 2.1 wires the questions into wm init. style.enable_escape_sequences is now public for the raw terminal
 - [ ] 1.4 The welcome screen
   - Criteria:
     - `views/welcome.py` draws the 11-row star with its ring, the name, the tagline "Leave a trail your agents can follow.", what `wm init` sets up and the skills to run next, the star's center row level with the middle of the text; below 90 columns, the text is under the star
