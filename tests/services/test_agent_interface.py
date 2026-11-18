@@ -200,6 +200,18 @@ def test_scenario_tasks_step(project: Workspace) -> None:
     assert not set(WRITING_RULES + SIZING_RULES) & set(at(project, "design")["guidance"])
 
 
+def test_scenario_resource_item(project: Workspace) -> None:
+    """Requirement "Writing and sizing rules": the tasks step asks for a resource item."""
+    project.change(tasks=None)
+    guidance = valid(at(project))["guidance"]
+    rule = (
+        "Give a change that sets up or alters something outside the repo an item to create or "
+        "update its resource."
+    )
+    assert rule in guidance
+    assert rule not in at(project, "specs")["guidance"]
+
+
 ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n  - Verify: a test\n"
 
 

@@ -47,7 +47,7 @@
     - a reviewer's edit of a resource is refused with the reason that a reviewer edits nothing
   - Verify:
     - `test_scenario_planner_edits_outside_a_change`, `test_scenario_implementer_edits_a_resource`, `test_scenario_reviewer_edits_a_resource`, `test_scenario_implementer_edits_a_proposal` and `test_scenario_resource_updated_as_tiny_work` in `tests/hooks/test_decide.py`, and the existing tests for Implementer writes a note by hand, Code edited outside a change, Spec edited outside a change and Nothing recorded still pass
-- [ ] 2.3 The resource rule in the tasks guidance
+- [x] 2.3 The resource rule in the tasks guidance
   - Criteria: `wm instructions` for the tasks step gives, among its sizing rules, "Give a change that sets up or alters something outside the repo an item to create or update its resource.", and the specs-step and other tasks-step rules are unchanged
   - Verify: `test_scenario_resource_item` beside the existing tests for the scenarios Specs step and Tasks step
 
