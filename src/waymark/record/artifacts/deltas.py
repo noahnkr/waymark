@@ -6,7 +6,6 @@ spec. A rename keeps the requirement's statement and scenarios; the same delta
 may also modify the requirement under its new name.
 """
 
-import re
 from dataclasses import dataclass
 
 from waymark.record.artifacts.specs import (
@@ -22,6 +21,7 @@ from waymark.record.artifacts.specs import (
     parse_spec,
     requirement_key,
 )
+from waymark.record.markdown import labels
 from waymark.record.markdown.outline import (
     collect_sections,
     parse_facts,
@@ -35,9 +35,6 @@ ADDED = "ADDED Requirements"
 MODIFIED = "MODIFIED Requirements"
 REMOVED = "REMOVED Requirements"
 RENAMED = "RENAMED Requirements"
-
-_REASON = re.compile(r"^Reason:\s*(\S.*)$")
-_RENAME_LINE = re.compile(r"^[-*]\s+(From|To):\s*(.*?)\s*$")
 
 
 @dataclass(frozen=True)
@@ -111,6 +108,14 @@ class Merge:
     problems: tuple[Problem, ...]
 
 
+def _reason(text: str) -> labels.Label | None:
+    """A removal's ``Reason:`` line, when it has text."""
+    label = labels.read_label(text)
+    if label is None or label.name != labels.REASON or not label.value:
+        return None
+    return label
+
+
 def _parse_removals(doc: Document, problems: list[Problem]) -> tuple[Removal, ...]:
     sections = {section.title.casefold(): section for section in doc.sections(2)}
     parent = sections.get(REMOVED.casefold())
@@ -119,7 +124,7 @@ def _parse_removals(doc: Document, problems: list[Problem]) -> tuple[Removal, ..
     removals: list[Removal] = []
     for name, section in named_blocks(doc, parent, problems):
         lines = doc.lines[section.body_start : section.end]
-        reason = next((m.group(1).strip() for line in lines if (m := _REASON.match(line.text))), "")
+        reason = next((label.value for line in lines if (label := _reason(line.text))), "")
         if not reason:
             problems.append(
                 Problem(
@@ -144,8 +149,13 @@ def _parse_renames(doc: Document, problems: list[Problem]) -> tuple[Rename, ...]
         line = doc.lines[index]
         if line.is_blank or line.in_fence:
             continue
-        match = _RENAME_LINE.match(line.text)
-        if match is None or not match.group(2):
+        match = labels.read_label(line.text)
+        if (
+            match is None
+            or not match.bullet
+            or match.name not in (labels.FROM, labels.TO)
+            or not match.value
+        ):
             problems.append(
                 Problem(
                     doc.path,
@@ -156,8 +166,8 @@ def _parse_renames(doc: Document, problems: list[Problem]) -> tuple[Rename, ...]
                 )
             )
             continue
-        word, name = match.group(1), match.group(2)
-        if word == "From":
+        word, name = match.name, match.value
+        if word == labels.FROM:
             if pending is not None:
                 problems.append(_unpaired(doc, pending[1]))
             pending = (name, index)

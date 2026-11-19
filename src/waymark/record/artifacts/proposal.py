@@ -11,6 +11,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from waymark.record.markdown import labels
 from waymark.record.markdown.outline import (
     collect_sections,
     content,
@@ -21,11 +22,11 @@ from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document
 from waymark.record.terms import ReviewLevel
 
-OWNER = "Owner"
-MILESTONE = "Milestone"
-AFTER = "After"
-PATH = "Path"
-REVIEW = "Review"
+OWNER = labels.OWNER
+MILESTONE = labels.MILESTONE
+AFTER = labels.AFTER
+PATH = labels.PATH
+REVIEW = labels.REVIEW
 SHORT = "short"
 FULL = "full"
 
@@ -36,17 +37,15 @@ IMPACT = "Impact"
 OUTCOME = "Outcome"
 REQUIRED_SECTIONS = (WHY, WHAT_CHANGES, NON_GOALS, IMPACT)
 
-SPECS = "Specs"
-USER_VISIBLE = "User-visible"
-CODE = "Code"
+SPECS = labels.SPECS
+USER_VISIBLE = labels.USER_VISIBLE
+CODE = labels.CODE
 IMPACT_LINES = (SPECS, USER_VISIBLE, CODE)
 NONE = "none"
-BUILT = "Built"
-DIFFERS = "Differs"
+BUILT = labels.BUILT
+DIFFERS = labels.DIFFERS
 
-_OUTCOME_LINE = re.compile(r"^[-*][ \t]+(Built|Differs):(?:[ \t]+(.*))?$")
 
-_IMPACT_LINE = re.compile(r"^[-*][ \t]+(Specs|User-visible|Code):(?:[ \t]+(.*))?$")
 _SPEC_NAME = re.compile(r"`([^`\s]+)`")
 
 
@@ -100,9 +99,9 @@ class Proposal:
         """The Outcome's ``Built`` and ``Differs`` lines that have text."""
         found: dict[str, str] = {}
         for line in (self.outcome or "").split("\n"):
-            match = _OUTCOME_LINE.match(line)
-            if match and (match.group(2) or "").strip():
-                found.setdefault(match.group(1), match.group(2).strip())
+            label = labels.read_label(line)
+            if label and label.bullet and label.name in (BUILT, DIFFERS) and label.value:
+                found.setdefault(label.name, label.value)
         return found
 
     def accepted_text(self) -> str:
@@ -216,10 +215,10 @@ def _impact_lines(doc: Document, start: int, end: int) -> dict[str, str]:
             if current is not None:
                 current.append(text.strip())
             continue
-        match = _IMPACT_LINE.match(text)
+        label = labels.read_label(text)
         current = None
-        if match and match.group(1) not in lines:
-            current = lines[match.group(1)] = [match.group(2) or ""]
+        if label and label.bullet and label.name in IMPACT_LINES and label.name not in lines:
+            current = lines[label.name] = [label.value]
     return {
         label: "\n".join(part for part in parts if part).strip() for label, parts in lines.items()
     }

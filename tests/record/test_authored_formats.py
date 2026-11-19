@@ -1,10 +1,26 @@
 """The layouts humans and the planner write: facts, the glossary, the exploration status."""
 
-from tests.support import CHARTER, DESIGN, NO_SPECS, Workspace, document, proposal
+import datetime
+import re
+
+from tests.record.artifacts.test_resources import resource
+from tests.support import (
+    CHARTER,
+    DESIGN,
+    NO_SPECS,
+    Workspace,
+    delta,
+    document,
+    proposal,
+    spec,
+)
 from waymark.record.artifacts.charter import parse_charter
+from waymark.record.artifacts.deltas import parse_delta
 from waymark.record.artifacts.design import parse_design
 from waymark.record.artifacts.explorations import parse_exploration
 from waymark.record.artifacts.proposal import parse_proposal
+from waymark.record.artifacts.resources import parse_resource
+from waymark.record.artifacts.specs import parse_spec
 from waymark.record.artifacts.tasks import parse_tasks
 from waymark.record.state import AcceptanceState, ExplorationStatus, derive_state
 from waymark.services import setup
@@ -334,3 +350,132 @@ def test_proposal_facts_include_the_after_line() -> None:
     assert parsed.problems == ()
     bare = text.replace("- After: add-index", "After: add-index")
     assert parse_proposal(document(bare, "changes/add-limit/proposal.md")).after is None
+
+
+_PLAIN_LABEL = re.compile(
+    r"^(\s*(?:[-*] )?)(Owner|Milestone|After|Path|Review|Specs|User-visible|Code|Built|Differs"
+    r"|Build|Repo|Criteria|Verify|Status|Decided by|Options|Choice|Why|From|To|Reason|Repos"
+    r"|Kind|Serves|Verified):",
+    re.MULTILINE,
+)
+
+
+def bold(text: str) -> str:
+    """The text with every known label written bold, the colon inside."""
+    return _PLAIN_LABEL.sub(r"\1**\2:**", text)
+
+
+def test_bold_labels_in_a_proposal() -> None:
+    """Facts, Impact and Outcome are read with bold labels."""
+    text = bold(
+        proposal(outcome="- Built: the cap\n- Differs: none").replace(
+            "- Owner: Sam Doe\n",
+            "- Owner: Sam Doe\n- Milestone: faster-search\n- After: add-index\n"
+            "- Path: short\n- Review: self\n",
+        )
+    )
+    assert "- **Owner:** Sam Doe" in text
+    parsed = parse_proposal(document(text, "changes/add-limit/proposal.md"))
+    assert parsed.problems == ()
+    assert (parsed.owner, parsed.milestone, parsed.after) == (
+        "Sam Doe",
+        "faster-search",
+        "add-index",
+    )
+    assert parsed.short_path
+    assert parsed.review is not None
+    assert parsed.review.value == "self"
+    assert parsed.impact_specs == ("search",)
+    assert parsed.impact["User-visible"] == "at most fifty results"
+    assert parsed.outcome_lines == {"Built": "the cap", "Differs": "none"}
+
+
+def test_bold_labels_in_a_task_list() -> None:
+    """An item's Criteria, Verify, Repo and Build are read with bold labels."""
+    text = bold(BUILT.replace("  - Verify: a test\n", "  - Verify: a test\n  - Repo: api\n"))
+    assert "  - **Criteria:**\n" in text
+    tasks = parse_tasks(document(text, "changes/add-limit/tasks.md"))
+    assert tasks.problems == ()
+    first, second = tasks.items
+    assert (first.criteria, first.verify, first.repo) == (
+        "- fifty at most\n- sorted by score",
+        "a test",
+        "api",
+    )
+    assert second.delegate
+
+
+def test_bold_labels_in_a_design() -> None:
+    """A decision's parts are read with bold labels."""
+    text = bold(DESIGN)
+    assert "- **Decided by:** planner" in text
+    design = parse_design(document(text, "changes/add-limit/design.md"))
+    assert design.problems == ()
+    [decision] = design.decisions
+    assert (decision.status, decision.decided_by) == ("decided", "planner")
+    assert decision.options == ("in the query", "after sorting")
+    listed = bold(
+        DESIGN.replace(
+            "- Options: in the query, or after sorting",
+            "- Options:\n  - cut in the query\n  - cut after sorting",
+        )
+    )
+    options = parse_design(document(listed, "d.md")).decisions[0].options
+    assert options == ("cut in the query", "cut after sorting")
+
+
+def test_bold_labels_in_a_delta() -> None:
+    """A delta's Repos, From, To and Reason are read with bold labels."""
+    text = bold(delta(removed=(("Result order", "Unused."),), repos="api, web"))
+    assert "**Reason:** Unused." in text
+    parsed = parse_delta("search", document(text, "changes/add-limit/specs/search.md"))
+    assert parsed.problems == ()
+    assert parsed.repos == ("api", "web")
+    assert [(r.name, r.reason) for r in parsed.removed] == [("Result order", "Unused.")]
+    renamed = bold(
+        "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+    )
+    parsed = parse_delta("search", document(renamed, "changes/add-limit/specs/search.md"))
+    assert parsed.problems == ()
+    assert [(r.old, r.new) for r in parsed.renamed] == [("Result cap", "Result limit")]
+
+
+def test_bold_repos_line_in_a_spec() -> None:
+    text = spec().replace("# Search\n\n", "# Search\n\n**Repos:** api\n\n")
+    parsed = parse_spec("search", document(text, "specs/search.md"))
+    assert parsed.problems == ()
+    assert parsed.repos == ("api",)
+
+
+def test_bold_status_in_an_exploration() -> None:
+    text = bold(explore("led-to [add-limit](../changes/add-limit/proposal.md)"))
+    assert "- **Status:** led-to" in text
+    parsed = parse_exploration("paging", document(text, "explorations/paging.md"))
+    assert parsed.problems == ()
+    assert parsed.status == "led-to"
+
+
+def test_bold_lines_in_a_resource() -> None:
+    text = bold(resource())
+    assert "- **Verified:** 2026-11-17" in text
+    parsed = parse_resource("stripe", document(text, "resources/stripe.md"))
+    assert parsed.problems == ()
+    assert (parsed.kind, parsed.status, parsed.verified) == (
+        "service",
+        "active",
+        datetime.date(2026, 11, 17),
+    )
+
+
+def test_glossary_with_the_colon_inside_the_bold() -> None:
+    text = CHARTER.replace("- **Match**: a document", "- **Match:** a document")
+    assert parse_charter(document(text, "charter.md")).problems == ()
+    assert parse_charter(document(CHARTER, "charter.md")).problems == ()
+
+
+def test_bold_labels_report_nothing_new(workspace: Workspace) -> None:
+    """A change written with bold labels throughout checks clean and can be accepted."""
+    workspace.change(proposal_text=bold(proposal()), design=bold(DESIGN), tasks=bold(BUILT))
+    assert workspace.record().changes["add-limit"].problems == ()
+    workspace.accept()
+    assert workspace.change_state().acceptance is AcceptanceState.VALID

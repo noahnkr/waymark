@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 from waymark.record.evidence import records
 from waymark.record.evidence.records import RecordKind
+from waymark.record.markdown import labels
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document, Section
 from waymark.record.terms import ReviewSeverity, Verdict
@@ -24,8 +25,8 @@ _SECTION = re.compile(r"^(\d+)\.\s+(\S.*)$")
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
 _LIST_LINE = re.compile(r"^(?:[-*+]|\d+[.)])(?:\s|$)")
 _FIELD = re.compile(r"^  [-*] (\S.*)$")
-_LABELED = re.compile(r"^(Criteria|Verify|Repo|Build):(?:\s+(.*))?$")
-BUILD = "Build"
+_ITEM_LABELS = (labels.CRITERIA, labels.VERIFY, labels.REPO, labels.BUILD)
+BUILD = labels.BUILD
 _RECORD_LINE = re.compile(r"^[-*] (\(.*)$")
 _REVIEW_KINDS = (RecordKind.REVIEW, RecordKind.SELF_REVIEW, RecordKind.RESOLVED)
 
@@ -262,9 +263,9 @@ class _Parser:
         assert draft is not None
         draft.open_text = None
         draft.end = index + 1
-        labeled = _LABELED.match(text)
-        if labeled:
-            self.labeled(index, labeled.group(1), (labeled.group(2) or "").strip())
+        labeled = labels.read_label(text)
+        if labeled and not labeled.bullet and labeled.name in _ITEM_LABELS:
+            self.labeled(index, labeled.name, labeled.value)
         elif records.looks_like_record(text):
             self.item_record(index, text)
         else:

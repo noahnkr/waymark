@@ -2,7 +2,7 @@
 
 ## 1. Labels
 
-- [ ] 1.1 Read every label in both the plain and the bold form, through one labels module
+- [x] 1.1 Read every label in both the plain and the bold form, through one labels module
   - Criteria:
     - a new `record/markdown/labels.py` holds the label names, `label_line(name, value, bullet=True)` writing `- **<name>:** <value>`, and a pattern that reads a label line and tells the bold form (colon inside), the plain form and the bold form with the colon outside apart
     - every reader named in the design's Context reads a label in the bold form and in the plain form alike: proposal facts, Impact and Outcome, an item's Criteria, Verify, Repo and Build, a decision's parts, a delta's From, To and Reason, the Repos line, an exploration's Status, a resource's four lines, and the hook's Status-line guard

@@ -19,8 +19,8 @@ CONTEXT = "Context"
 RULES = "Rules"
 REQUIRED_SECTIONS = (VISION, GOALS, NON_GOALS, CONSTRAINTS, GLOSSARY, CONTEXT, RULES)
 
-GLOSSARY_LINE = re.compile(r"^- \*\*(\S[^*]*?)\*\*: \S")
-"""A glossary entry: ``- **<term>**: <meaning>``."""
+GLOSSARY_LINE = re.compile(r"^- \*\*(?:(\S[^*]*?):\*\*|(\S[^*]*?)\*\*:) \S")
+"""A glossary entry: ``- **<term>:** <meaning>``, or the older ``- **<term>**: <meaning>``."""
 
 _NUMBERED_LINE = re.compile(r"^(\d+)\.[ \t]+\S")
 """An item of a numbered list: ``<n>. <text>``."""

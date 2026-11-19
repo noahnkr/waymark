@@ -846,6 +846,13 @@ def test_agent_may_not_remove_an_exploration_status(accepted: Workspace) -> None
     assert not replace(accepted, EXPLORATION_PATH, "- Status: open\n\n", "").allow
 
 
+def test_bold_exploration_status_is_guarded(accepted: Workspace) -> None:
+    for status in ("- **Status:** open", "- **Status**: open"):
+        accepted.write(EXPLORATION_PATH, EXPLORATION.replace("- Status: open", status))
+        assert not replace(accepted, EXPLORATION_PATH, f"{status}\n\n", "").allow
+        assert not replace(accepted, EXPLORATION_PATH, status, "- **Status:** dropped").allow
+
+
 def test_archived_exploration_status_is_not_guarded(accepted: Workspace) -> None:
     path = "explorations/archive/2026-11-01-result-paging.md"
     accepted.write(path, EXPLORATION)

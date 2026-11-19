@@ -4,6 +4,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from waymark.record.markdown import labels
 from waymark.record.markdown.outline import collect_sections, content, require_title
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document
@@ -14,9 +15,9 @@ DECISIONS = "Decisions"
 RISKS = "Risks and trade-offs"
 OPEN_QUESTIONS = "Open questions"
 REQUIRED_SECTIONS = (CONTEXT, APPROACH, DECISIONS, RISKS)
-DECISION_PARTS = ("Options", "Choice", "Why")
-STATUS = "Status"
-DECIDED_BY = "Decided by"
+DECISION_PARTS = (labels.OPTIONS, labels.CHOICE, labels.WHY)
+STATUS = labels.STATUS
+DECIDED_BY = labels.DECIDED_BY
 PROPOSED = "proposed"
 DECIDED = "decided"
 STATUSES = (PROPOSED, DECIDED)
@@ -24,7 +25,7 @@ DECIDERS = ("human", "planner")
 NO_QUESTIONS = "None."
 
 _DECISION = re.compile(r"^Decision:\s*(\S.*)$")
-_PART = re.compile(r"^\s*(?:[-*]\s+)?(Options|Choice|Why|Status|Decided by):[ \t]*(.*)$")
+_PARTS = (*DECISION_PARTS, STATUS, DECIDED_BY)
 _OPTION_SPLIT = re.compile(r";|\bor\b")
 _LIST_ITEM = re.compile(r"^(?:[-*]|\d+\.)[ \t]+(\S.*)$")
 
@@ -96,9 +97,10 @@ def parse_design(doc: Document) -> Design:
             bullets: list[str] = []
             in_options = False
             for line in lines:
-                if m := _PART.match(line.text):
-                    values.setdefault(m.group(1), m.group(2).strip())
-                    in_options = m.group(1) == "Options"
+                part = labels.read_label(line.text.strip())
+                if part is not None and part.name in _PARTS:
+                    values.setdefault(part.name, part.value)
+                    in_options = part.name == labels.OPTIONS
                 elif in_options and line.text.startswith((" ", "\t")):
                     if bullet := _LIST_ITEM.match(line.text.strip()):
                         bullets.append(bullet.group(1).strip())
@@ -124,7 +126,7 @@ def parse_design(doc: Document) -> Design:
                     section.start,
                     values.get(STATUS),
                     values.get(DECIDED_BY),
-                    tuple(bullets) or _inline_options(values.get("Options", "")),
+                    tuple(bullets) or _inline_options(values.get(labels.OPTIONS, "")),
                 )
             )
     questions: tuple[str, ...] | None = None
