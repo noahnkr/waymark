@@ -409,6 +409,7 @@ def _record(record: ReviewRecord, numbers: tuple[str, ...] = ()) -> Payload:
     reviews = record.kind in (RecordKind.REVIEW, RecordKind.SELF_REVIEW)
     return {
         "kind": record.kind.value,
+        "line": record.line,
         "date": record.date.isoformat(),
         "by": record.who,
         "verdict": record.verdict.value if record.verdict else None,

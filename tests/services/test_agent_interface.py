@@ -546,7 +546,7 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
             ],
         }
     ]
-    assert "critical: src/search.py:12" in render.to_text(built, PLAIN)
+    assert "[critical] `src/search.py:12`: fifty-one come back" in render.to_text(built, PLAIN)
 
 
 def test_scenario_note_in_the_implementers_pack(project: Workspace) -> None:
@@ -704,7 +704,9 @@ def test_pack_in_an_atlas_resolves_the_items_repo_to_its_folder_in_text_only(
     assert built["item"]["repo"] == "api"
     assert built["item"]["repo_found"] is True
     folder = str((tmp_path / "suite-api").resolve())
-    assert f"- Repo: api (its folder on this machine is {folder})" in render.to_text(built, PLAIN)
+    assert f"- **Repo:** api (its folder on this machine is {folder})" in render.to_text(
+        built, PLAIN
+    )
     assert folder not in render.to_json(built)
     assert '"repo_found": true' in render.to_json(built)
 
@@ -839,7 +841,7 @@ def test_reviewer_pack_holds_only_the_items_added_after_a_pass(project: Workspac
     assert built["design"]
     text = render.to_text(built, PLAIN)
     assert "Review only the items below, at level independent" in text
-    assert "- Earlier review (2026-01-15, pass, covers 1.1 1.2): fine" in text
+    assert "- Earlier review (2026-01-15, pass; covers 1.1, 1.2): fine" in text
     assert "Cap the result count" not in text
 
 

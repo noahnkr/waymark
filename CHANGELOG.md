@@ -64,6 +64,14 @@ All notable changes to Waymark, one entry per release.
   doesn't have as `unknown-item`. `wm show` and the implement context pack still
   show each item's records with the item. Each record in the `wm.show.change`
   JSON has an `item` field, and the Log in `wm show` names it.
+- **`wm show` prints records as they are written.** The Log and each item's
+  records read `<date> (<kind>) …`, with item lists separated by commas, and
+  findings read ``[<severity>] `<place>`: <text>``. A review written without
+  `covers` adds a line saying it covers every item. Each record in the
+  `wm.show.change` JSON has a `line` field holding it as written.
+- **The context packs use the record's own shapes.** An item's labels are bold,
+  `- **Criteria:**`, and earlier findings are in brackets, so what an agent
+  copies from a pack is what `wm check` expects.
 
 ## [0.4.0] - 2026-11-18
 

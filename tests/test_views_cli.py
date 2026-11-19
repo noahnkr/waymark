@@ -331,9 +331,9 @@ def test_items_are_a_tree_with_records_on_the_stem(terminal: Terminal) -> None:
     text = render.to_text(payload, Style(unicode=True, width=80))
     assert "  ├─ ○ 1.1" in text
     assert "  └─ ○ 1.2" in text
-    assert "  │   (blocked)" in text
+    assert "  │   2026-11-19 (blocked)" in text
     colored = render.to_text(payload, STYLED)
-    assert "\x1b[2m  │   (blocked)" in colored
+    assert "\x1b[2m  │   2026-11-19 (blocked)" in colored
 
 
 def test_milestone_roadmap_marks(terminal: Terminal) -> None:

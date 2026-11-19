@@ -261,21 +261,21 @@ def _item_lines(item: Payload, style: Style, *, last: bool) -> list[str]:
     return lines
 
 
-def _record_lines(
-    record: Payload, indent: str, style: Style, *, with_item: bool = False
-) -> list[str]:
-    verdict = f" {record['verdict']}" if record["verdict"] else ""
-    about = f" {record['item']}" if with_item and record.get("item") else ""
-    named = about + (f" {' '.join(record['items'])}" if record["items"] else "")
-    covers = f" covers {' '.join(record['covers'])}" if record.get("covers") else ""
-    text = f": {record['text']}" if record["text"] else ""
-    by = f" by {record['by']}" if record["by"] else ""
-    head = f"({record['kind']}) {record['date']}{verdict}{named}{covers}{by}{text}"
-    lines = _painted(style.wrap(head, indent), style, MUTED)
+def _finding_line(finding: Payload) -> str:
+    """A finding as it is written under its review, without its list marker."""
+    return f"[{finding['severity']}] `{finding['place']}`: {finding['text']}"
+
+
+def _record_lines(record: Payload, indent: str, style: Style) -> list[str]:
+    """A record and its findings, as they are written in the Log."""
+    lines = _painted(style.wrap(record["line"], indent), style, MUTED)
+    if record["covers"] and " covers " not in record["line"]:
+        # Written before reviews named what they cover: it covers every item.
+        note = f"covers every item: {', '.join(record['covers'])}"
+        lines += _painted(style.wrap(note, indent + "  "), style, MUTED)
     for finding in record["findings"]:
         color = DANGER if finding["severity"] == "critical" else ATTENTION
-        line = f"  {finding['severity']} `{finding['place']}`: {finding['text']}"
-        lines += _painted(style.wrap(line, indent), style, color)
+        lines += _painted(style.wrap(_finding_line(finding), indent + "  "), style, color)
     return lines
 
 
@@ -295,7 +295,7 @@ def _log_section(log: list[Payload], style: Style) -> list[str]:
         return []
     lines = ["", style.paint("Log", STRONG)]
     for record in log:
-        lines += _record_lines(record, "  ", style, with_item=True)
+        lines += _record_lines(record, "  ", style)
     return lines
 
 
@@ -482,23 +482,20 @@ def _definition_lines(item: Payload) -> list[str]:
     lines = [f"**{item['number']} {item['title']}**", ""]
     for label, key in (("Criteria", "criteria"), ("Verify", "verify")):
         if item[key]:
-            lines.append(f"- {label}: {item[key]}")
+            lines.append(f"- **{label}:** {item[key]}")
     if item["repo"]:
         folder = item["_local"]["repo_folder"]
         where = f"its folder on this machine is {folder}" if folder else "not found on this machine"
-        lines.append(f"- Repo: {item['repo']} ({where})")
+        lines.append(f"- **Repo:** {item['repo']} ({where})")
     return lines
 
 
 def _review_lines(review: Payload) -> list[str]:
-    named = f" {' '.join(review['items'])}" if review["items"] else ""
-    covers = f", covers {' '.join(review['covers'])}" if review["covers"] else ""
+    named = f" {', '.join(review['items'])}" if review["items"] else ""
+    covers = f"; covers {', '.join(review['covers'])}" if review["covers"] else ""
     head = f"({review['date']}, {review['verdict']}{named}{covers})"
     lines = [f"- Earlier review {head}: {review['text']}"]
-    lines += [
-        f"  - {finding['severity']}: {finding['place']}: {finding['text']}"
-        for finding in review["findings"]
-    ]
+    lines += [f"  - {_finding_line(finding)}" for finding in review["findings"]]
     return lines
 
 
