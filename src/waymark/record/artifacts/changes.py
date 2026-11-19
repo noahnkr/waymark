@@ -151,15 +151,27 @@ def _check_decisions(design: Design, problems: list[Problem]) -> None:
     """Each decision weighs options, says whether it is settled and who made it; open questions
     are listed."""
     for decision in design.decisions:
-        if len(decision.options) < 2:  # noqa: PLR2004 - a decision weighs at least two options
+        options = label_line(labels.OPTIONS)
+        if decision.options_text:
+            line = decision.options_index if decision.options_index is not None else decision.index
+            problems.append(
+                Problem(
+                    design.doc.path,
+                    line + 1,
+                    "decision-options",
+                    f'Decision "{decision.name}" has text on its "{options}" line. Write one '
+                    "option per bullet under the line, at least two, and leave the line itself "
+                    "empty.",
+                )
+            )
+        elif len(decision.options) < 2:  # noqa: PLR2004 - a decision weighs at least two options
             problems.append(
                 Problem(
                     design.doc.path,
                     decision.index + 1,
                     "decision-options",
-                    f'Decision "{decision.name}" weighs at least two options. List them as '
-                    f'bullets under "{label_line(labels.OPTIONS)}", or on the line joined by "or" '
-                    'or ";".',
+                    f'Decision "{decision.name}" weighs at least two options. List them under '
+                    f'"{options}", one option per bullet.',
                 )
             )
         for label, value, allowed in (

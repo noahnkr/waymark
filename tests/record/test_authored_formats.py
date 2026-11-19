@@ -170,30 +170,44 @@ def test_scenario_item_without_verification(workspace: Workspace) -> None:
     assert '"- **Criteria:**"' not in problem.message
 
 
+LISTED_OPTIONS = "- Options:\n  - in the query\n  - after sorting\n"
+
+
 def test_scenario_one_option(workspace: Workspace) -> None:
-    workspace.change(design=DESIGN.replace("in the query, or after sorting", "cut after sorting"))
+    workspace.change(
+        design=bold(DESIGN.replace(LISTED_OPTIONS, "- Options:\n  - cut after sorting\n"))
+    )
     [problem] = workspace.record().changes["add-limit"].problems
     assert problem.code == "decision-options"
     assert "at least two options" in problem.message
+    assert "one option per bullet" in problem.message
 
 
 def test_scenario_options_as_a_list(workspace: Workspace) -> None:
-    listed = DESIGN.replace(
-        "- Options: in the query, or after sorting",
-        "- Options:\n  - cut in the query\n  - cut after sorting",
-    )
-    workspace.change(design=listed)
+    workspace.change(design=bold(DESIGN))
     assert workspace.record().changes["add-limit"].problems == ()
-    design = parse_design(document(listed, "changes/add-limit/design.md"))
-    assert design.decisions[0].options == ("cut in the query", "cut after sorting")
-    inline = parse_design(document(DESIGN, "changes/add-limit/design.md"))
-    assert inline.decisions[0].options == ("in the query", "after sorting")
+    design = parse_design(document(bold(DESIGN), "changes/add-limit/design.md"))
+    assert design.decisions[0].options == ("in the query", "after sorting")
+
+
+def test_scenario_options_on_one_line(workspace: Workspace) -> None:
+    """The old one-line form is not split on "or": it is reported, on its own line."""
+    design = bold(DESIGN.replace(LISTED_OPTIONS, "- Options: cut before or after sorting\n"))
+    workspace.change(design=design)
+    [problem] = workspace.record().changes["add-limit"].problems
+    assert problem.code == "decision-options"
+    assert (
+        problem.line == design.split("\n").index("- **Options:** cut before or after sorting") + 1
+    )
+    assert "one option per bullet" in problem.message
+    parsed = parse_design(document(design, "changes/add-limit/design.md"))
+    assert parsed.decisions[0].options == ()
 
 
 def test_archived_changes_are_not_held_to_items_and_options(workspace: Workspace) -> None:
     folder = "changes/archive/2026-01-20-add-limit"
     workspace.write(f"{folder}/proposal.md", proposal(outcome="- Built: x\n- Differs: none"))
-    workspace.write(f"{folder}/design.md", DESIGN.replace("in the query, or after sorting", "one"))
+    workspace.write(f"{folder}/design.md", DESIGN.replace(LISTED_OPTIONS, "- Options: one\n"))
     workspace.write(f"{folder}/tasks.md", "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n")
     assert workspace.record().problems == ()
 
@@ -414,14 +428,6 @@ def test_bold_labels_in_a_design() -> None:
     [decision] = design.decisions
     assert (decision.status, decision.decided_by) == ("decided", "planner")
     assert decision.options == ("in the query", "after sorting")
-    listed = bold(
-        DESIGN.replace(
-            "- Options: in the query, or after sorting",
-            "- Options:\n  - cut in the query\n  - cut after sorting",
-        )
-    )
-    options = parse_design(document(listed, "d.md")).decisions[0].options
-    assert options == ("cut in the query", "cut after sorting")
 
 
 def test_bold_labels_in_a_delta() -> None:

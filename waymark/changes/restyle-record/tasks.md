@@ -34,7 +34,7 @@
   - Verify:
     - tests in `tests/services/test_check.py` and `tests/record/test_tasks_records.py` for the scenarios Item built by the planner, Tagged item, Unknown build value and Build changed after acceptance
     - `uv run --no-sync pytest tests/record tests/services`
-- [ ] 2.2 Count a decision's options only as nested bullets
+- [x] 2.2 Count a decision's options only as nested bullets
   - Criteria:
     - the split of a one-line Options on `;` and "or" is gone; options are the bullets under the Options line
     - an Options line with text of its own is reported as `decision-options`, asking for one option per bullet; fewer than two bullets asks for at least two

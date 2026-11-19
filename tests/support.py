@@ -72,7 +72,9 @@ Cut the result list after sorting.
 
 - Status: decided
 - Decided by: planner
-- Options: in the query, or after sorting
+- Options:
+  - in the query
+  - after sorting
 - Choice: after sorting
 - Why: the order must be final first
 
