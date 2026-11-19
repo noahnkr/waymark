@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "waymark-cli"
 dynamic = ["version"]
-description = "Spec-driven development for developers who stay in charge of their project while agents write the code."
+description = "Spec-driven development for coding agents, anchored in living specs."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
