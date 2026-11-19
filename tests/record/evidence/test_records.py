@@ -141,7 +141,12 @@ def test_one_record_shape_refuses_what_is_not_one(text: str) -> None:
 
 
 def test_lines_that_do_not_start_like_a_record_are_not_records() -> None:
-    for text in ("Criteria: fifty at most", "(Blocked) 2026-11-20: x", "a (note) in passing", ""):
+    for text in (
+        "**Criteria:** fifty at most",
+        "(Blocked) 2026-11-20: x",
+        "a (note) in passing",
+        "",
+    ):
         assert parse(text) is None
         assert not looks_like_record(text)
     assert looks_like_record("2026-11-20 (note): x")

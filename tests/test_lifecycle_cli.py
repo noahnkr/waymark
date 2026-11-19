@@ -52,7 +52,7 @@ class Session:
         if review is not None:
             owner = text.index("Owner:")
             end = text.index("\n", owner) + 1
-            text = text[:end] + f"- Review: {review}\n" + text[end:]
+            text = text[:end] + f"- **Review:** {review}\n" + text[end:]
         for hint, body in (
             ("<!-- The problem or opportunity, and why now. -->", "Long lists are slow."),
             ("<!-- What will be different once this change is archived. -->", "A capped list."),
@@ -95,11 +95,11 @@ def test_change_runs_from_init_to_archive_with_the_record_in_the_repo(session: S
     session.write(
         f"changes/{name}/tasks.md",
         HEAD
-        + "- [ ] 1.1 Cap the results\n  - Verify: a test\n  - Criteria: fifty at most\n"
+        + "- [ ] 1.1 Cap the results\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
         + (
             "- [ ] 1.2 Explain the cap\n"
-            "  - Verify: a test\n"
-            "  - Criteria: the help text names the limit\n"
+            "  - **Verify:** a test\n"
+            "  - **Criteria:** the help text names the limit\n"
         ),
     )
     assert session.step(name) == (Phase.PLANNED, StepKind.ACCEPT, None)
@@ -190,24 +190,25 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     session.write(f"changes/{name}/design.md", DESIGN)
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty at most\n"
+        HEAD
+        + "- [ ] 1.1 Add the endpoint\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
         "- [ ] 1.2 Show the capped list\n"
-        "  - Verify: a test\n"
-        "  - Criteria: the page shows fifty rows\n"
-        "  - Repo: web\n",
+        "  - **Verify:** a test\n"
+        "  - **Criteria:** the page shows fifty rows\n"
+        "  - **Repo:** web\n",
     )
     assert session.step(name) == (Phase.DESIGNED, StepKind.TASKS, None)
     assert "item-without-repo" in session.run("check", expect=EXIT_REFUSED)
     session.write(
         f"changes/{name}/tasks.md",
         HEAD + "- [ ] 1.1 Add the endpoint\n"
-        "  - Verify: a test\n"
-        "  - Criteria: fifty at most\n"
-        "  - Repo: api\n"
+        "  - **Verify:** a test\n"
+        "  - **Criteria:** fifty at most\n"
+        "  - **Repo:** api\n"
         "- [ ] 1.2 Show the capped list\n"
-        "  - Verify: a test\n"
-        "  - Criteria: the page shows fifty rows\n"
-        "  - Repo: web\n",
+        "  - **Verify:** a test\n"
+        "  - **Criteria:** the page shows fifty rows\n"
+        "  - **Repo:** web\n",
     )
     session.run("accept", name)
     status = session.run("status")
@@ -239,7 +240,8 @@ def test_small_change_takes_the_short_path_with_two_approvals(session: Session) 
     assert session.step(name) == (Phase.SPECIFIED, StepKind.TASKS, None)
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Fix the word\n  - Verify: a test\n  - Criteria: the word is right\n",
+        HEAD
+        + "- [ ] 1.1 Fix the word\n  - **Verify:** a test\n  - **Criteria:** the word is right\n",
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")
@@ -284,7 +286,7 @@ def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:
     )
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Fix the word\n  - Criteria: done\n  - Verify: a test\n",
+        HEAD + "- [ ] 1.1 Fix the word\n  - **Criteria:** done\n  - **Verify:** a test\n",
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")

@@ -10,7 +10,7 @@ from waymark.record.state import AcceptanceState, acceptance_state
 from waymark.record.terms import ReviewSeverity, Verdict
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ITEM = "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n  - Verify: a test\n"
+ITEM = "- [ ] 1.1 Cap it\n  - **Criteria:** fifty at most\n  - **Verify:** a test\n"
 
 
 def parse(text: str) -> Tasks:
@@ -200,7 +200,7 @@ def test_an_item_without_a_build_line_hashes_as_before(workspace: Workspace) -> 
     record = workspace.record()
     change = record.changes["add-limit"]
     before = change_fingerprint(change, record.specs, record.default_review, ["1.1", "1.2"])
-    workspace.change(tasks=bare.replace("  - **Criteria:** fifty", "  - Criteria: fifty"))
+    workspace.change(tasks=bare.replace("  - **Criteria:** fifty", "  - **Criteria:** fifty"))
     record = workspace.record()
     same = change_fingerprint(
         record.changes["add-limit"], record.specs, record.default_review, ["1.1", "1.2"]

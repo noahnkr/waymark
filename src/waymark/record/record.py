@@ -24,6 +24,7 @@ from waymark.record.artifacts.resources import Resource, parse_resource, unknown
 from waymark.record.artifacts.specs import Spec, parse_spec
 from waymark.record.machine.files import RecordFiles
 from waymark.record.machine.project import Project
+from waymark.record.markdown.labels import plain_label_problems
 from waymark.record.markdown.links import LinkChecker
 from waymark.record.markdown.problems import WHOLE_FILE, Problem
 from waymark.record.markdown.text import Document
@@ -158,6 +159,7 @@ def _load_charter(files: RecordFiles, problems: list[Problem]) -> Charter | None
         return None
     charter = parse_charter(doc)
     problems.extend(charter.problems)
+    problems.extend(plain_label_problems(doc))
     return charter
 
 
@@ -292,6 +294,7 @@ def load_record(project: Project) -> Record:
     for name, doc in _load_markdown_folder(files, SPECS, "spec", problems).items():
         specs[name] = parse_spec(name, doc)
         problems.extend(specs[name].problems)
+        problems.extend(plain_label_problems(doc))
         _check_spec_repos(specs[name], config, problems)
 
     change_names, archived_changes = _split_folder(files, CHANGES, "change", problems)
@@ -310,6 +313,7 @@ def load_record(project: Project) -> Record:
     for name, doc in _load_markdown_folder(files, EXPLORATIONS, "exploration", problems).items():
         explorations[name] = parse_exploration(name, doc)
         problems.extend(explorations[name].problems)
+        problems.extend(plain_label_problems(doc))
 
     archived_explorations = _archived_files(files, EXPLORATIONS, "exploration", problems)
 
@@ -317,6 +321,7 @@ def load_record(project: Project) -> Record:
     for name, doc in _load_markdown_folder(files, RESOURCES, "resource", problems).items():
         resources[name] = parse_resource(name, doc)
         problems.extend(resources[name].problems)
+        problems.extend(plain_label_problems(doc))
         problems.extend(unknown_specs(resources[name], specs))
 
     return Record(

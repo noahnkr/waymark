@@ -11,7 +11,7 @@ from waymark.record.writing import templates
 
 EXPLORATION = """# Paging
 
-- Status: {status}
+- **Status:** {status}
 
 ## Context
 
@@ -58,7 +58,7 @@ def test_proposal_has_an_owner_and_its_required_sections() -> None:
 
 
 def test_proposal_without_an_owner_is_a_problem() -> None:
-    assert proposal_codes(proposal().replace("Owner: Sam Doe\n", "")) == ["missing-owner"]
+    assert proposal_codes(proposal().replace("**Owner:** Sam Doe\n", "")) == ["missing-owner"]
     assert proposal_codes(proposal(owner="")) == ["missing-owner"]
 
 
@@ -78,10 +78,10 @@ def test_proposal_outcome_is_optional_until_archive() -> None:
 def test_proposal_marks_the_short_path_with_a_path_line() -> None:
     assert parse(proposal(short=True)).short_path
     assert not parse(
-        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Path: full\n")
+        proposal().replace("**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Path:** full\n")
     ).short_path
     assert proposal_codes(
-        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Path: quick\n")
+        proposal().replace("**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Path:** quick\n")
     ) == ["invalid-path"]
 
 
@@ -94,7 +94,7 @@ def test_accepted_text_leaves_out_the_outcome() -> None:
     plain = parse(proposal())
     accepted = parse(proposal(outcome="Shipped."))
     assert accepted.accepted_text().rstrip("\n") == plain.accepted_text().rstrip("\n")
-    assert "Owner: Sam Doe" in accepted.accepted_text()
+    assert "**Owner:** Sam Doe" in accepted.accepted_text()
 
 
 def test_design_has_context_approach_decisions_and_risks() -> None:
@@ -111,7 +111,9 @@ def test_design_missing_section_is_a_problem() -> None:
 
 
 def test_design_decision_gives_options_choice_and_why() -> None:
-    design = parse_design(document(DESIGN.replace("- Why: the order must be final first\n", "")))
+    design = parse_design(
+        document(DESIGN.replace("- **Why:** the order must be final first\n", ""))
+    )
     assert [problem.code for problem in design.problems] == ["decision-incomplete"]
     unnamed = parse_design(
         document(DESIGN.replace("### Decision: Where to cut", "### Where to cut"))
@@ -134,7 +136,7 @@ def test_charter_rules_are_one_list() -> None:
 
 def test_charter_missing_section_is_a_problem() -> None:
     text = CHARTER.replace(
-        "## Glossary\n\n- **Match**: a document that satisfies the query.\n\n", ""
+        "## Glossary\n\n- **Match:** a document that satisfies the query.\n\n", ""
     )
     charter = parse_charter(document(text))
     assert [problem.code for problem in charter.problems] == ["missing-section"]
@@ -222,10 +224,12 @@ def test_exploration_missing_section_is_a_problem() -> None:
 
 def test_proposal_review_line_sets_the_change_review_level() -> None:
     assert parse(proposal()).review is None
-    reviewed = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
+    reviewed = proposal().replace(
+        "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
+    )
     assert parse(reviewed).review is ReviewLevel.INDEPENDENT
     assert proposal_codes(
-        proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: strict\n")
+        proposal().replace("**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** strict\n")
     ) == ["invalid-review-level"]
 
 

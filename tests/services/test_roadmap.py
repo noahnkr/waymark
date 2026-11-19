@@ -66,7 +66,7 @@ def test_scenario_planned_line_dropped(project: Workspace) -> None:
 def test_scenario_active_member_not_dropped(project: Workspace) -> None:
     project.change(
         proposal_text=proposal().replace(
-            "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+            "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n"
         )
     )
     project.write(FILE, milestone("- [add-limit](../../changes/add-limit/proposal.md): cap\n"))

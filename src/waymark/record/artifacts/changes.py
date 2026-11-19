@@ -268,10 +268,22 @@ def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -
         )
 
 
+def _check_labels(change: Change, problems: list[Problem]) -> None:
+    """Every label in the change's files is written bold, the colon inside."""
+    parts = (change.proposal, change.design, change.tasks)
+    docs = [
+        *(part.doc for part in parts if part is not None),
+        *(delta.doc for delta in change.deltas.values()),
+    ]
+    for doc in docs:
+        problems.extend(labels.plain_label_problems(doc))
+
+
 def _check_against_config(change: Change, config: Config | None, problems: list[Problem]) -> None:
     """Rules that span files: the short path's limits, and repos in an atlas."""
     proposal, tasks = change.proposal, change.tasks
     default = config.default_review if config else ReviewLevel.SELF
+    _check_labels(change, problems)
     if proposal is not None:
         _check_impact(change, proposal, problems)
     if tasks is not None:

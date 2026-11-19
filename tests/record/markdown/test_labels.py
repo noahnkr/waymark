@@ -1,6 +1,6 @@
 """The labels module: one place that writes label lines and reads them in any form."""
 
-from waymark.record.markdown.labels import LabelForm, label_line, read_label
+from waymark.record.markdown.labels import LabelForm, label_line, match_label, read_label
 
 
 def test_label_line_writes_the_bold_form() -> None:
@@ -21,7 +21,8 @@ def test_bold_form_with_the_colon_inside() -> None:
 
 
 def test_plain_form() -> None:
-    label = read_label("Decided by: planner ")
+    assert read_label("Decided by: planner ") is None
+    label = match_label("Decided by: planner ")
     assert label is not None
     assert (label.name, label.value, label.form, label.bullet) == (
         "Decided by",
@@ -32,7 +33,8 @@ def test_plain_form() -> None:
 
 
 def test_bold_form_with_the_colon_outside() -> None:
-    label = read_label("* **User-visible**: a new flag")
+    assert read_label("* **User-visible**: a new flag") is None
+    label = match_label("* **User-visible**: a new flag")
     assert label is not None
     assert (label.name, label.value, label.form) == (
         "User-visible",
@@ -43,9 +45,10 @@ def test_bold_form_with_the_colon_outside() -> None:
 
 def test_a_label_without_a_value() -> None:
     for text in ("- **Criteria:**", "- Criteria:", "- **Criteria**:"):
-        label = read_label(text)
+        label = match_label(text)
         assert label is not None
         assert (label.name, label.value) == ("Criteria", "")
+    assert read_label("- **Criteria:**") is not None
 
 
 def test_other_lines_are_not_labels() -> None:
@@ -55,4 +58,4 @@ def test_other_lines_are_not_labels() -> None:
         "Criteria",
         "- 2026-11-18 (accepted) fingerprint 0123456789abcdef items 1.1 by Ada",
     ):
-        assert read_label(text) is None
+        assert match_label(text) is None

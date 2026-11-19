@@ -16,15 +16,17 @@ TASKS_FILE = f"changes/{NAME}/tasks.md"
 DAY = datetime.date(2026, 1, 15)
 LATER = datetime.date(2026, 2, 1)
 ADDED = (
-    "  - Verify: read the help text\n"
+    "  - **Verify:** read the help text\n"
     "- [ ] 1.3 Name the limit in the error\n"
-    "  - Criteria: the error names fifty\n"
-    "  - Verify: a test reads the error\n"
+    "  - **Criteria:** the error names fifty\n"
+    "  - **Verify:** a test reads the error\n"
 )
 
 
 def at(level: str) -> str:
-    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n- Review: {level}\n")
+    return proposal().replace(
+        "**Owner:** Sam Doe\n", f"**Owner:** Sam Doe\n- **Review:** {level}\n"
+    )
 
 
 def passed_then_added(project: Workspace, level: str = "independent") -> None:
@@ -38,7 +40,7 @@ def passed_then_added(project: Workspace, level: str = "independent") -> None:
     else:
         lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="wm-reviewer")
     assert project.change_state().review.reviewed
-    project.replace(TASKS_FILE, "  - Verify: read the help text\n", ADDED)
+    project.replace(TASKS_FILE, "  - **Verify:** read the help text\n", ADDED)
     lifecycle.tick(project.root, NAME, "1.3")
 
 

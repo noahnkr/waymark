@@ -515,7 +515,7 @@ def test_scenario_new_proposal(project: Workspace) -> None:
 def test_every_template_carries_examples_the_checks_ignore(
     template: str, path: str, parse: Callable[[Document], Any]
 ) -> None:
-    text = templates.render(template, title="X", facts="- Owner: Sam Doe\n")
+    text = templates.render(template, title="X", facts="- **Owner:** Sam Doe\n")
     assert "Good" in text
     assert "Bad" in text
     doc = document(text, path)

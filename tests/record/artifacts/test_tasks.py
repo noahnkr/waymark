@@ -31,7 +31,9 @@ def test_items_are_numbered_by_section_and_addressed_by_number() -> None:
 
 def test_item_carries_its_criteria_verification_and_repo() -> None:
     tasks = parse(
-        HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n  - Verify: a test\n  - Repo: api\n"
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Criteria:** fifty at most\n  - **Verify:** a test\n"
+        + "  - **Repo:** api\n"
     )
     (item,) = tasks.items
     assert (item.criteria, item.verify, item.repo) == ("fifty at most", "a test", "api")
@@ -39,7 +41,7 @@ def test_item_carries_its_criteria_verification_and_repo() -> None:
 
 
 def test_build_tag_marks_an_item_for_delegation() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Sort it\n  - Build: delegate\n- [ ] 1.2 Tidy up\n")
+    tasks = parse(HEAD + "- [ ] 1.1 Sort it\n  - **Build:** delegate\n- [ ] 1.2 Tidy up\n")
     assert tasks.problems == ()
     tagged, plain = tasks.items
     assert [item.title for item in tasks.items] == ["Sort it", "Tidy up"]
@@ -47,7 +49,7 @@ def test_build_tag_marks_an_item_for_delegation() -> None:
 
 
 def test_unknown_build_tag_is_a_problem_that_names_both_values() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - Build: someone\n")
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - **Build:** someone\n")
     (problem,) = tasks.problems
     assert problem.code == "unknown-build-tag"
     assert '"someone"' in problem.message
@@ -65,15 +67,15 @@ def test_a_trailing_build_tag_stays_part_of_the_title() -> None:
 
 
 def test_the_build_line_given_twice_is_a_problem() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - Build: delegate\n  - Build: delegate\n")
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - **Build:** delegate\n  - **Build:** delegate\n")
     assert [problem.code for problem in tasks.problems] == ["duplicate-field"]
 
 
 def test_field_may_continue_over_indented_lines() -> None:
     tasks = parse(
         HEAD
-        + "- [ ] 1.1 Cap it\n  - Criteria:\n    - fifty at most\n    - order kept\n"
-        + "  - Verify: a test\n"
+        + "- [ ] 1.1 Cap it\n  - **Criteria:**\n    - fifty at most\n    - order kept\n"
+        + "  - **Verify:** a test\n"
     )
     assert tasks.problems == ()
     assert tasks.items[0].criteria == "- fifty at most\n- order kept"
@@ -125,6 +127,6 @@ def test_unlabeled_line_under_an_item_is_a_problem() -> None:
 
 
 def test_field_given_twice_is_a_problem() -> None:
-    assert codes(HEAD + "- [ ] 1.1 Cap it\n  - Criteria: a\n  - Criteria: b\n") == [
+    assert codes(HEAD + "- [ ] 1.1 Cap it\n  - **Criteria:** a\n  - **Criteria:** b\n") == [
         "duplicate-field"
     ]

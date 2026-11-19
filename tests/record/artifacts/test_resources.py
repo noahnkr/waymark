@@ -27,8 +27,8 @@ def resource(
     sections: str = SECTIONS,
 ) -> str:
     return (
-        f"# Stripe\n\n- Kind: {kind}\n- Serves: {serves}\n- Status: {status}\n"
-        f"- Verified: {verified}\n\n{sections}"
+        f"# Stripe\n\n- **Kind:** {kind}\n- **Serves:** {serves}\n- **Status:** {status}\n"
+        f"- **Verified:** {verified}\n\n{sections}"
     )
 
 
@@ -69,7 +69,7 @@ def test_scenario_missing_section(project: Workspace) -> None:
 
 
 def test_a_missing_line_is_named() -> None:
-    text = resource().replace("- Status: active\n", "")
+    text = resource().replace("- **Status:** active\n", "")
     [problem] = parse_resource("stripe", Document.parse(PATH, text)).problems
     assert problem.code == "missing-line"
     assert '"- **Status:**"' in problem.message

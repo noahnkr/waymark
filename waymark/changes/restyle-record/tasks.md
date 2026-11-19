@@ -84,7 +84,7 @@
 
 ## 5. Old forms removed
 
-- [ ] 5.1 Read labels only in the bold form, and report the rest
+- [x] 5.1 Read labels only in the bold form, and report the rest
   - **Build:** planner
   - **Criteria:**
     - a label written plain, or bold with the colon outside, is no longer read as the label, and `wm check` reports it in the charter, a spec, an active change, an exploration or a resource as `plain-label`, showing the bold form; a glossary line with the colon outside is reported as `glossary-format`

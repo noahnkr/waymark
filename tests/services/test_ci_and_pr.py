@@ -25,8 +25,10 @@ DAY = datetime.date(2026, 1, 15)
 TOOL_CONFIG = CONFIG.replace('"some-tool"', '"claude-code"')
 ATLAS_TASKS = (
     "# Tasks\n\n## 1. Limit\n\n"
-    "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty at most\n  - Repo: api\n"
-    "- [ ] 1.2 Show the list\n  - Verify: a test\n  - Criteria: fifty rows\n  - Repo: web\n"
+    "- [ ] 1.1 Add the endpoint\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
+    "  - **Repo:** api\n"
+    "- [ ] 1.2 Show the list\n  - **Verify:** a test\n  - **Criteria:** fifty rows\n"
+    "  - **Repo:** web\n"
 )
 
 
@@ -282,7 +284,7 @@ def test_scenario_pull_request_of_a_stacked_change(project: Workspace) -> None:
     project.change(
         "add-paging",
         proposal_text=proposal().replace(
-            "- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- After: {NAME}\n"
+            "- **Owner:** Sam Doe\n", f"- **Owner:** Sam Doe\n- **After:** {NAME}\n"
         ),
     )
     payload = describe(project.record(), "add-paging")

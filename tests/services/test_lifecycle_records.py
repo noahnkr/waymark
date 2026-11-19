@@ -64,14 +64,14 @@ def test_scenario_accepted_again(latest: Workspace) -> None:
     latest.replace(
         TASKS_FILE,
         "- [ ] 1.2 Document the limit\n"
-        "  - Criteria: the help text names the limit\n"
-        "  - Verify: read the help text\n",
+        "  - **Criteria:** the help text names the limit\n"
+        "  - **Verify:** read the help text\n",
         "- [ ] 1.2 Document the limit\n"
-        "  - Criteria: the help text names the limit\n"
-        "  - Verify: read the help text\n"
+        "  - **Criteria:** the help text names the limit\n"
+        "  - **Verify:** read the help text\n"
         "- [ ] 1.3 Test it\n"
-        "  - Criteria: done\n"
-        "  - Verify: a test\n",
+        "  - **Criteria:** done\n"
+        "  - **Verify:** a test\n",
     )
     latest.replace(f"changes/{NAME}/design.md", "## Context", "## Context\n\nMore context.")
     assert latest.change_state().acceptance is AcceptanceState.WITHDRAWN

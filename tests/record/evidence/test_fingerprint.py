@@ -57,17 +57,17 @@ def test_editing_the_design_withdraws_acceptance(workspace: Workspace) -> None:
     ("old", "new"),
     [
         ("Cap the result count", "Cap the result count at fifty"),
-        ("Criteria: at most fifty", "Criteria: at most forty"),
-        ("Verify: a test covers", "Verify: nobody checks"),
+        ("**Criteria:** at most fifty", "**Criteria:** at most forty"),
+        ("**Verify:** a test covers", "**Verify:** nobody checks"),
         ("1.2 Document the limit", "1.2 Document the limit in the guide"),
         (
             "- [ ] 1.1 Cap the result count\n"
-            "  - Criteria: at most fifty results come back\n"
-            "  - Verify: a test covers fifty-one matches\n",
+            "  - **Criteria:** at most fifty results come back\n"
+            "  - **Verify:** a test covers fifty-one matches\n",
             "- [ ] 1.1 Cap the result count\n"
-            "  - Criteria: at most fifty results come back\n"
-            "  - Verify: a test covers fifty-one matches\n"
-            "  - Build: delegate\n",
+            "  - **Criteria:** at most fifty results come back\n"
+            "  - **Verify:** a test covers fifty-one matches\n"
+            "  - **Build:** delegate\n",
         ),
     ],
 )
@@ -82,7 +82,7 @@ def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
     accepted(workspace).replace(
         "changes/add-limit/tasks.md",
         "1.2 Document the limit\n",
-        "1.2 Document the limit\n  - Build: delegate\n",
+        "1.2 Document the limit\n  - **Build:** delegate\n",
     )
     state = workspace.change_state()
     assert state.acceptance is AcceptanceState.WITHDRAWN
@@ -93,12 +93,12 @@ def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
 def test_removing_the_build_tag_withdraws_acceptance(workspace: Workspace) -> None:
     workspace.change(
         tasks=TASKS.replace(
-            "1.2 Document the limit\n", "1.2 Document the limit\n  - Build: delegate\n"
+            "1.2 Document the limit\n", "1.2 Document the limit\n  - **Build:** delegate\n"
         )
     )
     workspace.accept()
     assert acceptance(workspace) is AcceptanceState.VALID
-    workspace.replace("changes/add-limit/tasks.md", "  - Build: delegate\n", "")
+    workspace.replace("changes/add-limit/tasks.md", "  - **Build:** delegate\n", "")
     assert acceptance(workspace) is AcceptanceState.WITHDRAWN
 
 
@@ -117,8 +117,8 @@ def test_fingerprint_of_a_plain_change_is_stable(workspace: Workspace) -> None:
 @pytest.mark.parametrize(
     ("old", "new"),
     [
-        ("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n"),
-        ("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: self\n"),
+        ("**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"),
+        ("**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** self\n"),
     ],
 )
 def test_adding_a_review_line_withdraws_acceptance(
@@ -130,7 +130,7 @@ def test_adding_a_review_line_withdraws_acceptance(
 
 def test_item_added(workspace: Workspace) -> None:
     accepted(workspace).write_tasks(
-        TASKS + "- [ ] 1.3 Announce it\n  - Verify: a test\n  - Criteria: posted\n"
+        TASKS + "- [ ] 1.3 Announce it\n  - **Verify:** a test\n  - **Criteria:** posted\n"
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     tasks = "changes/add-limit/tasks.md"
@@ -176,8 +176,8 @@ def test_ticks_blockers_review_records_and_notes_keep_acceptance(workspace: Work
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.replace(
         tasks,
-        "  - Verify: a test covers fifty-one matches\n",
-        "  - Verify: a test covers fifty-one matches\n"
+        "  - **Verify:** a test covers fifty-one matches\n",
+        "  - **Verify:** a test covers fifty-one matches\n"
         "  - 2026-01-16 (note) by Sam Doe: the cap sits after sorting\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
@@ -293,7 +293,9 @@ def test_a_spec_changing_elsewhere_keeps_acceptance(workspace: Workspace) -> Non
 
 def test_the_spec_text_of_a_renamed_requirement_is_covered(workspace: Workspace) -> None:
     workspace.write("specs/search.md", spec(requirement("Result cap")))
-    rename = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+    rename = (
+        "# Search\n\n## RENAMED Requirements\n\n- **From:** Result cap\n- **To:** Result limit\n"
+    )
     workspace.change(deltas={"search": rename})
     workspace.accept()
     assert acceptance(workspace) is AcceptanceState.VALID

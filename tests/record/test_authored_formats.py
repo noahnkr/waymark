@@ -7,6 +7,7 @@ from tests.support import (
     CHARTER,
     DESIGN,
     NO_SPECS,
+    TASKS,
     Workspace,
     bold,
     delta,
@@ -36,7 +37,7 @@ EXPLORATION = (
 
 def explore(status: str, conclusion: str = "") -> str:
     return EXPLORATION.format(
-        status=f"- Status: {status}\n\n" if status else "", conclusion=conclusion
+        status=f"- **Status:** {status}\n\n" if status else "", conclusion=conclusion
     )
 
 
@@ -49,7 +50,9 @@ def codes(text: str) -> list[str]:
 
 def test_proposal_facts_as_a_list() -> None:
     """Requirement "Proposal facts as a list": bulleted facts are read."""
-    text = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
+    text = proposal().replace(
+        "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
+    )
     parsed = parse_proposal(document(text, "changes/add-limit/proposal.md"))
     assert parsed.problems == ()
     assert parsed.owner == "Sam Doe"
@@ -60,9 +63,9 @@ def test_proposal_facts_as_a_list() -> None:
 def test_structured_impact() -> None:
     """Requirement "Structured impact": the three lines are read, with nested bullets."""
     impact = (
-        "- Specs: `search` (modified), `ranking` (new)\n"
-        "- User-visible:\n  - at most fifty results\n  - a new flag\n"
-        "- Code: `record/search.py`\n"
+        "- **Specs:** `search` (modified), `ranking` (new)\n"
+        "- **User-visible:**\n  - at most fifty results\n  - a new flag\n"
+        "- **Code:** `record/search.py`\n"
         "- Assets: the skills\n"
     )
     parsed = parse_proposal(document(proposal(impact=impact), "changes/add-limit/proposal.md"))
@@ -74,7 +77,7 @@ def test_structured_impact() -> None:
     assert none.impact_specs == ()
     assert none.no_spec_changes
     for value in ("", " search (new)"):
-        text = proposal(impact=NO_SPECS.replace("- Specs: none", f"- Specs:{value}"))
+        text = proposal(impact=NO_SPECS.replace("- **Specs:** none", f"- **Specs:**{value}"))
         unnamed = parse_proposal(document(text, "p.md"))
         assert (unnamed.impact_specs, unnamed.no_spec_changes) == (None, False)
 
@@ -94,8 +97,8 @@ def test_glossary_as_a_list() -> None:
     """Requirement "Glossary as a list": entries pass, other lines are reported."""
     assert parse_charter(document(CHARTER, "charter.md")).problems == ()
     prose = CHARTER.replace(
-        "- **Match**: a document that satisfies the query.\n",
-        "- **Match**: a document that satisfies the query.\nSome loose prose about terms.\n",
+        "- **Match:** a document that satisfies the query.\n",
+        "- **Match:** a document that satisfies the query.\nSome loose prose about terms.\n",
     )
     assert [p.code for p in parse_charter(document(prose, "charter.md")).problems] == [
         "glossary-format"
@@ -159,7 +162,7 @@ def test_numbered_goals_and_constraints() -> None:
 
 
 def test_scenario_item_without_verification(workspace: Workspace) -> None:
-    tasks = BUILT.replace("  - Verify: the index answers\n", "")
+    tasks = BUILT.replace("  - **Verify:** the index answers\n", "")
     workspace.change(tasks=tasks)
     [problem] = workspace.record().changes["add-limit"].problems
     assert (problem.code, problem.line) == (
@@ -170,12 +173,12 @@ def test_scenario_item_without_verification(workspace: Workspace) -> None:
     assert '"- **Criteria:**"' not in problem.message
 
 
-LISTED_OPTIONS = "- Options:\n  - in the query\n  - after sorting\n"
+LISTED_OPTIONS = "- **Options:**\n  - in the query\n  - after sorting\n"
 
 
 def test_scenario_one_option(workspace: Workspace) -> None:
     workspace.change(
-        design=bold(DESIGN.replace(LISTED_OPTIONS, "- Options:\n  - cut after sorting\n"))
+        design=bold(DESIGN.replace(LISTED_OPTIONS, "- **Options:**\n  - cut after sorting\n"))
     )
     [problem] = workspace.record().changes["add-limit"].problems
     assert problem.code == "decision-options"
@@ -192,7 +195,7 @@ def test_scenario_options_as_a_list(workspace: Workspace) -> None:
 
 def test_scenario_options_on_one_line(workspace: Workspace) -> None:
     """The old one-line form is not split on "or": it is reported, on its own line."""
-    design = bold(DESIGN.replace(LISTED_OPTIONS, "- Options: cut before or after sorting\n"))
+    design = bold(DESIGN.replace(LISTED_OPTIONS, "- **Options:** cut before or after sorting\n"))
     workspace.change(design=design)
     [problem] = workspace.record().changes["add-limit"].problems
     assert problem.code == "decision-options"
@@ -206,19 +209,23 @@ def test_scenario_options_on_one_line(workspace: Workspace) -> None:
 
 def test_archived_changes_are_not_held_to_items_and_options(workspace: Workspace) -> None:
     folder = "changes/archive/2026-01-20-add-limit"
-    workspace.write(f"{folder}/proposal.md", proposal(outcome="- Built: x\n- Differs: none"))
-    workspace.write(f"{folder}/design.md", DESIGN.replace(LISTED_OPTIONS, "- Options: one\n"))
+    workspace.write(
+        f"{folder}/proposal.md", proposal(outcome="- **Built:** x\n- **Differs:** none")
+    )
+    workspace.write(f"{folder}/design.md", DESIGN.replace(LISTED_OPTIONS, "- **Options:** one\n"))
     workspace.write(f"{folder}/tasks.md", "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n")
     assert workspace.record().problems == ()
 
 
 def test_settled_decisions_are_checked(workspace: Workspace) -> None:
     """Requirement "Settled decisions": the two lines and the section are required."""
-    workspace.change(design=DESIGN.replace("- Decided by: planner\n", "- Decided by: Sam\n"))
+    workspace.change(
+        design=DESIGN.replace("- **Decided by:** planner\n", "- **Decided by:** Sam\n")
+    )
     [problem] = workspace.record().changes["add-limit"].problems
     assert problem.code == "decision-format"
     assert '"- **Decided by:** human" or "- **Decided by:** planner"' in problem.message
-    workspace.change(design=DESIGN.replace("- Status: decided\n", ""))
+    workspace.change(design=DESIGN.replace("- **Status:** decided\n", ""))
     [problem] = workspace.record().changes["add-limit"].problems
     assert (problem.code, "the line is missing" in problem.message) == ("decision-format", True)
     workspace.change(design=DESIGN.replace("## Open questions\n\nNone.\n\n", ""))
@@ -286,14 +293,14 @@ def test_led_to_status_points_at_its_change(workspace: Workspace) -> None:
 BUILT = (
     "# Tasks\n\n## 1. Limit\n\n"
     "- [ ] 1.1 Cap it\n"
-    "  - Criteria:\n"
+    "  - **Criteria:**\n"
     "    - fifty at most\n"
     "    - sorted by score\n"
-    "  - Verify: a test\n"
+    "  - **Verify:** a test\n"
     "- [ ] 1.2 Rebuild the index\n"
-    "  - Criteria: rebuilt\n"
-    "  - Verify: the index answers\n"
-    "  - Build: delegate\n"
+    "  - **Criteria:** rebuilt\n"
+    "  - **Verify:** the index answers\n"
+    "  - **Build:** delegate\n"
 )
 
 
@@ -306,7 +313,8 @@ def test_scenario_nested_criteria(workspace: Workspace) -> None:
 
 def test_scenario_nested_verification(workspace: Workspace) -> None:
     built = BUILT.replace(
-        "  - Verify: a test\n", "  - Verify:\n    - a test for the limit\n    - wm check here\n"
+        "  - **Verify:** a test\n",
+        "  - **Verify:**\n    - a test for the limit\n    - wm check here\n",
     )
     workspace.change(tasks=built)
     workspace.accept()
@@ -324,7 +332,9 @@ def test_scenario_tagged_item(workspace: Workspace) -> None:
 
 
 def test_scenario_unknown_build_value() -> None:
-    tasks = parse_tasks(document(BUILT.replace("Build: delegate", "Build: someone"), "t.md"))
+    tasks = parse_tasks(
+        document(BUILT.replace("**Build:** delegate", "**Build:** someone"), "t.md")
+    )
     [problem] = tasks.problems
     assert problem.code == "unknown-build-tag"
     assert "delegate" in problem.message
@@ -332,13 +342,13 @@ def test_scenario_unknown_build_value() -> None:
 
 
 def test_scenario_tag_added_after_acceptance(workspace: Workspace) -> None:
-    workspace.change(tasks=BUILT.replace("  - Build: delegate\n", ""))
+    workspace.change(tasks=BUILT.replace("  - **Build:** delegate\n", ""))
     workspace.accept()
     assert workspace.change_state().acceptance is AcceptanceState.VALID
     workspace.replace(
         "changes/add-limit/tasks.md",
-        "  - Criteria: rebuilt\n",
-        "  - Criteria: rebuilt\n  - Build: delegate\n",
+        "  - **Criteria:** rebuilt\n",
+        "  - **Criteria:** rebuilt\n  - **Build:** delegate\n",
     )
     assert workspace.change_state().acceptance is AcceptanceState.WITHDRAWN
 
@@ -346,33 +356,35 @@ def test_scenario_tag_added_after_acceptance(workspace: Workspace) -> None:
 def test_proposal_facts_include_the_milestone_line() -> None:
     """Requirement "Proposal facts as a list": `- Milestone:` is one of the facts."""
     text = proposal().replace(
-        "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+        "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n"
     )
     parsed = parse_proposal(document(text, "changes/add-limit/proposal.md"))
     assert (parsed.milestone, parsed.milestone_line) == ("faster-search", 4)
     assert parsed.problems == ()
-    bare = text.replace("- Milestone: faster-search", "Milestone: faster-search")
+    bare = text.replace("- **Milestone:** faster-search", "**Milestone:** faster-search")
     assert parse_proposal(document(bare, "changes/add-limit/proposal.md")).milestone is None
     assert parse_proposal(document(proposal(), "changes/add-limit/proposal.md")).milestone is None
 
 
 def test_proposal_facts_include_the_after_line() -> None:
     """Requirement "Proposal facts as a list": `- After:` is one of the facts."""
-    text = proposal().replace("- Owner: Sam Doe\n", "- Owner: Sam Doe\n- After: add-index\n")
+    text = proposal().replace(
+        "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **After:** add-index\n"
+    )
     parsed = parse_proposal(document(text, "changes/add-limit/proposal.md"))
     assert (parsed.after, parsed.after_line) == ("add-index", 4)
     assert parsed.problems == ()
-    bare = text.replace("- After: add-index", "After: add-index")
+    bare = text.replace("- **After:** add-index", "**After:** add-index")
     assert parse_proposal(document(bare, "changes/add-limit/proposal.md")).after is None
 
 
 def test_bold_labels_in_a_proposal() -> None:
     """Facts, Impact and Outcome are read with bold labels."""
     text = bold(
-        proposal(outcome="- Built: the cap\n- Differs: none").replace(
-            "- Owner: Sam Doe\n",
-            "- Owner: Sam Doe\n- Milestone: faster-search\n- After: add-index\n"
-            "- Path: short\n- Review: self\n",
+        proposal(outcome="- **Built:** the cap\n- **Differs:** none").replace(
+            "- **Owner:** Sam Doe\n",
+            "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n- **After:** add-index\n"
+            "- **Path:** short\n- **Review:** self\n",
         )
     )
     assert "- **Owner:** Sam Doe" in text
@@ -393,7 +405,9 @@ def test_bold_labels_in_a_proposal() -> None:
 
 def test_bold_labels_in_a_task_list() -> None:
     """An item's Criteria, Verify, Repo and Build are read with bold labels."""
-    text = bold(BUILT.replace("  - Verify: a test\n", "  - Verify: a test\n  - Repo: api\n"))
+    text = bold(
+        BUILT.replace("  - **Verify:** a test\n", "  - **Verify:** a test\n  - **Repo:** api\n")
+    )
     assert "  - **Criteria:**\n" in text
     tasks = parse_tasks(document(text, "changes/add-limit/tasks.md"))
     assert tasks.problems == ()
@@ -426,7 +440,7 @@ def test_bold_labels_in_a_delta() -> None:
     assert parsed.repos == ("api", "web")
     assert [(r.name, r.reason) for r in parsed.removed] == [("Result order", "Unused.")]
     renamed = bold(
-        "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+        "# Search\n\n## RENAMED Requirements\n\n- **From:** Result cap\n- **To:** Result limit\n"
     )
     parsed = parse_delta("search", document(renamed, "changes/add-limit/specs/search.md"))
     assert parsed.problems == ()
@@ -461,7 +475,7 @@ def test_bold_lines_in_a_resource() -> None:
 
 
 def test_glossary_with_the_colon_inside_the_bold() -> None:
-    text = CHARTER.replace("- **Match**: a document", "- **Match:** a document")
+    text = CHARTER.replace("- **Match:** a document", "- **Match:** a document")
     assert parse_charter(document(text, "charter.md")).problems == ()
     assert parse_charter(document(CHARTER, "charter.md")).problems == ()
 
@@ -472,3 +486,64 @@ def test_bold_labels_report_nothing_new(workspace: Workspace) -> None:
     assert workspace.record().changes["add-limit"].problems == ()
     workspace.accept()
     assert workspace.change_state().acceptance is AcceptanceState.VALID
+
+
+def test_scenario_plain_label(workspace: Workspace) -> None:
+    """Requirement "Labels in bold": a plain label isn't read, and is reported in bold."""
+    tasks = bold(TASKS).replace(
+        "  - **Criteria:** the help text names the limit\n",
+        "  - Criteria: fifty at most\n",
+    )
+    workspace.change(proposal_text=bold(proposal()), design=bold(DESIGN), tasks=tasks)
+    change = workspace.record().changes["add-limit"]
+    line = tasks.split("\n").index("  - Criteria: fifty at most") + 1
+    plain = [p for p in change.problems if p.code == "plain-label"]
+    assert [(p.path, p.line) for p in plain] == [("changes/add-limit/tasks.md", line)]
+    assert '"- **Criteria:**"' in plain[0].message
+    assert change.tasks is not None
+    assert change.tasks.items[1].criteria is None
+    assert "unrecognized-item-line" not in {p.code for p in change.problems}
+
+
+def test_scenario_colon_outside_the_bold_in_a_resource(workspace: Workspace) -> None:
+    text = bold(resource()).replace("- **Kind:** service", "- **Kind**: service")
+    workspace.write("resources/stripe.md", text)
+    problems = [p for p in workspace.record().problems if p.path == "resources/stripe.md"]
+    plain = [p for p in problems if p.code == "plain-label"]
+    assert [p.line for p in plain] == [text.split("\n").index("- **Kind**: service") + 1]
+    assert '"- **Kind:**"' in plain[0].message
+
+
+def test_scenario_fact_without_a_bullet(workspace: Workspace) -> None:
+    text = bold(proposal(owner="Ada")).replace("- **Owner:** Ada\n", "**Owner:** Ada\n")
+    workspace.change(proposal_text=text, design=bold(DESIGN), tasks=bold(TASKS))
+    change = workspace.record().changes["add-limit"]
+    assert change.proposal is not None
+    assert change.proposal.owner is None
+    assert "missing-owner" in {p.code for p in change.problems}
+    assert not any("wm update" in p.message for p in change.problems)
+
+
+def test_scenario_old_glossary_line() -> None:
+    for line in ("Record: everything in waymark/", "- **Record**: everything in waymark/"):
+        text = CHARTER.replace("- **Match:** a document that satisfies the query.", line)
+        [problem] = parse_charter(document(text, "charter.md")).problems
+        assert problem.code == "glossary-format"
+        assert '"- **<term>:** <meaning>"' in problem.message
+
+
+def test_plain_labels_are_reported_in_specs_explorations_and_the_charter(
+    workspace: Workspace,
+) -> None:
+    workspace.write("specs/search.md", spec().replace("# Search\n\n", "# Search\n\nRepos: api\n\n"))
+    workspace.write("explorations/paging.md", explore("open").replace("**Status:**", "Status:"))
+    workspace.replace("charter.md", "The search index is rebuilt nightly.", "- Owner: Ada")
+    places = {p.path for p in workspace.record().problems if p.code == "plain-label"}
+    assert places == {"specs/search.md", "explorations/paging.md", "charter.md"}
+
+
+def test_archived_changes_are_not_checked_for_plain_labels(workspace: Workspace) -> None:
+    folder = "changes/archive/2026-01-20-add-limit"
+    workspace.write(f"{folder}/proposal.md", proposal(outcome="- Built: x\n- Differs: none"))
+    workspace.write(f"{folder}/tasks.md", "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n")
+    assert not any(p.code == "plain-label" for p in workspace.record().problems)

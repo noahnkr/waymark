@@ -81,13 +81,10 @@ def _comment_flags(doc: Document) -> list[bool]:
 
 def _bold_label(text: str) -> str | None:
     """The line with its known label made bold; None when it has no label to fix."""
-    body = text.lstrip(" ")
-    indent = text[: len(text) - len(body)]
-    label = labels.read_label(body)
-    if label is None or label.form is labels.LabelForm.BOLD or label.name not in labels.KNOWN:
+    label = labels.plain_label(text)
+    if label is None:
         return None
-    if not label.bullet and (indent or label.name not in labels.BARE):
-        return None
+    indent = text[: len(text) - len(text.lstrip(" "))]
     return indent + labels.label_line(label.name, label.value, bullet=label.bullet)
 
 

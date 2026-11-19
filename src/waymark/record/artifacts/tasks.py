@@ -279,7 +279,7 @@ class _Parser:
             self.labeled(index, labeled.name, labeled.value)
         elif records.looks_like_record(text):
             self.item_record(index, text)
-        else:
+        elif labels.plain_label(f"- {text}") is None:
             self.problem(
                 index,
                 "unrecognized-item-line",

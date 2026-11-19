@@ -32,7 +32,7 @@ DAY = datetime.date(2026, 1, 15)
 LATER = datetime.date(2026, 2, 1)
 ARCHIVED = f"changes/archive/2026-02-01-{NAME}"
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n"
+ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 
 
@@ -195,7 +195,7 @@ def test_archive_uses_an_outcome_already_written_in_the_proposal(project: Worksp
     text = project.read(f"changes/{NAME}/proposal.md")
     project.write(
         f"changes/{NAME}/proposal.md",
-        text + "\n## Outcome\n\n- Built: Written by hand.\n- Differs: none\n",
+        text + "\n## Outcome\n\n- **Built:** Written by hand.\n- **Differs:** none\n",
     )
     assert "already has an outcome" in refused(project, built="Another.")
     lifecycle.archive(project.root, NAME, LATER)
@@ -254,7 +254,7 @@ def test_archived_name_can_be_reused(project: Workspace) -> None:
 
 def exploration(status: str, context: str = "") -> str:
     return (
-        f"# Paging\n\n- Status: {status}\n\n## Context\n\n{context}\n\n"
+        f"# Paging\n\n- **Status:** {status}\n\n## Context\n\n{context}\n\n"
         "## Questions\n\n## Approaches\n\n## Conclusion\n\n## Related\n"
     )
 
@@ -264,7 +264,7 @@ def test_archive_rewrites_links_that_point_into_the_moved_folder(project: Worksp
     project.change("add-order")
     project.write(
         "explorations/paging.md",
-        "# Paging\n\n- Status: led-to [add-limit](../changes/add-limit/), "
+        "# Paging\n\n- **Status:** led-to [add-limit](../changes/add-limit/), "
         "[add-order](../changes/add-order/proposal.md)\n\n"
         "## Context\n\nSee the [tasks](../changes/add-limit/tasks.md#limit).\n\n"
         "## Questions\n\n## Approaches\n\n"
@@ -558,7 +558,7 @@ def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
     project.replace(
         tasks,
         "\n## Log\n",
-        "- [ ] 1.3 Announce it\n  - Criteria: done\n  - Verify: a test\n\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - **Criteria:** done\n  - **Verify:** a test\n\n## Log\n",
     )
     for number in ("1.1", "1.2", "1.3"):
         lifecycle.tick(project.root, NAME, number)
@@ -572,7 +572,9 @@ def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
 
 def test_archiving_a_rename_renames_the_requirement_in_the_spec(project: Workspace) -> None:
     project.write("specs/search.md", spec(requirement("Result cap")))
-    rename = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+    rename = (
+        "# Search\n\n## RENAMED Requirements\n\n- **From:** Result cap\n- **To:** Result limit\n"
+    )
     applied(project, deltas={"search": rename})
     lifecycle.archive(project.root, NAME, LATER, built="Renamed.")
     living = project.record().specs["search"]
@@ -583,7 +585,7 @@ def test_archiving_a_rename_renames_the_requirement_in_the_spec(project: Workspa
 def test_scenario_member_change_archived(project: Workspace) -> None:
     """Requirement "Milestone log": archiving a member change writes (archived)."""
     member = proposal().replace(
-        "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+        "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n"
     )
     project.write(
         "milestones/faster-search/milestone.md",

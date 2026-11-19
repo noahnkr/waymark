@@ -158,6 +158,8 @@ def _parse_renames(doc: Document, problems: list[Problem]) -> tuple[Rename, ...]
             or match.name not in (labels.FROM, labels.TO)
             or not match.value
         ):
+            if labels.plain_label(line.text) is not None:
+                continue  # Reported as a plain label, with the bold form to write.
             problems.append(
                 Problem(
                     doc.path,

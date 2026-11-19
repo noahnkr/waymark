@@ -247,7 +247,7 @@ def test_starting_an_implementer_with_change_and_item_is_allowed(hooks: Hooks) -
 
 def test_starting_an_implementer_on_an_item_without_criteria_is_denied(hooks: Hooks) -> None:
     hooks.project.replace(
-        "changes/add-limit/tasks.md", "  - Criteria: the help text names the limit\n", ""
+        "changes/add-limit/tasks.md", "  - **Criteria:** the help text names the limit\n", ""
     )
     reply = hooks.tool("Agent", {"subagent_type": "wm-implementer", "prompt": "add-limit 1.2"})
     assert 'acceptance of "add-limit" was withdrawn' in denied(reply)

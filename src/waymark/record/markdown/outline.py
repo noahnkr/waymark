@@ -3,7 +3,7 @@
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
-from waymark.record.markdown.labels import LabelForm, label_line, read_label
+from waymark.record.markdown.labels import LabelForm, label_line, plain_label, read_label
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document, Section
 
@@ -64,7 +64,7 @@ def parse_facts(
                 )
             else:
                 facts[key] = Fact(label.value, index, label.bullet, label.form)
-        elif not prose:
+        elif not prose and (plain_label(line.text) is None):
             allowed = ", ".join(f'"{label_line(key)}"' for key in sorted(keys)) or "nothing"
             problems.append(
                 Problem(

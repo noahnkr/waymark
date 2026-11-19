@@ -41,7 +41,9 @@ def with_origin(repository: Path, tmp_path: Path, head: str = "main") -> Path:
 
 
 def after(other: str) -> str:
-    return proposal().replace("- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- After: {other}\n")
+    return proposal().replace(
+        "- **Owner:** Sam Doe\n", f"- **Owner:** Sam Doe\n- **After:** {other}\n"
+    )
 
 
 def test_default_branch_is_main_without_a_remote(project: Workspace) -> None:

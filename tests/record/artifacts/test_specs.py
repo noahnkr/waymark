@@ -89,7 +89,7 @@ def test_spec_sections_are_purpose_and_requirements_only() -> None:
 
 
 def test_spec_can_say_which_repos_it_covers() -> None:
-    parsed = parse(spec().replace("# Search\n", "# Search\n\nRepos: api, web\n"))
+    parsed = parse(spec().replace("# Search\n", "# Search\n\n**Repos:** api, web\n"))
     assert parsed.problems == ()
     assert parsed.repos == ("api", "web")
 

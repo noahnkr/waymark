@@ -45,7 +45,7 @@ def test_delta_has_added_modified_and_removed_requirements() -> None:
 
 
 def test_removed_requirement_gives_a_reason() -> None:
-    text = delta(removed=(("Result order", "Unused."),)).replace("Reason: Unused.\n", "")
+    text = delta(removed=(("Result order", "Unused."),)).replace("**Reason:** Unused.\n", "")
     assert [problem.code for problem in parse(text).problems] == ["removal-without-reason"]
 
 
@@ -208,14 +208,14 @@ def test_merge_is_deterministic() -> None:
 
 
 CAP = requirement("Result cap")
-RENAME = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+RENAME = "# Search\n\n## RENAMED Requirements\n\n- **From:** Result cap\n- **To:** Result limit\n"
 
 
 def test_delta_sections_take_the_new_headings() -> None:
     """Requirement "Delta sections": the upper-case headings read like the old ones."""
     text = (
         delta(added=(LIMIT,)).replace("## ADDED Requirements", "## ADDED Requirements")
-        + "\n## REMOVED Requirements\n\n### Requirement: Old\nReason: gone\n"
+        + "\n## REMOVED Requirements\n\n### Requirement: Old\n**Reason:** gone\n"
     )
     parsed = parse(text)
     assert parsed.problems == ()
@@ -245,7 +245,7 @@ def test_rename_matches_the_heading_in_any_case_or_spacing() -> None:
 
 
 def test_rename_of_a_name_inside_the_heading_prefix() -> None:
-    text = "# Search\n\n## RENAMED Requirements\n\n- From: Re\n- To: Query\n"
+    text = "# Search\n\n## RENAMED Requirements\n\n- **From:** Re\n- **To:** Query\n"
     renamed = living(merged(spec(requirement("Re")), text))
     assert [r.name for r in renamed.requirements] == ["Query"]
 
@@ -266,8 +266,8 @@ def test_scenario_rename_of_a_missing_requirement() -> None:
 
 
 def test_renames_are_pairs() -> None:
-    assert [p.code for p in parse(RENAME + "- From: Lonely\n").problems] == ["malformed-rename"]
-    assert [p.code for p in parse(RENAME.replace("- From: Result cap\n", "")).problems] == [
+    assert [p.code for p in parse(RENAME + "- **From:** Lonely\n").problems] == ["malformed-rename"]
+    assert [p.code for p in parse(RENAME.replace("- **From:** Result cap\n", "")).problems] == [
         "malformed-rename",
         "empty-delta",
     ]
