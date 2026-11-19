@@ -4,9 +4,9 @@ An item's definition is its number, title, build tag, criteria, verification and
 repo. Its evidence is its tick and its records: blockers, spec gaps, notes,
 reopenings and resolutions. The change's records sit in a ``## Log`` section at
 the end, with the findings under its reviews; a record about one item names the
-item, and is gathered into that item's records once the whole list is read. A
-record still written under an item is read into that item. Every record is read
-through ``record/evidence/records.py``.
+item, and is gathered into that item's records once the whole list is read. An
+item holds only its definition and its tick: a record under it is reported and not
+read. Every record is read through ``record/evidence/records.py``.
 """
 
 import dataclasses
@@ -204,7 +204,6 @@ class _Draft:
     index: int
     end: int
     fields: dict[str, list[str]] = field(default_factory=dict)
-    records: list[ReviewRecord] = field(default_factory=list)
     open_text: list[str] | None = None
     order: list[str] = field(default_factory=list)
 
@@ -212,7 +211,7 @@ class _Draft:
         def single(label: str) -> str | None:
             return "\n".join(self.fields[label]).strip() if label in self.fields else None
 
-        item = Item(
+        return Item(
             number=self.number,
             section=self.section,
             title=self.title,
@@ -231,7 +230,6 @@ class _Draft:
             index=self.index,
             end=self.end,
         )
-        return _with_records(item, self.records)
 
 
 class _Parser:
@@ -253,9 +251,10 @@ class _Parser:
             self.draft = None
 
     def item_record(self, index: int, text: str) -> None:
-        """Read a record under an item."""
+        """Report a record under an item: records belong in the Log, and this one isn't read."""
         draft = self.draft
         assert draft is not None
+        draft.order.append(RECORD)
         found = records.parse(text)
         if isinstance(found, records.ParseError):
             self.problem(index, "malformed-record", found.message)
@@ -264,24 +263,18 @@ class _Parser:
         if records.KINDS[found.kind].level is records.Level.MILESTONE:
             self.problem(index, "misplaced-record", _milestone_record(found.kind))
             return
-        if records.KINDS[found.kind].level is records.Level.CHANGE:
-            self.problem(
-                index,
-                "misplaced-record",
-                f'A "({found.kind.value})" record is about the whole change, so it goes in '
-                f"the {LOG_SECTION} section at the end of the task list.",
-            )
-            return
-        if found.item is not None and found.item != draft.number:
-            self.problem(
-                index,
-                "misplaced-record",
-                f"This record names item {found.item} but sits under item {draft.number}. "
-                f"Records belong in the {LOG_SECTION} section, naming their item.",
-            )
-            return
-        draft.records.append(dataclasses.replace(_from_record(found, index), item=draft.number))
-        draft.order.append(RECORD)
+        about = (
+            ""
+            if records.KINDS[found.kind].level is records.Level.CHANGE
+            else f", naming the item: {records.shape(found.kind)}"
+        )
+        self.problem(
+            index,
+            "misplaced-record",
+            f"Records belong in the {LOG_SECTION} section at the end of the task list{about}. "
+            f'An item holds only its definition and its tick. Use "wm block", "wm gap", '
+            f'"wm note", "wm reopen" or "wm resolve", which write the record there.',
+        )
 
     def labeled(self, index: int, label: str, value: str) -> None:
         draft = self.draft
@@ -556,11 +549,11 @@ class _Parser:
                 )
 
     def gather_item_records(self) -> None:
-        """Add to each item the Log's records that name it, after those written under it."""
+        """Give each item the Log's records that name it, in the order they were written."""
         for at, item in enumerate(self.items):
             named = [record for record in self.log if record.item == item.number]
             if named:
-                self.items[at] = _with_records(item, [*item.records, *named])
+                self.items[at] = _with_records(item, named)
 
     def parse(self) -> Tasks:
         doc = self.doc

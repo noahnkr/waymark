@@ -1,4 +1,4 @@
-"""Task lists: records under items and the Log section."""
+"""Task lists: the Log section, holding every record, and records misplaced under items."""
 
 import datetime
 
@@ -24,42 +24,33 @@ def codes(text: str) -> list[str]:
     return [problem.code for problem in parse(text).problems]
 
 
-def test_item_records_are_read_under_their_item() -> None:
+def test_scenario_record_under_an_item() -> None:
     tasks = parse(
         HEAD
         + ITEM
         + "  - 2026-11-20 (blocked) by Ada: the API key is missing\n"
-        + "  - 2026-11-20 (note) by wm-implementer: partial: the parser is done\n"
+        + "  - 2026-11-20 (note) by Ada: halfway\n"
     )
-    assert tasks.problems == ()
+    assert [(problem.code, problem.line) for problem in tasks.problems] == [
+        ("misplaced-record", 9),
+        ("misplaced-record", 10),
+    ]
+    assert "belong in the Log section" in tasks.problems[0].message
     item = tasks.items[0]
-    assert [record.kind for record in item.records] == [RecordKind.BLOCKED, RecordKind.NOTE]
-    assert item.records[0].who == "Ada"
-    assert item.blocked == "the API key is missing"
-    assert item.notes == ("partial: the parser is done",)
+    assert (item.records, item.blocked, item.notes) == ((), None, ())
     assert item.criteria == "fifty at most"
-
-
-def test_scenario_resolved_item_keeps_its_blocker() -> None:
-    tasks = parse(
-        HEAD
-        + ITEM
-        + "  - 2026-11-20 (blocked) by Ada: the API key is missing\n"
-        + "  - 2026-11-21 (resolved) by Sam: use the test key\n"
-    )
-    item = tasks.items[0]
-    assert item.blocked is None
-    assert [record.kind for record in item.records] == [RecordKind.BLOCKED, RecordKind.RESOLVED]
 
 
 def test_a_gap_after_a_resolution_is_open_again() -> None:
     tasks = parse(
         HEAD
         + ITEM
-        + "  - 2026-11-20 (gap): the maximum\n"
-        + "  - 2026-11-21 (resolved): fifty\n"
-        + "  - 2026-11-22 (gap): the default\n"
+        + "\n## Log\n\n"
+        + "- 2026-11-20 (gap) 1.1: the maximum\n"
+        + "- 2026-11-21 (resolved) 1.1: fifty\n"
+        + "- 2026-11-22 (gap) 1.1: the default\n"
     )
+    assert tasks.problems == ()
     assert tasks.items[0].spec_gap == "the default"
 
 
@@ -132,7 +123,6 @@ def test_item_records_are_gathered_from_the_log_in_order() -> None:
     tasks = parse(
         HEAD
         + ITEM
-        + "  - 2026-11-19 (note) by Ada: under the item\n"
         + LOG
         + "- 2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1 by Ada\n"
         + "- 2026-11-20 (blocked) 1.1 by Ada: the API key is missing\n"
@@ -142,14 +132,13 @@ def test_item_records_are_gathered_from_the_log_in_order() -> None:
     assert tasks.problems == ()
     item = tasks.items[0]
     assert [record.kind for record in item.records] == [
-        RecordKind.NOTE,
         RecordKind.BLOCKED,
         RecordKind.NOTE,
         RecordKind.REOPENED,
     ]
     assert {record.item for record in item.records} == {"1.1"}
     assert item.blocked == "the API key is missing"
-    assert item.notes == ("under the item", "partial: the parser is done")
+    assert item.notes == ("partial: the parser is done",)
     assert [record.kind for record in tasks.log] == [
         RecordKind.ACCEPTED,
         RecordKind.BLOCKED,

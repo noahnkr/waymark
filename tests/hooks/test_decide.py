@@ -231,8 +231,9 @@ def test_scenario_implementer_writes_a_note_by_hand(accepted: Workspace) -> None
     decision = replace(
         accepted,
         TASKS_FILE,
-        "fifty-one matches\n",
-        "fifty-one matches\n  - 2026-01-15 (note) by wm-implementer: the cap sits after sorting\n",
+        "items 1.1, 1.2 by Sam Doe\n",
+        "items 1.1, 1.2 by Sam Doe\n"
+        "- 2026-01-15 (note) 1.2 by wm-implementer: the cap sits after sorting\n",
         Role.IMPLEMENTER,
     )
     assert not decision.allow

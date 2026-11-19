@@ -38,7 +38,7 @@
   - **Verify:**
     - `wm show <change> --json` on each archived change before and after, compared per item
     - `wm check`
-- [ ] 2.2 Report a record under an item
+- [x] 2.2 Report a record under an item
   - **Build:** planner
   - **Criteria:**
     - a record under an item of an active change is no longer read, and `wm check` reports it as `misplaced-record`, saying it belongs in the Log

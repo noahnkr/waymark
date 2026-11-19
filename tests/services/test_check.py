@@ -630,12 +630,15 @@ def test_scenario_lines_in_order(project: Workspace) -> None:
 
 
 def test_a_label_after_a_record_is_out_of_order(project: Workspace) -> None:
-    [(code, _, _)] = item_problems(
-        project,
-        "- [ ] 1.2 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
-        "  - 2026-01-16 (note) by Sam Doe: halfway\n  - **Verify:** a test\n",
-    )
-    assert code == "item-order"
+    codes = [
+        code
+        for code, _, _ in item_problems(
+            project,
+            "- [ ] 1.2 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+            "  - 2026-01-16 (note) by Sam Doe: halfway\n  - **Verify:** a test\n",
+        )
+    ]
+    assert sorted(codes) == ["item-order", "misplaced-record"]
 
 
 def test_scenario_malformed_record_and_kind_before_the_date(project: Workspace) -> None:
