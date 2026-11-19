@@ -13,11 +13,12 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-8a9299"></a>
 </p>
 
-Waymark is spec-driven development for coding agents, built on **living specs**:
-plain markdown in your repository that says what your system does today. Every
-change starts as a written plan that edits those specs, and nothing is built
-until you approve it. Your agent then builds from the plan, the finished change
-is checked against it, and the specs are updated when you sign off. A small
+Waymark is spec-driven development for coding agents, anchored in **living
+specs**: plain markdown in your repository that says what your system does
+today. Facts an agent can't get from the code, about the services, platforms and
+accounts your system depends on, are kept as **resources** linked to the specs
+they serve. Each change starts as a written plan that edits the specs, is built
+from that plan, and becomes part of the specs when it's done. A small
 command-line tool, `wm`, keeps track of where everything stands.
 
 ## The trail of a change
@@ -365,18 +366,20 @@ that can go in them.
 
 ## Why Waymark
 
-- **The plan comes before the code.** Each change starts as a short written
+- **The specs stay true.** Each change edits the specs, and its edits become
+  part of them when it's done, so they always say what your system does today.
+- **Agents work from what's written.** Each change starts as a short written
   plan: what's changing, why, and how you'll know it works. Your agent builds
-  from that. If something's missing, it asks or writes it down instead of
-  guessing.
-- **You sign off twice.** Once on the plan, before anything is built, and once
-  on the result, before the specs are updated.
+  from that, the specs and the resources. If something's missing, it asks or
+  writes it down instead of guessing.
 - **Every change gets checked.** When it's built, the whole change is checked
   against the plan, and what the check found stays with the change.
 - **Pick up anywhere.** Everything lives in files in your repository, so any
   session on any machine can see where things stand.
 - **Light for small work, thorough for big work.** A typo is just a commit. A
   risky change gets a design and a second agent to review it.
+- **You sign off twice.** On the plan before it's built, and on the result
+  before the specs are updated.
 
 <details>
 <summary><strong>Who it's for</strong></summary>

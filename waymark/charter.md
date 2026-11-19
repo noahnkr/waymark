@@ -2,11 +2,13 @@
 
 ## Vision
 
-Waymark is spec-driven development for coding agents, built on living specs: plain
-markdown in the repository that says what the system does today. Every change starts
-as an edit to those specs and is approved by a human before anything is built. Each
-task is built from the written change, by the main session or, when tagged, by a fresh
-agent that sees only the record. Each change is reviewed once, as a whole, and riskier
+Waymark is spec-driven development for coding agents, anchored in living specs: plain
+markdown in the repository that says what the system does today. Facts an agent can't
+get from the code, about the services, platforms and accounts the system depends on,
+are kept as resources linked to the specs they serve. Each change starts as a written
+plan that edits the specs, is built from that plan, and becomes part of the specs when
+it's done. Each task is built by the main session or, when tagged, by a fresh agent
+that sees only the record. Each change is reviewed once, as a whole, and riskier
 changes by a second agent that never saw the build. The command-line tool, `wm`
 (package `waymark-cli`), keeps track of where it all stands.
 
