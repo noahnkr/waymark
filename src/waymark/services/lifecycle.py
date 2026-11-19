@@ -4,6 +4,7 @@ Every gate lives here. A refused command changes nothing and says what to do.
 wm writes the evidence itself; these functions are the only way it gets written.
 """
 
+import dataclasses
 import datetime
 from collections.abc import Sequence
 from pathlib import Path
@@ -197,10 +198,10 @@ def _add_stopper(  # noqa: PLR0913 - the item, the stopper and who recorded it w
             f'Item {number} already has an open "({kind.value})" record. Resolve it first '
             f'with "wm resolve {name} {number} "<what was decided>"".'
         )
-    entry = records.Record(kind, _today(today), who=_who(record, by), text=note)
+    entry = records.Record(kind, _today(today), who=_who(record, by), text=note, item=number)
     line = _render(entry)
-    paths = _write_tasks(record, change, edit_item(_tasks(change), number, add=[line]))
-    return Done(f'Wrote "{line}" under item {number} of {name}.', paths)
+    paths = _write_tasks(record, change, append_log(_tasks(change), line))
+    return Done(f'Wrote "{line}" to the Log of {name}.', paths)
 
 
 def block(
@@ -238,17 +239,20 @@ def add_note(
     *,
     by: str | None = None,
 ) -> Done:
-    """Write a note under an item that is still to be finished, such as a partial result."""
+    """Write a note about an item that is still to be finished, such as a partial result, into
+    the change's Log."""
     record, change, state = _open(start, name)
     _require_accepted(state)
     item = find_item(change, number)
     text = one_line(note, "a note")
     if item.ticked:
         raise Refusal(f"Item {number} is already ticked, so there is nothing left to note.")
-    entry = records.Record(RecordKind.NOTE, _today(today), who=_who(record, by), text=text)
+    entry = records.Record(
+        RecordKind.NOTE, _today(today), who=_who(record, by), text=text, item=number
+    )
     line = _render(entry)
-    paths = _write_tasks(record, change, edit_item(_tasks(change), number, add=[line]))
-    return Done(f'Wrote "{line}" under item {number} of {name}. It is still to apply.', paths)
+    paths = _write_tasks(record, change, append_log(_tasks(change), line))
+    return Done(f'Wrote "{line}" to the Log of {name}. Item {number} is still to apply.', paths)
 
 
 def _place_roots(record: Record) -> list[tuple[str, Path]]:
@@ -413,8 +417,8 @@ def reopen(
             f"No open review of {name} names item {number} to rebuild, so there is nothing "
             "to reopen."
         )
-    line = _render(records.Record(RecordKind.REOPENED, today, who=_who(record, by)))
-    text = edit_item(_tasks(change), number, ticked=False, add=[line])
+    line = _render(records.Record(RecordKind.REOPENED, today, who=_who(record, by), item=number))
+    text = append_log(_tasks(change), line, untick=number)
     paths = _write_tasks(record, change, text)
     return Done(
         f"Reopened item {number} of {name}. The change needs an independent review once it "
@@ -440,6 +444,7 @@ def resolve(
     text = one_line(decision, "what was decided")
     entry = records.Record(RecordKind.RESOLVED, today, who=_who(record, by), text=text)
     line = _render(entry)
+    item_line = _render(dataclasses.replace(entry, item=target))
     if target == REVIEW_TARGET:
         if not state.review.escalated:
             raise Refusal(
@@ -456,7 +461,7 @@ def resolve(
             f"so there is nothing to resolve. For the change's review, run \"wm resolve {name} "
             f'{REVIEW_TARGET} "<what was decided>"".'
         )
-    new_text = edit_item(_tasks(change), target, ticked=False, add=[line])
+    new_text = append_log(_tasks(change), item_line, untick=target)
     paths = _write_tasks(record, change, new_text)
     return Done(f"Resolved item {target} of {name}. It is ready to be applied again.", paths)
 

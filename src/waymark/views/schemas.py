@@ -115,6 +115,7 @@ RECORD = _object(
         "by": TEXT_OR_NULL,
         "verdict": _enum(Verdict, nullable=True),
         "text": STRING,
+        "item": TEXT_OR_NULL,
         "items": NAMES,
         "covers": NAMES,
         "findings": _array(

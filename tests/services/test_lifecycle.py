@@ -296,7 +296,7 @@ def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Wor
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     text = project.read(TASKS_FILE)
     assert "- [ ] 1.1 Cap the result count" in text
-    assert "  - 2026-01-15 (reopened) by Sam Doe\n- [x] 1.2" in text
+    assert text.endswith("off by one\n- 2026-01-15 (reopened) 1.1 by Sam Doe\n")
     state = project.change_state()
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
 
@@ -355,11 +355,9 @@ def test_resolve_review_is_refused_when_nothing_went_to_the_human(project: Works
 def test_block_writes_a_blocked_record_and_stops_the_item(project: Workspace) -> None:
     accepted(project)
     lifecycle.block(project.root, NAME, "1.1", "waiting for the wording", DAY)
-    lines = project.read(TASKS_FILE).split("\n")
-    blocked = "  - 2026-01-15 (blocked) by Sam Doe: waiting for the wording"
-    assert (
-        lines.index(blocked) == lines.index("  - **Verify:** a test covers fifty-one matches") + 1
-    )
+    text = project.read(TASKS_FILE)
+    assert text.endswith("\n- 2026-01-15 (blocked) 1.1 by Sam Doe: waiting for the wording\n")
+    assert "fifty-one matches\n- [ ] 1.2" in text
     state = project.change_state()
     assert state.items[0].blocked == "waiting for the wording"
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.2")
@@ -375,11 +373,10 @@ def test_resolve_frees_a_blocked_item_and_keeps_the_blocker(project: Workspace) 
     lifecycle.block(project.root, NAME, "1.1", "waiting for the wording", DAY)
     lifecycle.resolve(project.root, NAME, "1.1", "use the short wording", DAY)
     text = project.read(TASKS_FILE)
-    assert text == before.replace(
-        "fifty-one matches\n",
-        "fifty-one matches\n"
-        "  - 2026-01-15 (blocked) by Sam Doe: waiting for the wording\n"
-        "  - 2026-01-15 (resolved) by Sam Doe: use the short wording\n",
+    assert text == (
+        before
+        + "- 2026-01-15 (blocked) 1.1 by Sam Doe: waiting for the wording\n"
+        + "- 2026-01-15 (resolved) 1.1 by Sam Doe: use the short wording\n"
     )
     state = project.change_state()
     assert state.items[0].blocked is None
@@ -394,7 +391,7 @@ def test_spec_gap_from_an_implementer_goes_to_the_human(project: Workspace) -> N
         project.root, NAME, "1.1", "the limit for an empty query is not stated", DAY
     )
     assert (
-        "  - 2026-01-15 (gap) by Sam Doe: the limit for an empty query is not stated"
+        "- 2026-01-15 (gap) 1.1 by Sam Doe: the limit for an empty query is not stated\n"
         in project.read(TASKS_FILE)
     )
     assert project.record().problems == ()

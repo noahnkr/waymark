@@ -356,9 +356,9 @@ def test_two_items_named(workspace: Workspace) -> None:
         "- [x] 1.2 Page it\n  - **Build:** planner\n  - **Criteria:** done\n"
         "  - **Verify:** a test\n",
         "- [ ] 1.2 Page it\n  - **Build:** planner\n  - **Criteria:** done\n"
-        "  - **Verify:** a test\n"
-        "  - 2026-01-17 (reopened)\n",
+        "  - **Verify:** a test\n",
     )
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- 2026-01-17 (reopened) 1.2\n")
     state = workspace.change_state()
     assert state.review.reopen == ("2.1",)
     assert step(state) == (Phase.APPLYING, StepKind.APPLY, "2.1", False)
@@ -368,9 +368,9 @@ def test_two_items_named(workspace: Workspace) -> None:
         "- [x] 2.1 Explain\n  - **Build:** planner\n  - **Criteria:** done\n"
         "  - **Verify:** a test\n",
         "- [ ] 2.1 Explain\n  - **Build:** planner\n  - **Criteria:** done\n"
-        "  - **Verify:** a test\n"
-        "  - 2026-01-17 (reopened)\n",
+        "  - **Verify:** a test\n",
     )
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- 2026-01-17 (reopened) 2.1\n")
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
 
     workspace.replace(TASKS_FILE, "- [ ] 1.2", "- [x] 1.2")
@@ -391,9 +391,9 @@ def test_second_request_for_changes(workspace: Workspace) -> None:
         HEAD
         + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
         + "  - **Verify:** a test\n"
-        + "  - 2026-01-17 (reopened)\n"
         + REVIEW
         + "- 2026-01-16 (review) changes 1.1: off by one\n"
+        + "- 2026-01-17 (reopened) 1.1\n"
         + "- 2026-01-18 (review) changes 1.1: still off by one\n",
     )
     assert state.review.escalated == "a second review asked for changes: still off by one"
@@ -429,11 +429,12 @@ def test_spec_gap_from_the_builder_goes_to_the_human(workspace: Workspace) -> No
             "- [ ] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "  - 2026-01-16 (gap): no limit given\n"
             "- [ ] 1.2 Next\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-        ),
+        )
+        + REVIEW
+        + "- 2026-01-16 (gap) 1.1: no limit given\n",
     )
     assert state.items[0].escalated == "the builder found a spec gap: no limit given"
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)
@@ -453,11 +454,12 @@ def test_blocked_item_is_skipped_until_only_blocked_items_remain(workspace: Work
             "- [ ] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "  - 2026-01-16 (blocked): waiting for wording\n"
             "- [ ] 1.2 Next\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-        ),
+        )
+        + REVIEW
+        + "- 2026-01-16 (blocked) 1.1: waiting for wording\n",
     )
     assert state.items[0].blocked == "waiting for wording"
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)

@@ -105,7 +105,7 @@ def test_scenario_malformed_record() -> None:
     found = parse("(blocked) the API key is missing")
     assert isinstance(found, ParseError)
     assert found.kind is RecordKind.BLOCKED
-    assert "YYYY-MM-DD (blocked) [by <who>]: <reason>" in found.message
+    assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in found.message
 
 
 @pytest.mark.parametrize(
@@ -325,7 +325,7 @@ def test_scenario_kind_before_the_date() -> None:
     """The older shape starts like a record, so it is reported, never read."""
     found = parse("(blocked) 2026-11-20 by Ada: the API key is missing")
     assert isinstance(found, ParseError)
-    assert "YYYY-MM-DD (blocked) [by <who>]: <reason>" in found.message
+    assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in found.message
     assert looks_like_record("(note) 2026-11-20: text")
     assert looks_like_record("2026-11-20 (note): text")
     note = parse("2026-11-20 (note): text")
@@ -365,3 +365,31 @@ def test_scenario_item_list_without_commas() -> None:
 
 def test_a_bare_severity_is_not_a_finding() -> None:
     assert parse_finding("critical `src/a.py:12`: the limit is not checked") is None
+
+
+@pytest.mark.parametrize(
+    "kind", [RecordKind.BLOCKED, RecordKind.GAP, RecordKind.NOTE, RecordKind.RESOLVED]
+)
+def test_an_item_record_names_its_item_after_the_kind(kind: RecordKind) -> None:
+    record = Record(kind, DAY, who="Ada", text="the key", item="1.2")
+    assert render(record) == f"2026-11-20 ({kind.value}) 1.2 by Ada: the key"
+    assert parse(render(record)) == record
+
+
+def test_a_reopened_record_names_its_item() -> None:
+    record = Record(RecordKind.REOPENED, DAY, who="Ada", item="1.2")
+    assert render(record) == "2026-11-20 (reopened) 1.2 by Ada"
+    assert parse("2026-11-20 (reopened) 1.2 by Ada") == record
+
+
+def test_a_resolved_record_may_name_no_item() -> None:
+    found = parse("2026-11-20 (resolved) by Sam: fifty")
+    assert isinstance(found, Record)
+    assert found.item is None
+
+
+def test_an_item_record_names_one_item_number() -> None:
+    for text in ("2026-11-20 (note) 1.2 2.1: x", "2026-11-20 (note) soon: x"):
+        found = parse(text)
+        assert isinstance(found, ParseError)
+        assert "one item number" in found.message

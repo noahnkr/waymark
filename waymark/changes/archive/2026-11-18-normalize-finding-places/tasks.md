@@ -18,7 +18,6 @@
   - **Verify:**
     - `git diff` of the file shows only the four places changed, and a search of `waymark/` for `project-workspace` finds nothing
     - `wm check` passes
-  - 2026-11-18 (note) by Noah Roberts: The human ran the repair, since the hook refuses an agent's edit to Log records. The Verify search for project-workspace can't come back empty: this change's proposal and task list hold the word, the proposal as a redacted example and the task list in the Verify line itself. A search for the checkout's own path, with its user folder, finds nothing in waymark/, so the criterion holds
 
 ## 2. Docs
 
@@ -34,3 +33,4 @@
 - 2026-11-18 (self-review) covers 1.1, 1.2, 2.1 by Noah Roberts: Every criterion of 1.1, 1.2 and 2.1 holds and every scenario of Finding places relative to the project has a passing test; the full checks pass. The review found that a place that isn't a path lost its backslashes, as in a regex, against the requirement, and that a path through .. came out as ../; both fixed in 814918f with tests
   - [suggestion] `src/waymark/record/records.py`: relative_place: a Git Bash style path such as /c/Users/... is refused on Windows instead of being read as C:/Users/...; a reviewer would have to give a Windows or relative path
   - [suggestion] `waymark/changes/normalize-finding-places/tasks.md`: item 1.2's Verify searches for a word this change's own files hold, so it can't come back empty; the criterion was checked with the full checkout path, as noted on the item
+- 2026-11-18 (note) 1.2 by Noah Roberts: The human ran the repair, since the hook refuses an agent's edit to Log records. The Verify search for project-workspace can't come back empty: this change's proposal and task list hold the word, the proposal as a redacted example and the task list in the Verify line itself. A search for the checkout's own path, with its user folder, finds nothing in waymark/, so the criterion holds

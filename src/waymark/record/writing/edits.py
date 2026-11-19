@@ -9,7 +9,7 @@ from collections.abc import Sequence
 
 from waymark.record.artifacts.proposal import OUTCOME, Proposal
 from waymark.record.artifacts.tasks import LOG_SECTION, Tasks
-from waymark.record.markdown.text import Document, Section
+from waymark.record.markdown.text import Document
 
 _BOX = re.compile(r"^- \[[ xX]\]")
 
@@ -22,41 +22,41 @@ def _lines(doc: Document) -> list[str]:
     return lines
 
 
-def edit_item(
-    tasks: Tasks,
-    number: str,
-    *,
-    ticked: bool | None = None,
-    add: Sequence[str] = (),
-) -> str:
-    """Change one item's evidence: its tick, and records added at its end.
-
-    Records are never removed; a later record supersedes an earlier one.
-    """
+def _set_tick(tasks: Tasks, lines: list[str], number: str, ticked: bool) -> None:
     item = tasks.item(number)
     assert item is not None
-    newline = tasks.doc.newline
+    mark = "x" if ticked else " "
+    lines[item.index] = _BOX.sub(f"- [{mark}]", lines[item.index], count=1)
+
+
+def edit_item(tasks: Tasks, number: str, *, ticked: bool) -> str:
+    """Tick an item, or take its tick off."""
     lines = _lines(tasks.doc)
-    lines[item.end : item.end] = [f"  - {text}{newline}" for text in add]
-    if ticked is not None:
-        mark = "x" if ticked else " "
-        lines[item.index] = _BOX.sub(f"- [{mark}]", lines[item.index], count=1)
+    _set_tick(tasks, lines, number, ticked)
     return "".join(lines)
 
 
-def append_log(tasks: Tasks, record: str, findings: Sequence[str] = ()) -> str:
+def append_log(
+    tasks: Tasks, record: str, findings: Sequence[str] = (), *, untick: str | None = None
+) -> str:
     """Append a record, and the findings under it, to the change's Log section.
 
     The section is created at the end of the task list when it isn't there yet.
+    ``untick`` names an item whose tick comes off in the same edit, as a reopening
+    or a resolution does. Records are never removed; a later record supersedes an
+    earlier one.
     """
-    return _append_to_section(tasks, tasks.log_section, LOG_SECTION, record, findings)
+    lines = _lines(tasks.doc)
+    if untick is not None:
+        _set_tick(tasks, lines, untick, ticked=False)
+    return _append_to_section(tasks, lines, LOG_SECTION, record, findings)
 
 
 def _append_to_section(
-    tasks: Tasks, section: Section | None, title: str, record: str, findings: Sequence[str]
+    tasks: Tasks, lines: list[str], title: str, record: str, findings: Sequence[str]
 ) -> str:
+    section = tasks.log_section
     newline = tasks.doc.newline
-    lines = _lines(tasks.doc)
     added = [f"- {record}{newline}", *(f"  - {finding}{newline}" for finding in findings)]
     if section is None:
         while lines and not lines[-1].strip():

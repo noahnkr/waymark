@@ -1,4 +1,4 @@
-"""Task lists: records under items and the Log section."""
+"""Task lists: the Log section, holding every record, and records misplaced under items."""
 
 import datetime
 
@@ -24,42 +24,33 @@ def codes(text: str) -> list[str]:
     return [problem.code for problem in parse(text).problems]
 
 
-def test_item_records_are_read_under_their_item() -> None:
+def test_scenario_record_under_an_item() -> None:
     tasks = parse(
         HEAD
         + ITEM
         + "  - 2026-11-20 (blocked) by Ada: the API key is missing\n"
-        + "  - 2026-11-20 (note) by wm-implementer: partial: the parser is done\n"
+        + "  - 2026-11-20 (note) by Ada: halfway\n"
     )
-    assert tasks.problems == ()
+    assert [(problem.code, problem.line) for problem in tasks.problems] == [
+        ("misplaced-record", 9),
+        ("misplaced-record", 10),
+    ]
+    assert "belong in the Log section" in tasks.problems[0].message
     item = tasks.items[0]
-    assert [record.kind for record in item.records] == [RecordKind.BLOCKED, RecordKind.NOTE]
-    assert item.records[0].who == "Ada"
-    assert item.blocked == "the API key is missing"
-    assert item.notes == ("partial: the parser is done",)
+    assert (item.records, item.blocked, item.notes) == ((), None, ())
     assert item.criteria == "fifty at most"
-
-
-def test_scenario_resolved_item_keeps_its_blocker() -> None:
-    tasks = parse(
-        HEAD
-        + ITEM
-        + "  - 2026-11-20 (blocked) by Ada: the API key is missing\n"
-        + "  - 2026-11-21 (resolved) by Sam: use the test key\n"
-    )
-    item = tasks.items[0]
-    assert item.blocked is None
-    assert [record.kind for record in item.records] == [RecordKind.BLOCKED, RecordKind.RESOLVED]
 
 
 def test_a_gap_after_a_resolution_is_open_again() -> None:
     tasks = parse(
         HEAD
         + ITEM
-        + "  - 2026-11-20 (gap): the maximum\n"
-        + "  - 2026-11-21 (resolved): fifty\n"
-        + "  - 2026-11-22 (gap): the default\n"
+        + "\n## Log\n\n"
+        + "- 2026-11-20 (gap) 1.1: the maximum\n"
+        + "- 2026-11-21 (resolved) 1.1: fifty\n"
+        + "- 2026-11-22 (gap) 1.1: the default\n"
     )
+    assert tasks.problems == ()
     assert tasks.items[0].spec_gap == "the default"
 
 
@@ -97,16 +88,108 @@ def test_scenario_malformed_record_under_an_item() -> None:
     tasks = parse(HEAD + ITEM + "  - (blocked) the API key is missing\n")
     [problem] = tasks.problems
     assert problem.code == "malformed-record"
-    assert "YYYY-MM-DD (blocked) [by <who>]: <reason>" in problem.message
+    assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in problem.message
 
 
 def test_records_in_the_wrong_place_are_reported() -> None:
     assert codes(
         HEAD + ITEM + "  - 2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1\n"
     ) == ["misplaced-record"]
-    assert codes(HEAD + ITEM + "\n## Log\n\n- 2026-11-20 (blocked): the key\n") == [
-        "misplaced-record"
+    assert codes(HEAD + ITEM + "  - 2026-11-20 (note) 1.2: elsewhere\n") == ["misplaced-record"]
+
+
+LOG = "\n## Log\n\n"
+TWO_ITEMS = ITEM + ITEM.replace("1.1 Cap it", "1.2 Page it")
+
+
+def test_an_item_record_in_the_log_names_its_item() -> None:
+    tasks = parse(HEAD + ITEM + LOG + "- 2026-11-20 (blocked): the key\n")
+    [problem] = tasks.problems
+    assert problem.code == "malformed-record"
+    assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in problem.message
+    assert codes(HEAD + ITEM + LOG + "- 2026-11-20 (blocked) 1.1 1.2: the key\n") == [
+        "malformed-record"
     ]
+
+
+def test_an_item_record_naming_an_unknown_item_is_reported() -> None:
+    tasks = parse(HEAD + ITEM + LOG + "- 2026-11-20 (note) 9.9 by Ada: elsewhere\n")
+    [problem] = tasks.problems
+    assert problem.code == "unknown-item"
+    assert "9.9" in problem.message
+
+
+def test_item_records_are_gathered_from_the_log_in_order() -> None:
+    tasks = parse(
+        HEAD
+        + ITEM
+        + LOG
+        + "- 2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1 by Ada\n"
+        + "- 2026-11-20 (blocked) 1.1 by Ada: the API key is missing\n"
+        + "- 2026-11-21 (note) 1.1 by wm-implementer: partial: the parser is done\n"
+        + "- 2026-11-22 (reopened) 1.1 by Ada\n"
+    )
+    assert tasks.problems == ()
+    item = tasks.items[0]
+    assert [record.kind for record in item.records] == [
+        RecordKind.BLOCKED,
+        RecordKind.NOTE,
+        RecordKind.REOPENED,
+    ]
+    assert {record.item for record in item.records} == {"1.1"}
+    assert item.blocked == "the API key is missing"
+    assert item.notes == ("partial: the parser is done",)
+    assert [record.kind for record in tasks.log] == [
+        RecordKind.ACCEPTED,
+        RecordKind.BLOCKED,
+        RecordKind.NOTE,
+        RecordKind.REOPENED,
+    ]
+
+
+def test_scenario_resolved_item_keeps_its_blocker_in_the_log() -> None:
+    tasks = parse(
+        HEAD
+        + ITEM
+        + LOG
+        + "- 2026-11-20 (blocked) 1.1 by Ada: the API key is missing\n"
+        + "- 2026-11-21 (resolved) 1.1 by Sam: use the test key\n"
+    )
+    assert tasks.problems == ()
+    item = tasks.items[0]
+    assert item.blocked is None
+    assert [record.kind for record in item.records] == [RecordKind.BLOCKED, RecordKind.RESOLVED]
+    assert [record.kind for record in tasks.log] == [RecordKind.BLOCKED, RecordKind.RESOLVED]
+
+
+def test_scenario_records_for_two_items() -> None:
+    tasks = parse(
+        HEAD
+        + TWO_ITEMS
+        + LOG
+        + "- 2026-11-20 (blocked) 1.1 by Ada: no key\n"
+        + "- 2026-11-20 (blocked) 1.2 by Ada: no page size\n"
+        + "- 2026-11-21 (resolved) 1.2 by Sam: twenty\n"
+    )
+    assert tasks.problems == ()
+    first, second = tasks.items
+    assert first.blocked == "no key"
+    assert second.blocked is None
+    assert [record.kind for record in first.records] == [RecordKind.BLOCKED]
+
+
+def test_a_resolved_item_record_does_not_resolve_the_review() -> None:
+    tasks = parse(
+        HEAD
+        + ITEM
+        + LOG
+        + "- 2026-11-20 (review) spec-gap by wm-reviewer: the cap is unclear\n"
+        + "- 2026-11-21 (resolved) 1.1 by Sam: fifty\n"
+    )
+    assert tasks.problems == ()
+    assert [record.kind for record in tasks.review_records] == [RecordKind.REVIEW]
+    assert tasks.latest(RecordKind.RESOLVED) is None
+    assert [record.text for record in tasks.items[0].records] == ["fifty"]
 
 
 def test_milestone_records_in_a_task_list_are_reported() -> None:

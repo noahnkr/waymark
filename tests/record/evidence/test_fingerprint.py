@@ -176,18 +176,14 @@ def test_ticks_blockers_review_records_and_notes_keep_acceptance(workspace: Work
     tasks = "changes/add-limit/tasks.md"
     workspace.replace(tasks, "- [ ] 1.1", "- [x] 1.1")
     assert acceptance(workspace) is AcceptanceState.VALID
-    workspace.replace(
+    workspace.write(
         tasks,
-        "  - **Verify:** a test covers fifty-one matches\n",
-        "  - **Verify:** a test covers fifty-one matches\n"
-        "  - 2026-01-16 (note) by Sam Doe: the cap sits after sorting\n",
+        workspace.read(tasks) + "- 2026-01-16 (note) 1.1 by Sam Doe: the cap sits after sorting\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
-    workspace.replace(
+    workspace.write(
         tasks,
-        "  - **Verify:** read the help text\n",
-        "  - **Verify:** read the help text\n"
-        "  - 2026-01-16 (blocked) by Sam Doe: waiting for wording\n",
+        workspace.read(tasks) + "- 2026-01-16 (blocked) 1.2 by Sam Doe: waiting for wording\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.write(
@@ -198,6 +194,8 @@ def test_ticks_blockers_review_records_and_notes_keep_acceptance(workspace: Work
     assert workspace.record().changes["add-limit"].problems == ()
     assert [r.kind.value for r in workspace.record().changes["add-limit"].tasks.log] == [  # type: ignore[union-attr]
         "accepted",
+        "note",
+        "blocked",
         "self-review",
     ]
 

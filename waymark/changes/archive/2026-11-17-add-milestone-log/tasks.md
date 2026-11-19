@@ -22,7 +22,6 @@
     - archiving a change whose proposal names an active milestone writes `(archived) <date> <change> by <who>` in its Log
     - `wm close` refuses a milestone with a planned line, naming it and `wm roadmap drop`, and still refuses one with an active member
   - **Verify:** tests in `tests/services/test_setup.py`, `tests/services/test_archive.py` and `tests/services/test_lifecycle.py` for the scenarios "Planned roadmap line", "Change not on the roadmap", "Unknown milestone refused", "Member change archived", "Planned line keeps a milestone open" and "Every line archived"
-  - 2026-11-17 (note) by Noah Roberts: The close scenarios, Planned line keeps a milestone open and Every line archived, are tested in tests/services/test_milestones.py, where the wm close tests live, not in tests/services/test_lifecycle.py.
 - [x] 1.4 Refuse an agent's hand edits to roadmap lines and a milestone's Log
   - **Criteria:**
     - an agent's edit to an active milestone's `milestone.md` that adds, changes or removes a roadmap line or a Log record is refused, with a reason that names `wm roadmap`
@@ -49,3 +48,4 @@
   - [warning] `src/waymark/services/roadmap.py:801`: `move` writes a `(moved)` record even when the line doesn't change place (e.g. `--first` on the first line, or `--after` the line already before it); untested edge
   - [suggestion] `waymark/changes/add-milestone-log/tasks.md item 1.3`: its verification names `tests/services/test_lifecycle.py` for "Planned line keeps a milestone open" and "Every line archived", but those cases are in `tests/services/test_milestones.py::test_closing_moves_the_milestone_to_the_dated_archive`
   - [suggestion] `src/waymark/services/setup.py:876`: `wm new change --milestone` writes `(proposed)` with only the git user as its author and has no `--by`, unlike `wm roadmap` and `wm archive`
+- 2026-11-17 (note) 1.3 by Noah Roberts: The close scenarios, Planned line keeps a milestone open and Every line archived, are tested in tests/services/test_milestones.py, where the wm close tests live, not in tests/services/test_lifecycle.py.

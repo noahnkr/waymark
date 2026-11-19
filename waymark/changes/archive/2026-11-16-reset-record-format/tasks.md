@@ -13,8 +13,6 @@
     - tests named after the scenarios: `test_scenario_new_record_is_format_1`, `test_scenario_record_from_wm_0_2_0` and `test_scenario_reported_by_the_checks` beside the update tests in `tests/adapters/test_integration.py`, `test_scenario_record_in_another_format` for `wm check --fix` and for `wm init` in a clone
     - `grep -rn "migrat" src/` finds nothing
     - `wm check` passes on this repository
-  - 2026-11-16 (note) by Noah Roberts: The three older-layout messages that still say to run wm update to migrate (outline.py OLD_LAYOUT, tasks.py _OLD_FORMAT, changes.py _old_proposal_lines) are removed by item 1.2; the grep for migrat in src/ is run again after 1.2.
-  - 2026-11-16 (reopened) by Noah Roberts
 - [x] 1.2 Remove the readers of older layouts
   - **Criteria:**
     - `OLD_LAYOUT`, `_OLD_FORMAT`, `_OLD_LABELED`, `_OLD_SECTION`, the `review` tag handling, `_old_proposal_lines`, `OLD_FILES`, `_old_milestone_file` and `_check_archived_milestone` are gone, and no problem has the code `old-layout` or `old-record-format`
@@ -64,3 +62,5 @@
 - 2026-11-16 (review) pass by wm-reviewer: the earlier critical finding is fixed in the template and this repository's config.toml, every criterion and scenario holds, all tests and checks pass and wm check is healthy; the release-skill wording is left as a warning
   - [warning] `tools/skills/waymark-release/SKILL.md:33`: the release skill still says "If the record format changed, say what `wm update` migrates", which the next release would follow, though no `wm` migrates any more (carried over from the earlier review, not addressed)
   - [suggestion] `src/waymark/record/tasks.py:292`: `delegate=False` is a constant at the only place an item draft is built; take the value from the `Build:` line alone, or drop the field if nothing else sets it
+- 2026-11-16 (note) 1.1 by Noah Roberts: The three older-layout messages that still say to run wm update to migrate (outline.py OLD_LAYOUT, tasks.py _OLD_FORMAT, changes.py _old_proposal_lines) are removed by item 1.2; the grep for migrat in src/ is run again after 1.2.
+- 2026-11-16 (reopened) 1.1 by Noah Roberts

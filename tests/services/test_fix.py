@@ -173,8 +173,10 @@ def test_scenario_item_lines_put_in_order(project: Workspace) -> None:
 def test_records_under_an_item_stay_after_its_lines(project: Workspace) -> None:
     project.change(proposal_text=bold(proposal()), design=bold(DESIGN), tasks=bold(TASKS))
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.add_note(project.root, NAME, "1.2", "half done", DAY)
-    text = project.read(TASKS_FILE)
+    text = project.read(TASKS_FILE).replace(
+        "  - **Verify:** read the help text\n",
+        "  - **Verify:** read the help text\n  - 2026-01-15 (note) by Sam Doe: half done\n",
+    )
     moved = (
         text.replace(
             "1.2 Document the limit\n  - **Build:** planner\n", "1.2 Document the limit\n"

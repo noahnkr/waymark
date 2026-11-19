@@ -304,7 +304,7 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
         "reopen": [],
         "needs_human": None,
     }
-    assert [record["kind"] for record in payload["log"]] == ["accepted"]
+    assert [record["kind"] for record in payload["log"]] == ["accepted", "blocked", "gap"]
     assert [record["kind"] for record in items["1.2"]["records"]] == ["blocked"]
     text = render.to_text(payload, PLAIN)
     for expected in ("Change: add-order", "Owner: Sam Doe", "Blocked: waiting for the wording"):
@@ -621,3 +621,33 @@ def test_scenario_status_of_a_stacked_change(project: Workspace) -> None:
     assert lines[paging + 1].strip() == "on add-limit"
     assert lines[limit + 1].strip() != "on main"
     assert all(line.strip() != "on main" for line in lines)
+
+
+def test_scenario_blocker_shown_with_its_item(project: Workspace) -> None:
+    project.change(
+        tasks=HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n"
+        + "- [ ] 1.2 Say so\n  - **Build:** planner\n  - **Criteria:** documented\n"
+        + "  - **Verify:** read it\n"
+    )
+    lifecycle.accept(project.root, "add-limit", DAY)
+    lifecycle.block(
+        project.root, "add-limit", "1.2", "the API key is missing", datetime.date(2026, 11, 20)
+    )
+    payload = valid(payloads.show(project.record(), "add-limit"))
+    items = {item["number"]: item for item in payload["items"]}
+    assert items["1.1"]["records"] == []
+    [blocked] = items["1.2"]["records"]
+    assert (blocked["kind"], blocked["item"], blocked["text"]) == (
+        "blocked",
+        "1.2",
+        "the API key is missing",
+    )
+    assert [(record["kind"], record["item"]) for record in payload["log"]] == [
+        ("accepted", None),
+        ("blocked", "1.2"),
+    ]
+    text = render.to_text(payload, PLAIN)
+    assert "Blocked: the API key is missing" in text
+    assert "(blocked) 2026-11-20 1.2 by Sam Doe: the API key is missing" in text

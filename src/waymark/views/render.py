@@ -261,9 +261,12 @@ def _item_lines(item: Payload, style: Style, *, last: bool) -> list[str]:
     return lines
 
 
-def _record_lines(record: Payload, indent: str, style: Style) -> list[str]:
+def _record_lines(
+    record: Payload, indent: str, style: Style, *, with_item: bool = False
+) -> list[str]:
     verdict = f" {record['verdict']}" if record["verdict"] else ""
-    named = f" {' '.join(record['items'])}" if record["items"] else ""
+    about = f" {record['item']}" if with_item and record.get("item") else ""
+    named = about + (f" {' '.join(record['items'])}" if record["items"] else "")
     covers = f" covers {' '.join(record['covers'])}" if record.get("covers") else ""
     text = f": {record['text']}" if record["text"] else ""
     by = f" by {record['by']}" if record["by"] else ""
@@ -292,7 +295,7 @@ def _log_section(log: list[Payload], style: Style) -> list[str]:
         return []
     lines = ["", style.paint("Log", STRONG)]
     for record in log:
-        lines += _record_lines(record, "  ", style)
+        lines += _record_lines(record, "  ", style, with_item=True)
     return lines
 
 

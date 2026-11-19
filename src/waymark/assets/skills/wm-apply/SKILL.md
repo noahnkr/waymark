@@ -45,7 +45,7 @@ You are the planner. You build each item yourself, from the record, unless its `
 - Start the `wm-implementer` agent with a prompt of exactly `<name> <item>` and nothing else, for example `add-search-limit 1.2`. It builds its own context from the record.
 - When it returns, run `wm show <name> --json` and look at the item:
   - ticked: commit it and go on;
-  - an open `(blocked)` or `(gap)` record under it: that item waits on the human; go on to the next step;
+  - an open `(blocked)` or `(gap)` record for it: that item waits on the human; go on to the next step;
   - neither, and the agent reported `partial`: delegate the item again;
   - neither, and your tool recorded nothing: record the result yourself with `wm tick`, `wm block` or `wm gap`, using the agent's own words.
 
@@ -82,7 +82,7 @@ Only what waits on the human is left. Run `wm inbox` and bring each one to them:
 
 ### What `wm` writes
 
-Every line `wm` writes is a dated record, `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, with lists of items separated by `, `. Records about one item sit under it: `(blocked)`, `(gap)`, `(note)`, `(reopened)` and `(resolved)`. Records about the whole change sit in the `## Log` at the end of the task list: `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)` and `(override)`. Records are never edited or removed; a later one supersedes an earlier one, so `wm resolve` adds a `(resolved)` record and the blocker stays.
+Every line `wm` writes is a dated record, `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, with lists of items separated by `, `. Every record of a change goes in the `## Log` at the end of the task list, in the order it was written. A record about one item names the item straight after the kind, such as `2026-11-20 (blocked) 1.2 by Ada: <reason>`: `(blocked)`, `(gap)`, `(note)`, `(reopened)`, and `(resolved)` with an item. The records about the whole change are `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)` without an item, and `(override)`. An item holds only its definition and its tick; `wm show` gathers each item's records from the Log and shows them with it. Records are never edited or removed; a later one supersedes an earlier one, so `wm resolve` adds a `(resolved)` record and the blocker stays.
 
 - Leave a note on an unfinished item with `wm note <name> <item> "<text>"`.
 - `by` is your git name. Pass `--by "<name>"` to any writing command when someone else did the work, such as `--by wm-reviewer` when you record a reviewer's verdict for it.

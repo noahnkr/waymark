@@ -183,7 +183,7 @@ wm gap <change> <item> <note> [--by NAME]
 
 ## wm note
 
-Write a note under an item still to be finished, such as a partial result.
+Write a note about an item still to be finished, such as a partial result, in the change's Log.
 
 ```
 wm note <change> <item> <text> [--by NAME]

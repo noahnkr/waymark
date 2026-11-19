@@ -11,7 +11,6 @@
   - **Verify:**
     - tests in `tests/record/test_authored_formats.py` and `tests/services/test_check.py` for the scenarios "Impact matches the deltas" and "Delta not named in the impact"
     - `wm check` here
-  - 2026-11-16 (reopened) by Noah Roberts
 - [x] 1.2 Archive with a structured Outcome
   - **Criteria:**
     - `wm archive` takes `--built` and `--differs`, and `--outcome` is gone
@@ -92,3 +91,4 @@
 - 2026-11-16 (review) pass by wm-reviewer: the earlier change to 1.1 is made (only `- Specs: none` skips the specs step, and an empty or unbackticked Specs line gives impact-format, with tests); the fingerprint warning and test suggestions are addressed; every criterion and scenario holds, and tests, lint, format, types, the docs check and wm check pass
   - [warning] `tooling`: codespell could not be run in this review because the uv launcher failed; CI must confirm spelling
   - [suggestion] `waymark/changes/structure-authored-notes/design.md`: the risk "The Specs: check is only as good as the backticks" says an unbackticked spec gives `impact-mismatch`; with the fix it now gives `impact-format` when no spec is backticked, so the design's wording is out of date
+- 2026-11-16 (reopened) 1.1 by Noah Roberts

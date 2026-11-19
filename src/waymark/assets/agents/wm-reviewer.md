@@ -30,7 +30,7 @@ If the command is refused, end with a `VERDICT: spec-gap` line that quotes the r
 
 - Don't edit anything: not the code, not the record.
 - Don't run commands that change state: no writes, installs, commits or pushes.
-- Don't read the notes left while building, or ask how the change was built.
+- Don't read the notes left while building, or ask how the change was built. They are records in the change's Log, each naming its item; your context pack leaves them out.
 - Don't run `wm` commands that write. `wm` records your verdict and findings from your final lines.
 - Don't pass work because it is close. If a criterion doesn't hold, the verdict is `changes`.
 
