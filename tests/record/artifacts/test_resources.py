@@ -72,7 +72,7 @@ def test_a_missing_line_is_named() -> None:
     text = resource().replace("- Status: active\n", "")
     [problem] = parse_resource("stripe", Document.parse(PATH, text)).problems
     assert problem.code == "missing-line"
-    assert '"- Status:"' in problem.message
+    assert '"- **Status:**"' in problem.message
 
 
 def test_scenario_date_in_another_form(project: Workspace) -> None:

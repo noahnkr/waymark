@@ -10,6 +10,8 @@ from waymark.record.artifacts.config import CONFIG_FILE, RECORD_FORMAT, other_fo
 from waymark.record.machine import git
 from waymark.record.machine.branches import Branches
 from waymark.record.machine.project import RECORD_DIR
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.problems import WHOLE_FILE
 from waymark.record.record import Record, link_problems
 from waymark.record.state import (
@@ -102,8 +104,8 @@ def _review_level_findings(record: Record, name: str) -> list[Finding]:
         return []
     message = (
         f'The change "{name}" modifies or removes a requirement, and its review level is '
-        f'{level}. A change like this should be reviewed independently: add a "- Review: '
-        'independent" line to its proposal.'
+        f"{level}. A change like this should be reviewed independently: add a "
+        f'"{label_line(labels.REVIEW, "independent")}" line to its proposal.'
     )
     return [
         Finding(Severity.WARNING, change.proposal.doc.path, WHOLE_FILE, "review-level", message)
@@ -144,7 +146,7 @@ def _merged_base_findings(record: Record) -> list[Finding]:
         message = (
             f'The change "{name}" comes after "{place.after}", which is merged. Rebase '
             f'"{name}" onto {branches.default}, retarget its pull request to '
-            f'{branches.default}, and take the "- After:" line off its proposal.'
+            f'{branches.default}, and take the "{label_line(labels.AFTER)}" line off its proposal.'
         )
         found.append(
             Finding(
@@ -166,13 +168,13 @@ def _after_problem(
         return (
             "after-self",
             f'The change "{name}" says it comes after itself. Name the change it needs, or '
-            'remove the "- After:" line.',
+            f'remove the "{label_line(labels.AFTER)}" line.',
         )
     if other not in known:
         return (
             "unknown-after",
             f'The change "{name}" comes after "{other}", which is neither an active nor an '
-            'archived change. Fix the name, or remove the "- After:" line.',
+            f'archived change. Fix the name, or remove the "{label_line(labels.AFTER)}" line.',
         )
     chain = [name]
     current = other
@@ -183,8 +185,8 @@ def _after_problem(
         cycle = " -> ".join([*chain, name])
         return (
             "after-cycle",
-            f'The "- After:" lines form a cycle: {cycle}. A change can\'t come after a change '
-            "that comes after it; remove one of the lines.",
+            f'The "{label_line(labels.AFTER)}" lines form a cycle: {cycle}. A change can\'t '
+            "come after a change that comes after it; remove one of the lines.",
         )
     return None
 
@@ -221,7 +223,8 @@ def _milestone_problem(  # noqa: PLR0911 - one return per disagreement
         return (
             "milestone-missing",
             f'The roadmap of "{linked[0]}" links the change "{name}", but its proposal names no '
-            f'milestone. Add a "- Milestone: {linked[0]}" line under the "- Owner:" line, or '
+            f'milestone. Add a "{label_line(labels.MILESTONE, linked[0])}" line under the '
+            f'"{label_line(labels.OWNER)}" line, or '
             "remove the link from the roadmap.",
         )
     if named not in record.milestones:
@@ -234,14 +237,15 @@ def _milestone_problem(  # noqa: PLR0911 - one return per disagreement
         return (
             "milestone-other",
             f'The proposal names the milestone "{named}", but the roadmap of "{linked[0]}" links '
-            f'the change "{name}". Make them agree: fix the "- Milestone:" line, or move the link '
-            "to the named milestone's roadmap.",
+            f'the change "{name}". Make them agree: fix the "{label_line(labels.MILESTONE)}" '
+            "line, or move the link to the named milestone's roadmap.",
         )
     if not linked:
         return (
             "milestone-unlinked",
             f'The proposal names the milestone "{named}", but its roadmap doesn\'t link "{name}". '
-            'Link the change from a line in its "## Roadmap", or remove the "- Milestone:" line.',
+            'Link the change from a line in its "## Roadmap", or remove the '
+            f'"{label_line(labels.MILESTONE)}" line.',
         )
     return None
 

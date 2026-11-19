@@ -590,7 +590,7 @@ def status_line(project: Workspace, name: str) -> str:
     return next(
         line
         for line in project.read(f"explorations/{name}.md").splitlines()
-        if line.startswith("- Status:")
+        if line.startswith("- **Status:**")
     )
 
 
@@ -600,11 +600,11 @@ def test_scenario_change_from_an_open_exploration(project: Workspace) -> None:
     done = setup.create_change(project.root, "add-search-limit", source="result-paging")
     assert project.read("changes/add-search-limit/proposal.md")
     assert status_line(project, "result-paging") == (
-        "- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md)"
+        "- **Status:** led-to [add-search-limit](../changes/add-search-limit/proposal.md)"
     )
     after = project.read("explorations/result-paging.md")
     assert [a for a, b in zip(before.splitlines(), after.splitlines(), strict=True) if a != b] == [
-        "- Status: open"
+        "- **Status:** open"
     ]
     assert "result-paging" in done.message
     record = project.record()
@@ -618,7 +618,7 @@ def test_scenario_a_second_change_from_the_same_exploration(project: Workspace) 
     setup.create_change(project.root, "add-search-limit", source="result-paging")
     setup.create_change(project.root, "add-page-cursor", source="result-paging")
     assert status_line(project, "result-paging") == (
-        "- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md), "
+        "- **Status:** led-to [add-search-limit](../changes/add-search-limit/proposal.md), "
         "[add-page-cursor](../changes/add-page-cursor/proposal.md)"
     )
     problems = project.record().problems
@@ -629,7 +629,7 @@ def test_scenario_milestone_from_an_exploration(project: Workspace) -> None:
     setup.create_exploration(project.root, "faster-search-ideas")
     setup.create_milestone(project.root, "faster-search", "faster-search-ideas")
     assert status_line(project, "faster-search-ideas") == (
-        "- Status: led-to [faster-search](../milestones/faster-search/milestone.md)"
+        "- **Status:** led-to [faster-search](../milestones/faster-search/milestone.md)"
     )
     state = derive_state(project.record()).explorations["faster-search-ideas"]
     assert (state.status, state.detail) == (ExplorationStatus.LED_TO, "milestone faster-search")
@@ -816,7 +816,7 @@ def test_scenario_planned_roadmap_line(project: Workspace) -> None:
     )
     assert 'linked from the roadmap of "faster-search"' in done.message
     proposal_text = project.read("changes/add-limit/proposal.md")
-    assert "- Owner: Sam Doe\n- Milestone: faster-search\n\n" in proposal_text
+    assert "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n\n" in proposal_text
     assert project.read(MILESTONE_FILE).endswith(
         "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"
         "- add-cache\n\n## Log\n\n- (proposed) 2026-11-20 add-limit by Sam Doe\n"
@@ -857,7 +857,7 @@ def test_the_milestone_keeps_its_line_endings(project: Workspace) -> None:
     assert "\n" not in text.replace("\r\n", "")
     assert "- [add-limit](../../changes/add-limit/proposal.md): cap\r\n\r\n## Log\r\n" in text
     proposal_text = project.read("changes/add-limit/proposal.md")
-    assert "- Milestone: faster-search\n- Path: short\n" in proposal_text
+    assert "- **Milestone:** faster-search\n- **Path:** short\n" in proposal_text
 
 
 def test_scenario_unknown_milestone_refused(project: Workspace) -> None:
@@ -889,8 +889,9 @@ def test_scenario_change_written_after_another(project: Workspace) -> None:
     setup.create_change(project.root, "add-limit")
     project.write(MILESTONE_FILE, faster_search(""))
     setup.create_change(project.root, "add-paging", milestone="faster-search", after="add-limit")
-    assert "- Owner: Sam Doe\n- Milestone: faster-search\n- After: add-limit\n\n" in project.read(
-        "changes/add-paging/proposal.md"
+    assert (
+        "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n- **After:** add-limit\n\n"
+        in project.read("changes/add-paging/proposal.md")
     )
     with pytest.raises(Refusal, match="not a valid change name"):
         setup.create_change(project.root, "add-sort", after="Add_Limit")
@@ -904,10 +905,10 @@ def test_scenario_new_resource(project: Workspace) -> None:
     assert done.paths == ("resources/stripe.md",)
     text = project.read("resources/stripe.md")
     for line in (
-        "- Kind: service\n",
-        "- Serves: none\n",
-        "- Status: active\n",
-        "- Verified: 2026-11-17\n",
+        "- **Kind:** service\n",
+        "- **Serves:** none\n",
+        "- **Status:** active\n",
+        "- **Verified:** 2026-11-17\n",
     ):
         assert line in text
     for section in ("What it is", "Access", "Interface", "Data", "Configuration", "Verification"):

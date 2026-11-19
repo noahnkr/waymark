@@ -332,6 +332,11 @@ def test_instruction_templates_follow_the_formats_wm_parses(project: Workspace) 
     assert parsed.problems == ()
     assert [item.number for item in parsed.items] == ["1.1", "1.2"]
     assert parsed.items[0].criteria is not None
+    for item in parsed.items:
+        first = tasks.split("\n")[item.index + 1]
+        assert first in ("  - **Build:** planner", "  - **Build:** delegate")
+    assert "- **Options:**\n  - <one option considered>\n  - <another>\n" in design
+    assert "- **Decided by:** <human or planner>" in design
     specs = at(project, "specs")["outputs"][0]["template"]
     parsed_delta = parse_delta("search", Document.parse("specs/search.md", specs))
     assert [item.name for item in parsed_delta.added] == ["<name>"]
@@ -345,7 +350,9 @@ def test_instruction_templates_follow_the_formats_wm_parses(project: Workspace) 
 def test_task_instructions_in_an_atlas_ask_for_a_repo_on_every_item(atlas: Workspace) -> None:
     atlas.change(tasks=None)
     step = valid(instructions(atlas.record(), "tasks", NAME))
-    assert "  - Repo: <api | web>" in step["outputs"][0]["template"]
+    template = step["outputs"][0]["template"]
+    assert template.count("  - **Build:** planner\n  - **Repo:** <api | web>\n") == 1
+    assert template.count("  - **Build:** delegate\n  - **Repo:** <api | web>\n") == 1
     assert any("Repo line" in line for line in step["guidance"])
 
 
@@ -729,7 +736,7 @@ def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
 def test_proposal_instructions_explain_the_review_line(project: Workspace) -> None:
     project.write(f"{FOLDER}/proposal.md", "# Limit\n\nOwner: Sam Doe\n")
     guidance = " ".join(at(project)["guidance"])
-    assert '"- Review: self|independent|none"' in guidance
+    assert '"- **Review:** self|independent|none"' in guidance
     assert "modifies or removes an existing requirement" in guidance
 
 

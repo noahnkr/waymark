@@ -1,9 +1,9 @@
 # {{title}}
 
-- Kind: {{kind}}
-- Serves: none
-- Status: active
-- Verified: {{date}}
+- **Kind:** {{kind}}
+- **Serves:** none
+- **Status:** active
+- **Verified:** {{date}}
 
 <!-- One note per account or separate deployment; environments of the same
      deployment are ### subsections within a section.

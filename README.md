@@ -224,8 +224,8 @@ Custom colors, or themes beyond light and dark.
 
 ## Outcome
 
-- Built: A dark theme that follows the device, and a Theme choice in Settings.
-- Differs: none
+- **Built:** A dark theme that follows the device, and a Theme choice in Settings.
+- **Differs:** none
 ```
 
 </details>

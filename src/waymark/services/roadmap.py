@@ -12,6 +12,8 @@ from pathlib import Path
 from waymark.record.artifacts.milestones import ROADMAP, Milestone, Roadmap, append_milestone_log
 from waymark.record.evidence import records
 from waymark.record.evidence.records import RecordError, RecordKind
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.text import BOM, Document
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.record import Record
@@ -150,7 +152,8 @@ def drop(
     if member is not None and member.proposal and member.proposal.milestone == milestone:
         raise Refusal(
             f'"{change}" is an active change whose proposal names "{milestone}" in its '
-            '"- Milestone:" line. Take that line off its proposal first, which withdraws its '
+            f'"{label_line(labels.MILESTONE)}" line. Take that line off its proposal first, '
+            "which withdraws its "
             "acceptance, or archive or delete the change, then drop it."
         )
     lines = _Lines.of(roadmap.doc)

@@ -235,7 +235,10 @@ def test_archived_on_its_branch(project: Workspace) -> None:
     assert "- search: adds Result limit" in body
     assert "- [x] 1.1 Cap the result count\n" in body
     assert "## Review\n\nSelf-reviewed: fine" in body
-    assert "## Outcome\n\n- Built: Searches return the fifty best matches.\n- Differs: none" in body
+    assert (
+        "## Outcome\n\n- **Built:** Searches return the fifty best matches.\n- **Differs:** none"
+        in body
+    )
     folder = f"waymark/changes/archive/{DAY.isoformat()}-{NAME}"
     url = f"https://github.com/someone/shop/blob/{sha}/{folder}/proposal.md"
     assert payload["links"] == [{"name": "change", "url": url}]
@@ -254,7 +257,7 @@ def test_pr_for_a_name_archived_twice_describes_the_latest(project: Workspace) -
     )
     archived(project, "Second.", datetime.date(2026, 2, 1))
     body = describe(project.record(), NAME)["body"]
-    assert "## Outcome\n\n- Built: Second.\n- Differs: none" in body
+    assert "## Outcome\n\n- **Built:** Second.\n- **Differs:** none" in body
     assert "archive/2026-02-01-add-limit/proposal.md" in body
 
 

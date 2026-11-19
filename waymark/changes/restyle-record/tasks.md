@@ -12,7 +12,7 @@
     - tests in `tests/record/markdown/test_labels.py` for the three forms
     - a test per artifact in `tests/record/test_authored_formats.py` reading it with bold labels
     - `uv run --no-sync pytest tests/record tests/hooks` and `wm check`
-- [ ] 1.2 Write every label in the bold form
+- [x] 1.2 Write every label in the bold form
   - Criteria:
     - the proposal, design, task list, delta, exploration, resource and charter templates write bold labels, the task template writes `- **Build:** planner` first in each item, and the design template writes Options as a nested list
     - `wm new change` writes the Owner, Milestone, After and Path facts bold; `wm archive` writes `- **Built:**` and `- **Differs:**`; `--from` and `wm exploration drop` write `- **Status:**`; `wm new resource` writes its four lines bold; a delta's Repos line is written `**Repos:**`
@@ -21,6 +21,7 @@
   - Verify:
     - `uv run --no-sync pytest tests/services tests/record tests/test_lifecycle_cli.py`
     - `wm check`
+  - (note) 2026-11-18 by Noah Roberts: The task template now writes '- **Build:** planner', so tasks.py accepts 'planner' as a build value (an item built by the planner) to keep the template and wm check clean. Item 2.1 still owns the message naming both values, the instructions and the fingerprint.
 
 ## 2. Build line and options
 

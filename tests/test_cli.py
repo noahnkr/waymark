@@ -244,7 +244,7 @@ def test_wm_new_change_takes_a_milestone(
     )
     monkeypatch.chdir(project.root)
     assert main(["new", "change", "add-limit", "--milestone", "faster-search"]) == EXIT_OK
-    assert "- Milestone: faster-search\n" in project.read("changes/add-limit/proposal.md")
+    assert "- **Milestone:** faster-search\n" in project.read("changes/add-limit/proposal.md")
     assert main(["new", "change", "add-cache", "--milestone", "no-such-one"]) == EXIT_REFUSED
     assert not project.path("changes/add-cache").exists()
     assert main(["new", "milestone", "better-ranking", "--milestone", "x"]) == EXIT_REFUSED
@@ -283,7 +283,7 @@ def test_wm_new_change_takes_after(project: Workspace, monkeypatch: pytest.Monke
     monkeypatch.chdir(project.root)
     assert main(["new", "change", "add-limit"]) == EXIT_OK
     assert main(["new", "change", "add-paging", "--after", "add-limit"]) == EXIT_OK
-    assert "- After: add-limit\n" in project.read("changes/add-paging/proposal.md")
+    assert "- **After:** add-limit\n" in project.read("changes/add-paging/proposal.md")
     assert main(["new", "exploration", "paging", "--after", "add-limit"]) == EXIT_REFUSED
     assert not project.path("explorations/paging.md").exists()
 
@@ -291,7 +291,7 @@ def test_wm_new_change_takes_after(project: Workspace, monkeypatch: pytest.Monke
 def test_wm_new_resource_and_its_kind(project: Workspace, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(project.root)
     assert main(["new", "resource", "stripe", "service"]) == EXIT_OK
-    assert "- Kind: service\n" in project.read("resources/stripe.md")
+    assert "- **Kind:** service\n" in project.read("resources/stripe.md")
     assert main(["new", "resource", "mailgun"]) == EXIT_REFUSED
     assert not project.path("resources/mailgun.md").exists()
     for kind in ("change", "milestone", "exploration"):

@@ -22,6 +22,7 @@ from waymark.record.artifacts.specs import (
     requirement_key,
 )
 from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.outline import (
     collect_sections,
     parse_facts,
@@ -131,7 +132,8 @@ def _parse_removals(doc: Document, problems: list[Problem]) -> tuple[Removal, ..
                     doc.path,
                     section.start + 1,
                     "removal-without-reason",
-                    f'Removing "{name}" needs a reason. Add a "Reason: <why>" line under it.',
+                    f'Removing "{name}" needs a reason. Add a '
+                    f'"{label_line(labels.REASON, "<why>", bullet=False)}" line under it.',
                 )
             )
         removals.append(Removal(name, reason, section.start))
@@ -161,8 +163,8 @@ def _parse_renames(doc: Document, problems: list[Problem]) -> tuple[Rename, ...]
                     doc.path,
                     index + 1,
                     "malformed-rename",
-                    'A rename is a "- From: <old name>" line followed by a '
-                    '"- To: <new name>" line.',
+                    f'A rename is a "{label_line(labels.FROM, "<old name>")}" line followed by a '
+                    f'"{label_line(labels.TO, "<new name>")}" line.',
                 )
             )
             continue
@@ -186,7 +188,8 @@ def _unpaired(doc: Document, index: int) -> Problem:
         doc.path,
         index + 1,
         "malformed-rename",
-        'Every "- From:" line is followed by its own "- To:" line.',
+        f'Every "{label_line(labels.FROM)}" line is followed by its own '
+        f'"{label_line(labels.TO)}" line.',
     )
 
 
@@ -204,7 +207,8 @@ def parse_delta(domain: str, doc: Document) -> Delta:
                     doc.path,
                     facts[REPOS_FACT].index + 1,
                     "empty-fact",
-                    f'"{REPOS_FACT}:" names no repo. List the repos, or remove the line.',
+                    f'"{label_line(REPOS_FACT, bullet=False)}" names no repo. List the repos, '
+                    "or remove the line.",
                 )
             )
     for section in doc.sections(2):
@@ -380,7 +384,7 @@ def _new_spec_text(delta: Delta) -> str:
     newline = delta.doc.newline
     lines = [f"# {delta.title}", ""]
     if delta.repos:
-        lines += [f"{REPOS_FACT}: {', '.join(delta.repos)}", ""]
+        lines += [label_line(REPOS_FACT, ", ".join(delta.repos), bullet=False), ""]
     lines += [f"## {PURPOSE}", "", *(delta.purpose or "").split("\n"), ""]
     if delta.background is not None:
         lines += [f"## {BACKGROUND}", "", *delta.background.split("\n"), ""]
@@ -455,7 +459,7 @@ def _set_background(spec: Spec, background: str, lines: list[str], newline: str)
 
 def _set_repos(spec: Spec, repos: tuple[str, ...], lines: list[str], newline: str) -> None:
     doc = _reparse(spec, lines)
-    fact_line = f"{REPOS_FACT}: {', '.join(repos)}{newline}"
+    fact_line = label_line(REPOS_FACT, ", ".join(repos), bullet=False) + newline
     facts = parse_facts(doc, {REPOS_FACT}, [], prose=True)
     if REPOS_FACT in facts:
         index = facts[REPOS_FACT].index

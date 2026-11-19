@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.outline import (
     collect_sections,
     content,
@@ -131,7 +132,8 @@ def parse_proposal(doc: Document) -> Proposal:
                 doc.path,
                 1,
                 "missing-owner",
-                f'Every change has one owner. Add a "- {OWNER}: <name>" line under the title.',
+                f'Every change has one owner. Add a "{label_line(OWNER, "<name>")}" line under '
+                "the title.",
             )
         )
 
@@ -145,7 +147,7 @@ def parse_proposal(doc: Document) -> Proposal:
                     doc.path,
                     facts[PATH].index + 1,
                     "invalid-path",
-                    f'"{PATH}:" is "{SHORT}" for the short path or "{FULL}". '
+                    f'"{label_line(PATH)}" is "{SHORT}" for the short path or "{FULL}". '
                     "Fix the value, or remove the line for the full path.",
                 )
             )
@@ -162,8 +164,8 @@ def parse_proposal(doc: Document) -> Proposal:
                     doc.path,
                     facts[REVIEW].index + 1,
                     "invalid-review-level",
-                    f'"{REVIEW}:" is one of {levels}. Fix the value, or remove the line for '
-                    "the project's default.",
+                    f'"{label_line(REVIEW)}" is one of {levels}. Fix the value, or remove the '
+                    "line for the project's default.",
                 )
             )
 

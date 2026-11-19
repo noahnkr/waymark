@@ -124,10 +124,10 @@ def test_scenario_delta_not_named_in_the_impact(project: Workspace) -> None:
 
 
 def test_impact_needs_its_three_lines(project: Workspace) -> None:
-    project.change(proposal_text=proposal(impact="- Specs: `search`"))
+    project.change(proposal_text=proposal(impact="- **Specs:** `search`"))
     [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
     assert finding.code == "impact-format"
-    assert '"- User-visible:", "- Code:"' in finding.message
+    assert '"- **User-visible:**", "- **Code:**"' in finding.message
 
 
 @pytest.mark.parametrize("value", ["", " search (new)"])
@@ -407,7 +407,7 @@ def test_scenario_linked_change_names_no_milestone(project: Workspace) -> None:
     project.write("milestones/faster-search/milestone.md", milestone(LINKED))
     [(severity, code, _, message)] = milestone_findings(project)
     assert (severity, code) == ("error", "milestone-missing")
-    assert '"- Milestone: faster-search"' in message
+    assert '"- **Milestone:** faster-search"' in message
 
 
 def test_scenario_unknown_milestone(project: Workspace) -> None:
@@ -515,7 +515,7 @@ def test_scenario_dependency_merged(project: Workspace) -> None:
     assert '"add-limit"' in message
     assert "Rebase" in message
     assert "pull request" in message
-    assert '"- After:"' in message
+    assert '"- **After:**"' in message
 
 
 def test_an_unmerged_dependency_is_not_warned_about(project: Workspace) -> None:

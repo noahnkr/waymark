@@ -257,7 +257,7 @@ def test_override_archives_a_change_whose_review_is_missing(session: Session) ->
     session.fill_proposal(name, NO_SPECS)
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n",
+        HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n",
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")
@@ -265,7 +265,7 @@ def test_override_archives_a_change_whose_review_is_missing(session: Session) ->
     assert "--override" in refusal
     session.run("archive", name, "--built", "Done.", "--override", "checked by hand")
     text = session.read(f"changes/archive/{TODAY}-{name}/proposal.md")
-    assert text.endswith("## Outcome\n\n- Built: Done.\n- Differs: none\n")
+    assert text.endswith("## Outcome\n\n- **Built:** Done.\n- **Differs:** none\n")
     tasks = session.read(f"changes/archive/{TODAY}-{name}/tasks.md")
     assert tasks.endswith(": checked by hand\n")
     assert f"- (override) {TODAY} by " in tasks
@@ -301,7 +301,7 @@ def test_exploration_is_dropped_from_the_command_line(session: Session) -> None:
     session.run("new", "exploration", "result-paging")
     output = session.run("exploration", "drop", "result-paging", "--reason", "Not needed.")
     assert f"explorations/archive/{TODAY}-result-paging.md" in output
-    assert "- Status: dropped" in session.read(f"explorations/archive/{TODAY}-result-paging.md")
+    assert "- **Status:** dropped" in session.read(f"explorations/archive/{TODAY}-result-paging.md")
     with pytest.raises(SystemExit) as exit_info:
         main(["exploration", "drop", "result-paging"])
     assert exit_info.value.code == EXIT_USAGE

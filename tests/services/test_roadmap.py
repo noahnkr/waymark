@@ -71,7 +71,7 @@ def test_scenario_active_member_not_dropped(project: Workspace) -> None:
     )
     project.write(FILE, milestone("- [add-limit](../../changes/add-limit/proposal.md): cap\n"))
     message = refused(project, "drop", "faster-search", "add-limit", "later", DAY)
-    assert '"- Milestone:"' in message
+    assert '"- **Milestone:**"' in message
 
 
 def test_an_archived_or_unknown_change_line_may_be_dropped(project: Workspace) -> None:

@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.outline import collect_sections, content, require_title
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document
@@ -109,7 +110,7 @@ def parse_design(doc: Document) -> Design:
             parts = set(values)
             missing = [part for part in DECISION_PARTS if part not in parts]
             if missing:
-                wanted = ", ".join(f'"{part}:"' for part in missing)
+                wanted = ", ".join(f'"{label_line(part)}"' for part in missing)
                 problems.append(
                     Problem(
                         doc.path,

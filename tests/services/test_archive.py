@@ -77,7 +77,7 @@ def test_archive_merges_the_deltas_and_moves_the_change_to_the_dated_archive(
     created = record.specs["search"]
     assert created.purpose == "How search behaves."
     assert [item.name for item in created.requirements] == ["Result limit"]
-    assert "## Outcome\n\n- Built: Capped at fifty.\n- Differs: none\n" in project.read(
+    assert "## Outcome\n\n- **Built:** Capped at fifty.\n- **Differs:** none\n" in project.read(
         f"{ARCHIVED}/proposal.md"
     )
     assert project.path(f"{ARCHIVED}/tasks.md").is_file()
@@ -149,7 +149,7 @@ def test_archive_override_passes_missing_reviews_and_records_the_reason(
         project.root, NAME, LATER, built="Shipped.", override="reviewed in the pull request"
     )
     assert project.read(f"{ARCHIVED}/proposal.md").endswith(
-        "## Outcome\n\n- Built: Shipped.\n- Differs: none\n"
+        "## Outcome\n\n- **Built:** Shipped.\n- **Differs:** none\n"
     )
     assert project.read(f"{ARCHIVED}/tasks.md").endswith(
         "- (override) 2026-02-01 by Sam Doe: reviewed in the pull request\n"
@@ -209,14 +209,14 @@ def test_scenario_archived_with_an_outcome(project: Workspace) -> None:
     )
     text = project.read(f"{ARCHIVED}/proposal.md")
     assert text.endswith(
-        "## Outcome\n\n- Built: The result limit.\n- Differs: Fifty, not twenty.\n"
+        "## Outcome\n\n- **Built:** The result limit.\n- **Differs:** Fifty, not twenty.\n"
     )
 
 
 def test_scenario_nothing_differs(project: Workspace) -> None:
     applied(project)
     lifecycle.archive(project.root, NAME, LATER, built="The result limit.")
-    assert project.read(f"{ARCHIVED}/proposal.md").endswith("- Differs: none\n")
+    assert project.read(f"{ARCHIVED}/proposal.md").endswith("- **Differs:** none\n")
 
 
 def test_differs_needs_built(project: Workspace) -> None:
@@ -229,8 +229,8 @@ def test_hand_written_outcome_needs_both_lines(project: Workspace) -> None:
     text = project.read(f"changes/{NAME}/proposal.md")
     project.write(f"changes/{NAME}/proposal.md", text + "\n## Outcome\n\nWritten by hand.\n")
     message = refused(project)
-    assert '"- Built:"' in message
-    assert "- Differs: <how it differs, or none>" in message
+    assert '"- **Built:**"' in message
+    assert "- **Differs:** <how it differs, or none>" in message
 
 
 def test_archive_of_the_same_name_twice_in_a_day_is_refused(project: Workspace) -> None:

@@ -17,11 +17,13 @@
      because that is where we cut"). -->
 
 ### Decision: <name>
-- Status: <proposed while the human hasn't settled it, then decided>
-- Decided by: <human or planner>
-- Options: <the options considered>
-- Choice: <the one taken>
-- Why: <the reason>
+- **Status:** <proposed while the human hasn't settled it, then decided>
+- **Decided by:** <human or planner>
+- **Options:**
+  - <one option considered>
+  - <another>
+- **Choice:** <the one taken>
+- **Why:** <the reason>
 
 ## Open questions
 

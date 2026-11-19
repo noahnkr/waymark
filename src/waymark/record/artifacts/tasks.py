@@ -14,12 +14,14 @@ from dataclasses import dataclass, field
 from waymark.record.evidence import records
 from waymark.record.evidence.records import RecordKind
 from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document, Section
 from waymark.record.terms import ReviewSeverity, Verdict
 
 LOG_SECTION = "Log"
 DELEGATE = "delegate"
+PLANNER = "planner"
 
 _SECTION = re.compile(r"^(\d+)\.\s+(\S.*)$")
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
@@ -237,17 +239,21 @@ class _Parser:
         assert draft is not None
         if label in draft.fields:
             self.problem(
-                index, "duplicate-field", f'"{label}:" appears twice under this item. Keep one.'
+                index,
+                "duplicate-field",
+                f'"{label_line(label)}" appears twice under this item. Keep one.',
             )
             return
         if label == BUILD:
             if draft.delegate:
                 self.problem(
-                    index, "repeated-tag", 'The item says "build" twice. Keep the "Build:" line.'
+                    index,
+                    "repeated-tag",
+                    f'The item says "build" twice. Keep the "{label_line(BUILD)}" line.',
                 )
             elif value == DELEGATE:
                 draft.delegate = True
-            else:
+            elif value != PLANNER:
                 self.problem(
                     index,
                     "unknown-build-tag",
@@ -272,8 +278,10 @@ class _Parser:
             self.problem(
                 index,
                 "unrecognized-item-line",
-                'A line under an item starts with "Criteria:", "Verify:", "Repo:" or "Build:", '
-                'or is a record that wm writes. Label this line, or write a note with "wm note".',
+                "A line under an item starts with "
+                + ", ".join(f'"{label_line(label)}"' for label in _ITEM_LABELS)
+                + ", or is a record that wm writes. Label this line, or write a note with "
+                '"wm note".',
             )
 
     def item_line(self, index: int, section: TaskSection | None, text: str) -> bool:
@@ -340,8 +348,9 @@ class _Parser:
             self.problem(
                 index,
                 "unrecognized-item-line",
-                'Lines under an item are a list indented by two spaces, such as "  - Criteria: '
-                '...". Fix the indentation, or label the line.',
+                "Lines under an item are a list indented by two spaces, such as "
+                f'"  {label_line(labels.CRITERIA, "...")}". Fix the indentation, or label the '
+                "line.",
             )
 
     def section(self, section: Section) -> TaskSection | None:
@@ -382,13 +391,17 @@ class _Parser:
 
     def check_fields(self) -> None:
         for item in self.items:
-            values = {"Criteria": item.criteria, "Verify": item.verify, "Repo": item.repo}
+            values = {
+                labels.CRITERIA: item.criteria,
+                labels.VERIFY: item.verify,
+                labels.REPO: item.repo,
+            }
             for label, value in values.items():
                 if value is not None and not value:
                     self.problem(
                         item.index,
                         "empty-field",
-                        f'"{label}:" under item {item.number} is empty. '
+                        f'"{label_line(label)}" under item {item.number} is empty. '
                         "Write it, or remove the line.",
                     )
 

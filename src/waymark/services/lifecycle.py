@@ -10,7 +10,13 @@ from pathlib import Path
 
 from waymark.record.artifacts.changes import Change
 from waymark.record.artifacts.deltas import merge_delta
-from waymark.record.artifacts.explorations import LED_TO, OPEN, parse_exploration, with_dropped
+from waymark.record.artifacts.explorations import (
+    LED_TO,
+    OPEN,
+    STATUS,
+    parse_exploration,
+    with_dropped,
+)
 from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log
 from waymark.record.artifacts.proposal import BUILT, DIFFERS, NONE, Proposal
 from waymark.record.artifacts.specs import Spec, parse_spec
@@ -19,6 +25,7 @@ from waymark.record.evidence import records
 from waymark.record.evidence.fingerprint import change_fingerprint
 from waymark.record.evidence.records import RecordError, RecordKind
 from waymark.record.machine import git
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.text import Document
 from waymark.record.names import ArchiveName
 from waymark.record.record import ARCHIVE, CHANGES, EXPLORATIONS, MILESTONES, SPECS, Record
@@ -546,7 +553,10 @@ def _listed(numbers: list[str]) -> str:
     return f"items {', '.join(numbers)} are"
 
 
-_OUTCOME_FORM = f'"- {BUILT}: <what was built>" and "- {DIFFERS}: <how it differs, or none>"'
+_OUTCOME_FORM = (
+    f'"{label_line(BUILT, "<what was built>")}" and '
+    f'"{label_line(DIFFERS, "<how it differs, or none>")}"'
+)
 
 
 def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | None) -> str:
@@ -562,7 +572,7 @@ def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | No
             )
         text = one_line(built, "what was built")
         diff = one_line(differs, "how it differs from the proposal") if differs else NONE
-        return f"- {BUILT}: {text}\n- {DIFFERS}: {diff}"
+        return f"{label_line(BUILT, text)}\n{label_line(DIFFERS, diff)}"
     if not existing:
         raise Refusal(
             'Archiving records what came of the change. Pass --built "<what was built>" and, '
@@ -571,7 +581,7 @@ def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | No
     missing = [label for label in (BUILT, DIFFERS) if label not in proposal.outcome_lines]
     if missing:
         raise Refusal(
-            f'The outcome in the proposal of "{name}" needs a "- {missing[0]}:" line. '
+            f'The outcome in the proposal of "{name}" needs a "{label_line(missing[0])}" line. '
             f"An outcome is written {_OUTCOME_FORM}."
         )
     return existing
@@ -662,7 +672,8 @@ def drop_exploration(start: Path, name: str, reason: str, today: datetime.date) 
         )
     if exploration.status != OPEN or exploration.status_index is None:
         raise Refusal(
-            f'Only an open exploration is dropped. Give "{name}" the line "- Status: open" '
+            f'Only an open exploration is dropped. Give "{name}" the line '
+            f'"{label_line(STATUS, OPEN)}" '
             "first, then drop it."
         )
     if not reason.strip():

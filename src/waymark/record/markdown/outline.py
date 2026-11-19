@@ -3,7 +3,7 @@
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
-from waymark.record.markdown.labels import LabelForm, read_label
+from waymark.record.markdown.labels import LabelForm, label_line, read_label
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document, Section
 
@@ -59,13 +59,13 @@ def parse_facts(
                         doc.path,
                         index + 1,
                         "duplicate-fact",
-                        f'"{key}:" appears twice. Keep one line.',
+                        f'"{label_line(key)}" appears twice. Keep one line.',
                     )
                 )
             else:
                 facts[key] = Fact(label.value, index, label.bullet, label.form)
         elif not prose:
-            allowed = ", ".join(f'"{key}:"' for key in sorted(keys)) or "nothing"
+            allowed = ", ".join(f'"{label_line(key)}"' for key in sorted(keys)) or "nothing"
             problems.append(
                 Problem(
                     doc.path,

@@ -4,6 +4,8 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.outline import (
     Fact,
     collect_sections,
@@ -20,13 +22,16 @@ CONCLUSION = "Conclusion"
 RELATED = "Related"
 REQUIRED_SECTIONS = (CONTEXT, QUESTIONS, APPROACHES, CONCLUSION, RELATED)
 
-STATUS = "Status"
+STATUS = labels.STATUS
 OPEN = "open"
 LED_TO = "led-to"
 DROPPED = "dropped"
 STATUSES = (OPEN, LED_TO, DROPPED)
 _STATUS = re.compile(r"^(open|led-to|dropped)(?:\s+(\S.*))?$")
-_FORMS = '"- Status: open", "- Status: led-to <link>" or "- Status: dropped"'
+_FORMS = (
+    f'"{label_line(labels.STATUS, "open")}", "{label_line(labels.STATUS, "led-to <link>")}" '
+    f'or "{label_line(labels.STATUS, "dropped")}"'
+)
 
 
 @dataclass(frozen=True)
@@ -101,7 +106,7 @@ def with_led_to(exploration: Exploration, name: str, target: str) -> str:
     if exploration.status == LED_TO:
         lines[at] = f"{lines[at].rstrip()}, {link}"
     else:
-        lines[at] = f"- {STATUS}: {LED_TO} {link}"
+        lines[at] = label_line(STATUS, f"{LED_TO} {link}")
     return _join(doc, lines, endings)
 
 
@@ -112,7 +117,7 @@ def with_dropped(exploration: Exploration, reason: str) -> str:
     newline = doc.newline
     lines = [line.text for line in doc.lines]
     endings = [line.ending for line in doc.lines]
-    lines[exploration.status_index] = f"- {STATUS}: {DROPPED}"
+    lines[exploration.status_index] = label_line(STATUS, DROPPED)
     section = next(s for s in doc.sections(2) if s.title.casefold() == CONCLUSION.casefold())
     filled = [i for i in range(section.body_start, section.end) if lines[i].strip()]
     at = filled[-1] + 1 if filled else section.body_start

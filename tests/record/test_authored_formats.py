@@ -82,7 +82,7 @@ def test_structured_impact() -> None:
 def test_scenario_new_change(project: Workspace) -> None:
     setup.create_change(project.root, "add-limit", short=True)
     text = project.read("changes/add-limit/proposal.md")
-    assert "\n- Owner: Sam Doe\n- Path: short\n" in text
+    assert "\n- **Owner:** Sam Doe\n- **Path:** short\n" in text
     change = project.record().changes["add-limit"]
     assert change.short_path
     assert change.proposal is not None
@@ -166,8 +166,8 @@ def test_scenario_item_without_verification(workspace: Workspace) -> None:
         "item-incomplete",
         tasks.split("\n").index("- [ ] 1.2 Rebuild the index") + 1,
     )
-    assert '"- Verify:"' in problem.message
-    assert '"- Criteria:"' not in problem.message
+    assert '"- **Verify:**"' in problem.message
+    assert '"- **Criteria:**"' not in problem.message
 
 
 def test_scenario_one_option(workspace: Workspace) -> None:
@@ -203,7 +203,7 @@ def test_settled_decisions_are_checked(workspace: Workspace) -> None:
     workspace.change(design=DESIGN.replace("- Decided by: planner\n", "- Decided by: Sam\n"))
     [problem] = workspace.record().changes["add-limit"].problems
     assert problem.code == "decision-format"
-    assert '"- Decided by: human" or "- Decided by: planner"' in problem.message
+    assert '"- **Decided by:** human" or "- **Decided by:** planner"' in problem.message
     workspace.change(design=DESIGN.replace("- Status: decided\n", ""))
     [problem] = workspace.record().changes["add-limit"].problems
     assert (problem.code, "the line is missing" in problem.message) == ("decision-format", True)
@@ -234,7 +234,7 @@ def test_exploration_status() -> None:
 def test_scenario_new_exploration(workspace: Workspace) -> None:
     setup.create_exploration(workspace.root, "result-paging")
     text = workspace.read("explorations/result-paging.md")
-    assert "\n- Status: open\n" in text
+    assert "\n- **Status:** open\n" in text
     built = context_pack(workspace.record(), "explore")
     assert built["explorations"][0]["status"] == "open"
 
@@ -243,14 +243,14 @@ def test_scenario_parked_is_not_a_status() -> None:
     [problem] = parse_exploration("paging", document(explore("parked"), "e.md")).problems
     assert problem.code == "unknown-status"
     for status in ("open", "led-to", "dropped"):
-        assert f"- Status: {status}" in problem.message
+        assert f"- **Status:** {status}" in problem.message
 
 
 def test_scenario_missing_status() -> None:
     [problem] = parse_exploration("paging", document(explore(""), "e.md")).problems
     assert problem.code == "missing-status"
     for status in ("open", "led-to", "dropped"):
-        assert f"- Status: {status}" in problem.message
+        assert f"- **Status:** {status}" in problem.message
     assert "wm update" not in problem.message
 
 

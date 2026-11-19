@@ -513,7 +513,7 @@ def test_scenario_drop_an_open_exploration(project: Workspace) -> None:
     assert DROPPED in done.message
     assert not project.path("explorations/result-paging.md").exists()
     text = project.read(DROPPED)
-    assert "\n- Status: dropped\n" in text
+    assert "\n- **Status:** dropped\n" in text
     assert "## Conclusion\n\nResults never pass fifty.\n\n## Related\n" in text
     assert "[Search](../../specs/search.md)" in text
     assert "(archive/2026-12-01-result-paging.md)" in project.read("explorations/other.md")
