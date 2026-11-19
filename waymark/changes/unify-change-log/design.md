@@ -24,50 +24,50 @@ This design assumes `restyle-record` is built: records are written `<date> (<kin
 ## Decisions
 
 ### Decision: Where a record names its item
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - an argument straight after the kind, `2026-11-20 (note) 1.2 by Ada: …`
   - inside the kind, `2026-11-20 (note 1.2) by Ada: …`
-- Choice: an argument after the kind
-- Why: it is the existing record shape, the way a milestone record names its change; a second shape would need its own reading and checks.
+- **Choice:** an argument after the kind
+- **Why:** it is the existing record shape, the way a milestone record names its change; a second shape would need its own reading and checks.
 
 ### Decision: Order of archived item records
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - by date, after the Log records of the same day
   - placed by a rule, such as a `(reopened)` right after the review that named its item
   - left under their items in the archive
-- Choice: by date, after the day's Log records
-- Why: it is simple and predictable, and affects only the archive; rules that run once aren't worth their risk, and leaving them would keep a second placement in the reader for good.
+- **Choice:** by date, after the day's Log records
+- **Why:** it is simple and predictable, and affects only the archive; rules that run once aren't worth their risk, and leaving them would keep a second placement in the reader for good.
 
 ### Decision: What the views show
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - each item's records with the item, gathered from the Log, and the Log as written
   - the Log only
-- Choice: gathered with the item, and the Log as written
-- Why: an implementer and a reader of `wm show` still see an item's blockers and notes beside it, while the file holds one history.
+- **Choice:** gathered with the item, and the Log as written
+- **Why:** an implementer and a reader of `wm show` still see an item's blockers and notes beside it, while the file holds one history.
 
 ### Decision: How item records reach the code that reads them
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - gather them from the Log into `Item.records` after parsing, so readers are unchanged
   - give `Tasks` a lookup by item and change every reader to use it
-- Choice: gather into `Item.records`
-- Why: the state, context, views and commands keep working on items as they do, and the change stays in the parser and the writers.
+- **Choice:** gather into `Item.records`
+- **Why:** the state, context, views and commands keep working on items as they do, and the change stays in the parser and the writers.
 
 ### Decision: How the reader moves to the Log
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - read both places first, rewrite the archive, then report records under items
   - switch reader, writers and files in one item
-- Choice: both places first
-- Why: `wm` on PATH runs this checkout, and this change's own items may get records while it is built; reading both keeps `wm check` healthy after every item.
+- **Choice:** both places first
+- **Why:** `wm` on PATH runs this checkout, and this change's own items may get records while it is built; reading both keeps `wm check` healthy after every item.
 
 ## Open questions
 

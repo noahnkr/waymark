@@ -1,8 +1,7 @@
 # Unify change log
 
-- Owner: Noah Roberts
-- After: restyle-record
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -27,9 +26,9 @@ Once `restyle-record` puts the date first on every record, the Log reads as a ti
 
 ## Impact
 
-- Specs: `acceptance`, `agent-results`, `records` (modified)
-- User-visible:
+- **Specs:** `acceptance`, `agent-results`, `records` (modified)
+- **User-visible:**
   - `wm block`, `wm gap`, `wm note`, `wm reopen`, `wm resolve <change> <item>` and an implementer's ending write their record into the change's `## Log`, naming the item, not under the item
   - `wm check` reports a record under an item in an active change
   - `wm show` and the implement pack still show each item's records with the item
-- Code: `record/` (`evidence/records.py`, `artifacts/tasks.py`, `evidence/evidence.py`), `services/` (lifecycle, check, agent results), `hooks/decide.py`, `views/` only if a payload's shape changes, the skills and agent definitions in `assets/`, the tests, the docs and the CHANGELOG, and this record's archived changes
+- **Code:** `record/` (`evidence/records.py`, `artifacts/tasks.py`, `evidence/evidence.py`), `services/` (lifecycle, check, agent results), `hooks/decide.py`, `views/` only if a payload's shape changes, the skills and agent definitions in `assets/`, the tests, the docs and the CHANGELOG, and this record's archived changes
