@@ -32,3 +32,8 @@ Once `restyle-record` puts the date first on every record, the Log reads as a ti
   - `wm check` reports a record under an item in an active change
   - `wm show` and the implement pack still show each item's records with the item
 - **Code:** `record/` (`evidence/records.py`, `artifacts/tasks.py`, `evidence/evidence.py`), `services/` (lifecycle, check, agent results), `hooks/decide.py`, `views/` only if a payload's shape changes, the skills and agent definitions in `assets/`, the tests, the docs and the CHANGELOG, and this record's archived changes
+
+## Outcome
+
+- **Built:** Every record of a change now goes in its Log: wm block, wm gap, wm note, wm reopen, wm resolve <change> <item> and an implementer's ending name the item after the kind, wm show and the implement pack gather each item's records from the Log, and wm check reports a record under an item as misplaced-record. The archive's item records were moved into their Logs by an uncommitted script.
+- **Differs:** The delta was revised during the build so that only wm show, not the review pack, shows the Log as written; the review pack still leaves notes out. Left open from the review: in keep-agent-setup-local, items 1.1 and 2.1 list their records in date order, which differs from the order they were written in (warning); the Implementer partly done test doesn't check that the note ends the Log (suggestion).

@@ -21,7 +21,7 @@ An acceptance SHALL cover the change's proposal, its deltas, its design, the liv
 
 #### Scenario: Record added
 - GIVEN an accepted change whose acceptance names items 1.1 and 1.2
-- WHEN `wm block <change> 1.2 "<reason>"` adds a `(blocked)` record under item 1.2
+- WHEN `wm block <change> 1.2 "<reason>"` adds a `(blocked)` record for item 1.2 to the Log
 - THEN the change is still accepted
 
 ### Requirement: Items added after acceptance
