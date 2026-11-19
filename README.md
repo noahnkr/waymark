@@ -408,9 +408,9 @@ for organizations that need access control or approval chains.
 These catch mistakes and shortcuts. They aren't a security boundary against
 someone set on getting around them.
 
-**Teams:** each change has one owner and its own branch. If two changes edit the
-same requirement, the second has to be updated before it can be archived. This
-is caught once both are in the same branch, not before.
+**Teams:** each change has one owner and its own branch, and two changes that
+edit the same requirement are caught once both are on the same branch. See
+[Working as a team](docs/concepts.md#working-as-a-team).
 
 </details>
 

@@ -35,27 +35,6 @@ If the pull request needs more work, the archive commit is reverted and the
 change archived again. Specs come before design: first agree on what the system does, then
 on how.
 
-## Branches
-
-Each change lives on a branch named after it, and merges on its own.
-
-- **Base:** a change branches from the default branch, the `origin` remote's HEAD
-  or `main`. A change that needs another change not merged yet says so with an
-  `- **After:** <change>` line, written by `wm new change <name> --after <change>`,
-  and branches from that change's branch instead.
-- **Shown:** `wm instructions` and `wm pr` give a change's branch and base, and
-  its pull request goes into the base. `wm status` adds an `on <base>` line under
-  a change whose base isn't the default branch.
-- **Merged base:** once the change it comes after is archived or merged, `wm
-  check` warns: rebase onto the default branch, retarget the pull request, and
-  take the `- **After:**` line off.
-- **Milestones:** a new milestone goes on a `plan-<milestone>` branch and lands
-  on the default branch in a plan pull request before its changes are proposed.
-
-`wm` names branches; it never creates, switches, rebases or pushes them. The
-skills do that with git. In an atlas, a change uses the same branch name in every
-repo.
-
 ## Paths
 
 | Path | For | What it takes |
@@ -89,57 +68,31 @@ any other:
 
 Accepting again adds a new `(accepted)` record; the latest one counts.
 
-**Several changes can be in flight at once.** Two changes that name the same
-requirement *overlap*: `wm check` reports it and neither is blocked. Whichever
-is archived first wins; the other is then revised against the new spec and
-accepted again before it can be archived.
-
 **A decision is reversed by a new change.** The specs are always the sum of the
 archived changes, and the archive keeps the history of why.
 
-## Explorations
+## Branches
 
-An exploration is saved thinking on an idea that isn't a change yet: research,
-or an idea kept for later. `/wm-explore` saves one when you pick that offer. Its
-`- **Status:**` line says where it stands, and only `wm` writes it.
+Each change lives on a branch named after it, and merges on its own.
 
-| Status | Means | Written by |
-|---|---|---|
-| `open` | waiting to be decided or built | `wm new exploration <name>` |
-| `led-to <links>` | its findings went into a change or milestone | `wm new change <name> --from <exploration>` or `wm new milestone <name> --from <exploration>` |
-| `dropped` | weighed, and won't be acted on | `wm exploration drop <exploration> --reason "<why>"` |
+- **Base:** a change branches from the default branch, the `origin` remote's HEAD
+  or `main`. A change that needs another change not merged yet says so with an
+  `- **After:** <change>` line, written by `wm new change <name> --after <change>`,
+  and branches from that change's branch instead.
+- **Shown:** `wm instructions` and `wm pr` give a change's branch and base, and
+  its pull request goes into the base. `wm status` adds an `on <base>` line under
+  a change whose base isn't the default branch.
+- **Merged base:** once the change it comes after is archived or merged, `wm
+  check` warns: rebase onto the default branch, retarget the pull request, and
+  take the `- **After:**` line off.
+- **Milestones:** a new milestone goes on a `plan-<milestone>` branch and lands
+  on the default branch in a plan pull request before its changes are proposed.
 
-- **Picking one back up:** `/wm-explore <exploration>` reads it, says what in
-  the record has changed since, and goes on from its Questions and Approaches.
-  It ends with four offers: do nothing, update it or drop it, start a proposal,
-  or start a milestone.
-- **Ending:** an exploration that led to work moves to `explorations/archive/`
-  when `wm archive` or `wm close` finishes everything it led to. A dropped one
-  moves there at once. Links to it are re-aimed, so nothing is left to tidy.
+`wm` names branches; it never creates, switches, rebases or pushes them. The
+skills do that with git. In an atlas, a change uses the same branch name in every
+repo.
 
-[The record](record.md#exploration) covers its sections and checks.
-
-## Resources
-
-Some of what an agent needs can't be found in the code: the CRM your app reads
-its leads from, how it's set up for each environment, and where the settings to
-reach its API live. A **resource** holds those facts for one service, platform,
-account, database, dataset or document, in `resources/<name>.md`.
-
-- **Specs and resources:** a spec says what your system does, and changes only
-  through a change. A resource says what something outside the repo is, and is
-  edited by hand whenever that thing changes, inside a change or as tiny work.
-- **Serves:** its `- **Serves:**` line names the specs it supports, such as
-  `leads` for the CRM.
-- **For agents:** the explore pack lists every resource. The implement and
-  review packs carry each active resource that serves a spec the change has a
-  delta for.
-- **No secrets:** a resource says where a secret lives, never the secret.
-
-`wm new resource <name> <kind>` creates one. [The record](record.md#resource)
-covers its sections and checks.
-
-## The files
+## The record
 
 ```
 waymark/
@@ -160,68 +113,9 @@ item (see [What you write](#what-you-write)). What `wm` writes is a record (see
 what they say. Templates are built into `wm`; `wm instructions` hands an agent
 the right one at each step.
 
-`wm instructions` also gives every step the rules all the skills share: only
-you accept a change or archive one past a missing review, only `wm` writes
-records, the specs change only by archiving or syncing, the record is never
-filled in by guessing, and nothing is pushed, opened as a pull request or merged
-without your yes. Each drafting step (propose, specs, design, tasks) also gets a
-checklist of what must hold before moving on; a check marked `wm` is one that
-`wm check` enforces, and the agent judges the rest. The specs step also gives
-the rules for writing requirements, and the tasks step the rules for sizing
-items.
-
-Every skill `wm init` installs has the same sections: Role, Inputs, Steps, any
-sections of its own, Quality bar, Show the human, When to stop and Rules. Show
-the human gives the fixed shape of what the skill tells you, such as the summary
-`wm-propose` shows before you accept, and When to stop says when it hands back
-to you.
-
-A spec states what one area of the system does, as requirements, each with at
-least one scenario:
-
-```markdown
-### Requirement: Result limit
-A search SHALL return at most fifty results.
-
-#### Scenario: Many matches
-- GIVEN an index where a query matches more than fifty documents
-- WHEN the search runs
-- THEN fifty results come back
-```
-
-Each fact has one place to go:
-
-| The fact | Where it goes |
-|---|---|
-| What the system does | A requirement in the area's spec. |
-| A fact about one area that isn't a requirement, such as where its data comes from | The spec's `## Background`, set through a delta. |
-| A fact about something outside the repo, such as a service or a platform | A resource, `resources/<name>.md`. |
-| A fact every agent needs on every change | The charter's Context. |
-
-A spec's Background reaches only the agents working on a change with a delta for
-that spec. See [Spec](record.md#spec-specsareamd).
-
-A task item carries what an agent needs to build it, and the records `wm`
-writes about it. The records about the whole change sit in a `## Log` section at
-the end of the task list:
-
-```markdown
-- [x] 1.1 Cap the result count
-  - **Build:** planner
-  - **Criteria:**
-    - at most fifty results come back
-    - they are the fifty best matches
-  - **Verify:**
-    - a test searches an index with fifty-one matches
-    - `wm check` here
-
-## Log
-
-- 2026-01-15 (accepted) fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
-- 2026-01-15 (note) 1.1 by Sam Doe: the cap sits after sorting
-- 2026-01-16 (review) pass covers 1.1 by wm-reviewer: the boundary is covered
-  - [suggestion] `docs/search.md`: name the limit in the help text
-```
+Every skill gets the same shared rules and, at each drafting step, a checklist
+from `wm instructions`. [Skills and agents](skills.md#what-every-skill-shares)
+lists them.
 
 ### What you write
 
@@ -276,6 +170,124 @@ item as `misplaced-record`.
   markers, blank lines before headings, trailing spaces, the final line break
   and the records' own shape. It never changes wording, fenced code, comments
   or links, and never touches the archive.
+
+## Specs
+
+A spec states what one area of the system does, as requirements, each with at
+least one scenario:
+
+```markdown
+### Requirement: Result limit
+A search SHALL return at most fifty results.
+
+#### Scenario: Many matches
+- GIVEN an index where a query matches more than fifty documents
+- WHEN the search runs
+- THEN fifty results come back
+```
+
+Each fact has one place to go:
+
+| The fact | Where it goes |
+|---|---|
+| What the system does | A requirement in the area's spec. |
+| A fact about one area that isn't a requirement, such as where its data comes from | The spec's `## Background`, set through a delta. |
+| A fact about something outside the repo, such as a service or a platform | A resource, `resources/<name>.md`. |
+| A fact every agent needs on every change | The charter's Context. |
+
+A spec's Background reaches only the agents working on a change with a delta for
+that spec. See [Spec](record.md#spec-specsareamd).
+
+## Task items
+
+A task item carries what an agent needs to build it, and the records `wm`
+writes about it. The records about the whole change sit in a `## Log` section at
+the end of the task list:
+
+```markdown
+- [x] 1.1 Cap the result count
+  - **Build:** planner
+  - **Criteria:**
+    - at most fifty results come back
+    - they are the fifty best matches
+  - **Verify:**
+    - a test searches an index with fifty-one matches
+    - `wm check` here
+
+## Log
+
+- 2026-01-15 (accepted) fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
+- 2026-01-15 (note) 1.1 by Sam Doe: the cap sits after sorting
+- 2026-01-16 (review) pass covers 1.1 by wm-reviewer: the boundary is covered
+  - [suggestion] `docs/search.md`: name the limit in the help text
+```
+
+## Explorations
+
+An exploration is saved thinking on an idea that isn't a change yet: research,
+or an idea kept for later. `/wm-explore` saves one when you pick that offer. Its
+`- **Status:**` line says where it stands, and only `wm` writes it.
+
+| Status | Means | Written by |
+|---|---|---|
+| `open` | waiting to be decided or built | `wm new exploration <name>` |
+| `led-to <links>` | its findings went into a change or milestone | `wm new change <name> --from <exploration>` or `wm new milestone <name> --from <exploration>` |
+| `dropped` | weighed, and won't be acted on | `wm exploration drop <exploration> --reason "<why>"` |
+
+- **Picking one back up:** `/wm-explore <exploration>` reads it, says what in
+  the record has changed since, and goes on from its Questions and Approaches.
+  It ends with four offers: do nothing, update it or drop it, start a proposal,
+  or start a milestone.
+- **Ending:** an exploration that led to work moves to `explorations/archive/`
+  when `wm archive` or `wm close` finishes everything it led to. A dropped one
+  moves there at once. Links to it are re-aimed, so nothing is left to tidy.
+
+[The record](record.md#exploration) covers its sections and checks.
+
+## Milestones
+
+A milestone is a goal that takes several changes, and the roadmap that lists
+them, in one file: `milestones/<name>/milestone.md`, with the sections Goal,
+Done when, Non-goals and Roadmap. `/wm-explore` offers to start one.
+
+- **Planning it:** on a `plan-<name>` branch, `wm new milestone <name>` creates
+  it, and `wm roadmap add <milestone> <change> "<what it delivers>"` adds each
+  change, in order. The milestone lands on the default branch in a plan
+  pull request before any of its changes is proposed.
+- **Its changes:** `wm new change <name> --milestone <milestone>` writes a
+  `- **Milestone:**` line in the proposal and links the change from the roadmap.
+  `wm check` holds the two to each other.
+- **The roadmap** changes only through `wm roadmap add`, `drop` and `move`, each
+  recorded in the milestone's `## Log`. An agent's hand edit to a roadmap line is
+  refused.
+- **Progress:** archiving a member change ticks its line, and `wm status` shows
+  how many are done.
+- **For agents:** a member change's implement and review packs carry the
+  milestone's Goal and Non-goals.
+- **Closing:** `wm close <milestone>` moves it to `milestones/archive/` once
+  every line on its roadmap links to an archived change.
+
+[The record](record.md#milestone) covers its sections, its Log and its checks.
+
+## Resources
+
+Some of what an agent needs can't be found in the code: the CRM your app reads
+its leads from, how it's set up for each environment, and where the settings to
+reach its API live. A **resource** holds those facts for one service, platform,
+account, database, dataset or document, in `resources/<name>.md`.
+
+- **Specs and resources:** a spec says what your system does, and changes only
+  through a change. A resource says what something outside the repo is, and is
+  edited by hand whenever that thing changes, inside a change or as tiny work.
+- **Serves:** its `- **Serves:**` line names the specs it supports, such as
+  `leads` for the CRM.
+- **For agents:** the explore pack lists every resource. The implement and
+  review packs carry each active resource that serves a spec the change has a
+  delta for.
+- **No secrets:** a resource says where a secret lives, never the secret.
+
+`wm new resource <name> <kind>` creates one. [The record](record.md#resource)
+covers its sections and checks.
 
 ## Who does what
 
@@ -389,6 +401,23 @@ not checked.
 **The record's health** is checked by `wm check`. In CI it runs on every push
 and pull request, through the workflow `wm ci` writes.
 
+## Working as a team
+
+The record is shared through git like the code, so everyone works from the same
+files.
+
+- **One owner per change:** a proposal's `- **Owner:**` line names the one
+  person responsible, taken from git when the change is created.
+- **One branch per change:** each change lives on its own branch and merges on
+  its own (see [Branches](#branches)).
+- **Several changes in flight:** two changes that name the same requirement
+  *overlap*. `wm check` reports it, and neither is blocked. Whichever is
+  archived first wins; the other is then revised against the new spec and
+  accepted again before it can be archived.
+- **When it's caught:** `wm` reads only the files on your branch and never
+  fetches, so an overlap with a teammate's change shows once both are on the
+  same branch, such as after you merge or rebase onto the default branch.
+
 ## Glossary
 
 | Term | Meaning |
@@ -413,7 +442,7 @@ and pull request, through the workflow `wm ci` writes.
 | **Owner** | The one person responsible for a change. |
 | **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion): `open` until it leads to a change or milestone or is dropped, then archived. |
 | **Resource** | The as-built facts about one thing outside the repo that the project depends on, such as a service, a platform or a dataset, in `resources/<name>.md`. A spec says what the system does and changes only through a change; a resource says what the outside world is, and is edited by hand when that world changes. See [the record](record.md#resource). |
-| **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. A member change names it in a `- **Milestone:**` line that `wm check` holds to the roadmap, is created with `wm new change <name> --milestone <milestone>`, and its agents see the milestone's Goal and Non-goals. The roadmap changes only through `wm roadmap add`, `drop` and `move`, each recorded in the milestone's Log, and `wm close` needs every line archived. See [the record](record.md#milestone). |
+| **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. See [Milestones](#milestones). |
 | **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |
 | **Implementer** | A fresh agent that builds one task item with a `- **Build:** delegate` line, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one whole change against its scenarios, design and criteria, without seeing how it was built. |
