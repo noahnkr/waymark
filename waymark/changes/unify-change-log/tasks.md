@@ -64,3 +64,7 @@
 ## Log
 
 - 2026-11-18 (accepted) fingerprint 3bcdcf537052f64f items 1.1, 1.2, 1.3, 2.1, 2.2, 3.1 by Noah Roberts
+- 2026-11-18 (accepted) fingerprint 6e1155405a7fbeb0 items 1.1, 1.2, 1.3, 2.1, 2.2, 3.1 by Noah Roberts
+- 2026-11-18 (review) pass covers 1.1, 1.2, 1.3, 2.1, 2.2, 3.1 by wm-reviewer: every item's criteria hold and every scenario has a passing test; item records are read from and written to the Log naming their item, a record under an item is reported as misplaced, the archive is moved with only one change's same-day order shifted, and the full checks and wm check pass
+  - [warning] `waymark/changes/archive/2026-11-15-keep-agent-setup-local/tasks.md`: items 1.1 and 2.1 now list their records in a different order than before (the 2026-11-14 review note comes before the 2026-11-15 notes), because the originals weren't in date order; `wm show` per item doesn't match the old order exactly, and no other archived change is affected
+  - [suggestion] `tests/hooks/test_decide.py:576`: the Implementer partly done scenario says the Log ends with the note, but the test only checks that the note is somewhere in the file
