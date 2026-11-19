@@ -73,6 +73,24 @@ class ReviewRecord:
     item: str | None = None
     """The item a record about one item is about; None for a record about the change."""
 
+    @property
+    def line(self) -> str:
+        """The record as it is written in the Log, without its list marker."""
+        is_acceptance = self.kind is RecordKind.ACCEPTED
+        return records.render(
+            records.Record(
+                kind=self.kind,
+                date=self.date,
+                who=self.who,
+                text=self.text or None,
+                verdict=self.verdict,
+                items=(self.covers or None) if is_acceptance else (self.items or None),
+                fingerprint=self.fingerprint,
+                covers=None if is_acceptance else (self.covers or None),
+                item=self.item,
+            )
+        )
+
 
 @dataclass(frozen=True)
 class Item:

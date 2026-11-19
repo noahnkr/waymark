@@ -951,6 +951,9 @@ Printed by `wm show` for a change.
                     "archived"
                   ]
                 },
+                "line": {
+                  "type": "string"
+                },
                 "date": {
                   "type": "string",
                   "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
@@ -1020,6 +1023,7 @@ Printed by `wm show` for a change.
               },
               "required": [
                 "kind",
+                "line",
                 "date",
                 "by",
                 "verdict",
@@ -1110,6 +1114,9 @@ Printed by `wm show` for a change.
               "archived"
             ]
           },
+          "line": {
+            "type": "string"
+          },
           "date": {
             "type": "string",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
@@ -1179,6 +1186,7 @@ Printed by `wm show` for a change.
         },
         "required": [
           "kind",
+          "line",
           "date",
           "by",
           "verdict",

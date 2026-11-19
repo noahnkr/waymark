@@ -111,6 +111,7 @@ DELTA_NAMES = {"added": NAMES, "modified": NAMES, "removed": NAMES}
 RECORD = _object(
     {
         "kind": _enum(RecordKind),
+        "line": STRING,
         "date": DATE,
         "by": TEXT_OR_NULL,
         "verdict": _enum(Verdict, nullable=True),

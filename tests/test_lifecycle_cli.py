@@ -217,7 +217,7 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     assert "branches: suite" in status
     assert "api is on" in status
     pack = session.run("context", name, "1.1", "--for", "implement")
-    assert f"- Repo: api (its folder on this machine is {api.resolve()})" in pack
+    assert f"- **Repo:** api (its folder on this machine is {api.resolve()})" in pack
     for number in ("1.1", "1.2"):
         session.run("tick", name, number)
     session.run("review", name, "--self", "matches the criteria")

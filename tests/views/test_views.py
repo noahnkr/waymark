@@ -346,8 +346,8 @@ def test_show_change_gives_the_changes_review_and_its_findings(project: Workspac
     }
     text = render.to_text(payload, PLAIN)
     assert "Level: independent; reviewed" in text
-    assert f"(review) 2026-01-15 pass covers 1.1 by {review['by']}: edge covered" in text
-    assert "suggestion `docs/search.md`: name the edge" in text
+    assert f"2026-01-15 (review) pass covers 1.1 by {review['by']}: edge covered" in text
+    assert "[suggestion] `docs/search.md`: name the edge" in text
 
 
 def test_show_spec_includes_pending_deltas_and_history(project: Workspace) -> None:
@@ -565,7 +565,8 @@ def test_scenario_older_review_records_shown_as_covering_every_item(project: Wor
     assert (review["kind"], review["covers"]) == ("self-review", ["1.1", "1.2"])
     assert payload["problems"] == []
     text = render.to_text(payload, PLAIN)
-    assert "(self-review) 2026-01-15 covers 1.1 1.2 by Sam Doe: before covers" in text
+    assert "2026-01-15 (self-review) by Sam Doe: before covers\n" in text
+    assert "    covers every item: 1.1, 1.2" in text
 
 
 def test_show_change_gives_what_a_review_of_added_items_covers(project: Workspace) -> None:
@@ -587,7 +588,7 @@ def test_show_change_gives_what_a_review_of_added_items_covers(project: Workspac
     payload = valid(payloads.show(project.record(), "add-limit"))
     assert [record["covers"] for record in payload["log"]] == [[], ["1.1", "1.2"], ["1.3"]]
     text = render.to_text(payload, PLAIN)
-    assert "(self-review) 2026-01-15 covers 1.3 by Sam Doe: named well" in text
+    assert "2026-01-15 (self-review) covers 1.3 by Sam Doe: named well" in text
 
 
 def test_implement_pack_of_a_member_change_validates_and_shows_its_milestone(
@@ -650,4 +651,21 @@ def test_scenario_blocker_shown_with_its_item(project: Workspace) -> None:
     ]
     text = render.to_text(payload, PLAIN)
     assert "Blocked: the API key is missing" in text
-    assert "(blocked) 2026-11-20 1.2 by Sam Doe: the API key is missing" in text
+    assert "2026-11-20 (blocked) 1.2 by Sam Doe: the API key is missing" in text
+
+
+def test_show_gives_the_log_as_written(project: Workspace) -> None:
+    tasks = "changes/add-limit/tasks.md"
+    project.change()
+    lifecycle.accept(project.root, "add-limit", DAY)
+    lifecycle.block(project.root, "add-limit", "1.2", "the API key is missing", DAY)
+    lifecycle.resolve(project.root, "add-limit", "1.2", "use the test key", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.2")
+    lifecycle.self_review(project.root, "add-limit", "fine", DAY)
+    lines = project.read(tasks).split("\n")
+    written = [line[2:] for line in lines[lines.index("## Log") + 1 :] if line.startswith("- ")]
+    payload = valid(payloads.show(project.record(), "add-limit"))
+    assert [record["line"] for record in payload["log"]] == written
+    text = render.to_text(payload, PLAIN)
+    assert all(line in text for line in written)
