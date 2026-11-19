@@ -175,9 +175,10 @@ def test_records_under_an_item_stay_after_its_lines(project: Workspace) -> None:
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.add_note(project.root, NAME, "1.2", "half done", DAY)
     text = project.read(TASKS_FILE)
-    moved = text.replace(
-        "  - **Criteria:** the help text names the limit\n",
-        "",
+    moved = (
+        text.replace(
+            "1.2 Document the limit\n  - **Build:** planner\n", "1.2 Document the limit\n"
+        ).replace("  - **Criteria:** the help text names the limit\n", "")
     ).replace(
         "  - **Verify:** read the help text\n",
         "  - **Verify:** read the help text\n  - **Build:** planner\n"
@@ -194,15 +195,15 @@ def test_records_under_an_item_stay_after_its_lines(project: Workspace) -> None:
     )
 
 
-def test_old_shaped_records_are_rewritten_and_still_count(project: Workspace) -> None:
+def test_old_shaped_records_are_left_as_written(project: Workspace) -> None:
+    """No command migrates a record: an old shape stays, and wm check reports it."""
     project.change(proposal_text=bold(proposal()), design=bold(DESIGN), tasks=bold(TASKS))
     lifecycle.accept(project.root, NAME, DAY)
     text = project.read(TASKS_FILE)
     old = text.replace("- 2026-01-15 (accepted) ", "- (accepted) 2026-01-15 ")
-    old = old.replace("items 1.1, 1.2", "items 1.1 1.2")
     assert old != text
     project.write(TASKS_FILE, old)
-    assert project.change_state().acceptance is AcceptanceState.VALID
-    assert fix_layout(project.root) == (FixedFile(TASKS_FILE, (Fix.RECORD_LINES,)),)
-    assert project.read(TASKS_FILE) == text
-    assert project.change_state().acceptance is AcceptanceState.VALID
+    assert fix_layout(project.root) == ()
+    assert project.read(TASKS_FILE) == old
+    codes = {p.code for p in project.record().changes[NAME].problems}
+    assert "malformed-record" in codes

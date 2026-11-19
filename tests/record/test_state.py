@@ -212,13 +212,13 @@ def test_progress_is_ticked_items_out_of_all_items(workspace: Workspace) -> None
         workspace,
         HEAD
         + (
-            "- [x] 1.1 A\n"
+            "- [x] 1.1 A\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "- [ ] 1.2 B\n"
+            "- [ ] 1.2 B\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "- [x] 1.3 C\n"
+            "- [x] 1.3 C\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
         ),
@@ -229,7 +229,9 @@ def test_progress_is_ticked_items_out_of_all_items(workspace: Workspace) -> None
 def test_change_at_level_none_needs_no_review(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
-        HEAD + "- [x] 1.1 Rename a file\n  - **Criteria:** done\n  - **Verify:** a test\n",
+        HEAD
+        + "- [x] 1.1 Rename a file\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n",
         level="none",
     )
     assert state.review.reviewed
@@ -241,10 +243,10 @@ def test_all_items_ticked(workspace: Workspace) -> None:
         workspace,
         HEAD
         + (
-            "- [x] 1.1 Cap it\n"
+            "- [x] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "- [x] 1.2 Tidy up\n"
+            "- [x] 1.2 Tidy up\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
         ),
@@ -258,10 +260,10 @@ def test_all_items_ticked(workspace: Workspace) -> None:
         workspace,
         HEAD
         + (
-            "- [x] 1.1 Cap it\n"
+            "- [x] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "- [x] 1.2 Tidy up\n"
+            "- [x] 1.2 Tidy up\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
         )
@@ -276,10 +278,10 @@ def test_an_item_still_to_build(workspace: Workspace) -> None:
         workspace,
         HEAD
         + (
-            "- [x] 1.1 Cap it\n"
+            "- [x] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "- [ ] 1.2 Tidy up\n"
+            "- [ ] 1.2 Tidy up\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
         ),
@@ -289,10 +291,10 @@ def test_an_item_still_to_build(workspace: Workspace) -> None:
         workspace,
         HEAD
         + (
-            "- [x] 1.1 Cap it\n"
+            "- [x] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "- [ ] 1.2 Tidy up\n"
+            "- [ ] 1.2 Tidy up\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
         )
@@ -304,7 +306,10 @@ def test_an_item_still_to_build(workspace: Workspace) -> None:
 def test_independent_change_needs_a_passing_review(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
-        HEAD + "- [x] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test\n" + SELF_REVIEW,
+        HEAD
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+        + SELF_REVIEW,
         level="independent",
     )
     assert state.review.level is ReviewLevel.INDEPENDENT
@@ -314,7 +319,8 @@ def test_independent_change_needs_a_passing_review(workspace: Workspace) -> None
     state = with_tasks(
         workspace,
         HEAD
-        + "- [x] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test\n"
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
         + REVIEW
         + "- 2026-01-16 (review) pass: boundary covered\n",
         level="independent",
@@ -325,16 +331,16 @@ def test_independent_change_needs_a_passing_review(workspace: Workspace) -> None
 
 def test_two_items_named(workspace: Workspace) -> None:
     items = HEAD + (
-        "- [x] 1.1 Cap it\n"
+        "- [x] 1.1 Cap it\n  - **Build:** planner\n"
         "  - **Criteria:** done\n"
         "  - **Verify:** a test\n"
-        "- [x] 1.2 Page it\n"
+        "- [x] 1.2 Page it\n  - **Build:** planner\n"
         "  - **Criteria:** done\n"
         "  - **Verify:** a test\n"
         "\n"
         "## 2. Docs\n"
         "\n"
-        "- [x] 2.1 Explain\n"
+        "- [x] 2.1 Explain\n  - **Build:** planner\n"
         "  - **Criteria:** done\n"
         "  - **Verify:** a test\n"
     )
@@ -347,8 +353,10 @@ def test_two_items_named(workspace: Workspace) -> None:
 
     workspace.replace(
         TASKS_FILE,
-        "- [x] 1.2 Page it\n  - **Criteria:** done\n  - **Verify:** a test\n",
-        "- [ ] 1.2 Page it\n  - **Criteria:** done\n  - **Verify:** a test\n"
+        "- [x] 1.2 Page it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n",
+        "- [ ] 1.2 Page it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n"
         "  - 2026-01-17 (reopened)\n",
     )
     state = workspace.change_state()
@@ -357,8 +365,10 @@ def test_two_items_named(workspace: Workspace) -> None:
 
     workspace.replace(
         TASKS_FILE,
-        "- [x] 2.1 Explain\n  - **Criteria:** done\n  - **Verify:** a test\n",
-        "- [ ] 2.1 Explain\n  - **Criteria:** done\n  - **Verify:** a test\n"
+        "- [x] 2.1 Explain\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n",
+        "- [ ] 2.1 Explain\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n"
         "  - 2026-01-17 (reopened)\n",
     )
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
@@ -379,7 +389,8 @@ def test_second_request_for_changes(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
         HEAD
-        + "- [x] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test\n"
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
         + "  - 2026-01-17 (reopened)\n"
         + REVIEW
         + "- 2026-01-16 (review) changes 1.1: off by one\n"
@@ -401,7 +412,8 @@ def test_spec_gap_verdict_goes_to_the_human(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
         HEAD
-        + "- [x] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test\n"
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
         + REVIEW
         + "- 2026-01-16 (review) spec-gap: no scenario for zero results\n",
     )
@@ -414,11 +426,11 @@ def test_spec_gap_from_the_builder_goes_to_the_human(workspace: Workspace) -> No
         workspace,
         HEAD
         + (
-            "- [ ] 1.1 Cap it\n"
+            "- [ ] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
             "  - 2026-01-16 (gap): no limit given\n"
-            "- [ ] 1.2 Next\n"
+            "- [ ] 1.2 Next\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
         ),
@@ -427,8 +439,8 @@ def test_spec_gap_from_the_builder_goes_to_the_human(workspace: Workspace) -> No
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)
     workspace.replace(
         TASKS_FILE,
-        "- [ ] 1.2 Next\n  - **Criteria:** done\n  - **Verify:** a test\n",
-        "- [x] 1.2 Next\n  - **Criteria:** done\n  - **Verify:** a test\n",
+        "- [ ] 1.2 Next\n  - **Build:** planner\n  - **Criteria:** done\n  - **Verify:** a test\n",
+        "- [x] 1.2 Next\n  - **Build:** planner\n  - **Criteria:** done\n  - **Verify:** a test\n",
     )
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)
 
@@ -438,11 +450,11 @@ def test_blocked_item_is_skipped_until_only_blocked_items_remain(workspace: Work
         workspace,
         HEAD
         + (
-            "- [ ] 1.1 Cap it\n"
+            "- [ ] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
             "  - 2026-01-16 (blocked): waiting for wording\n"
-            "- [ ] 1.2 Next\n"
+            "- [ ] 1.2 Next\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
         ),
@@ -451,8 +463,8 @@ def test_blocked_item_is_skipped_until_only_blocked_items_remain(workspace: Work
     assert step(state) == (Phase.ACCEPTED, StepKind.APPLY, "1.2", False)
     workspace.replace(
         TASKS_FILE,
-        "- [ ] 1.2 Next\n  - **Criteria:** done\n  - **Verify:** a test\n",
-        "- [x] 1.2 Next\n  - **Criteria:** done\n  - **Verify:** a test\n",
+        "- [ ] 1.2 Next\n  - **Build:** planner\n  - **Criteria:** done\n  - **Verify:** a test\n",
+        "- [x] 1.2 Next\n  - **Build:** planner\n  - **Criteria:** done\n  - **Verify:** a test\n",
     )
     state = workspace.change_state()
     assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, "1.1", True)
@@ -477,7 +489,11 @@ def test_delta_that_no_longer_matches_its_spec_is_a_conflict(workspace: Workspac
 
 def test_change_with_a_mismatch_is_not_applied(workspace: Workspace) -> None:
     workspace.write("specs/search.md", spec())
-    tasks = HEAD + "- [ ] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test\n"
+    tasks = (
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+    )
     workspace.change(
         "fix-limit",
         proposal_text=reviewed_at("none"),
@@ -521,7 +537,11 @@ def test_two_changes_touching_the_same_requirement_overlap(workspace: Workspace)
 
 def test_overlap_blocks_neither_change(workspace: Workspace) -> None:
     workspace.write("specs/search.md", spec())
-    tasks = HEAD + "- [x] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test\n"
+    tasks = (
+        HEAD
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+    )
     for name, limit in (("fix-limit", "twenty"), ("cut-limit", "ten")):
         changed = requirement(statement=f"A search SHALL return at most {limit} results.")
         workspace.change(
@@ -553,17 +573,17 @@ def test_item_in_an_atlas_names_a_configured_repo(atlas: Workspace) -> None:
     atlas.change(
         tasks=HEAD
         + (
-            "- [ ] 1.1 Cap it\n"
+            "- [ ] 1.1 Cap it\n  - **Build:** planner\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
-            "- [ ] 1.2 Show it\n"
-            "  - **Criteria:** done\n"
-            "  - **Verify:** a test\n"
+            "- [ ] 1.2 Show it\n  - **Build:** planner\n"
             "  - **Repo:** docs\n"
-            "- [ ] 1.3 Ok\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
+            "- [ ] 1.3 Ok\n  - **Build:** planner\n"
             "  - **Repo:** api\n"
+            "  - **Criteria:** done\n"
+            "  - **Verify:** a test\n"
         )
     )
     assert code_list(atlas) == [
@@ -577,14 +597,14 @@ def test_change_can_span_the_repos_of_an_atlas(atlas: Workspace) -> None:
     atlas.change(
         tasks=HEAD
         + (
-            "- [ ] 1.1 Add the endpoint\n"
-            "  - **Criteria:** done\n"
-            "  - **Verify:** a test\n"
+            "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n"
             "  - **Repo:** api\n"
-            "- [ ] 1.2 Show it\n"
             "  - **Criteria:** done\n"
             "  - **Verify:** a test\n"
+            "- [ ] 1.2 Show it\n  - **Build:** planner\n"
             "  - **Repo:** web\n"
+            "  - **Criteria:** done\n"
+            "  - **Verify:** a test\n"
         )
     )
     assert atlas.record().problems == ()
@@ -594,7 +614,8 @@ def test_change_can_span_the_repos_of_an_atlas(atlas: Workspace) -> None:
 def test_repo_line_outside_an_atlas_is_a_problem(workspace: Workspace) -> None:
     workspace.change(
         tasks=HEAD
-        + "- [ ] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test\n  - **Repo:** api\n"
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Repo:** api\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
     )
     assert code_list(workspace) == [(TASKS_FILE, "unknown-repo")]
 

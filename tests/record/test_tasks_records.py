@@ -10,7 +10,10 @@ from waymark.record.state import AcceptanceState, acceptance_state
 from waymark.record.terms import ReviewSeverity, Verdict
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ITEM = "- [ ] 1.1 Cap it\n  - **Criteria:** fifty at most\n  - **Verify:** a test\n"
+ITEM = (
+    "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+    "  - **Verify:** a test\n"
+)
 
 
 def parse(text: str) -> Tasks:
@@ -63,7 +66,7 @@ def test_a_gap_after_a_resolution_is_open_again() -> None:
 def test_the_log_holds_the_change_records_and_their_findings() -> None:
     tasks = parse(
         HEAD
-        + "- [x] 1.1 Cap it\n\n## Log\n\n"
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n\n## Log\n\n"
         + "- 2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1 by Ada\n"
         + "- 2026-11-21 (synced) by Ada\n"
         + "- 2026-11-22 (review) changes 1.1 by wm-reviewer: the cap is off by one\n"
@@ -114,7 +117,12 @@ def test_milestone_records_in_a_task_list_are_reported() -> None:
 
 
 def test_the_log_section_comes_last() -> None:
-    text = HEAD + ITEM + "\n## Log\n\n- 2026-11-20 (synced)\n\n## 2. Docs\n\n- [ ] 2.1 Say so\n"
+    text = (
+        HEAD
+        + ITEM
+        + "\n## Log\n\n- 2026-11-20 (synced)\n\n## 2. Docs\n\n- [ ] 2.1 Say so\n"
+        + "  - **Build:** planner\n"
+    )
     assert codes(text) == ["log-section-last"]
 
 

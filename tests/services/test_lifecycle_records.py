@@ -63,13 +63,13 @@ def test_scenario_accepted_again(latest: Workspace) -> None:
     accepted(latest)
     latest.replace(
         TASKS_FILE,
-        "- [ ] 1.2 Document the limit\n"
+        "- [ ] 1.2 Document the limit\n  - **Build:** planner\n"
         "  - **Criteria:** the help text names the limit\n"
         "  - **Verify:** read the help text\n",
-        "- [ ] 1.2 Document the limit\n"
+        "- [ ] 1.2 Document the limit\n  - **Build:** planner\n"
         "  - **Criteria:** the help text names the limit\n"
         "  - **Verify:** read the help text\n"
-        "- [ ] 1.3 Test it\n"
+        "- [ ] 1.3 Test it\n  - **Build:** planner\n"
         "  - **Criteria:** done\n"
         "  - **Verify:** a test\n",
     )

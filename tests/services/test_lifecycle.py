@@ -16,7 +16,11 @@ TASKS_FILE = f"changes/{NAME}/tasks.md"
 PROPOSAL_FILE = f"changes/{NAME}/proposal.md"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
+ONE_ITEM = (
+    HEAD
+    + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+    + "  - **Verify:** a test\n"
+)
 REVIEW = "\n## Log\n\n"
 
 
@@ -428,13 +432,19 @@ def test_evidence_commands_keep_windows_line_endings(project: Workspace) -> None
 
 
 def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test",
+    )
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     text = project.read(TASKS_FILE)
     assert text.startswith(
         HEAD
-        + "- [x] 1.1 Cap it\n  - **Criteria:** done\n  - **Verify:** a test\n"
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
         + REVIEW
         + "- 2026-01-15 (accepted) "
     )
@@ -448,7 +458,8 @@ def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
         deltas={},
         design=None,
         tasks=HEAD
-        + "- [ ] 1.1 Fix the typo\n  - **Verify:** a test\n  - **Criteria:** the word is right\n",
+        + "- [ ] 1.1 Fix the typo\n  - **Build:** planner\n  - **Criteria:** the word is right\n"
+        + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
@@ -464,7 +475,8 @@ def test_accepted_again(project: Workspace) -> None:
     project.replace(
         TASKS_FILE,
         "\n## Log\n",
-        "- [ ] 1.3 Announce it\n  - **Criteria:** done\n  - **Verify:** a test\n\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n\n## Log\n",
     )
     assert project.change_state().acceptance is AcceptanceState.VALID
     project.write(f"changes/{NAME}/design.md", DESIGN.replace("after sorting", "after ranking"))

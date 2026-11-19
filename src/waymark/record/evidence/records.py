@@ -9,9 +9,8 @@ record's text is built or read; the table of kinds says what each one carries.
 
 Findings sit under a review record as ``[<severity>] `<place>`: <text>``.
 
-While the record moves to these shapes, a record is also read with its kind
-before its date and its item lists separated by spaces, and a finding with its
-severity bare.
+A line that starts like a record in an older shape, with its kind before its date,
+is recognized so that it can be reported, and is never read as a record.
 """
 
 import datetime
@@ -189,7 +188,7 @@ KINDS: dict[RecordKind, KindSpec] = {
 }
 
 _START = re.compile(r"^\(([a-z][a-z-]*)\)(?=\s|$)")
-_DATE_FIRST = re.compile(r"^(\d{4}-\d{2}-\d{2}) \(([a-z][a-z-]*)\)(?=\s|:|$)(.*)$")
+_DATE_FIRST = re.compile(r"^(\d[\d-]*) \(([a-z][a-z-]*)\)(?=\s|:|$)(.*)$")
 _HEAD = re.compile(r"^\(([a-z][a-z-]*)\) (\d{4}-\d{2}-\d{2})(?=\s|:|$)(.*)$")
 _ITEM_NUMBER = re.compile(r"^\d+\.\d+$")
 _DIGEST = re.compile(r"^[0-9a-f]{16}$")
@@ -231,7 +230,7 @@ def shape(kind: RecordKind) -> str:
 
 def looks_like_record(text: str) -> bool:
     """Whether a line's text starts like a record: a lowercase word in parentheses, after a
-    date or first."""
+    date, or first as in the older shape, which is then reported."""
     return _START.match(text) is not None or _DATE_FIRST.match(text) is not None
 
 
@@ -290,32 +289,47 @@ def _fail(kind: RecordKind | None, reason: str) -> ParseError:
     return ParseError(kind, f'{reason} A "{kind.value}" record is written "{shape(kind)}".')
 
 
-def _kind_first(text: str) -> str:
-    """A record's text with its kind before its date, the order the reader works in."""
+def _unknown_kind(word: str) -> ParseError:
+    known = ", ".join(f"({k.value})" for k in RecordKind)
+    return _fail(None, f'"({word})" is not a kind of record. The kinds are {known}.')
+
+
+def _kind_first(text: str) -> str | ParseError | None:
+    """A record's text with its kind before its date, the order the reader works in.
+
+    None when the text doesn't start like a record; a ParseError for the older shape,
+    with the kind first.
+    """
     date_first = _DATE_FIRST.match(text)
-    if date_first is None:
-        return text
-    return f"({date_first.group(2)}) {date_first.group(1)}{date_first.group(3)}"
+    if date_first is not None:
+        return f"({date_first.group(2)}) {date_first.group(1)}{date_first.group(3)}"
+    start = _START.match(text)
+    if start is None:
+        return None
+    try:
+        kind = RecordKind(start.group(1))
+    except ValueError:
+        return _unknown_kind(start.group(1))
+    return _fail(kind, "A record starts with its date, YYYY-MM-DD, then its kind.")
 
 
 def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one return per refusal
     """Read a record from a line's text, without its list marker.
 
     None when the text doesn't start like a record at all; a ParseError when it
-    does but has the wrong shape or an unknown kind. The date may come first or
-    after the kind.
+    does but has the wrong shape or an unknown kind.
     """
-    text = _kind_first(text.strip())
-    start = _START.match(text)
-    if start is None:
-        return None
-    before_text, colon, after_text = text.partition(_TEXT_SEPARATOR)
+    reordered = _kind_first(text.strip())
+    if not isinstance(reordered, str):
+        return reordered
+    start = _START.match(reordered)
+    assert start is not None
+    before_text, colon, after_text = reordered.partition(_TEXT_SEPARATOR)
     text = " ".join(before_text.split()) + colon + after_text
     try:
         kind = RecordKind(start.group(1))
     except ValueError:
-        known = ", ".join(f"({k.value})" for k in RecordKind)
-        return _fail(None, f'"({start.group(1)})" is not a kind of record. The kinds are {known}.')
+        return _unknown_kind(start.group(1))
     head = _HEAD.match(text)
     if head is None:
         return _fail(kind, "The date is missing or not written YYYY-MM-DD.")
@@ -333,8 +347,6 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
     if not spec.has_text and separator:
         return _fail(kind, "This kind of record has no text after a colon.")
     words, who = _split_who(body.strip())
-    if spec.grammar in (Grammar.VERDICT, Grammar.COVERS, Grammar.ACCEPTANCE):
-        words = _list_words(words)
     if who == "":
         return _fail(kind, 'The name after "by" is missing.')
     text_value = line_text.strip() if spec.has_text else None
@@ -369,18 +381,45 @@ def _split_who(body: str) -> tuple[list[str], str | None]:
     return words[:at], " ".join(words[at + 1 :])
 
 
-def _list_words(words: list[str]) -> list[str]:
-    """The argument words with the commas and semicolons of item lists taken out."""
-    return " ".join(words).replace(",", " ").replace(";", " ").split()
+_LISTED = re.compile(r"^(\d+\.\d+)([,;]?)$")
+
+
+def _list_words(kind: RecordKind, words: list[str]) -> list[str] | ParseError:
+    """The argument words with the separators of their item lists taken out.
+
+    Items in a list are separated by ``, ``, and a list that ``covers`` follows ends
+    with ``;``; any other separator is refused.
+    """
+    out: list[str] = []
+    for at, word in enumerate(words):
+        listed = _LISTED.match(word)
+        if listed is None:
+            out.append(word)
+            continue
+        following = words[at + 1] if at + 1 < len(words) else None
+        next_is_item = following is not None and _LISTED.match(following) is not None
+        wanted = "," if next_is_item else (";" if following == "covers" else "")
+        if listed.group(2) != wanted:
+            return _fail(
+                kind,
+                'Separate the items with ", ", and end a list that "covers" follows with ";".',
+            )
+        out.append(listed.group(1))
+    return out
 
 
 _Arguments = tuple[Verdict | None, tuple[str, ...] | None, str | None, tuple[str, ...] | None]
 
 
-def _read_arguments(
+def _read_arguments(  # noqa: PLR0911 - one return per grammar
     kind: RecordKind, grammar: Grammar, words: list[str]
 ) -> _Arguments | ParseError:
     """The arguments before ``by``, read by the kind's grammar."""
+    if grammar in (Grammar.VERDICT, Grammar.COVERS, Grammar.ACCEPTANCE):
+        listed = _list_words(kind, words)
+        if isinstance(listed, ParseError):
+            return listed
+        words = listed
     if grammar is Grammar.VERDICT:
         return _verdict_arguments(kind, words)
     if grammar is Grammar.SYNC:
@@ -478,9 +517,7 @@ class Finding:
 FINDING_SHAPE = "[<severity>] `<place>`: <text>"
 FINDING_ARGUMENT = "<critical|warning|suggestion>: <place>: <text>"
 
-_FINDING = re.compile(
-    r"^(?:\[(critical|warning|suggestion)\]|(critical|warning|suggestion))\s+`([^`]+)`:\s+(\S.*)$"
-)
+_FINDING = re.compile(r"^\[(critical|warning|suggestion)\]\s+`([^`]+)`:\s+(\S.*)$")
 _FINDING_ARGUMENT_QUOTED = re.compile(r"^(critical|warning|suggestion): `([^`]+)`: (\S.*)$")
 _FINDING_ARGUMENT = re.compile(r"^(critical|warning|suggestion): (\S.*?): (\S.*)$")
 
@@ -497,8 +534,7 @@ def parse_finding(text: str) -> Finding | None:
     match = _FINDING.match(text.strip())
     if match is None:
         return None
-    severity = match.group(1) or match.group(2)
-    return Finding(ReviewSeverity(severity), match.group(3), match.group(4).strip())
+    return Finding(ReviewSeverity(match.group(1)), match.group(2), match.group(3).strip())
 
 
 def parse_finding_argument(text: str) -> Finding | None:

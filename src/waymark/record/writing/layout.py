@@ -27,8 +27,8 @@ from waymark.record.markdown.text import BOM, Document
 
 _MARKER = re.compile(r"^(\s*)[*+](\s+\S.*)$")
 _THEMATIC_BREAK = re.compile(r"^\s*([*+-])(\s*\1){2,}\s*$")
-_RECORD_LINE = re.compile(r"^(\s*- )((?:\d{4}-\d{2}-\d{2} )?\(.*)$")
-_FINDING_LINE = re.compile(r"^(\s+- )(\[?(?:critical|warning|suggestion)\]? .*)$")
+_RECORD_LINE = re.compile(r"^(\s*- )(\d{4}-\d{2}-\d{2} \(.*)$")
+_FINDING_LINE = re.compile(r"^(\s+- )(\[(?:critical|warning|suggestion)\] .*)$")
 _ITEM = re.compile(r"^- \[[ xX]\] \d+\.\d+(?:\s|$)")
 _ITEM_CHILD = "  - "
 _COMMENT_OPEN = "<!--"

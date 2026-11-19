@@ -19,7 +19,11 @@ FOLDER = f"changes/{NAME}"
 TASKS_FILE = f"{FOLDER}/tasks.md"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
+ONE_ITEM = (
+    HEAD
+    + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+    + "  - **Verify:** a test\n"
+)
 INDEPENDENT = proposal().replace(
     "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
 )
@@ -156,9 +160,9 @@ def passed_then_added(project: Workspace) -> Workspace:
     lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="wm-reviewer")
     project.replace(
         TASKS_FILE,
-        "  - **Criteria:** fifty at most\n",
-        "  - **Criteria:** fifty at most\n- [ ] 1.2 Name it\n  - **Verify:** a test\n"
-        "  - **Criteria:** named\n",
+        "  - **Verify:** a test\n",
+        "  - **Verify:** a test\n- [ ] 1.2 Name it\n  - **Build:** planner\n"
+        "  - **Criteria:** named\n  - **Verify:** a test\n",
     )
     lifecycle.tick(project.root, NAME, "1.2")
     return project
@@ -170,9 +174,9 @@ def test_reviewer_is_started_on_an_item_added_after_a_pass(project: Workspace) -
     assert "already has the review it needs" in delegate(project, assets.REVIEWER, NAME).reason
     project.replace(
         TASKS_FILE,
-        "  - **Criteria:** fifty at most\n",
-        "  - **Criteria:** fifty at most\n- [ ] 1.2 Name it\n  - **Verify:** a test\n"
-        "  - **Criteria:** named\n",
+        "  - **Verify:** a test\n",
+        "  - **Verify:** a test\n- [ ] 1.2 Name it\n  - **Build:** planner\n"
+        "  - **Criteria:** named\n  - **Verify:** a test\n",
     )
     assert "items still to build (1.2)" in delegate(project, assets.REVIEWER, NAME).reason
     lifecycle.tick(project.root, NAME, "1.2")
@@ -270,13 +274,13 @@ def atlas(tmp_path: Path) -> Workspace:
     suite.change(
         tasks=HEAD
         + (
-            "- [ ] 1.1 Add the endpoint\n"
-            "  - **Verify:** a test\n"
-            "  - **Criteria:** fifty at most\n"
+            "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n"
             "  - **Repo:** api\n"
+            "  - **Criteria:** fifty at most\n"
+            "  - **Verify:** a test\n"
         )
-        + "- [ ] 1.2 Show the list\n  - **Verify:** a test\n  - **Criteria:** fifty rows\n"
-        + "  - **Repo:** web\n",
+        + "- [ ] 1.2 Show the list\n  - **Build:** planner\n  - **Repo:** web\n"
+        + "  - **Criteria:** fifty rows\n  - **Verify:** a test\n",
         design=DESIGN,
     )
     lifecycle.accept(suite.root, NAME, DAY)
@@ -314,7 +318,8 @@ def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -
         accepted,
         TASKS_FILE,
         "\n## Log\n",
-        "- [ ] 1.3 Announce it\n  - **Criteria:** done\n  - **Verify:** a test\n\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n\n## Log\n",
     ).allow
     assert edit(accepted, "charter.md", content="# New\n").allow
     assert edit(accepted, "changes/add-order/proposal.md", content=proposal()).allow
@@ -389,7 +394,8 @@ def test_edit_that_keeps_existing_evidence_is_allowed(accepted: Workspace) -> No
         accepted,
         TASKS_FILE,
         "\n## Log\n",
-        "- [ ] 1.3 Announce it\n  - **Criteria:** done\n  - **Verify:** a test\n\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n\n## Log\n",
     ).allow
 
 

@@ -25,10 +25,10 @@ DAY = datetime.date(2026, 1, 15)
 TOOL_CONFIG = CONFIG.replace('"some-tool"', '"claude-code"')
 ATLAS_TASKS = (
     "# Tasks\n\n## 1. Limit\n\n"
-    "- [ ] 1.1 Add the endpoint\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
-    "  - **Repo:** api\n"
-    "- [ ] 1.2 Show the list\n  - **Verify:** a test\n  - **Criteria:** fifty rows\n"
-    "  - **Repo:** web\n"
+    "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n  - **Repo:** api\n"
+    "  - **Criteria:** fifty at most\n  - **Verify:** a test\n"
+    "- [ ] 1.2 Show the list\n  - **Build:** planner\n  - **Repo:** web\n"
+    "  - **Criteria:** fifty rows\n  - **Verify:** a test\n"
 )
 
 

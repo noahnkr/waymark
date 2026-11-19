@@ -228,7 +228,10 @@ def test_scenario_resource_item(project: Workspace) -> None:
     assert rule not in at(project, "specs")["guidance"]
 
 
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - **Criteria:** fifty\n  - **Verify:** a test\n"
+ONE_ITEM = (
+    HEAD
+    + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n  - **Verify:** a test\n"
+)
 
 
 def reviewable(project: Workspace, level: str = "independent") -> None:
@@ -363,7 +366,9 @@ def test_review_instructions_follow_the_changes_review_level(project: Workspace)
         proposal_text=proposal().replace(
             "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
         ),
-        tasks=HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty\n",
+        tasks=HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
@@ -380,7 +385,12 @@ def mentions_an_implementer(step: dict[str, Any]) -> bool:
 
 
 def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"] == [
@@ -398,8 +408,8 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     accepted(
         project,
         HEAD
-        + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Build:** delegate\n"
-        + "  - **Criteria:** fifty\n",
+        + "- [ ] 1.1 Cap it\n  - **Build:** delegate\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
     )
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
@@ -409,12 +419,15 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     )
 
 
-@pytest.mark.parametrize("tag", ["", "\n  - **Build:** delegate"])
+@pytest.mark.parametrize("tag", ["planner", "delegate"])
 def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     project: Workspace, tag: str
 ) -> None:
     accepted(
-        project, HEAD + f"- [ ] 1.1 Cap it{tag}\n  - **Verify:** a test\n  - **Criteria:** fifty\n"
+        project,
+        HEAD
+        + f"- [ ] 1.1 Cap it\n  - **Build:** {tag}\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
     )
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
@@ -422,11 +435,16 @@ def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"][0] == f"wm reopen {NAME} 1.1"
     assert step["commands"][1] == f"wm context {NAME} 1.1 --for implement"
-    assert mentions_an_implementer(step) == bool(tag)
+    assert mentions_an_implementer(step) == (tag == "delegate")
 
 
 def test_instructions_for_items_waiting_on_the_human_point_to_resolve(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.block(project.root, NAME, "1.1", "waiting")
     step = at(project)
     assert (step["step"], step["item"]) == ("resolve-items", "1.1")
@@ -496,7 +514,12 @@ def test_reviewer_pack_holds_the_whole_change_but_not_how_it_was_built(
 
 
 def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(
         project.root,
@@ -529,7 +552,12 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
 def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
     project: Workspace,
 ) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.add_note(project.root, NAME, "1.1", "half done", DAY)
     lifecycle.block(project.root, NAME, "1.1", "which bound?")
     lifecycle.resolve(project.root, NAME, "1.1", "use an inclusive bound", DAY)
@@ -606,12 +634,12 @@ def test_implementer_pack_is_refused_for_an_item_that_is_done_or_waiting(
         project,
         HEAD
         + (
-            "- [ ] 1.1 A\n"
-            "  - **Verify:** a test\n"
+            "- [ ] 1.1 A\n  - **Build:** planner\n"
             "  - **Criteria:** a\n"
-            "- [ ] 1.2 B\n"
             "  - **Verify:** a test\n"
+            "- [ ] 1.2 B\n  - **Build:** planner\n"
             "  - **Criteria:** b\n"
+            "  - **Verify:** a test\n"
         ),
     )
     lifecycle.block(project.root, NAME, "1.1", "waiting for wording")
@@ -658,8 +686,8 @@ def test_pack_in_an_atlas_resolves_the_items_repo_to_its_folder_in_text_only(
     git_init(tmp_path / "suite-api")
     atlas.change(
         tasks=HEAD
-        + "- [ ] 1.1 Add the endpoint\n  - **Verify:** a test\n  - **Criteria:** fifty\n"
-        + "  - **Repo:** api\n"
+        + "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n  - **Repo:** api\n"
+        + "  - **Criteria:** fifty\n  - **Verify:** a test\n"
     )
     lifecycle.accept(atlas.root, NAME, DAY)
     built = valid(context_pack(atlas.record(), "implement", NAME, "1.1"))
@@ -680,8 +708,8 @@ def test_delegation_gate_refuses_an_item_whose_repo_is_not_on_this_machine(
     git_init(atlas.root)
     atlas.change(
         tasks=HEAD
-        + "- [ ] 1.1 Add the endpoint\n  - **Verify:** a test\n  - **Criteria:** fifty\n"
-        + "  - **Repo:** api\n"
+        + "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n  - **Repo:** api\n"
+        + "  - **Criteria:** fifty\n  - **Verify:** a test\n"
     )
     lifecycle.accept(atlas.root, NAME, DAY)
     with pytest.raises(Refusal, match=r'works in a repo that isn.t here.*"api"'):
@@ -733,7 +761,12 @@ def test_context_packs_are_the_same_on_every_machine(project: Workspace) -> None
 def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
     project: Workspace,
 ) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(project.root, NAME, Verdict.SPEC_GAP, "no scenario for zero", DAY)
     step = at(project)
@@ -782,7 +815,8 @@ def test_reviewer_pack_holds_only_the_items_added_after_a_pass(project: Workspac
         f"{FOLDER}/tasks.md",
         "  - **Verify:** read the help text\n",
         "  - **Verify:** read the help text\n"
-        "- [ ] 1.3 Name it\n  - **Criteria:** named\n  - **Verify:** a test\n",
+        "- [ ] 1.3 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+        "  - **Verify:** a test\n",
     )
     lifecycle.tick(project.root, NAME, "1.3")
     built = pack(project, "review")

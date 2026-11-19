@@ -28,7 +28,7 @@ from waymark.record.artifacts.proposal import (
     Proposal,
     parse_proposal,
 )
-from waymark.record.artifacts.tasks import Tasks, parse_tasks
+from waymark.record.artifacts.tasks import DELEGATE, PLANNER, Tasks, parse_tasks
 from waymark.record.evidence.records import RecordKind
 from waymark.record.machine.files import RecordFiles
 from waymark.record.markdown import labels
@@ -128,23 +128,48 @@ def _load_deltas(files: RecordFiles, path: str, problems: list[Problem]) -> dict
 
 
 def _check_items(tasks: Tasks, problems: list[Problem]) -> None:
-    """Every item says how it is done: a Criteria line and a Verify line."""
+    """Every item says who builds it and how it is done, in its lines' order."""
     for item in tasks.items:
         missing = [
             label
-            for label, value in ((labels.CRITERIA, item.criteria), (labels.VERIFY, item.verify))
-            if value is None
+            for label, there in (
+                (labels.BUILD, item.has_build_line),
+                (labels.CRITERIA, item.criteria is not None),
+                (labels.VERIFY, item.verify is not None),
+            )
+            if not there
         ]
         if missing:
             lines = " and ".join(f'a "{label_line(label)}" line' for label in missing)
+            message = (
+                f"Item {item.number} says who builds it and how it is done: add {lines} under it."
+            )
+            if labels.BUILD in missing:
+                message += (
+                    f' The Build line is "{label_line(labels.BUILD, PLANNER)}" or '
+                    f'"{label_line(labels.BUILD, DELEGATE)}".'
+                )
+            problems.append(Problem(tasks.doc.path, item.index + 1, "item-incomplete", message))
+        if not _in_order(item.line_order):
+            order = ", ".join(labels.ITEM_ORDER)
             problems.append(
                 Problem(
                     tasks.doc.path,
                     item.index + 1,
-                    "item-incomplete",
-                    f"Item {item.number} says how it is done: add {lines} under it.",
+                    "item-order",
+                    f"The lines under item {item.number} come in the order {order}, before any "
+                    'record. Reorder them, or run "wm check --fix".',
                 )
             )
+
+
+def _in_order(order: tuple[str, ...]) -> bool:
+    """Whether an item's label lines follow the item order and come before its records."""
+    ranks = [
+        labels.ITEM_ORDER.index(line) if line in labels.ITEM_ORDER else len(labels.ITEM_ORDER)
+        for line in order
+    ]
+    return ranks == sorted(ranks)
 
 
 def _check_decisions(design: Design, problems: list[Problem]) -> None:

@@ -23,6 +23,8 @@ LOG_SECTION = "Log"
 DELEGATE = "delegate"
 PLANNER = "planner"
 BUILD_VALUES = (PLANNER, DELEGATE)
+RECORD = "record"
+"""How a record stands in an item's line order."""
 
 _SECTION = re.compile(r"^(\d+)\.\s+(\S.*)$")
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
@@ -30,7 +32,7 @@ _LIST_LINE = re.compile(r"^(?:[-*+]|\d+[.)])(?:\s|$)")
 _FIELD = re.compile(r"^  [-*] (\S.*)$")
 _ITEM_LABELS = (labels.CRITERIA, labels.VERIFY, labels.REPO, labels.BUILD)
 BUILD = labels.BUILD
-_RECORD_LINE = re.compile(r"^[-*] ((?:\d{4}-\d{2}-\d{2} )?\(.*)$")
+_RECORD_LINE = re.compile(r"^[-*] ((?:\d[\d-]* )?\(.*)$")
 _REVIEW_KINDS = (RecordKind.REVIEW, RecordKind.SELF_REVIEW, RecordKind.RESOLVED)
 
 
@@ -90,6 +92,10 @@ class Item:
     build: str | None = None
     """Who builds the item, from its Build line: planner or delegate; None without a known
     value."""
+    has_build_line: bool = False
+    """Whether the item has a Build line, whatever its value."""
+    line_order: tuple[str, ...] = ()
+    """The item's lines in the order written: each label's name, and ``record`` for a record."""
 
 
 @dataclass(frozen=True)
@@ -174,6 +180,7 @@ class _Draft:
     fields: dict[str, list[str]] = field(default_factory=dict)
     records: list[ReviewRecord] = field(default_factory=list)
     open_text: list[str] | None = None
+    order: list[str] = field(default_factory=list)
 
     def finish(self) -> Item:
         def single(label: str) -> str | None:
@@ -187,6 +194,8 @@ class _Draft:
             ticked=self.ticked,
             delegate=self.delegate,
             build=build if (build := single(BUILD)) in BUILD_VALUES else None,
+            has_build_line=BUILD in self.fields,
+            line_order=tuple(self.order),
             criteria=single("Criteria"),
             verify=single("Verify"),
             repo=single("Repo"),
@@ -238,10 +247,12 @@ class _Parser:
             )
             return
         draft.records.append(_from_record(found, index))
+        draft.order.append(RECORD)
 
     def labeled(self, index: int, label: str, value: str) -> None:
         draft = self.draft
         assert draft is not None
+        draft.order.append(label)
         if label in draft.fields:
             self.problem(
                 index,

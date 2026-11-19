@@ -61,13 +61,13 @@ def test_editing_the_design_withdraws_acceptance(workspace: Workspace) -> None:
         ("**Verify:** a test covers", "**Verify:** nobody checks"),
         ("1.2 Document the limit", "1.2 Document the limit in the guide"),
         (
-            "- [ ] 1.1 Cap the result count\n"
+            "- [ ] 1.1 Cap the result count\n  - **Build:** planner\n"
             "  - **Criteria:** at most fifty results come back\n"
             "  - **Verify:** a test covers fifty-one matches\n",
             "- [ ] 1.1 Cap the result count\n"
+            "  - **Build:** delegate\n"
             "  - **Criteria:** at most fifty results come back\n"
-            "  - **Verify:** a test covers fifty-one matches\n"
-            "  - **Build:** delegate\n",
+            "  - **Verify:** a test covers fifty-one matches\n",
         ),
     ],
 )
@@ -81,7 +81,7 @@ def test_changing_an_item_definition_withdraws_acceptance(
 def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
     accepted(workspace).replace(
         "changes/add-limit/tasks.md",
-        "1.2 Document the limit\n",
+        "1.2 Document the limit\n  - **Build:** planner\n",
         "1.2 Document the limit\n  - **Build:** delegate\n",
     )
     state = workspace.change_state()
@@ -130,7 +130,9 @@ def test_adding_a_review_line_withdraws_acceptance(
 
 def test_item_added(workspace: Workspace) -> None:
     accepted(workspace).write_tasks(
-        TASKS + "- [ ] 1.3 Announce it\n  - **Verify:** a test\n  - **Criteria:** posted\n"
+        TASKS
+        + "- [ ] 1.3 Announce it\n  - **Build:** planner\n  - **Criteria:** posted\n"
+        + "  - **Verify:** a test\n"
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     tasks = "changes/add-limit/tasks.md"
@@ -183,8 +185,9 @@ def test_ticks_blockers_review_records_and_notes_keep_acceptance(workspace: Work
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.replace(
         tasks,
-        "1.2 Document the limit\n",
-        "1.2 Document the limit\n  - 2026-01-16 (blocked) by Sam Doe: waiting for wording\n",
+        "  - **Verify:** read the help text\n",
+        "  - **Verify:** read the help text\n"
+        "  - 2026-01-16 (blocked) by Sam Doe: waiting for wording\n",
     )
     assert acceptance(workspace) is AcceptanceState.VALID
     workspace.write(

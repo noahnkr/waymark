@@ -93,7 +93,7 @@
   - **Verify:**
     - `uv run --no-sync pytest`
     - `wm check`
-- [ ] 5.2 Require the Build line and the item order, and read only the new record shapes
+- [x] 5.2 Require the Build line and the item order, and read only the new record shapes
   - **Build:** planner
   - **Criteria:**
     - `wm check` reports an item of an active change without a Build line as `item-incomplete`, naming `- **Build:**` and the values `planner` and `delegate`, and an item whose label lines are out of order as `item-order`, naming the order

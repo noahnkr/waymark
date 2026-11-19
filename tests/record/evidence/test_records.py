@@ -321,14 +321,11 @@ def test_a_record_is_written_date_first_with_comma_separated_items() -> None:
     assert parse(line) == accepted
 
 
-def test_a_record_in_the_old_shape_is_still_read() -> None:
-    """While the record moves over: the kind before the date, and item lists with spaces."""
-    old = parse("(review) 2026-11-20 changes 1.2 2.2 covers 1.1 1.2 2.2 by wm-reviewer: off")
-    new = parse("2026-11-20 (review) changes 1.2, 2.2; covers 1.1, 1.2, 2.2 by wm-reviewer: off")
-    assert isinstance(old, Record)
-    assert old == new
-    assert old.items == ("1.2", "2.2")
-    assert old.covers == ("1.1", "1.2", "2.2")
+def test_scenario_kind_before_the_date() -> None:
+    """The older shape starts like a record, so it is reported, never read."""
+    found = parse("(blocked) 2026-11-20 by Ada: the API key is missing")
+    assert isinstance(found, ParseError)
+    assert "YYYY-MM-DD (blocked) [by <who>]: <reason>" in found.message
     assert looks_like_record("(note) 2026-11-20: text")
     assert looks_like_record("2026-11-20 (note): text")
     note = parse("2026-11-20 (note): text")
@@ -348,4 +345,23 @@ def test_a_finding_is_written_with_its_severity_in_brackets() -> None:
     finding = Finding(ReviewSeverity.CRITICAL, "src/a.py:12", "the limit is not checked")
     assert render_finding(finding) == "[critical] `src/a.py:12`: the limit is not checked"
     assert parse_finding("[critical] `src/a.py:12`: the limit is not checked") == finding
-    assert parse_finding("critical `src/a.py:12`: the limit is not checked") == finding
+
+
+def test_scenario_item_list_without_commas() -> None:
+    for line in (
+        "2026-11-20 (accepted) fingerprint 0123456789abcdef items 1.1 1.2 by Ada",
+        "2026-11-20 (review) changes 1.2, 2.2 covers 1.1, 1.2 by wm-reviewer: off",
+        "2026-11-20 (review) changes 1.2; by wm-reviewer: off",
+        "2026-11-20 (self-review) covers 1.1,1.2 by Ada: fine",
+    ):
+        found = parse(line)
+        assert isinstance(found, ParseError), line
+    found = parse("2026-11-20 (accepted) fingerprint 0123456789abcdef items 1.1 1.2 by Ada")
+    assert isinstance(found, ParseError)
+    assert "YYYY-MM-DD (accepted) fingerprint <digest> items <item>, <item>... [by <who>]" in (
+        found.message
+    )
+
+
+def test_a_bare_severity_is_not_a_finding() -> None:
+    assert parse_finding("critical `src/a.py:12`: the limit is not checked") is None

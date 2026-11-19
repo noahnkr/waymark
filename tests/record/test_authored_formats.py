@@ -213,7 +213,9 @@ def test_archived_changes_are_not_held_to_items_and_options(workspace: Workspace
         f"{folder}/proposal.md", proposal(outcome="- **Built:** x\n- **Differs:** none")
     )
     workspace.write(f"{folder}/design.md", DESIGN.replace(LISTED_OPTIONS, "- **Options:** one\n"))
-    workspace.write(f"{folder}/tasks.md", "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n")
+    workspace.write(
+        f"{folder}/tasks.md", "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n  - **Build:** planner\n"
+    )
     assert workspace.record().problems == ()
 
 
@@ -292,15 +294,15 @@ def test_led_to_status_points_at_its_change(workspace: Workspace) -> None:
 
 BUILT = (
     "# Tasks\n\n## 1. Limit\n\n"
-    "- [ ] 1.1 Cap it\n"
+    "- [ ] 1.1 Cap it\n  - **Build:** planner\n"
     "  - **Criteria:**\n"
     "    - fifty at most\n"
     "    - sorted by score\n"
     "  - **Verify:** a test\n"
     "- [ ] 1.2 Rebuild the index\n"
+    "  - **Build:** delegate\n"
     "  - **Criteria:** rebuilt\n"
     "  - **Verify:** the index answers\n"
-    "  - **Build:** delegate\n"
 )
 
 
@@ -545,5 +547,7 @@ def test_plain_labels_are_reported_in_specs_explorations_and_the_charter(
 def test_archived_changes_are_not_checked_for_plain_labels(workspace: Workspace) -> None:
     folder = "changes/archive/2026-01-20-add-limit"
     workspace.write(f"{folder}/proposal.md", proposal(outcome="- Built: x\n- Differs: none"))
-    workspace.write(f"{folder}/tasks.md", "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n")
+    workspace.write(
+        f"{folder}/tasks.md", "# Tasks\n\n## 1. Limit\n\n- [x] 1.1 Cap it\n  - **Build:** planner\n"
+    )
     assert not any(p.code == "plain-label" for p in workspace.record().problems)

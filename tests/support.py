@@ -93,9 +93,11 @@ TASKS = """# Tasks
 ## 1. Limit
 
 - [ ] 1.1 Cap the result count
+  - **Build:** planner
   - **Criteria:** at most fifty results come back
   - **Verify:** a test covers fifty-one matches
 - [ ] 1.2 Document the limit
+  - **Build:** planner
   - **Criteria:** the help text names the limit
   - **Verify:** read the help text
 """

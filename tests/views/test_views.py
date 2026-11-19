@@ -52,14 +52,17 @@ def busy(project: Workspace) -> Workspace:
         ),
         deltas={"search": delta(added=(requirement("Result order"),))},
         tasks=HEAD
-        + "- [ ] 1.1 Sort it\n  - **Verify:** a test\n  - **Criteria:** newest first\n"
-        + "- [ ] 1.2 Explain it\n  - **Verify:** a test\n  - **Criteria:** documented\n"
-        + "- [ ] 1.3 Announce it\n  - **Verify:** a test\n  - **Criteria:** posted\n"
+        + "- [ ] 1.1 Sort it\n  - **Build:** planner\n  - **Criteria:** newest first\n"
+        + "  - **Verify:** a test\n"
+        + "- [ ] 1.2 Explain it\n  - **Build:** planner\n  - **Criteria:** documented\n"
+        + "  - **Verify:** a test\n"
+        + "- [ ] 1.3 Announce it\n  - **Build:** planner\n  - **Criteria:** posted\n"
+        + "  - **Verify:** a test\n"
         + (
             "- [ ] 1.4 Translate it\n"
-            "  - **Verify:** a test\n"
             "  - **Build:** delegate\n"
             "  - **Criteria:** two languages\n"
+            "  - **Verify:** a test\n"
         ),
     )
     lifecycle.accept(project.root, "add-order", DAY)
@@ -72,7 +75,9 @@ def busy(project: Workspace) -> Workspace:
             "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
         ),
         deltas={"search": delta(modified=(requirement(scenario="Edge"),))},
-        tasks=HEAD + "- [ ] 1.1 Fix it\n  - **Criteria:** done\n  - **Verify:** a test\n",
+        tasks=HEAD
+        + "- [ ] 1.1 Fix it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, "fix-limit", DAY)
     lifecycle.tick(project.root, "fix-limit", "1.1")
@@ -229,7 +234,9 @@ def test_inbox_lists_everything_only_the_human_can_resolve(project: Workspace) -
 
 def test_inbox_lists_a_verdict_that_came_back_to_the_human(project: Workspace) -> None:
     project.change(
-        tasks=HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
+        tasks=HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+        + "  - **Verify:** a test\n"
     )
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
@@ -246,7 +253,9 @@ def test_inbox_lists_a_verdict_that_came_back_to_the_human(project: Workspace) -
 
 def test_inbox_lists_a_reviewers_spec_gap(project: Workspace) -> None:
     project.change(
-        tasks=HEAD + "- [ ] 1.1 Cap it\n  - **Verify:** a test\n  - **Criteria:** fifty at most\n"
+        tasks=HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+        + "  - **Verify:** a test\n"
     )
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
@@ -510,7 +519,9 @@ def test_views_answer_in_about_a_second_on_a_large_record(workspace: Workspace) 
         workspace.write(f"{folder}/specs/area-{name}.md", delta(added=(requirement(),)))
         workspace.write(
             f"{folder}/tasks.md",
-            HEAD + "- [x] 1.1 Do it\n  - **Criteria:** done\n  - **Verify:** a test\n",
+            HEAD
+            + "- [x] 1.1 Do it\n  - **Build:** planner\n  - **Criteria:** done\n"
+            + "  - **Verify:** a test\n",
         )
         if index < 20:
             workspace.change(
@@ -546,7 +557,7 @@ def test_scenario_older_review_records_shown_as_covering_every_item(project: Wor
     lifecycle.tick(project.root, "add-limit", "1.1")
     lifecycle.tick(project.root, "add-limit", "1.2")
     project.write(
-        tasks, project.read(tasks) + "- (self-review) 2026-01-15 by Sam Doe: before covers\n"
+        tasks, project.read(tasks) + "- 2026-01-15 (self-review) by Sam Doe: before covers\n"
     )
     lifecycle.archive(project.root, "add-limit", DAY, built="Shipped.")
     payload = valid(payloads.show(project.record(), "add-limit"))
@@ -568,7 +579,8 @@ def test_show_change_gives_what_a_review_of_added_items_covers(project: Workspac
         tasks,
         "  - **Verify:** read the help text\n",
         "  - **Verify:** read the help text\n"
-        "- [ ] 1.3 Name it\n  - **Criteria:** named\n  - **Verify:** a test\n",
+        "- [ ] 1.3 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+        "  - **Verify:** a test\n",
     )
     lifecycle.tick(project.root, "add-limit", "1.3")
     lifecycle.self_review(project.root, "add-limit", "named well", DAY)

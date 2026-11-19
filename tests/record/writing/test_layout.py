@@ -49,8 +49,8 @@ def test_the_file_ends_with_exactly_one_line_break() -> None:
 def test_record_lines_take_their_standard_shape() -> None:
     text = (
         "# Tasks\n\n## Log\n\n"
-        "- (review)  2026-11-20  pass   by  Ada: fine\n"
-        "  - warning  `a.py:1`: vague\n"
+        "- 2026-11-20 (review)  pass   by  Ada: fine\n"
+        "  - [warning]  `a.py:1`: vague\n"
     )
     result, fixes = standard_layout(text)
     assert result == (

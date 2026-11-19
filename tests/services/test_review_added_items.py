@@ -17,7 +17,7 @@ DAY = datetime.date(2026, 1, 15)
 LATER = datetime.date(2026, 2, 1)
 ADDED = (
     "  - **Verify:** read the help text\n"
-    "- [ ] 1.3 Name the limit in the error\n"
+    "- [ ] 1.3 Name the limit in the error\n  - **Build:** planner\n"
     "  - **Criteria:** the error names fifty\n"
     "  - **Verify:** a test reads the error\n"
 )
