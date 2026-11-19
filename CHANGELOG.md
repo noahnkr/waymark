@@ -2,36 +2,15 @@
 
 All notable changes to Waymark, one entry per release.
 
-## [Unreleased]
+## [0.5.0] - 2026-11-19
+
+Explorations get a lifecycle, and the record one style: bold labels, records
+that start with their date, and every record of a change in its Log.
 
 - **Behavior change: `parked` is no longer an exploration status.** An
   exploration is `open`, `led-to <links>` or `dropped`, and `wm check` reports
   `parked` as an unknown status. An open exploration's Conclusion may say what it
   waits for. The record format is unchanged.
-- **`wm new change --from <exploration>` and `wm new milestone --from
-  <exploration>`** set the exploration's status to `led-to` the new change or
-  milestone. A second `--from` adds its link after the first.
-- **Explorations are archived with their work.** `wm archive` and `wm close`
-  move an exploration to `explorations/archive/YYYY-MM-DD-<name>.md` once
-  everything it led to is archived or closed, and re-aim the links to it.
-- **`wm exploration drop <exploration> --reason "<why>"`** ends an open
-  exploration that won't be acted on: it writes `dropped` and the reason, and
-  moves it to the archive.
-- **Agents can't edit an exploration's status line by hand.** The hooks refuse
-  the edit and name `--from` and `wm exploration drop`.
-- **Archived explorations in the views.** `wm show <exploration>` finds an
-  archived one by its name or dated name and says when it was archived, and
-  `wm ls explorations --archived` lists them. The explore context pack lists
-  active explorations only. The `wm.show.exploration` JSON is at version 2, with
-  an `archived_on` field, and `wm.context.explore` at version 2; both list
-  `dropped` instead of `parked`.
-- **`wm check` reports `exploration-not-archived`** for an active exploration
-  whose work is all archived.
-- **`wm init` and `wm update` write `explorations/archive/.gitkeep`.**
-- **`/wm-explore <exploration>` picks a saved exploration back up:** it reads it,
-  says what in the record has changed since, and goes on from its Questions and
-  Approaches. Its closing offers for a saved exploration are do nothing, update or
-  drop it, a proposal, or a milestone, the last two created with `--from`.
 - **Behavior change: labels are bold.** Every label line in the record is
   written `- **<Label>:** <text>`, the colon inside the bold: a proposal's facts,
   Impact and Outcome, an item's lines, a decision's parts, a delta's `From`, `To`,
@@ -64,6 +43,37 @@ All notable changes to Waymark, one entry per release.
   doesn't have as `unknown-item`. `wm show` and the implement context pack still
   show each item's records with the item. Each record in the `wm.show.change`
   JSON has an `item` field, and the Log in `wm show` names it.
+- **Upgrading from 0.4.0.** The record format is unchanged, so `wm update`
+  accepts a 0.4.0 record, and archived changes are read as they were written. A
+  change still in flight keeps its old shapes, which `wm check` now reports:
+  `wm check --fix` makes its labels bold and puts its item lines in order, and
+  you add a `- **Build:** planner` line to each item and rewrite its records in
+  the new shape, in its `## Log`. Or finish and archive the changes in flight
+  before upgrading.
+- **`wm new change --from <exploration>` and `wm new milestone --from
+  <exploration>`** set the exploration's status to `led-to` the new change or
+  milestone. A second `--from` adds its link after the first.
+- **Explorations are archived with their work.** `wm archive` and `wm close`
+  move an exploration to `explorations/archive/YYYY-MM-DD-<name>.md` once
+  everything it led to is archived or closed, and re-aim the links to it.
+- **`wm exploration drop <exploration> --reason "<why>"`** ends an open
+  exploration that won't be acted on: it writes `dropped` and the reason, and
+  moves it to the archive.
+- **Agents can't edit an exploration's status line by hand.** The hooks refuse
+  the edit and name `--from` and `wm exploration drop`.
+- **Archived explorations in the views.** `wm show <exploration>` finds an
+  archived one by its name or dated name and says when it was archived, and
+  `wm ls explorations --archived` lists them. The explore context pack lists
+  active explorations only. The `wm.show.exploration` JSON is at version 2, with
+  an `archived_on` field, and `wm.context.explore` at version 2; both list
+  `dropped` instead of `parked`.
+- **`wm check` reports `exploration-not-archived`** for an active exploration
+  whose work is all archived.
+- **`wm init` and `wm update` write `explorations/archive/.gitkeep`.**
+- **`/wm-explore <exploration>` picks a saved exploration back up:** it reads it,
+  says what in the record has changed since, and goes on from its Questions and
+  Approaches. Its closing offers for a saved exploration are do nothing, update or
+  drop it, a proposal, or a milestone, the last two created with `--from`.
 - **`wm show` prints records as they are written.** The Log and each item's
   records read `<date> (<kind>) …`, with item lists separated by commas, and
   findings read ``[<severity>] `<place>`: <text>``. A review written without
@@ -72,6 +82,8 @@ All notable changes to Waymark, one entry per release.
 - **The context packs use the record's own shapes.** An item's labels are bold,
   `- **Criteria:**`, and earlier findings are in brackets, so what an agent
   copies from a pack is what `wm check` expects.
+
+Smoke test: passed on 2026-11-19 with Claude Code 2.1.328 on Windows.
 
 ## [0.4.0] - 2026-11-18
 
