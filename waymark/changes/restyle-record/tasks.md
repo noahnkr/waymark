@@ -127,3 +127,7 @@
 
 - 2026-11-18 (accepted) fingerprint ab2018a35172d5de items 1.1, 1.2, 2.1, 2.2, 3.1, 4.1, 4.2, 5.1, 5.2, 6.1, 6.2 by Noah Roberts
 - 2026-11-18 (accepted) fingerprint bca8595b5246f25b items 1.1, 1.2, 2.1, 2.2, 3.1, 4.1, 4.2, 5.1, 5.2, 6.1, 6.2 by Noah Roberts
+- 2026-11-18 (review) pass covers 1.1, 1.2, 2.1, 2.2, 3.1, 4.1, 4.2, 5.1, 5.2, 6.1, 6.2 by wm-reviewer: every criterion of items 1.1 to 6.2 holds and every delta scenario has a passing test; the full suite (1441), wm check, ruff, mypy, codespell and the generated-docs check all pass, the change was accepted again after the layout fix, and the archive reads under the new shapes; the two warnings are view and context-pack output that still uses the old record and label shapes
+  - [warning] `src/waymark/views/render.py:270`: _record_lines shows records kind first with space-separated item lists and findings without brackets, so `wm show` disagrees with the restyled record shapes the Records spec and the docs now use
+  - [warning] `src/waymark/views/render.py:486`: the context packs show labels plain (`- Repo:`, `- Criteria:`) and earlier review findings as `severity: place: text`, which agents may copy into the record against the Labels in bold requirement
+  - [suggestion] `tests/record/test_authored_formats.py:480`: test_glossary_with_the_colon_inside_the_bold calls replace with identical arguments, so it only repeats the plain CHARTER check
