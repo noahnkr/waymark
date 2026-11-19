@@ -11,7 +11,7 @@
   - **Verify:**
     - tests in `tests/record/test_tasks_records.py` for the scenarios Resolved item keeps its blocker and Records for two items, and for a `(resolved)` with an item not counted as resolving the review
     - `uv run --no-sync pytest tests/record tests/services` and `wm check`
-- [ ] 1.2 Write item records into the Log
+- [x] 1.2 Write item records into the Log
   - **Build:** planner
   - **Criteria:**
     - `wm block`, `wm gap`, `wm note`, `wm reopen`, `wm resolve <change> <item>` and an implementer's ending append their record to the Log with the item number, creating the section when needed, and write nothing under the item

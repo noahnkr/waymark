@@ -304,7 +304,7 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
         "reopen": [],
         "needs_human": None,
     }
-    assert [record["kind"] for record in payload["log"]] == ["accepted"]
+    assert [record["kind"] for record in payload["log"]] == ["accepted", "blocked", "gap"]
     assert [record["kind"] for record in items["1.2"]["records"]] == ["blocked"]
     text = render.to_text(payload, PLAIN)
     for expected in ("Change: add-order", "Owner: Sam Doe", "Blocked: waiting for the wording"):

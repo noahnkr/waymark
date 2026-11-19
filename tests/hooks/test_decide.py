@@ -559,7 +559,7 @@ def test_implementer_blocked_writes_the_blocked_line(accepted: Workspace) -> Non
         accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: blocked - the index is down"
     )
     assert decision.allow
-    assert "  - 2026-01-15 (blocked) by wm-implementer: the index is down\n" in accepted.read(
+    assert "- 2026-01-15 (blocked) 1.1 by wm-implementer: the index is down\n" in accepted.read(
         TASKS_FILE
     )
     assert "- [ ] 1.1" in accepted.read(TASKS_FILE)
@@ -567,14 +567,14 @@ def test_implementer_blocked_writes_the_blocked_line(accepted: Workspace) -> Non
 
 def test_implementer_spec_gap_writes_the_spec_gap_line(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: spec-gap: empty query?")
-    assert "  - 2026-01-15 (gap) by wm-implementer: empty query?\n" in accepted.read(TASKS_FILE)
+    assert "- 2026-01-15 (gap) 1.1 by wm-implementer: empty query?\n" in accepted.read(TASKS_FILE)
     assert accepted.change_state().items[0].escalated is not None
 
 
 def test_implementer_partial_leaves_a_note_and_the_item_unticked(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: partial: the test is missing")
     text = accepted.read(TASKS_FILE)
-    assert "  - 2026-01-15 (note) by wm-implementer: partial: the test is missing\n" in text
+    assert "- 2026-01-15 (note) 1.1 by wm-implementer: partial: the test is missing\n" in text
     assert "- [ ] 1.1" in text
     assert accepted.change_state().next_step.item == "1.1"
 

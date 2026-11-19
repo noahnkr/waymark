@@ -1,4 +1,4 @@
-"""The commands that write records: dated records under items and in the Log."""
+"""The commands that write records: dated records in the Log, naming an item when about one."""
 
 import datetime
 from pathlib import Path, PurePosixPath, PureWindowsPath
@@ -86,9 +86,9 @@ def test_scenario_accepted_again(latest: Workspace) -> None:
 def test_scenario_blocked_item(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.block(latest.root, NAME, "1.2", "the API key is missing", DAY)
-    assert "  - 2026-11-20 (blocked) by Sam Doe: the API key is missing\n" in latest.read(
-        TASKS_FILE
-    )
+    text = latest.read(TASKS_FILE)
+    assert text.endswith("\n- 2026-11-20 (blocked) 1.2 by Sam Doe: the API key is missing\n")
+    assert "(blocked)" not in text.split("## Log")[0]
 
 
 def test_scenario_record_added(latest: Workspace) -> None:
@@ -103,8 +103,8 @@ def test_scenario_resolved_item_keeps_its_blocker(latest: Workspace) -> None:
     lifecycle.block(latest.root, NAME, "1.2", "the API key is missing", DAY, by="Ada")
     lifecycle.resolve(latest.root, NAME, "1.2", "use the test key", NEXT)
     text = latest.read(TASKS_FILE)
-    assert "  - 2026-11-20 (blocked) by Ada: the API key is missing\n" in text
-    assert "  - 2026-11-21 (resolved) by Sam Doe: use the test key\n" in text
+    assert "- 2026-11-20 (blocked) 1.2 by Ada: the API key is missing\n" in text
+    assert "- 2026-11-21 (resolved) 1.2 by Sam Doe: use the test key\n" in text
     step = latest.change_state().next_step
     assert (step.kind, step.item) == (StepKind.APPLY, "1.2")
 
@@ -119,7 +119,7 @@ def test_an_open_blocker_is_resolved_before_another(latest: Workspace) -> None:
 def test_a_gap_is_a_record_too(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.report_gap(latest.root, NAME, "1.2", "the maximum", DAY)
-    assert "  - 2026-11-20 (gap) by Sam Doe: the maximum\n" in latest.read(TASKS_FILE)
+    assert "- 2026-11-20 (gap) 1.2 by Sam Doe: the maximum\n" in latest.read(TASKS_FILE)
     assert latest.record().changes[NAME].tasks.item("1.2").spec_gap == "the maximum"  # type: ignore[union-attr]
 
 
@@ -127,7 +127,7 @@ def test_scenario_note_on_an_unticked_item(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.add_note(latest.root, NAME, "1.2", "the parser is done; the CLI flag is not", DAY)
     assert (
-        "  - 2026-11-20 (note) by Sam Doe: the parser is done; the CLI flag is not\n"
+        "- 2026-11-20 (note) 1.2 by Sam Doe: the parser is done; the CLI flag is not\n"
         in latest.read(TASKS_FILE)
     )
     assert latest.change_state().acceptance is AcceptanceState.VALID
@@ -212,7 +212,7 @@ def test_a_changes_verdict_and_reopening_are_records(latest: Workspace) -> None:
         in log(latest)
     )
     lifecycle.reopen(latest.root, NAME, "1.1", NEXT)
-    assert "  - 2026-11-21 (reopened) by Sam Doe\n" in latest.read(TASKS_FILE)
+    assert "- 2026-11-21 (reopened) 1.1 by Sam Doe\n" in latest.read(TASKS_FILE)
     assert not latest.record().changes[NAME].tasks.item("1.1").ticked  # type: ignore[union-attr]
 
 
