@@ -11,7 +11,6 @@
   - **Verify:**
     - `test_scenario_step_heading_under_rules` and `test_scenario_no_rules` beside the existing test for the scenario Bulleted goal, and the existing Old glossary line test still passes
     - `wm check` passes on this repository
-  - 2026-11-18 (note) by Noah Roberts: Charter.rules became a string, so instructions.py and context.py now pass it whole in place of one step's text, to keep the build green; item 1.2 adds the Project rules titles and its scenario tests
 - [x] 1.2 Every agent gets every rule
   - **Criteria:**
     - `wm instructions` gives the whole Rules as `rules` at every step, explore included, titled "Project rules" in the text output and left out when empty
@@ -36,3 +35,4 @@
 - 2026-11-18 (accepted) fingerprint c7fbdef466aa348e items 1.1, 1.2, 2.1 by Noah Roberts
 - 2026-11-18 (review) pass covers 1.1, 1.2, 2.1 by wm-reviewer: every criterion of 1.1, 1.2 and 2.1 holds and every scenario in the three deltas is met; pytest, tools.docs --check, codespell, ruff, mypy and wm check all pass
   - [suggestion] `src/waymark/services/context.py:3-8`: module docstring still says implementer/reviewer packs carry "apply rules"/"review rules"; they now carry the project's whole Rules
+- 2026-11-18 (note) 1.1 by Noah Roberts: Charter.rules became a string, so instructions.py and context.py now pass it whole in place of one step's text, to keep the build green; item 1.2 adds the Project rules titles and its scenario tests

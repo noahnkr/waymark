@@ -30,7 +30,7 @@
 
 ## 2. The record moved
 
-- [ ] 2.1 Move the archive's item records into their Logs with an uncommitted script
+- [x] 2.1 Move the archive's item records into their Logs with an uncommitted script
   - **Build:** planner
   - **Criteria:**
     - a Python script run from the scratchpad, never committed, moves every record under an item of an archived change into that change's Log, with the item number after the kind, after the last Log record dated on or before it, item records of one day in item order; it creates a Log where there is none and changes nothing else

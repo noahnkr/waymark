@@ -11,8 +11,6 @@
   - **Verify:**
     - `test_scenario_piped_output`, `test_scenario_forced_color`, `test_scenario_no_color_wins` and `test_scenario_json` in `tests/views/test_style.py` and `tests/test_views_cli.py`
     - tests for `wrap` at width 60 and with `None`, beside them
-  - 2026-11-18 (note) by Noah Roberts: wrap(text, indent) with no width still puts the indent before each line, one line per paragraph, so piped output keeps its layout; the design's 'returns the text unchanged' is read as 'not wrapped'. Section rules are now drawn in accent, per the design's palette
-  - 2026-11-18 (reopened) by Noah Roberts
 
 ## 2. Views
 
@@ -24,7 +22,6 @@
     - with `Style()` (no color, no width), each view's text is unchanged except for the new glyphs and grouping
   - **Verify:**
     - view tests in `tests/test_views_cli.py` and `tests/services/test_doctor.py` with a fixed `Style(color=True, unicode=True, width=80)`, and the existing plain-output tests still pass
-  - 2026-11-18 (note) by Noah Roberts: In wm status a milestone's marks count its planned roadmap lines as open too, since they are on the roadmap and not archived; the bar now colors its filled part ok and its empty part muted in Style.bar
 - [x] 2.2 Show views in the new style
   - **Criteria:**
     - `wm show <change>` draws items as a tree with `├─`, `└─` and `│`, records muted on the stem, and wraps the proposal's sections and each item's criteria
@@ -32,7 +29,6 @@
     - with an encoding of `cp437`, the same views use only the ASCII stand-ins and keep their layout
   - **Verify:**
     - `test_scenario_legacy_console`, `test_scenario_narrow_terminal` and `test_scenario_piped` in `tests/test_views_cli.py` or `tests/views/`
-  - 2026-11-18 (note) by Noah Roberts: Prose is wrapped in the change, spec, milestone and exploration show views; a resource's sections are left unwrapped because they hold code and settings that wrapping would break. A roadmap line that is neither archived nor active (planned or missing) gets the muted open circle
 - [x] 2.3 Every criterion of an item hangs under its bullet
   - **Criteria:**
     - in `wm show <change>`, an item's Criteria and Verify that are a list start the list on the line after their label, so the first bullet wraps under its own text like the others
@@ -71,3 +67,7 @@
   - [warning] `src/waymark/views/render.py:242`: a Criteria or Verify of a single bullet (like 2.4's own Verify) counts as a list and moves to the next line, but 2.3's second criterion says "of one line stays on its label's line". The two criteria can be read against each other here, and no test covers a one-bullet list.
   - [suggestion] `src/waymark/views/render.py:242`: only a "- " list is moved under its label, but `Style.wrap` also treats `* `, `•` and `1. ` lines as lists, so a numbered criteria list would still start on the label's line.
   - [suggestion] `tools/docs.py:128`: the Environment line is split into odd string pieces ("going " then "to a terminal is never wrapped."). The output is right, but the source reads awkwardly.
+- 2026-11-18 (note) 1.1 by Noah Roberts: wrap(text, indent) with no width still puts the indent before each line, one line per paragraph, so piped output keeps its layout; the design's 'returns the text unchanged' is read as 'not wrapped'. Section rules are now drawn in accent, per the design's palette
+- 2026-11-18 (reopened) 1.1 by Noah Roberts
+- 2026-11-18 (note) 2.1 by Noah Roberts: In wm status a milestone's marks count its planned roadmap lines as open too, since they are on the roadmap and not archived; the bar now colors its filled part ok and its empty part muted in Style.bar
+- 2026-11-18 (note) 2.2 by Noah Roberts: Prose is wrapped in the change, spec, milestone and exploration show views; a resource's sections are left unwrapped because they hold code and settings that wrapping would break. A roadmap line that is neither archived nor active (planned or missing) gets the muted open circle

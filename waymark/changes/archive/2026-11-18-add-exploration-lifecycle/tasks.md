@@ -23,7 +23,6 @@
     - tests in `tests/views/test_views.py` for Show an archived exploration and List with the archived ones
     - tests in `tests/services/test_setup.py` for the four Record folders kept in git scenarios
     - `uv run --no-sync pytest tests/views tests/services/test_setup.py tests/record`
-  - 2026-11-18 (reopened) by Noah Roberts
 - [x] 1.3 Report a led-to exploration left active, and archive `lighter-workflow`
   - **Criteria:**
     - `wm check` reports an active exploration whose `led-to` targets are all archived or closed as an error, `exploration-not-archived`, that names `explorations/archive/`
@@ -53,8 +52,6 @@
     - tests in `tests/services/test_milestones.py` for Its milestone closed and the same-day clash
     - `uv run --no-sync pytest tests/services`
   - **Build:** delegate
-  - 2026-11-18 (note) by wm-implementer: Links from other active documents to an exploration moved by wm archive or wm close are not re-aimed; the record asks only for the exploration's own links. A spec or active change linking the exploration would then fail wm check's link check.
-  - 2026-11-18 (reopened) by Noah Roberts
 - [x] 2.3 Add `wm exploration drop <exploration> --reason "<why>"`
   - **Criteria:**
     - an open exploration gets `- Status: dropped`, the reason as its Conclusion's last paragraph after any text already there, and moves to `explorations/archive/<date>-<name>.md`, in one transaction
@@ -91,7 +88,6 @@
   - **Verify:**
     - `uv run --no-sync python -m tools.docs --check`
     - the full checks: `pytest`, `ruff format --check .`, `ruff check .`, `mypy`, `codespell`
-  - 2026-11-18 (reopened) by Noah Roberts
 
 ## Log
 
@@ -103,3 +99,7 @@
   - [warning] `src/waymark/record/artifacts/explorations.py with_dropped`: on an open exploration with no Conclusion section, wm exploration drop raises an uncaught StopIteration instead of a refusal. Untested.
 - 2026-11-18 (accepted) fingerprint 879fc00b099a5688 items 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2 by Noah Roberts
 - 2026-11-18 (review) pass covers 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2 by wm-reviewer: all criteria and scenarios hold; the earlier review's fixes (re-aimed links from the moved change or milestone to its exploration, with tests; criterion amended to archived_on; concepts.md covering --from, drop and resuming; drop refusing a missing Conclusion) are in; pytest, ruff, mypy, codespell, tools.docs --check and wm check all pass.
+- 2026-11-18 (reopened) 1.2 by Noah Roberts
+- 2026-11-18 (note) 2.2 by wm-implementer: Links from other active documents to an exploration moved by wm archive or wm close are not re-aimed; the record asks only for the exploration's own links. A spec or active change linking the exploration would then fail wm check's link check.
+- 2026-11-18 (reopened) 2.2 by Noah Roberts
+- 2026-11-18 (reopened) 3.2 by Noah Roberts

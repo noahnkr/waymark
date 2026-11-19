@@ -15,7 +15,6 @@
     - `escape` from any prompt gives a canceled state
   - **Verify:**
     - tests feeding key sequences in a new `tests/views/test_prompts.py`, including `test_scenario_nothing_selected` and `test_scenario_invalid_atlas_name`
-  - 2026-11-18 (note) by Noah Roberts: setup.atlas_name_problem() now holds the atlas-name rule that init_project refused with, so the TextInput can validate with the same rule; Select also takes a typed number, for the line fallback
 - [x] 1.3 Raw keys, redraws and the line fallback
   - **Criteria:**
     - `views/terminal.py` reads keys in raw mode on Windows and POSIX, mapping arrows, Space, Enter, Backspace, Esc and Ctrl+C to key names, and restores the terminal mode and cursor in a `finally`
@@ -24,7 +23,6 @@
   - **Verify:**
     - tests of the key mapping from raw byte sequences of both platforms, and `test_scenario_numbered_choices` with a fake input, in a new `tests/views/test_terminal.py`
     - by hand: arrows, Space, Enter and Esc on Windows Terminal and one POSIX terminal, added to `docs/smoke-test.md`
-  - 2026-11-18 (note) by Noah Roberts: The by-hand check of arrows, Space, Enter, Backspace and Esc on Windows Terminal and a POSIX terminal is in docs/smoke-test.md under Keys in a raw terminal; it runs at the release's smoke test, once 2.1 wires the questions into wm init. style.enable_escape_sequences is now public for the raw terminal
 - [x] 1.4 The welcome screen
   - **Criteria:**
     - `views/welcome.py` draws the 11-row star with its ring, the name, the tagline "Leave a trail your agents can follow.", what `wm init` sets up and the skills to run next, the star's center row level with the middle of the text; below 90 columns, the text is under the star
@@ -32,7 +30,6 @@
     - with ASCII glyphs, the star is drawn with `#`
   - **Verify:**
     - tests of the full screen at 100 and 80 columns, of the frames, and of the ASCII star, in a new `tests/views/test_welcome.py`
-  - 2026-11-18 (note) by Noah Roberts: The star is drawn from the design's description, four tapering arms around a ring with a gap, not traced from the banner SVG, which has no pixel grid; its pixels use the full glyph, so ASCII draws it with #. Without color but with raw mode it is drawn once and waits for Enter; without raw mode show_still waits at a line
 
 ## 2. The flow
 
@@ -46,7 +43,6 @@
   - **Verify:**
     - `test_scenario_project_with_claude_code_and_ci`, `test_scenario_atlas`, `test_scenario_tool_detected`, `test_scenario_canceled_at_the_tools`, `test_scenario_run_by_an_agent`, `test_scenario_yes_flag_on_a_terminal` and `test_scenario_clone_on_a_terminal`, with fake terminal streams and key sequences, in `tests/test_cli.py` or beside the setup tests
     - by hand: a full interactive `wm init` in a fresh repository on Windows, added to `docs/smoke-test.md`
-  - 2026-11-18 (note) by Noah Roberts: The questions live in views/init_flow.py; cli.py runs them in raw mode and writes and prints only after raw mode ends, so the output keeps its line breaks. The step indicator adds a current glyph (● or @). docs/cli.md was regenerated here for --yes so the docs test stays green; item 3.1 still owns the docs. The by-hand Windows run is in docs/smoke-test.md's first step
 
 ## 3. Docs
 
@@ -64,3 +60,7 @@
   - [warning] `src/waymark/views/terminal.py`: RawTerminal.draw: a redraw goes back over as many lines as it drew, so a line wider than the terminal wraps and the next redraw leaves part of it behind; no test covers it
   - [warning] `src/waymark/views/terminal.py`: the Windows and POSIX raw readers are tested only through their key mapping; reading real keys is checked by hand at the smoke test
   - [suggestion] `src/waymark/views/welcome.py`: text_lines: in a clone the welcome screen still says it sets up the CI workflow if you want it, though a clone asks nothing
+- 2026-11-18 (note) 1.2 by Noah Roberts: setup.atlas_name_problem() now holds the atlas-name rule that init_project refused with, so the TextInput can validate with the same rule; Select also takes a typed number, for the line fallback
+- 2026-11-18 (note) 1.3 by Noah Roberts: The by-hand check of arrows, Space, Enter, Backspace and Esc on Windows Terminal and a POSIX terminal is in docs/smoke-test.md under Keys in a raw terminal; it runs at the release's smoke test, once 2.1 wires the questions into wm init. style.enable_escape_sequences is now public for the raw terminal
+- 2026-11-18 (note) 1.4 by Noah Roberts: The star is drawn from the design's description, four tapering arms around a ring with a gap, not traced from the banner SVG, which has no pixel grid; its pixels use the full glyph, so ASCII draws it with #. Without color but with raw mode it is drawn once and waits for Enter; without raw mode show_still waits at a line
+- 2026-11-18 (note) 2.1 by Noah Roberts: The questions live in views/init_flow.py; cli.py runs them in raw mode and writes and prints only after raw mode ends, so the output keeps its line breaks. The step indicator adds a current glyph (● or @). docs/cli.md was regenerated here for --yes so the docs test stays green; item 3.1 still owns the docs. The by-hand Windows run is in docs/smoke-test.md's first step

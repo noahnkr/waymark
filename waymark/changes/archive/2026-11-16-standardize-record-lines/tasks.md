@@ -14,7 +14,6 @@
 - [x] 1.4 Hash the standard layout, migrate every change to format 2 and drop format 1
   - **Criteria:** `record/layout.py` `standard_layout` fixes list markers, blank lines around headings, trailing spaces, the final line break and record lines, outside fenced code and comments, keeping line endings, and is idempotent; every fingerprint part is hashed after it, and no old hash is kept; the format 1 to 2 migration reads the files with its own patterns and does what the requirement "Record format 2" lists for active and archived changes, keeping each acceptance's digest and dating undated lines from the file's last commit or today; `RECORD_FORMAT` is 2; every format 1 reader and writer is removed (the `## Review` section, the old labels, `Accepted:` and `Synced:` lines, the `review:` tag, the format switch), and the tests move to format 2, with format 1 only in the migration's tests; afterwards the planner runs `wm update` on this repository and the human accepts this change again
   - **Verify:** tests in `tests/record/test_layout.py`, `tests/record/test_fingerprint.py` and `tests/services/test_migrations.py` for the scenarios "Accepted change migrated", "Archived change migrated" and "Item added", and idempotence; then `wm update`, `wm check` and `wm status` here
-  - 2026-11-16 (reopened) by Noah Roberts
 - [x] 1.5 Add `wm check --fix`
   - **Criteria:** `--fix` opens the record for writing, runs `standard_layout` over the charter, specs, active changes, explorations and milestones, never archived changes, and writes every changed file or none; it refuses, writing nothing, when the fix would change any acceptance state, record or tick; it names each fixed file and its kinds of fix, or says there was nothing to fix, then reports the check, failing when an error remains
   - **Verify:** tests in `tests/services/test_check.py` and `tests/test_cli.py` for the scenarios "Layout fixed", "Fenced code left alone", "Nothing to fix", "Error that can't be fixed", "Accepted change fixed" and "Older record format"
@@ -30,11 +29,9 @@
 - [x] 2.1 Rewrite the skills and agent definitions for records and the Log
   - **Criteria:** `wm-apply` and `wm-update` name the item records, `wm note`, `--by` and the Log; `wm-propose` and `wm-archive` no longer name `Accepted:` or `Blocked:` lines; `wm-implementer` writes notes with `wm note` or its ending and never edits the record; `wm-reviewer` matches the finding format; the planner runs `wm update` to regenerate the rendered files
   - **Verify:** `uv run --no-sync pytest tests/adapters`; read each changed skill once through as the planner would
-  - 2026-11-16 (reopened) by Noah Roberts
 - [x] 2.2 Update the charter and the docs
   - **Criteria:** the charter's careful-writes constraint names the exception for `wm check --fix`, which changes layout and never wording; concepts (the records, the Log, the glossary), getting started, the smoke test, architecture and the README describe format 2 and `--fix`; the generated docs are regenerated; the docs follow the `waymark-write-docs` skill
   - **Verify:** `uv run --no-sync python -m tools.docs --check`, `uv run --no-sync codespell` and `wm check`
-  - 2026-11-16 (reopened) by Noah Roberts
 - [x] 2.3 Close the review's open warnings
   - **Criteria:** `wm accept` without `--by` checks the git name as every other command does, and refuses one that holds `: ` with the reason; `wm pr` lists every review record of the change with its findings, each place in backticks, and the override; the refusal of an agent's edit that touches a record or tick names `wm note` among the commands to use
   - **Verify:** tests in `tests/services/test_lifecycle.py`, `tests/services/test_ci_and_pr.py` and `tests/hooks/test_decide.py`
@@ -58,3 +55,6 @@
   - [warning] `src/waymark/services/lifecycle.py:118`: without `--by`, `accept` uses `git.user_name` without `records.check_who`; a git name holding `: ` would write an `(accepted)` record that no longer parses
   - [warning] `src/waymark/services/pr.py:52-63`: `wm pr` shows only the last review record and its findings, and prints the place without backticks; item 1.3 says it "lists the review records" (the override is shown, as the "Overridden" scenario requires)
   - [suggestion] `src/waymark/hooks/decide.py:52-55`: `_EVIDENCE_COMMANDS`, quoted when an edit to a record or tick is refused, could name `wm note`
+- 2026-11-16 (reopened) 1.4 by Noah Roberts
+- 2026-11-16 (reopened) 2.1 by Noah Roberts
+- 2026-11-16 (reopened) 2.2 by Noah Roberts

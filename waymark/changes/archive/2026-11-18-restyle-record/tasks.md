@@ -23,7 +23,6 @@
   - **Verify:**
     - `uv run --no-sync pytest tests/services tests/record tests/test_lifecycle_cli.py`
     - `wm check`
-  - 2026-11-18 (note) by Noah Roberts: The task template now writes '- **Build:** planner', so tasks.py accepts 'planner' as a build value (an item built by the planner) to keep the template and wm check clean. Item 2.1 still owns the message naming both values, the instructions and the fingerprint.
 
 ## 2. Build line and options
 
@@ -131,3 +130,4 @@
   - [warning] `src/waymark/views/render.py:270`: _record_lines shows records kind first with space-separated item lists and findings without brackets, so `wm show` disagrees with the restyled record shapes the Records spec and the docs now use
   - [warning] `src/waymark/views/render.py:486`: the context packs show labels plain (`- Repo:`, `- Criteria:`) and earlier review findings as `severity: place: text`, which agents may copy into the record against the Labels in bold requirement
   - [suggestion] `tests/record/test_authored_formats.py:480`: test_glossary_with_the_colon_inside_the_bold calls replace with identical arguments, so it only repeats the plain CHARTER check
+- 2026-11-18 (note) 1.2 by Noah Roberts: The task template now writes '- **Build:** planner', so tasks.py accepts 'planner' as a build value (an item built by the planner) to keep the template and wm check clean. Item 2.1 still owns the message naming both values, the instructions and the fingerprint.
