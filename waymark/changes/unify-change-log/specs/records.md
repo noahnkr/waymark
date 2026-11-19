@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Item records shown with their item
-`wm show <change>`, in text and JSON, and the implement context pack SHALL show each item's records with that item, gathered from the change's `## Log` in the order they were written. The review context pack and `wm show` SHALL also show the Log as written.
+`wm show <change>`, in text and JSON, and the implement context pack SHALL show each item's records with that item, gathered from the change's `## Log` in the order they were written. `wm show` SHALL also show the Log as written.
 
 #### Scenario: Blocker shown with its item
 - GIVEN an accepted change whose Log holds `2026-11-20 (blocked) 1.2 by Ada: the API key is missing`
