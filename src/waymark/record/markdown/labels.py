@@ -43,6 +43,42 @@ KIND = "Kind"
 SERVES = "Serves"
 VERIFIED = "Verified"
 
+KNOWN = frozenset(
+    {
+        OWNER,
+        MILESTONE,
+        AFTER,
+        PATH,
+        REVIEW,
+        SPECS,
+        USER_VISIBLE,
+        CODE,
+        BUILT,
+        DIFFERS,
+        BUILD,
+        REPO,
+        CRITERIA,
+        VERIFY,
+        STATUS,
+        DECIDED_BY,
+        OPTIONS,
+        CHOICE,
+        WHY,
+        FROM,
+        TO,
+        REASON,
+        REPOS,
+        KIND,
+        SERVES,
+        VERIFIED,
+    }
+)
+"""Every label the record reads."""
+BARE = frozenset({REASON, REPOS})
+"""The labels written without a list bullet, at the start of a line."""
+ITEM_ORDER = (BUILD, REPO, CRITERIA, VERIFY)
+"""The order of a task item's label lines."""
+
 _NAME = r"[A-Z][A-Za-z-]*(?: [a-z][A-Za-z-]*)*"
 
 LABEL = re.compile(

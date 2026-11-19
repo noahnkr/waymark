@@ -25,98 +25,98 @@
 ## Decisions
 
 ### Decision: Bold form
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - colon inside the bold, `**Owner:**`
   - colon outside, `**Owner**:`, as the glossary was
-- Choice: colon inside, with the glossary moved to the same form
-- Why: it is the usual markdown convention, and one form everywhere is simpler to read and to check.
+- **Choice:** colon inside, with the glossary moved to the same form
+- **Why:** it is the usual markdown convention, and one form everywhere is simpler to read and to check.
 
 ### Decision: Which lines are labels
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - every label line, whether a human or `wm` writes it
   - only the lines humans write
-- Choice: every label line
-- Why: two styles for the same kind of line would read as a difference that isn't there; the record's own marks (`(kind)` for records, `[severity]` for findings) tell what `wm` wrote.
+- **Choice:** every label line
+- **Why:** two styles for the same kind of line would read as a difference that isn't there; the record's own marks (`(kind)` for records, `[severity]` for findings) tell what `wm` wrote.
 
 ### Decision: How an item's line order is held
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - `wm check` reports it and `--fix` reorders
   - the template only
-- Choice: check and fix
-- Why: without a check, items drift back to the old order.
+- **Choice:** check and fix
+- **Why:** without a check, items drift back to the old order.
 
 ### Decision: Finding severity
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - bold, `**critical**`
   - capitals, `CRITICAL`
   - parentheses, `(critical)`
   - brackets, `[critical]`
-- Choice: brackets
-- Why: bold now means a label a human writes, capitals shout, and parentheses would make a finding look like a record and clash with the record-shape check.
+- **Choice:** brackets
+- **Why:** bold now means a label a human writes, capitals shout, and parentheses would make a finding look like a record and clash with the record-shape check.
 
 ### Decision: Item lists in records
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - spaces, as today
   - commas, with `;` ending a list that another argument follows
   - commas inside parentheses
-- Choice: commas, with `;`
-- Why: a review's two lists become easy to tell apart, without the clutter of parentheses; the word `fingerprint` stays, since it says what the digest is.
+- **Choice:** commas, with `;`
+- **Why:** a review's two lists become easy to tell apart, without the clutter of parentheses; the word `fingerprint` stays, since it says what the digest is.
 
 ### Decision: Where a record's date goes
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - after the kind, `(note) 2026-11-20 …`, as today
   - first, bare, `2026-11-20 (note) …`
   - first, in brackets, `[2026-11-20] (note) …`
-- Choice: first, bare
-- Why: the dates line up in a column, so a Log reads as a timeline, and the kind sits next to its arguments; brackets now mark a finding's severity, and the date is distinct without them.
+- **Choice:** first, bare
+- **Why:** the dates line up in a column, so a Log reads as a timeline, and the kind sits next to its arguments; brackets now mark a finding's severity, and the date is distinct without them.
 
 ### Decision: The archive script
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - commit it under `tools/`, then delete it in a later commit of the change
   - run it from the scratchpad and never commit it
-- Choice: never commit it
-- Why: it runs once on the only record there is; the rewritten files are the result that matters.
+- **Choice:** never commit it
+- **Why:** it runs once on the only record there is; the rewritten files are the result that matters.
 
 ### Decision: What the archive rewrite covers
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - only what the new readers need: labels, the record's date first, item lists in records, finding severities
   - full conformance, also adding Build lines, ordering item lines and turning one-line Options into lists
-- Choice: only what the readers need
-- Why: archived changes are read as they were written and aren't checked against the new rules; adding Build lines or splitting options would put words in the archive that nobody wrote, and the old "or" split is the bug this change removes.
+- **Choice:** only what the readers need
+- **Why:** archived changes are read as they were written and aren't checked against the new rules; adding Build lines or splitting options would put words in the archive that nobody wrote, and the old "or" split is the bug this change removes.
 
 ### Decision: How the readers move to the new forms
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - accept both forms first, convert the record, then drop the old forms
   - switch every reader, writer and file in one item
-- Choice: both forms first
-- Why: `wm` on PATH runs this checkout, so a reader that only knows the new form would make the record unreadable until the conversion item is ticked; reading both keeps `wm check` healthy after every item, and the last step leaves one form in the code.
+- **Choice:** both forms first
+- **Why:** `wm` on PATH runs this checkout, so a reader that only knows the new form would make the record unreadable until the conversion item is ticked; reading both keeps `wm check` healthy after every item, and the last step leaves one form in the code.
 
 ### Decision: The one acceptance this change loses
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - accept that the change is accepted again once, after the layout fix lands
   - keep old fingerprints valid by hashing labels without their bold
-- Choice: accept again once
-- Why: the standard layout bolds labels once step 7 lands, so the proposal, deltas and design hash differently from the acceptance taken over the old layout, and adding `planner` Build lines changes the items' definitions. Hiding that in the hash would make the fingerprint ignore a change people can see. It is one extra `wm accept`, in the middle of this change only.
+- **Choice:** accept again once
+- **Why:** the standard layout bolds labels once step 7 lands, so the proposal, deltas and design hash differently from the acceptance taken over the old layout, and adding `planner` Build lines changes the items' definitions. Hiding that in the hash would make the fingerprint ignore a change people can see. It is one extra `wm accept`, in the middle of this change only.
 
 ## Open questions
 

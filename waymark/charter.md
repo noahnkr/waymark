@@ -42,12 +42,12 @@ atlas).
 
 ## Glossary
 
-- **Record**: everything Waymark keeps in `waymark/`; the full glossary is in `docs/concepts.md`.
-- **Atlas**: a separate repository holding the record for a project spread over several repositories.
-- **Adapter**: the code that connects `wm` to one agent tool: renders its files, translates its hook events.
-- **Asset**: a skill or agent definition shipped in `src/waymark/assets/`, tool-neutral.
-- **Maintainer skill**: a skill in `tools/skills/` for working on Waymark itself (docs, releases); installed per machine for contributors, and not shipped to users.
-- **Smoke test**: the manual run of one change through Claude Code before each release (`docs/smoke-test.md`).
+- **Record:** everything Waymark keeps in `waymark/`; the full glossary is in `docs/concepts.md`.
+- **Atlas:** a separate repository holding the record for a project spread over several repositories.
+- **Adapter:** the code that connects `wm` to one agent tool: renders its files, translates its hook events.
+- **Asset:** a skill or agent definition shipped in `src/waymark/assets/`, tool-neutral.
+- **Maintainer skill:** a skill in `tools/skills/` for working on Waymark itself (docs, releases); installed per machine for contributors, and not shipped to users.
+- **Smoke test:** the manual run of one change through Claude Code before each release (`docs/smoke-test.md`).
 
 ## Context
 

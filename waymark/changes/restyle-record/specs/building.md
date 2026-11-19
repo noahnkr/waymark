@@ -33,9 +33,9 @@ An item's Build line SHALL be part of the item's definition that the human accep
 
 ## RENAMED Requirements
 
-- From: Planner builds by default
-- To: Planner builds its items
-- From: Delegation tag
-- To: Build line
-- From: Delegation tag accepted with the item
-- To: Build line accepted with the item
+- **From:** Planner builds by default
+- **To:** Planner builds its items
+- **From:** Delegation tag
+- **To:** Build line
+- **From:** Delegation tag accepted with the item
+- **To:** Build line accepted with the item

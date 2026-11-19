@@ -5,6 +5,7 @@ folder while a test runs.
 """
 
 import datetime
+import re
 from pathlib import Path
 
 from waymark import __version__
@@ -98,6 +99,19 @@ TASKS = """# Tasks
   - Criteria: the help text names the limit
   - Verify: read the help text
 """
+
+
+_PLAIN_LABEL = re.compile(
+    r"^(\s*(?:[-*] )?)(Owner|Milestone|After|Path|Review|Specs|User-visible|Code|Built|Differs"
+    r"|Build|Repo|Criteria|Verify|Status|Decided by|Options|Choice|Why|From|To|Reason|Repos"
+    r"|Kind|Serves|Verified):",
+    re.MULTILINE,
+)
+
+
+def bold(text: str) -> str:
+    """The text with every known label written bold, the colon inside."""
+    return _PLAIN_LABEL.sub(r"\1**\2:**", text)
 
 
 def document(text: str, path: str = "file.md") -> Document:

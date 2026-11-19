@@ -1,7 +1,7 @@
 # Restyle record
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -31,8 +31,8 @@ This record is Waymark's only instance, so the layouts can change in place: the 
 
 ## Impact
 
-- Specs: `acceptance`, `agent-results`, `authored-formats`, `branches`, `building`, `explorations`, `formatting`, `milestones`, `paths`, `records`, `resources`, `review` (all modified)
-- User-visible:
+- **Specs:** `acceptance`, `agent-results`, `authored-formats`, `branches`, `building`, `explorations`, `formatting`, `milestones`, `paths`, `records`, `resources`, `review` (all modified)
+- **User-visible:**
   - the record's label lines are bold, colon inside, and the glossary's terms too
   - every task item has a `Build:` line, `planner` or `delegate`, first among its lines
   - a decision's options are a nested list
@@ -40,4 +40,4 @@ This record is Waymark's only instance, so the layouts can change in place: the 
   - item lists in records are separated by commas, and a review's two lists by `; `
   - a finding's severity is written in brackets, `[critical]`
   - `wm check` reports a plain label, a missing Build line, an item's lines out of order and a one-line Options; `wm check --fix` fixes the first and third
-- Code: `record/` (the artifact readers, `markdown/outline.py`, `evidence/records.py` and `evidence.py`, `writing/layout.py` and the templates), `services/` (check, setup, lifecycle, context, instructions), `hooks/decide.py`, the skills and agent definitions in `assets/`, the tests, the docs and the CHANGELOG, and this record's active and archived files
+- **Code:** `record/` (the artifact readers, `markdown/outline.py`, `evidence/records.py` and `evidence.py`, `writing/layout.py` and the templates), `services/` (check, setup, lifecycle, context, instructions), `hooks/decide.py`, the skills and agent definitions in `assets/`, the tests, the docs and the CHANGELOG, and this record's active and archived files

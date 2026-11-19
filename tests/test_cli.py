@@ -10,7 +10,7 @@ from typing import ClassVar
 import pytest
 
 from tests.conftest import git_init
-from tests.support import Workspace, proposal
+from tests.support import Workspace, bold, proposal
 from waymark import __version__, cli
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
 from waymark.services import setup
@@ -211,7 +211,9 @@ def test_wm_check_fix_reports_what_it_fixed(
     project: Workspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """wm check --fix names each fixed file, then reports the check."""
-    project.change(proposal_text=proposal().replace("Paging.", "Paging.   "))
+    project.change(proposal_text=bold(proposal()).replace("Paging.", "Paging.   "))
+    project.write("changes/add-limit/design.md", bold(project.read("changes/add-limit/design.md")))
+    project.write("changes/add-limit/tasks.md", bold(project.read("changes/add-limit/tasks.md")))
     monkeypatch.chdir(project.root)
     assert main(["check", "--fix"]) == EXIT_OK
     out = capsys.readouterr().out

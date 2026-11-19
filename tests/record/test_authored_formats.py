@@ -1,7 +1,6 @@
 """The layouts humans and the planner write: facts, the glossary, the exploration status."""
 
 import datetime
-import re
 
 from tests.record.artifacts.test_resources import resource
 from tests.support import (
@@ -9,6 +8,7 @@ from tests.support import (
     DESIGN,
     NO_SPECS,
     Workspace,
+    bold,
     delta,
     document,
     proposal,
@@ -364,19 +364,6 @@ def test_proposal_facts_include_the_after_line() -> None:
     assert parsed.problems == ()
     bare = text.replace("- After: add-index", "After: add-index")
     assert parse_proposal(document(bare, "changes/add-limit/proposal.md")).after is None
-
-
-_PLAIN_LABEL = re.compile(
-    r"^(\s*(?:[-*] )?)(Owner|Milestone|After|Path|Review|Specs|User-visible|Code|Built|Differs"
-    r"|Build|Repo|Criteria|Verify|Status|Decided by|Options|Choice|Why|From|To|Reason|Repos"
-    r"|Kind|Serves|Verified):",
-    re.MULTILINE,
-)
-
-
-def bold(text: str) -> str:
-    """The text with every known label written bold, the colon inside."""
-    return _PLAIN_LABEL.sub(r"\1**\2:**", text)
 
 
 def test_bold_labels_in_a_proposal() -> None:
