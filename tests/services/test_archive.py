@@ -32,7 +32,11 @@ DAY = datetime.date(2026, 1, 15)
 LATER = datetime.date(2026, 2, 1)
 ARCHIVED = f"changes/archive/2026-02-01-{NAME}"
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n"
+ONE_ITEM = (
+    HEAD
+    + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+    + "  - **Verify:** a test\n"
+)
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 
 
@@ -77,7 +81,7 @@ def test_archive_merges_the_deltas_and_moves_the_change_to_the_dated_archive(
     created = record.specs["search"]
     assert created.purpose == "How search behaves."
     assert [item.name for item in created.requirements] == ["Result limit"]
-    assert "## Outcome\n\n- Built: Capped at fifty.\n- Differs: none\n" in project.read(
+    assert "## Outcome\n\n- **Built:** Capped at fifty.\n- **Differs:** none\n" in project.read(
         f"{ARCHIVED}/proposal.md"
     )
     assert project.path(f"{ARCHIVED}/tasks.md").is_file()
@@ -149,10 +153,10 @@ def test_archive_override_passes_missing_reviews_and_records_the_reason(
         project.root, NAME, LATER, built="Shipped.", override="reviewed in the pull request"
     )
     assert project.read(f"{ARCHIVED}/proposal.md").endswith(
-        "## Outcome\n\n- Built: Shipped.\n- Differs: none\n"
+        "## Outcome\n\n- **Built:** Shipped.\n- **Differs:** none\n"
     )
     assert project.read(f"{ARCHIVED}/tasks.md").endswith(
-        "- (override) 2026-02-01 by Sam Doe: reviewed in the pull request\n"
+        "- 2026-02-01 (override) by Sam Doe: reviewed in the pull request\n"
     )
     assert project.record().changes == {}
 
@@ -195,7 +199,7 @@ def test_archive_uses_an_outcome_already_written_in_the_proposal(project: Worksp
     text = project.read(f"changes/{NAME}/proposal.md")
     project.write(
         f"changes/{NAME}/proposal.md",
-        text + "\n## Outcome\n\n- Built: Written by hand.\n- Differs: none\n",
+        text + "\n## Outcome\n\n- **Built:** Written by hand.\n- **Differs:** none\n",
     )
     assert "already has an outcome" in refused(project, built="Another.")
     lifecycle.archive(project.root, NAME, LATER)
@@ -209,14 +213,14 @@ def test_scenario_archived_with_an_outcome(project: Workspace) -> None:
     )
     text = project.read(f"{ARCHIVED}/proposal.md")
     assert text.endswith(
-        "## Outcome\n\n- Built: The result limit.\n- Differs: Fifty, not twenty.\n"
+        "## Outcome\n\n- **Built:** The result limit.\n- **Differs:** Fifty, not twenty.\n"
     )
 
 
 def test_scenario_nothing_differs(project: Workspace) -> None:
     applied(project)
     lifecycle.archive(project.root, NAME, LATER, built="The result limit.")
-    assert project.read(f"{ARCHIVED}/proposal.md").endswith("- Differs: none\n")
+    assert project.read(f"{ARCHIVED}/proposal.md").endswith("- **Differs:** none\n")
 
 
 def test_differs_needs_built(project: Workspace) -> None:
@@ -229,8 +233,8 @@ def test_hand_written_outcome_needs_both_lines(project: Workspace) -> None:
     text = project.read(f"changes/{NAME}/proposal.md")
     project.write(f"changes/{NAME}/proposal.md", text + "\n## Outcome\n\nWritten by hand.\n")
     message = refused(project)
-    assert '"- Built:"' in message
-    assert "- Differs: <how it differs, or none>" in message
+    assert '"- **Built:**"' in message
+    assert "- **Differs:** <how it differs, or none>" in message
 
 
 def test_archive_of_the_same_name_twice_in_a_day_is_refused(project: Workspace) -> None:
@@ -254,7 +258,7 @@ def test_archived_name_can_be_reused(project: Workspace) -> None:
 
 def exploration(status: str, context: str = "") -> str:
     return (
-        f"# Paging\n\n- Status: {status}\n\n## Context\n\n{context}\n\n"
+        f"# Paging\n\n- **Status:** {status}\n\n## Context\n\n{context}\n\n"
         "## Questions\n\n## Approaches\n\n## Conclusion\n\n## Related\n"
     )
 
@@ -264,7 +268,7 @@ def test_archive_rewrites_links_that_point_into_the_moved_folder(project: Worksp
     project.change("add-order")
     project.write(
         "explorations/paging.md",
-        "# Paging\n\n- Status: led-to [add-limit](../changes/add-limit/), "
+        "# Paging\n\n- **Status:** led-to [add-limit](../changes/add-limit/), "
         "[add-order](../changes/add-order/proposal.md)\n\n"
         "## Context\n\nSee the [tasks](../changes/add-limit/tasks.md#limit).\n\n"
         "## Questions\n\n## Approaches\n\n"
@@ -558,21 +562,24 @@ def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
     project.replace(
         tasks,
         "\n## Log\n",
-        "- [ ] 1.3 Announce it\n  - Criteria: done\n  - Verify: a test\n\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n\n## Log\n",
     )
     for number in ("1.1", "1.2", "1.3"):
         lifecycle.tick(project.root, NAME, number)
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     lifecycle.sync(project.root, NAME, DAY)
     text = project.read(tasks)
-    assert " items 1.1 1.2 by " in text
-    assert "- (synced) 2026-01-15 fingerprint " in text
+    assert " items 1.1, 1.2 by " in text
+    assert "- 2026-01-15 (synced) fingerprint " in text
     assert project.change_state(NAME).acceptance is AcceptanceState.VALID
 
 
 def test_archiving_a_rename_renames_the_requirement_in_the_spec(project: Workspace) -> None:
     project.write("specs/search.md", spec(requirement("Result cap")))
-    rename = "# Search\n\n## RENAMED Requirements\n\n- From: Result cap\n- To: Result limit\n"
+    rename = (
+        "# Search\n\n## RENAMED Requirements\n\n- **From:** Result cap\n- **To:** Result limit\n"
+    )
     applied(project, deltas={"search": rename})
     lifecycle.archive(project.root, NAME, LATER, built="Renamed.")
     living = project.record().specs["search"]
@@ -583,7 +590,7 @@ def test_archiving_a_rename_renames_the_requirement_in_the_spec(project: Workspa
 def test_scenario_member_change_archived(project: Workspace) -> None:
     """Requirement "Milestone log": archiving a member change writes (archived)."""
     member = proposal().replace(
-        "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+        "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n"
     )
     project.write(
         "milestones/faster-search/milestone.md",
@@ -593,7 +600,7 @@ def test_scenario_member_change_archived(project: Workspace) -> None:
     lifecycle.archive(project.root, NAME, LATER, built="Shipped.", by="Ada")
     text = project.read("milestones/faster-search/milestone.md")
     assert f"- [x] [add-limit](../../{ARCHIVED}/proposal.md): cap\n" in text
-    assert text.endswith("\n## Log\n\n- (archived) 2026-02-01 add-limit by Ada\n")
+    assert text.endswith("\n## Log\n\n- 2026-02-01 (archived) add-limit by Ada\n")
 
 
 def test_a_change_without_a_milestone_writes_no_milestone_record(project: Workspace) -> None:

@@ -1,8 +1,8 @@
 # Add milestone log
 
-- Owner: Noah Roberts
-- Milestone: stronger-milestones
-- Review: independent
+- **Owner:** Noah Roberts
+- **Milestone:** stronger-milestones
+- **Review:** independent
 
 ## Why
 
@@ -28,15 +28,15 @@ This is the second change of `stronger-milestones`. It builds on `link-milestone
 
 ## Impact
 
-- Specs: `milestones` (the Log section in the milestone file, `wm roadmap`, the milestone Log and its records, roadmap lines as evidence, closing a milestone, and the proposed record from `wm new change --milestone`).
-- User-visible:
+- **Specs:** `milestones` (the Log section in the milestone file, `wm roadmap`, the milestone Log and its records, roadmap lines as evidence, closing a milestone, and the proposed record from `wm new change --milestone`).
+- **User-visible:**
   - new commands `wm roadmap add`, `wm roadmap drop --reason` and `wm roadmap move --after|--first`;
   - a `## Log` section at the end of `milestone.md`, written by `wm new change --milestone`, `wm archive` and `wm roadmap`;
   - agents' edits to roadmap lines or a milestone's Log are refused;
   - behavior change: `wm close` refuses a milestone with a planned line that was never proposed, until it is dropped.
-- Code: the record kinds and their grammar (`record/records.py`), the milestone file and its Log (`record/milestones.py`, `record/evidence.py`), the roadmap commands (`cli.py`, a new service), `wm new change` (`services/setup.py`), `wm archive` and `wm close` (`services/lifecycle.py`), the hooks (`hooks/decide.py`), the `wm-explore`, `wm-propose` and `wm-archive` skills, and the docs.
+- **Code:** the record kinds and their grammar (`record/records.py`), the milestone file and its Log (`record/milestones.py`, `record/evidence.py`), the roadmap commands (`cli.py`, a new service), `wm new change` (`services/setup.py`), `wm archive` and `wm close` (`services/lifecycle.py`), the hooks (`hooks/decide.py`), the `wm-explore`, `wm-propose` and `wm-archive` skills, and the docs.
 
 ## Outcome
 
-- Built: A milestone roadmap now changes only through wm roadmap add, drop --reason and move --after|--first, each writing a record in a ## Log at the end of milestone.md, as do wm new change --milestone and wm archive. The hooks refuse an agent hand edit to a roadmap line or the Log. wm close needs every roadmap line archived. The wm-explore and wm-archive skills and the docs use wm roadmap.
-- Differs: The independent review passed with four findings left open: a planned line that does not start with a change name blocks wm close and cannot be dropped through wm, so only a human edit unblocks it; move writes a (moved) record even when the line does not change place; item 1.3 close tests are in test_milestones.py, not the test_lifecycle.py its Verify line names, as noted on the item; and wm new change --milestone has no --by for its (proposed) record. Also, a milestone record found in a change task list is reported as misplaced, which the design did not mention.
+- **Built:** A milestone roadmap now changes only through wm roadmap add, drop --reason and move --after|--first, each writing a record in a ## Log at the end of milestone.md, as do wm new change --milestone and wm archive. The hooks refuse an agent hand edit to a roadmap line or the Log. wm close needs every roadmap line archived. The wm-explore and wm-archive skills and the docs use wm roadmap.
+- **Differs:** The independent review passed with four findings left open: a planned line that does not start with a change name blocks wm close and cannot be dropped through wm, so only a human edit unblocks it; move writes a (moved) record even when the line does not change place; item 1.3 close tests are in test_milestones.py, not the test_lifecycle.py its Verify line names, as noted on the item; and wm new change --milestone has no --by for its (proposed) record. Also, a milestone record found in a change task list is reported as misplaced, which the design did not mention.

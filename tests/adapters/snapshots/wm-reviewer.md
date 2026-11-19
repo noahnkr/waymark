@@ -45,7 +45,7 @@ CHANGE: <change>
 VERDICT: <pass | changes <item> <item>... | spec-gap>: <your reasons, in one line>
 ```
 
-- A place that holds `: ` goes in backticks, for example ``FINDING: warning: `docs: setup`: <text>``. `wm` writes each finding under your verdict as ``warning `<place>`: <text>``, and the verdict itself as `(review) <date> pass covers <items> by wm-reviewer: <reasons>` in the change's `## Log`, where `<items>` are the items your pack held.
+- A place that holds `: ` goes in backticks, for example ``FINDING: warning: `docs: setup`: <text>``. `wm` writes each finding under your verdict as ``[warning] `<place>`: <text>``, and the verdict itself as `<date> (review) pass covers <items> by wm-reviewer: <reasons>` in the change's `## Log`, where `<items>` are the items your pack held, separated by `, `.
 - Grade each finding by the severity rubric in your context pack: `critical`, `warning` or `suggestion`, the higher when it could be either.
 - `pass`: every criterion holds and every scenario is met. A pass has no critical finding.
 - `changes`: something must be fixed. Name the items to rebuild after the word, for example `VERDICT: changes 1.2 2.1: <reasons>`, and say what, precisely enough to act on.

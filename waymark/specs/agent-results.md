@@ -17,7 +17,7 @@ When an implementer or reviewer stops and its final message ends with its two en
 #### Scenario: Implementer partly done
 - GIVEN an accepted change with item 1.1 not ticked
 - WHEN its implementer stops with a final message ending in `ITEM: <change> 1.1` and `RESULT: partial: <note>`
-- THEN item 1.1 is not ticked, and has a record `(note) <date> by wm-implementer: partial: <note>` under it
+- THEN item 1.1 is not ticked, and has a record `<date> (note) by wm-implementer: partial: <note>` under it
 
 ### Requirement: Ending recorded from a handed-back report
 When an implementer or reviewer hands its report back through its agent tool instead of a final message, `wm` SHALL record the ending from the report's text exactly as from a final message.

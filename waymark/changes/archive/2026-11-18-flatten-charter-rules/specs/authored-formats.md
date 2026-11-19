@@ -30,5 +30,5 @@ The charter's Goals, Constraints and Rules SHALL be numbered lists, `1. <text>`,
 
 ## RENAMED Requirements
 
-- From: Numbered goals and constraints
-- To: Numbered goals, constraints and rules
+- **From:** Numbered goals and constraints
+- **To:** Numbered goals, constraints and rules

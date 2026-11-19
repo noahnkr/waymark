@@ -14,13 +14,13 @@ from waymark.record.artifacts.changes import TASKS_FILE
 from waymark.record.artifacts.milestones import LOG, MILESTONE_FILE, ROADMAP
 from waymark.record.artifacts.tasks import LOG_SECTION
 from waymark.record.evidence import records
+from waymark.record.markdown import labels
 from waymark.record.markdown.text import Document
 from waymark.record.record import EXPLORATIONS, MILESTONES
 
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+\.\d+)\s")
 _HEADING = re.compile(r"^## (.*)$")
 _LIST_LINE = re.compile(r"^\s*[-*] (.*)$")
-_STATUS_LINE = re.compile(r"^\s*[-*]\s+Status:")
 
 
 def _milestone_evidence(relative: str, text: str) -> Counter[str]:
@@ -57,7 +57,8 @@ def _exploration_evidence(relative: str, text: str) -> Counter[str]:
         if in_comment or line.text.lstrip().startswith("<!--"):
             in_comment = "-->" not in line.text
             continue
-        if _STATUS_LINE.match(line.text):
+        label = labels.read_label(line.text.strip())
+        if label is not None and label.bullet and label.name == labels.STATUS:
             found[f'the status line "{line.text.strip()}"'] += 1
     return found
 

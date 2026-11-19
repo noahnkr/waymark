@@ -29,59 +29,59 @@
 ## Decisions
 
 ### Decision: How the file is laid out
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - Goal, Done when, Non-goals, then Roadmap;
   - Goal, then Roadmap, then Done when and Non-goals.
-- Choice: Goal, Done when, Non-goals, Roadmap.
-- Why: It reads top-down: why, when it is done, what it leaves out, then the changes.
+- **Choice:** Goal, Done when, Non-goals, Roadmap.
+- **Why:** It reads top-down: why, when it is done, what it leaves out, then the changes.
 
 ### Decision: How the existing milestones move
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - by hand, once, in this change;
   - a `wm check --fix` step;
   - a new `wm` command.
-- Choice: by hand, once.
-- Why: There are two milestones and two links; a command or a fix would be code kept for one use.
+- **Choice:** by hand, once.
+- **Why:** There are two milestones and two links; a command or a fix would be code kept for one use.
 
 ### Decision: The archived milestone
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - merge it too, and rewrite the exploration's links;
   - leave it as written, and keep reading the two files for archived milestones.
-- Choice: merge it too.
-- Why: Only one layout is ever read, so the two-file reader can go entirely.
+- **Choice:** merge it too.
+- **Why:** Only one layout is ever read, so the two-file reader can go entirely.
 
 ### Decision: Link rewriting for a moved file
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - leave it out;
   - build it in this change anyway.
-- Choice: leave it out.
-- Why: With the merge done by hand nothing moves a single file, and archiving and closing already rewrite links when they move a folder.
+- **Choice:** leave it out.
+- **Why:** With the merge done by hand nothing moves a single file, and archiving and closing already rewrite links when they move a folder.
 
 ### Decision: One document, two views
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - keep `Goal` and `Roadmap`, both built from `milestone.md`;
   - one new `Milestone` type with the sections and the entries.
-- Choice: keep `Goal` and `Roadmap`.
-- Why: `milestone_state`, `show_milestone` and their JSON keep their shape, so the change stays in the reader, the loader and the writer.
+- **Choice:** keep `Goal` and `Roadmap`.
+- **Why:** `milestone_state`, `show_milestone` and their JSON keep their shape, so the change stays in the reader, the loader and the writer.
 
 ### Decision: What an old file is reported as
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - a new code, `milestone-file`, naming `milestone.md`;
   - `old-layout`.
-- Choice: `milestone-file`.
-- Why: `old-layout` tells the human to run `wm update`, which can't merge the files.
+- **Choice:** `milestone-file`.
+- **Why:** `old-layout` tells the human to run `wm update`, which can't merge the files.
 
 ## Open questions
 

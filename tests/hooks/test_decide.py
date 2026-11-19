@@ -19,8 +19,14 @@ FOLDER = f"changes/{NAME}"
 TASKS_FILE = f"{FOLDER}/tasks.md"
 DAY = datetime.date(2026, 1, 15)
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n"
-INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
+ONE_ITEM = (
+    HEAD
+    + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+    + "  - **Verify:** a test\n"
+)
+INDEPENDENT = proposal().replace(
+    "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
+)
 
 
 def built_for_review(project: Workspace) -> Workspace:
@@ -124,7 +130,7 @@ def test_delegation_of_an_unaccepted_change_is_refused(project: Workspace) -> No
 
 def test_delegation_of_an_item_without_criteria_is_refused(accepted: Workspace) -> None:
     accepted.replace(
-        "changes/add-limit/tasks.md", "  - Criteria: the help text names the limit\n", ""
+        "changes/add-limit/tasks.md", "  - **Criteria:** the help text names the limit\n", ""
     )
     decision = delegate(accepted, assets.IMPLEMENTER, "add-limit 1.2")
     assert not decision.allow
@@ -154,8 +160,9 @@ def passed_then_added(project: Workspace) -> Workspace:
     lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="wm-reviewer")
     project.replace(
         TASKS_FILE,
-        "  - Criteria: fifty at most\n",
-        "  - Criteria: fifty at most\n- [ ] 1.2 Name it\n  - Verify: a test\n  - Criteria: named\n",
+        "  - **Verify:** a test\n",
+        "  - **Verify:** a test\n- [ ] 1.2 Name it\n  - **Build:** planner\n"
+        "  - **Criteria:** named\n  - **Verify:** a test\n",
     )
     lifecycle.tick(project.root, NAME, "1.2")
     return project
@@ -167,8 +174,9 @@ def test_reviewer_is_started_on_an_item_added_after_a_pass(project: Workspace) -
     assert "already has the review it needs" in delegate(project, assets.REVIEWER, NAME).reason
     project.replace(
         TASKS_FILE,
-        "  - Criteria: fifty at most\n",
-        "  - Criteria: fifty at most\n- [ ] 1.2 Name it\n  - Verify: a test\n  - Criteria: named\n",
+        "  - **Verify:** a test\n",
+        "  - **Verify:** a test\n- [ ] 1.2 Name it\n  - **Build:** planner\n"
+        "  - **Criteria:** named\n  - **Verify:** a test\n",
     )
     assert "items still to build (1.2)" in delegate(project, assets.REVIEWER, NAME).reason
     lifecycle.tick(project.root, NAME, "1.2")
@@ -179,8 +187,8 @@ def test_reviewer_verdict_on_an_added_item_covers_just_it(project: Workspace) ->
     passed_then_added(project)
     assert stop(project, Role.REVIEWER, "CHANGE: add-limit\nVERDICT: pass: named well").allow
     text = project.read(TASKS_FILE)
-    assert "- (review) 2026-01-15 pass covers 1.1 by wm-reviewer: fine\n" in text
-    assert text.endswith("- (review) 2026-01-15 pass covers 1.2 by wm-reviewer: named well\n")
+    assert "- 2026-01-15 (review) pass covers 1.1 by wm-reviewer: fine\n" in text
+    assert text.endswith("- 2026-01-15 (review) pass covers 1.2 by wm-reviewer: named well\n")
     assert project.change_state().applied
 
 
@@ -224,7 +232,7 @@ def test_scenario_implementer_writes_a_note_by_hand(accepted: Workspace) -> None
         accepted,
         TASKS_FILE,
         "fifty-one matches\n",
-        "fifty-one matches\n  - (note) 2026-01-15 by wm-implementer: the cap sits after sorting\n",
+        "fifty-one matches\n  - 2026-01-15 (note) by wm-implementer: the cap sits after sorting\n",
         Role.IMPLEMENTER,
     )
     assert not decision.allow
@@ -266,12 +274,13 @@ def atlas(tmp_path: Path) -> Workspace:
     suite.change(
         tasks=HEAD
         + (
-            "- [ ] 1.1 Add the endpoint\n"
-            "  - Verify: a test\n"
-            "  - Criteria: fifty at most\n"
-            "  - Repo: api\n"
+            "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n"
+            "  - **Repo:** api\n"
+            "  - **Criteria:** fifty at most\n"
+            "  - **Verify:** a test\n"
         )
-        + "- [ ] 1.2 Show the list\n  - Verify: a test\n  - Criteria: fifty rows\n  - Repo: web\n",
+        + "- [ ] 1.2 Show the list\n  - **Build:** planner\n  - **Repo:** web\n"
+        + "  - **Criteria:** fifty rows\n  - **Verify:** a test\n",
         design=DESIGN,
     )
     lifecycle.accept(suite.root, NAME, DAY)
@@ -309,7 +318,8 @@ def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -
         accepted,
         TASKS_FILE,
         "\n## Log\n",
-        "- [ ] 1.3 Announce it\n  - Criteria: done\n  - Verify: a test\n\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n\n## Log\n",
     ).allow
     assert edit(accepted, "charter.md", content="# New\n").allow
     assert edit(accepted, "changes/add-order/proposal.md", content=proposal()).allow
@@ -321,27 +331,27 @@ def test_planner_may_draft_and_revise_the_changes_content(accepted: Workspace) -
         ("- [ ] 1.1", "- [x] 1.1", "adds the tick on item 1.1"),
         (
             "fifty-one matches\n",
-            "fifty-one matches\n  - (self-review) 2026-01-16: fine\n",
-            'adds "(self-review) 2026-01-16: fine" under item 1.1',
+            "fifty-one matches\n  - 2026-01-16 (self-review): fine\n",
+            'adds "2026-01-16 (self-review): fine" under item 1.1',
         ),
         (
             "fifty-one matches\n",
-            "fifty-one matches\n  - (review) 2026-01-16 pass: fine\n",
+            "fifty-one matches\n  - 2026-01-16 (review) pass: fine\n",
             "under item 1.1",
         ),
         (
             "1.2 Document the limit\n",
-            "1.2 Document the limit\n  - (blocked) 2026-01-16: waiting\n",
+            "1.2 Document the limit\n  - 2026-01-16 (blocked): waiting\n",
             "under item 1.2",
         ),
         (
             "1.2 Document the limit\n",
-            "1.2 Document the limit\n  - (gap) 2026-01-16: unclear\n",
+            "1.2 Document the limit\n  - 2026-01-16 (gap): unclear\n",
             "under item 1.2",
         ),
         (
             "## Log\n\n",
-            "## Log\n\n- (self-review) 2026-01-16: fine\n",
+            "## Log\n\n- 2026-01-16 (self-review): fine\n",
             "in the Log section",
         ),
     ],
@@ -372,7 +382,7 @@ def test_agent_edit_that_removes_or_changes_evidence_is_refused(accepted: Worksp
 
 def test_agent_may_not_write_the_acceptance_record(project: Workspace) -> None:
     project.change()
-    line = "- (accepted) 2026-01-15 fingerprint 0123456789abcdef items 1.1 1.2 by Sam Doe"
+    line = "- 2026-01-15 (accepted) fingerprint 0123456789abcdef items 1.1, 1.2 by Sam Doe"
     decision = edit(project, TASKS_FILE, content=TASKS + f"\n## Log\n\n{line}\n")
     assert not decision.allow
     assert f'adds "{line}" in the Log section' in decision.reason
@@ -384,7 +394,8 @@ def test_edit_that_keeps_existing_evidence_is_allowed(accepted: Workspace) -> No
         accepted,
         TASKS_FILE,
         "\n## Log\n",
-        "- [ ] 1.3 Announce it\n  - Criteria: done\n  - Verify: a test\n\n## Log\n",
+        "- [ ] 1.3 Announce it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        "  - **Verify:** a test\n\n## Log\n",
     ).allow
 
 
@@ -548,7 +559,7 @@ def test_implementer_blocked_writes_the_blocked_line(accepted: Workspace) -> Non
         accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: blocked - the index is down"
     )
     assert decision.allow
-    assert "  - (blocked) 2026-01-15 by wm-implementer: the index is down\n" in accepted.read(
+    assert "  - 2026-01-15 (blocked) by wm-implementer: the index is down\n" in accepted.read(
         TASKS_FILE
     )
     assert "- [ ] 1.1" in accepted.read(TASKS_FILE)
@@ -556,14 +567,14 @@ def test_implementer_blocked_writes_the_blocked_line(accepted: Workspace) -> Non
 
 def test_implementer_spec_gap_writes_the_spec_gap_line(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: spec-gap: empty query?")
-    assert "  - (gap) 2026-01-15 by wm-implementer: empty query?\n" in accepted.read(TASKS_FILE)
+    assert "  - 2026-01-15 (gap) by wm-implementer: empty query?\n" in accepted.read(TASKS_FILE)
     assert accepted.change_state().items[0].escalated is not None
 
 
 def test_implementer_partial_leaves_a_note_and_the_item_unticked(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: partial: the test is missing")
     text = accepted.read(TASKS_FILE)
-    assert "  - (note) 2026-01-15 by wm-implementer: partial: the test is missing\n" in text
+    assert "  - 2026-01-15 (note) by wm-implementer: partial: the test is missing\n" in text
     assert "- [ ] 1.1" in text
     assert accepted.change_state().next_step.item == "1.1"
 
@@ -578,8 +589,8 @@ def test_reviewer_verdict_is_written_from_its_own_words(project: Workspace) -> N
     )
     assert decision.allow
     assert project.read(TASKS_FILE).endswith(
-        "- (review) 2026-01-15 pass covers 1.1 by wm-reviewer: boundary covered at 50 and 51\n"
-        "  - suggestion `docs/search.md`: say the limit\n"
+        "- 2026-01-15 (review) pass covers 1.1 by wm-reviewer: boundary covered at 50 and 51\n"
+        "  - [suggestion] `docs/search.md`: say the limit\n"
     )
     assert project.change_state().applied
 
@@ -593,8 +604,8 @@ def test_reviewer_changes_verdict_names_the_items_to_rebuild(project: Workspace)
         "CHANGE: add-limit\nVERDICT: changes 1.1: off by one at 50",
     )
     text = project.read(TASKS_FILE)
-    assert "- (review) 2026-01-15 changes 1.1 covers 1.1 by wm-reviewer: off by one at 50" in text
-    assert "  - critical `src/search.py:12`: fifty-one come back" in text
+    assert "- 2026-01-15 (review) changes 1.1; covers 1.1 by wm-reviewer: off by one at 50" in text
+    assert "  - [critical] `src/search.py:12`: fifty-one come back" in text
     assert project.change_state().review.reopen == ("1.1",)
 
 
@@ -700,7 +711,7 @@ def test_reviewer_in_the_background(project: Workspace) -> None:
     )
     assert decision.allow
     assert (
-        "- (review) 2026-01-15 pass covers 1.1 by wm-reviewer: boundary covered at 50"
+        "- 2026-01-15 (review) pass covers 1.1 by wm-reviewer: boundary covered at 50"
         in project.read(TASKS_FILE)
     )
     assert project.change_state().applied
@@ -811,24 +822,24 @@ def test_scenario_agent_edits_the_goal(accepted: Workspace) -> None:
 
 
 def test_agent_may_not_edit_a_milestone_log(accepted: Workspace) -> None:
-    text = milestone("- add-limit: cap\n") + "\n## Log\n\n- (proposed) 2026-11-20 add-limit\n"
+    text = milestone("- add-limit: cap\n") + "\n## Log\n\n- 2026-11-20 (proposed) add-limit\n"
     accepted.write(MILESTONE_FILE_PATH, text)
-    decision = replace(accepted, MILESTONE_FILE_PATH, "- (proposed) 2026-11-20 add-limit\n", "")
+    decision = replace(accepted, MILESTONE_FILE_PATH, "- 2026-11-20 (proposed) add-limit\n", "")
     assert not decision.allow
     assert "milestone's Log" in decision.reason
 
 
 EXPLORATION_PATH = "explorations/result-paging.md"
 EXPLORATION = (
-    "# Result paging\n\n- Status: open\n\n## Context\n\n## Questions\n\n- Cursor?\n\n"
+    "# Result paging\n\n- **Status:** open\n\n## Context\n\n## Questions\n\n- Cursor?\n\n"
     "## Approaches\n\n## Conclusion\n\n## Related\n"
 )
 
 
 def test_scenario_agent_writes_led_to_by_hand(accepted: Workspace) -> None:
     accepted.write(EXPLORATION_PATH, EXPLORATION)
-    led_to = "- Status: led-to [add-search-limit](../changes/add-search-limit/proposal.md)"
-    decision = replace(accepted, EXPLORATION_PATH, "- Status: open", led_to)
+    led_to = "- **Status:** led-to [add-search-limit](../changes/add-search-limit/proposal.md)"
+    decision = replace(accepted, EXPLORATION_PATH, "- **Status:** open", led_to)
     assert not decision.allow
     assert "--from" in decision.reason
     assert "wm exploration drop" in decision.reason
@@ -843,19 +854,26 @@ def test_scenario_agent_edits_the_questions(accepted: Workspace) -> None:
 
 def test_agent_may_not_remove_an_exploration_status(accepted: Workspace) -> None:
     accepted.write(EXPLORATION_PATH, EXPLORATION)
-    assert not replace(accepted, EXPLORATION_PATH, "- Status: open\n\n", "").allow
+    assert not replace(accepted, EXPLORATION_PATH, "- **Status:** open\n\n", "").allow
+
+
+def test_bold_exploration_status_is_guarded(accepted: Workspace) -> None:
+    for status in ("- **Status:** open", "- **Status:** open"):
+        accepted.write(EXPLORATION_PATH, EXPLORATION.replace("- **Status:** open", status))
+        assert not replace(accepted, EXPLORATION_PATH, f"{status}\n\n", "").allow
+        assert not replace(accepted, EXPLORATION_PATH, status, "- **Status:** dropped").allow
 
 
 def test_archived_exploration_status_is_not_guarded(accepted: Workspace) -> None:
     path = "explorations/archive/2026-11-01-result-paging.md"
     accepted.write(path, EXPLORATION)
-    assert replace(accepted, path, "- Status: open", "- Status: dropped").allow
+    assert replace(accepted, path, "- **Status:** open", "- **Status:** dropped").allow
 
 
 RESOURCE_FILE = "resources/nightly-sync.md"
 NIGHTLY = (
-    "# Nightly sync\n\n- Kind: platform\n- Serves: none\n- Status: active\n"
-    "- Verified: 2026-11-17\n\n## What it is\n\nA scheduled job.\n\n## Access\n\nNone.\n\n"
+    "# Nightly sync\n\n- **Kind:** platform\n- **Serves:** none\n- **Status:** active\n"
+    "- **Verified:** 2026-11-17\n\n## What it is\n\nA scheduled job.\n\n## Access\n\nNone.\n\n"
     "## Interface\n\nNone.\n\n## Data\n\nNone.\n\n"
     "## Configuration\n\n### prod\n\nRuns at 05:00.\n\n## Verification\n\nNone.\n"
 )

@@ -63,12 +63,12 @@ def test_closing_moves_the_milestone_to_the_dated_archive(project: Workspace) ->
     assert closed.startswith(
         milestone_text(f"- [x] [Limit](../../../{ARCHIVED_CHANGE}/proposal.md)\n")
     )
-    assert closed.endswith("- (dropped) 2026-02-01 add-paging by Sam Doe: paging can wait\n")
+    assert closed.endswith("- 2026-02-01 (dropped) add-paging by Sam Doe: paging can wait\n")
 
 
 def exploration(status: str, milestone_link: str = f"../milestones/{NAME}/milestone.md") -> str:
     return (
-        f"# Speed\n\n- Status: {status}\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        f"# Speed\n\n- **Status:** {status}\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
         f"## Conclusion\n\n[Faster search]({milestone_link})\n\n## Related\n"
     )
 

@@ -17,8 +17,11 @@ from waymark.record.artifacts.changes import (
     Change,
 )
 from waymark.record.artifacts.charter import CHARTER_FILE
+from waymark.record.artifacts.tasks import DELEGATE, PLANNER
 from waymark.record.machine.branches import Branches
 from waymark.record.machine.project import RECORD_DIR
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.record import SPECS, Record
 from waymark.record.state import AcceptanceState, ChangeState, StepKind
 from waymark.record.terms import Layout, ReviewLevel
@@ -148,7 +151,7 @@ CHECKLISTS: dict[StepKind, tuple[Check, ...]] = {
             ("missing-section", "open-questions-format"),
         ),
         Check("The design says how, not what, and doesn't repeat the deltas."),
-        Check('"Decided by: human" only where the human made the call.'),
+        Check(f'"{label_line(labels.DECIDED_BY, "human")}" only where the human made the call.'),
     ),
     StepKind.TASKS: (
         Check("Every item has a Criteria line and a Verify line.", ("item-incomplete",)),
@@ -203,9 +206,12 @@ def _tasks_template(record: Record) -> str:
     text = templates.render(templates.TASKS)
     if record.layout is Layout.ATLAS:
         repos = " | ".join(sorted(record.config.repo_names)) if record.config else ""
-        text = text.replace(
-            "  - Verify: <how to check it>\n",
-            f"  - Verify: <how to check it>\n  - Repo: <{repos or 'repo'}>\n",
+        placeholder = f"<{repos or 'repo'}>"
+        repo = f"  {label_line(labels.REPO, placeholder)}"
+        lines = text.split("\n")
+        text = "\n".join(
+            f"{line}\n{repo}" if line.startswith(f"  {label_line(labels.BUILD)}") else line
+            for line in lines
         )
     return text
 
@@ -220,13 +226,16 @@ def _drafting(
     if step is StepKind.PROPOSE:
         outputs = [_output(record, f"{folder}/{PROPOSAL_FILE}", None)]
         guidance = [
-            "Fill in every section of the proposal; leave the '- Owner:' line as it is.",
-            'Under Impact, write a "- Specs:" line naming each spec with a delta in backticks, '
-            'or "- Specs: none"; a "- User-visible:" line; and a "- Code:" line.',
+            "Fill in every section of the proposal; leave the "
+            f"'{label_line(labels.OWNER)}' line as it is.",
+            f'Under Impact, write a "{label_line(labels.SPECS)}" line naming each spec with a '
+            f'delta in backticks, or "{label_line(labels.SPECS, "none")}"; a '
+            f'"{label_line(labels.USER_VISIBLE)}" line; and a "{label_line(labels.CODE)}" line.',
             "Don't write records such as (accepted), a Log section or the Outcome section; wm "
             "writes the records in the task list's Log, and the outcome comes at archive.",
             f"The change is reviewed once, as a whole, at the project's default level ({default}) "
-            'unless a "- Review: self|independent|none" line under the Owner line says otherwise. '
+            f'unless a "{label_line(labels.REVIEW, "self|independent|none")}" line under the Owner '
+            "line says otherwise. "
             "Suggest independent when " + "; or ".join(_RISK_SIGNALS) + ".",
         ]
         if change.short_path:
@@ -239,8 +248,10 @@ def _drafting(
         guidance = [
             "Write one delta file per spec the change touches, named after the spec.",
             "A modified requirement is written out in full under its existing heading; "
-            "a removed one gives a reason; a rename is a '- From: <old name>' line and a "
-            "'- To: <new name>' line under '## RENAMED Requirements', and keeps the text.",
+            "a removed one gives a reason; a rename is a "
+            f"'{label_line(labels.FROM, '<old name>')}' line and a "
+            f"'{label_line(labels.TO, '<new name>')}' line under '## RENAMED Requirements', "
+            "and keeps the text.",
             "A delta that creates a spec needs a Purpose section.",
             "Every requirement states what the system SHALL do and has at least one scenario.",
             "Requirements describe what the system does, as a user or another program sees it. "
@@ -265,11 +276,13 @@ def _drafting(
     guidance = [
         "Give every item criteria that can be checked, and say how to verify it.",
         "Number items by section and never renumber; append new items at the end.",
-        "Criteria and Verify may each be a nested list under '- Criteria:' or '- Verify:', "
+        f"Criteria and Verify may each be a nested list under '{label_line(labels.CRITERIA)}' "
+        f"or '{label_line(labels.VERIFY)}', "
         "one criterion or one verification step per bullet.",
-        "Add a '- Build: delegate' line under an item only when a fresh implementer should build "
-        "it: a large item, one built in parallel, or one worth a cold check that the record is "
-        "enough.",
+        f"Give every item a '{label_line(labels.BUILD)}' line, first among its lines: "
+        f"'{PLANNER}' when the planner builds it, or '{DELEGATE}' when a fresh implementer should "
+        "build it: a large item, one built in parallel, or one worth a cold check that the record "
+        "is enough.",
         "Don't tick items or write records; wm writes those.",
         *SIZING_RULES,
     ]
@@ -292,7 +305,7 @@ def _working(  # noqa: PLR0911 - one return per step
     number = item or "<item>"
     if step is StepKind.APPLY:
         built = change.tasks.item(item) if change.tasks and item else None
-        if built is not None and built.delegate:
+        if built is not None and built.build == DELEGATE:
             guidance = [
                 f"Start an implementer for item {number} with the change and item and nothing "
                 "else.",

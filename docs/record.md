@@ -38,11 +38,13 @@ removes one, and `wm check` doesn't read them.
 
 ## Two kinds of line
 
-- **What people and agents write** is sections of prose and `- Label:` lines,
-  such as `- Owner: Sam Doe` or `- Criteria: at most fifty results`.
+- **What people and agents write** is sections of prose and label lines, the
+  label in bold with the colon inside, such as `- **Owner:** Sam Doe` or
+  `- **Criteria:** at most fifty results`. `wm check` reports a label written
+  plain or with the colon outside, and `wm check --fix` makes it bold.
 - **What `wm` writes** is a dated record of one shape,
-  `(kind) YYYY-MM-DD [<args>] [by <who>]: <text>`, such as
-  `(blocked) 2026-01-16 by wm-implementer: the index service is down`. Only `wm`
+  `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, such as
+  `2026-01-16 (blocked) by wm-implementer: the index service is down`. Only `wm`
   writes records, and none is ever edited or removed. See [Records](#records).
 
 Every template carries a short good and bad example in a comment. Comments are
@@ -58,7 +60,7 @@ values and keep the keys.
 |---|---|
 | `wm_version` | The exact wm version the project uses. Any version can read the record; only this one may write it. |
 | `record_format` | The record's format, now `1`. Never edit it by hand. A record in another format is refused, with the reason to install the `wm` version that wrote it. |
-| `default_review` | `self`, `independent` or `none`: a change's review level when its proposal has no `- Review:` line. |
+| `default_review` | `self`, `independent` or `none`: a change's review level when its proposal has no `- **Review:**` line. |
 | `agent_tools` | Which agent tools get skills, agents and hooks, such as `["claude-code"]`. |
 | `commit_scopes` | Optional. The scopes a conventional commit may use; the commit hook refuses any other. |
 | `[atlas.repos.<name>]` | In an atlas, one table per code repo, with a relative `path` hint. |
@@ -77,7 +79,7 @@ and its Rules go into every context pack and every step's instructions.
 | `## Goals` | A numbered list, `1. <goal>`, counted from 1, so a change can cite a goal by number. |
 | `## Non-goals` | What it leaves out that someone might expect. |
 | `## Constraints` | A numbered list: platforms, dependencies, budgets, what must never happen. |
-| `## Glossary` | One term per line: `- **<term>**: <meaning>`. |
+| `## Glossary` | One term per line: `- **<term>:** <meaning>`, the colon inside the bold. |
 | `## Context` | Where things live, how to build and test, who owns what. |
 | `## Rules` | A numbered list, `1. <rule>`, of the project's own rules. Every agent gets the whole list at every step, under "Project rules". May be empty. |
 
@@ -95,7 +97,7 @@ bullet under Rules is a `numbered-list-format` error.
 
 ## Glossary
 
-- **Record**: everything Waymark keeps in waymark/.
+- **Record:** everything Waymark keeps in waymark/.
 ```
 
 ## Spec: `specs/<area>.md`
@@ -107,7 +109,7 @@ a change adds a delta for a new area.
 
 | Part | What it holds |
 |---|---|
-| `# <Title>` | The spec's name. In an atlas, an optional `Repos: api, web` line follows. |
+| `# <Title>` | The spec's name. In an atlas, an optional `**Repos:** api, web` line follows. |
 | `## Purpose` | What the area is for. |
 | `## Background` | Optional. Facts about the area that aren't requirements and can't be found in the code. It changes only through a delta. |
 | `## Requirements` | Every requirement, each under `### Requirement: <name>`. The name is the key, matched ignoring case and spacing. |
@@ -139,27 +141,27 @@ except the Outcome.
 
 | Part | What it holds |
 |---|---|
-| Facts under the title | `- Owner: <name>` (from git), and optionally `- Milestone: <name>`, `- After: <change>`, `- Review: self\|independent\|none` and `- Path: short`. |
+| Facts under the title | `- **Owner:** <name>` (from git), and optionally `- **Milestone:** <name>`, `- **After:** <change>`, `- **Review:** self\|independent\|none` and `- **Path:** short`. |
 | `## Why` | The problem and why now, not the solution. |
 | `## What changes` | What will be different once the change is archived. |
 | `## Non-goals` | What a reader might expect and won't get. |
-| `## Impact` | Three lines, each with text or nested bullets: `- Specs:`, `- User-visible:`, `- Code:`. |
-| `## Outcome` | Written by `wm archive`: `- Built: <text>` and `- Differs: <text>` (`none` when nothing differs). |
+| `## Impact` | Three lines, each with text or nested bullets: `- **Specs:**`, `- **User-visible:**`, `- **Code:**`. |
+| `## Outcome` | Written by `wm archive`: `- **Built:** <text>` and `- **Differs:** <text>` (`none` when nothing differs). |
 
-- **`- Specs:`** names each spec the change has a delta for, in backticks, such
-  as ``- Specs: `search` (modified)``, or says `- Specs: none`, the only way to
+- **`- **Specs:**`** names each spec the change has a delta for, in backticks, such
+  as ``- **Specs:** `search` (modified)``, or says `- **Specs:** none`, the only way to
   skip the specs step. A spec named without a delta sends the next step back to
   the specs; a delta whose spec isn't named is reported on the proposal.
-- **`- User-visible:`** lists the commands, output, files and formats users will
+- **`- **User-visible:**`** lists the commands, output, files and formats users will
   see change, for the changelog.
-- **`- Code:`** names the parts of the code it touches, and in an atlas the repos.
-- **`- Review: independent`** is for a change that modifies or removes an existing
+- **`- **Code:**`** names the parts of the code it touches, and in an atlas the repos.
+- **`- **Review:** independent`** is for a change that modifies or removes an existing
   requirement, or touches security, data integrity or money; `wm check` warns
   when such a change is reviewed below independent.
 
 **Checks:** `missing-owner`, `invalid-path`, `invalid-review-level`,
 `impact-format`, `impact-mismatch`, `old-layout`, `short-path-review`, `empty-section`.
-For an `- After:` line in an active change: `unknown-after` (no active or archived
+For an `- **After:**` line in an active change: `unknown-after` (no active or archived
 change has that name), `after-self`, `after-cycle` (the lines lead back to the
 change), all errors, and the warning `after-merged` (the change it comes after is
 archived or merged, so rebase onto the default branch and take the line off). See
@@ -173,13 +175,13 @@ the living spec, renames first.
 
 | Section | What goes in it |
 |---|---|
-| `# <Spec title>` | The spec it edits; a `Repos:` line may follow in an atlas. |
+| `# <Spec title>` | The spec it edits; a `**Repos:**` line may follow in an atlas. |
 | `## Purpose` | Only when the delta creates the spec, or changes what it is for. |
 | `## Background` | Only when the change sets the spec's Background. At archive or sync it replaces the spec's Background whole, or is added before `## Requirements` when the spec has none. |
 | `## ADDED Requirements` | New requirements, each with its scenarios. |
 | `## MODIFIED Requirements` | Each written out in full as it should read afterwards, under its heading in the spec, or its new name when also renamed. |
-| `## REMOVED Requirements` | Each heading with a `Reason:` line. |
-| `## RENAMED Requirements` | A `- From: <old name>` line, then a `- To: <new name>` line. The requirement keeps its text. |
+| `## REMOVED Requirements` | Each heading with a `**Reason:**` line. |
+| `## RENAMED Requirements` | A `- **From:** <old name>` line, then a `- **To:** <new name>` line. The requirement keeps its text. |
 
 A delta that no longer applies, because another change was archived first, is a
 **conflict**; `/wm-update` rewrites it against the spec as it now reads. The
@@ -209,11 +211,11 @@ Each decision holds these lines:
 
 | Line | Meaning |
 |---|---|
-| `- Status: proposed\|decided` | Proposed until you settle it. |
-| `- Decided by: human\|planner` | Human only where you made the call. |
-| `- Options:` | At least two: bullets under it, or one line joined by "or" or ";". |
-| `- Choice:` | The one taken. |
-| `- Why:` | The reason. |
+| `- **Status:** proposed\|decided` | Proposed until you settle it. |
+| `- **Decided by:** human\|planner` | Human only where you made the call. |
+| `- **Options:**` | At least two, one option per bullet under it; text on the line itself is reported. |
+| `- **Choice:**` | The one taken. |
+| `- **Why:**` | The reason. |
 
 **Checks:** `decision-incomplete`, `decision-format`, `decision-options`,
 `missing-section`, `open-questions-format`, `short-path-design`.
@@ -227,20 +229,20 @@ syncs and reviews.
 - **Sections** are numbered, `## 1. <title>`.
 - **Items** are `- [ ] 1.1 <title>`, numbered by section and never renumbered;
   new items are appended. Only `wm tick` ticks one.
-- **Lines under an item:**
+- **Lines under an item**, in this order, before any record:
 
   | Line | Meaning |
   |---|---|
-  | `- Criteria:` | What must be true. Several go as a nested list, one per bullet. Required. |
-  | `- Verify:` | How to check it. May be a nested list too. Required. |
-  | `- Repo: <name>` | In an atlas, the code repo it works in. Required there. |
-  | `- Build: delegate` | Send it to a fresh implementer agent. The only value. |
+  | `- **Build:** planner` or `- **Build:** delegate` | Who builds it: the planner, or a fresh implementer agent. Required. |
+  | `- **Repo:** <name>` | In an atlas, the code repo it works in. Required there. |
+  | `- **Criteria:**` | What must be true. Several go as a nested list, one per bullet. Required. |
+  | `- **Verify:**` | How to check it. May be a nested list too. Required. |
 
 - **Records under an item**, written by `wm`: `(blocked)`, `(gap)`, `(note)`,
   `(reopened)`, `(resolved)`.
 - **`## Log`**, always last, written by `wm`: `(accepted)`, `(synced)`,
   `(self-review)`, `(review)`, `(resolved)`, `(override)`. A review's findings sit
-  under it as ``- <severity> `<place>`: <text>``.
+  under it as ``- [<severity>] `<place>`: <text>``.
 
 A finding's place is a path relative to the project's top folder, such as
 `src/limit.py:12`, or `<repo>/<path>` for a code repo in an atlas. When
@@ -252,22 +254,24 @@ The acceptance names the items it covers: **adding** an item keeps it, while
 **changing** or removing an accepted item withdraws it.
 
 **Checks:** `item-incomplete`, `item-number`, `section-number`,
-`item-without-repo`, `unknown-build-tag`, `log-section-last`, `misplaced-record`,
+`item-order`, `item-without-repo`, `unknown-build-tag`, `log-section-last`,
+`misplaced-record`, `malformed-record`,
 `malformed-finding`, `changes-without-items`.
 
 ```markdown
 - [x] 1.1 Cap the result count
-  - Criteria:
+  - **Build:** planner
+  - **Criteria:**
     - at most fifty results come back
     - they are the best matches
-  - Verify: a test with fifty-one matches
-  - (note) 2026-01-15 by Sam Doe: the cap sits after sorting
+  - **Verify:** a test with fifty-one matches
+  - 2026-01-15 (note) by Sam Doe: the cap sits after sorting
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
-- (self-review) 2026-01-16 covers 1.1 by Sam Doe: every criterion holds
-  - suggestion `docs/search.md`: name the limit in the help text
+- 2026-01-15 (accepted) fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
+- 2026-01-16 (self-review) covers 1.1 by Sam Doe: every criterion holds
+  - [suggestion] `docs/search.md`: name the limit in the help text
 ```
 
 ## Milestone
@@ -294,18 +298,18 @@ are allowed.
 | Command | What it does |
 |---|---|
 | `wm roadmap add <milestone> <change> "<description>"` | Adds `- <change>: <description>` at the end of the roadmap. Refused for a name already on it. |
-| `wm roadmap drop <milestone> <change> --reason "<why>"` | Removes the change's line. Refused for an active change whose proposal names the milestone: take its `- Milestone:` line off first. |
+| `wm roadmap drop <milestone> <change> --reason "<why>"` | Removes the change's line. Refused for an active change whose proposal names the milestone: take its `- **Milestone:**` line off first. |
 | `wm roadmap move <milestone> <change> --after <change>` | Moves the line right after another's, or to the top with `--first`. |
 
 Each change to the plan writes a record in the milestone's `## Log`, which `wm`
 creates at the end of the file the first time:
 
 ```
-(added) 2026-11-20 add-cache by Ada: cache hot queries
-(moved) 2026-11-20 add-cache first by Ada
-(proposed) 2026-11-21 add-limit by Ada
-(dropped) 2026-11-21 add-cache by Ada: the index is fast enough
-(archived) 2026-11-22 add-limit by Ada
+2026-11-20 (added) add-cache by Ada: cache hot queries
+2026-11-20 (moved) add-cache first by Ada
+2026-11-21 (proposed) add-limit by Ada
+2026-11-21 (dropped) add-cache by Ada: the index is fast enough
+2026-11-22 (archived) add-limit by Ada
 ```
 
 `(proposed)` comes from `wm new change --milestone`, and `(archived)` from
@@ -316,12 +320,12 @@ roadmap before its Log began have no records.
 every line on its roadmap links to an archived change, and rewrites links to
 it. A planned line keeps it open until it is proposed, or dropped with a reason.
 
-A change belongs to a milestone when its proposal has a `- Milestone: <name>`
+A change belongs to a milestone when its proposal has a `- **Milestone:** <name>`
 line, naming the milestone's folder, and the milestone's roadmap links the
 proposal. A change without the line belongs to no milestone.
 
 - **Creating one:** `wm new change add-cache --milestone faster-search` writes
-  `- Milestone: faster-search` in the proposal. In the roadmap, it turns the
+  `- **Milestone:** faster-search` in the proposal. In the roadmap, it turns the
   plain line `- add-cache: cache hot queries` into a link to
   `../../changes/add-cache/proposal.md` that keeps the text after the name, or
   adds a linked line at the end when there is no such line. A milestone that
@@ -345,7 +349,7 @@ changes aren't checked against roadmaps.
 Created by `wm new exploration <name>`, written by `/wm-explore` when you pick
 that offer.
 
-- **`- Status:`** under the title says where it stands. Only this line decides it,
+- **`- **Status:**`** under the title says where it stands. Only this line decides it,
   and only `wm` writes it; the hooks refuse an agent's hand edit to it.
   - `open`: waiting to be decided or built. `wm new exploration` writes it.
   - `led-to <links>`: its findings went into a change or milestone.
@@ -393,10 +397,10 @@ one deployment, such as dev and prod, are `###` subsections inside its sections.
 
 | Line | What it holds |
 |---|---|
-| `- Kind:` | `service`, `platform`, `account`, `database`, `dataset` or `document`. |
-| `- Serves:` | The specs it serves, separated by commas, or `none`. |
-| `- Status:` | `active`, or `retired` once nothing uses it. |
-| `- Verified:` | The day its facts were last checked, written `YYYY-MM-DD`. |
+| `- **Kind:**` | `service`, `platform`, `account`, `database`, `dataset` or `document`. |
+| `- **Serves:**` | The specs it serves, separated by commas, or `none`. |
+| `- **Status:**` | `active`, or `retired` once nothing uses it. |
+| `- **Verified:**` | The day its facts were last checked, written `YYYY-MM-DD`. |
 
 | Section | What goes in it |
 |---|---|
@@ -413,14 +417,14 @@ All six sections are always there; one that doesn't apply holds `None.`.
   or outside one as tiny work, and an implementer may edit one while building
   its item. A reviewer edits nothing. A resource never goes through deltas.
 - **In a change:** a change that sets up or alters something outside the repo
-  gets an item to create or update its resource and its `- Verified:` date.
+  gets an item to create or update its resource and its `- **Verified:**` date.
 - **For agents:** the explore context pack lists every resource. The implement
   and review packs carry each active resource that serves a spec the change has
   a delta for: its What it is and Access sections and the outline of the rest,
   which the agent reads with `wm show`. Retired resources are left out.
 
 **Checks:** `missing-line`, `missing-section`, `unknown-kind`, `unknown-status`,
-`invalid-date`, `unknown-spec` (a `- Serves:` name that isn't a spec).
+`invalid-date`, `unknown-spec` (a `- **Serves:**` name that isn't a spec).
 
 ## Records
 

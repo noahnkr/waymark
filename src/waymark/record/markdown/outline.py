@@ -1,25 +1,25 @@
 """Shared reading of an artifact's outline: its title, fact lines and named sections."""
 
-import re
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
+from waymark.record.markdown.labels import LabelForm, label_line, plain_label, read_label
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document, Section
-
-_FACT = re.compile(r"^([-*][ \t]+)?([A-Z][A-Za-z-]*):(?:[ \t]+(.*))?$")
 
 
 @dataclass(frozen=True)
 class Fact:
     """A ``Key: value`` line under an artifact's title, with or without a list bullet.
 
-    ``bullet`` says whether it was written as ``- Key: value``.
+    ``bullet`` says whether it was written with a list bullet, and ``form``
+    how its label was written.
     """
 
     value: str
     index: int
     bullet: bool = True
+    form: LabelForm = LabelForm.BOLD
 
 
 def require_title(doc: Document, problems: list[Problem]) -> str:
@@ -50,22 +50,22 @@ def parse_facts(
             continue
         if line.is_blank:
             continue
-        match = _FACT.match(line.text)
-        if match and match.group(2) in keys:
-            key = match.group(2)
+        label = read_label(line.text)
+        if label and label.name in keys:
+            key = label.name
             if key in facts:
                 problems.append(
                     Problem(
                         doc.path,
                         index + 1,
                         "duplicate-fact",
-                        f'"{key}:" appears twice. Keep one line.',
+                        f'"{label_line(key)}" appears twice. Keep one line.',
                     )
                 )
             else:
-                facts[key] = Fact((match.group(3) or "").strip(), index, bool(match.group(1)))
-        elif not prose:
-            allowed = ", ".join(f'"{key}:"' for key in sorted(keys)) or "nothing"
+                facts[key] = Fact(label.value, index, label.bullet, label.form)
+        elif not prose and (plain_label(line.text) is None):
+            allowed = ", ".join(f'"{label_line(key)}"' for key in sorted(keys)) or "nothing"
             problems.append(
                 Problem(
                     doc.path,

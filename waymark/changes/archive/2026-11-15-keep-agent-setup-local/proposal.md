@@ -1,6 +1,6 @@
 # Keep agent setup local
 
-- Owner: Noah Roberts
+- **Owner:** Noah Roberts
 
 ## Why
 
@@ -30,7 +30,7 @@ Waymark's own repository now keeps this setup out of git, so this is the first t
 
 - New spec: `setup` (setting up a machine, ignoring its files, the git hooks, and the doctor check).
 - Behavior change for every user, for the changelog. After cloning, run `wm init`. Agent tool files and the git hooks are now per machine and ignored. In a 0.1.0 project, `wm update` adds the ignore block, and `wm doctor` lists the tracked files to untrack.
-- Code: `services/setup.py`, `services/integration.py`, `services/githooks.py`, `services/doctor.py`, the adapter interface and the Claude Code adapter, and a new `.gitignore` writer in `record/`.
+- **Code:** `services/setup.py`, `services/integration.py`, `services/githooks.py`, `services/doctor.py`, the adapter interface and the Claude Code adapter, and a new `.gitignore` writer in `record/`.
 - Docs: getting started, the multi-repo guide, the smoke test, and the regenerated CLI reference if any help text changes.
 
 ## Outcome

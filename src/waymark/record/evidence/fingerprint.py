@@ -24,7 +24,7 @@ from collections.abc import Callable, Mapping, Sequence
 
 from waymark.record.artifacts.changes import Change
 from waymark.record.artifacts.specs import Spec
-from waymark.record.artifacts.tasks import DELEGATE, Item
+from waymark.record.artifacts.tasks import Item
 from waymark.record.terms import ReviewLevel
 from waymark.record.writing.layout import standard_layout
 
@@ -131,8 +131,8 @@ def _definition(item: Item) -> str:
         item.verify if item.verify is not None else _ABSENT,
         item.repo if item.repo is not None else _ABSENT,
     ]
-    if item.delegate:
-        definition.append(DELEGATE)
+    if item.build is not None:
+        definition.append(item.build)
     return "\x00".join(definition)
 
 

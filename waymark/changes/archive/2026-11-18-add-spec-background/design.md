@@ -15,25 +15,25 @@
 ## Decisions
 
 ### Decision: How a Background changes
-- Status: decided
-- Decided by: human
-- Options: through a delta, replaced whole like the Purpose; edited by hand like a resource, with a hole in the spec guard
-- Choice: through a delta
-- Why: a Background changes rarely, and a spec stays whole behind one gate; the delta already carries the Purpose the same way
+- **Status:** decided
+- **Decided by:** human
+- **Options:** through a delta, replaced whole like the Purpose; edited by hand like a resource, with a hole in the spec guard
+- **Choice:** through a delta
+- **Why:** a Background changes rarely, and a spec stays whole behind one gate; the delta already carries the Purpose the same way
 
 ### Decision: Where a Background sits
-- Status: decided
-- Decided by: planner
-- Options: after the Purpose, before the Requirements; at the end of the spec
-- Choice: after the Purpose
-- Why: it is read before the requirements it explains, and it keeps the requirements the last section, where added requirements are appended
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** after the Purpose, before the Requirements; at the end of the spec
+- **Choice:** after the Purpose
+- **Why:** it is read before the requirements it explains, and it keeps the requirements the last section, where added requirements are appended
 
 ### Decision: Which Background the packs carry
-- Status: decided
-- Decided by: planner
-- Options: the delta's when it has one, otherwise the spec's; always the living spec's
-- Choice: the delta's when it has one
-- Why: the agents build toward the spec as it will read once the change is archived, as they do for modified requirements
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** the delta's when it has one, otherwise the spec's; always the living spec's
+- **Choice:** the delta's when it has one
+- **Why:** the agents build toward the spec as it will read once the change is archived, as they do for modified requirements
 
 ## Open questions
 

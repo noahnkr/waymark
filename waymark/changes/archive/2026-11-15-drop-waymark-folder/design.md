@@ -66,24 +66,24 @@
 ## Decisions
 
 ### Decision: How a pointer is told from a record's settings
-- Options: a top-level `atlas = "<name>"` string, where a record's `atlas` is a table; a `[pointer]` table; a separate file name in `waymark/`.
-- Choice: a `[pointer]` table.
-- Why: It says what the file is on sight, and a record's settings can never contain it by accident. Telling them apart by whether `atlas` is a string or a table would be easy to get wrong when editing by hand. A second file name in `waymark/` would bring back two spellings of the same thing.
+- **Options:** a top-level `atlas = "<name>"` string, where a record's `atlas` is a table; a `[pointer]` table; a separate file name in `waymark/`.
+- **Choice:** a `[pointer]` table.
+- **Why:** It says what the file is on sight, and a record's settings can never contain it by accident. Telling them apart by whether `atlas` is a string or a table would be easy to get wrong when editing by hand. A second file name in `waymark/` would bring back two spellings of the same thing.
 
 ### Decision: Where commit messages are checked
-- Options: the agent's command hook; `wm check --commits` in CI; pull request titles in CI.
-- Choice: the agent's command hook only, as the human chose.
-- Why: Agents make nearly every commit in a Waymark project. The hook refuses a bad message before the commit exists, so no history needs rewriting. The CI checks stay possible later.
+- **Options:** the agent's command hook; `wm check --commits` in CI; pull request titles in CI.
+- **Choice:** the agent's command hook only, as the human chose.
+- **Why:** Agents make nearly every commit in a Waymark project. The hook refuses a bad message before the commit exists, so no history needs rewriting. The CI checks stay possible later.
 
 ### Decision: What to do with messages the hook can't read
-- Options: refuse; allow.
-- Choice: allow.
-- Why: Refusing an editor commit or a message built from a variable would block legitimate commands to enforce a convention. That would go against the charter's "guard rails, not security".
+- **Options:** refuse; allow.
+- **Choice:** allow.
+- **Why:** Refusing an editor commit or a message built from a variable would block legitimate commands to enforce a convention. That would go against the charter's "guard rails, not security".
 
 ### Decision: No automatic cleanup of the 0.1.1 hooks
-- Options: a record format migration; a step in `setup_machine`, which `wm init` and `wm update` both run; no cleanup, with the commands in the changelog.
-- Choice: no cleanup.
-- Why: 0.1.1 set up one clone, Waymark's own, and it was cleaned by hand. Code that undoes a one-release setup would stay in `wm` for no user. The changelog tells anyone else what to run.
+- **Options:** a record format migration; a step in `setup_machine`, which `wm init` and `wm update` both run; no cleanup, with the commands in the changelog.
+- **Choice:** no cleanup.
+- **Why:** 0.1.1 set up one clone, Waymark's own, and it was cleaned by hand. Code that undoes a one-release setup would stay in `wm` for no user. The changelog tells anyone else what to run.
 
 ## Risks and trade-offs
 

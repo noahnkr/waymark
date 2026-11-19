@@ -18,6 +18,7 @@ from waymark.record.machine import git
 from waymark.record.machine.files import RecordFiles
 from waymark.record.machine.pointer import POINTER_FILE, is_pointer, parse_pointer
 from waymark.record.machine.project import RECORD_DIR
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.text import Document
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES, RESOURCES, Record
@@ -203,12 +204,11 @@ def create_change(  # noqa: PLR0913 - the change's facts, and the day for its mi
             "Every change has one owner. Pass --owner <name>, or set your name in git: "
             'git config user.name "<name>".'
         )
-    facts = (
-        f"- {OWNER}: {who}\n"
-        + (f"- {MILESTONE}: {milestone}\n" if milestone else "")
-        + (f"- {AFTER}: {after}\n" if after else "")
-        + (f"- {PATH}: {SHORT}\n" if short else "")
-    )
+    facts = "".join(
+        f"{label_line(key, value)}\n"
+        for key, value in ((OWNER, who), (MILESTONE, milestone), (AFTER, after))
+        if value
+    ) + (f"{label_line(PATH, SHORT)}\n" if short else "")
     text = templates.render(templates.PROPOSAL, title=templates.title_from_name(name), facts=facts)
     transaction = Transaction(record.files)
     transaction.write(f"{folder}/{PROPOSAL_FILE}", text)

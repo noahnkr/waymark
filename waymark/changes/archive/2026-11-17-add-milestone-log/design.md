@@ -26,53 +26,53 @@
 ## Decisions
 
 ### Decision: How hand edits are refused
-- Status: decided
-- Decided by: human
-- Options: hooks refuse agents' edits to roadmap lines and the Log, as evidence; the same plus `wm check` replaying the Log against the roadmap
-- Choice: hooks only, as evidence
-- Why: it matches how ticks and records in a task list are guarded, and a replay would need every existing roadmap to start from a Log that lists its lines
+- **Status:** decided
+- **Decided by:** human
+- **Options:** hooks refuse agents' edits to roadmap lines and the Log, as evidence; the same plus `wm check` replaying the Log against the roadmap
+- **Choice:** hooks only, as evidence
+- **Why:** it matches how ticks and records in a task list are guarded, and a replay would need every existing roadmap to start from a Log that lists its lines
 
 ### Decision: How `move` names the position
-- Status: decided
-- Decided by: human
-- Options: `--after <change>` or `--first`; a position number
-- Choice: `--after <change>` or `--first`
-- Why: names stay meaningful as other lines move, and the record reads as a sentence
+- **Status:** decided
+- **Decided by:** human
+- **Options:** `--after <change>` or `--first`; a position number
+- **Choice:** `--after <change>` or `--first`
+- **Why:** names stay meaningful as other lines move, and the record reads as a sentence
 
 ### Decision: Dropping an active member change
-- Status: decided
-- Decided by: human
-- Options: refuse it until its proposal no longer names the milestone; allow it and let `wm check` report the change
-- Choice: refuse it
-- Why: dropping it would leave a member the roadmap no longer lists; taking the `- Milestone:` line off the proposal first is a deliberate step that withdraws its acceptance
+- **Status:** decided
+- **Decided by:** human
+- **Options:** refuse it until its proposal no longer names the milestone; allow it and let `wm check` report the change
+- **Choice:** refuse it
+- **Why:** dropping it would leave a member the roadmap no longer lists; taking the `- Milestone:` line off the proposal first is a deliberate step that withdraws its acceptance
 
 ### Decision: Lines already on a roadmap
-- Status: decided
-- Decided by: human
-- Options: nothing written for them; backfill an `(added)` record for each on first use
-- Choice: nothing written
-- Why: the milestone's non-goals rule out reconstructing history, and a backfilled record would carry a date it didn't happen on
+- **Status:** decided
+- **Decided by:** human
+- **Options:** nothing written for them; backfill an `(added)` record for each on first use
+- **Choice:** nothing written
+- **Why:** the milestone's non-goals rule out reconstructing history, and a backfilled record would carry a date it didn't happen on
 
 ### Decision: The commands' shape
-- Status: decided
-- Decided by: planner
-- Options: `wm roadmap <add|drop|move> <milestone> <change>`; flags such as `wm roadmap --milestone <m> add <change>`
-- Choice: `wm roadmap <add|drop|move> <milestone> <change>`, with the description as a positional argument to `add`
-- Why: the same order as `wm accept <change>` and `wm tick <change> <item>`: what it acts on, then the detail
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** `wm roadmap <add|drop|move> <milestone> <change>`; flags such as `wm roadmap --milestone <m> add <change>`
+- **Choice:** `wm roadmap <add|drop|move> <milestone> <change>`, with the description as a positional argument to `add`
+- **Why:** the same order as `wm accept <change>` and `wm tick <change> <item>`: what it acts on, then the detail
 
 ### Decision: Records a change of plan writes
-- Status: decided
-- Decided by: planner
-- Options: `(proposed)` and `(archived)` only for membership, and `(added)` only from `wm roadmap add`; also `(added)` when `wm new change --milestone` appends a new line
-- Choice: one record per command: `wm new change --milestone` writes `(proposed)` whether it links a planned line or adds one
-- Why: one command, one record keeps the Log easy to read, and `(proposed)` already says the change joined the plan
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** `(proposed)` and `(archived)` only for membership, and `(added)` only from `wm roadmap add`; also `(added)` when `wm new change --milestone` appends a new line
+- **Choice:** one record per command: `wm new change --milestone` writes `(proposed)` whether it links a planned line or adds one
+- **Why:** one command, one record keeps the Log easy to read, and `(proposed)` already says the change joined the plan
 
 ### Decision: Where the Log's records are parsed
-- Status: decided
-- Decided by: planner
-- Options: in `record/milestones.py`, with the rest of the file; in `record/tasks.py`, which reads a change's Log
-- Choice: `record/milestones.py`, using `records.parse`
-- Why: the Log belongs to the milestone file, and only the record grammar is shared
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** in `record/milestones.py`, with the rest of the file; in `record/tasks.py`, which reads a change's Log
+- **Choice:** `record/milestones.py`, using `records.parse`
+- **Why:** the Log belongs to the milestone file, and only the record grammar is shared
 
 ## Open questions
 

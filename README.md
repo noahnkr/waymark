@@ -200,7 +200,7 @@ waymark/
 ```markdown
 # Add dark mode
 
-- Owner: Alex Example
+- **Owner:** Alex Example
 
 ## Why
 
@@ -218,14 +218,14 @@ Custom colors, or themes beyond light and dark.
 
 ## Impact
 
-- Specs: `appearance` (new)
-- User-visible: a dark theme, and a Theme choice in Settings
-- Code: the stylesheet and the settings page
+- **Specs:** `appearance` (new)
+- **User-visible:** a dark theme, and a Theme choice in Settings
+- **Code:** the stylesheet and the settings page
 
 ## Outcome
 
-- Built: A dark theme that follows the device, and a Theme choice in Settings.
-- Differs: none
+- **Built:** A dark theme that follows the device, and a Theme choice in Settings.
+- **Differs:** none
 ```
 
 </details>
@@ -250,13 +250,13 @@ stores light, dark or system.
 
 ### Decision: Default theme
 
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - follow the device's setting;
   - always start light.
-- Choice: follow the device's setting.
-- Why: people who run their device dark expect apps to match without asking.
+- **Choice:** follow the device's setting.
+- **Why:** people who run their device dark expect apps to match without asking.
 
 ## Open questions
 
@@ -306,21 +306,24 @@ setting until the person picks one.
 ## 1. Dark mode
 
 - [x] 1.1 Move the colors into theme variables
-  - Criteria: every color in the stylesheet comes from a variable with a light and a dark value
-  - Verify: a search of the stylesheet finds no colors written out
+  - **Build:** planner
+  - **Criteria:** every color in the stylesheet comes from a variable with a light and a dark value
+  - **Verify:** a search of the stylesheet finds no colors written out
 - [x] 1.2 Follow the device's setting
-  - Criteria: with no theme picked, the app matches the device's light or dark mode
-  - Verify: a test for the scenario "Device set to dark"
+  - **Build:** planner
+  - **Criteria:** with no theme picked, the app matches the device's light or dark mode
+  - **Verify:** a test for the scenario "Device set to dark"
 - [x] 1.3 Add the Theme choice to Settings
-  - Criteria:
+  - **Build:** planner
+  - **Criteria:**
     - Settings offers light, dark and system
     - the choice is kept between visits
-  - Verify: a test for the scenario "Theme picked in Settings"
+  - **Verify:** a test for the scenario "Theme picked in Settings"
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint 01204aef70272f6b items 1.1 1.2 1.3 by Alex Example
-- (self-review) 2026-01-15 covers 1.1 1.2 1.3 by Alex Example: every criterion holds, and both scenarios have a test
+- 2026-01-15 (accepted) fingerprint c6a1ef9b1c432c26 items 1.1, 1.2, 1.3 by Alex Example
+- 2026-01-15 (self-review) covers 1.1, 1.2, 1.3 by Alex Example: every criterion holds, and both scenarios have a test
 ```
 
 </details>

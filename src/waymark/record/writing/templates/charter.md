@@ -23,7 +23,7 @@ list, such as:
 ## Glossary
 
 <!-- The project's own terms, one per line, such as:
-- **Record**: everything Waymark keeps in waymark/. -->
+- **Record:** everything Waymark keeps in waymark/. -->
 
 ## Context
 

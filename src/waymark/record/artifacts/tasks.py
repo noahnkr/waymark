@@ -13,20 +13,26 @@ from dataclasses import dataclass, field
 
 from waymark.record.evidence import records
 from waymark.record.evidence.records import RecordKind
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document, Section
 from waymark.record.terms import ReviewSeverity, Verdict
 
 LOG_SECTION = "Log"
 DELEGATE = "delegate"
+PLANNER = "planner"
+BUILD_VALUES = (PLANNER, DELEGATE)
+RECORD = "record"
+"""How a record stands in an item's line order."""
 
 _SECTION = re.compile(r"^(\d+)\.\s+(\S.*)$")
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
 _LIST_LINE = re.compile(r"^(?:[-*+]|\d+[.)])(?:\s|$)")
 _FIELD = re.compile(r"^  [-*] (\S.*)$")
-_LABELED = re.compile(r"^(Criteria|Verify|Repo|Build):(?:\s+(.*))?$")
-BUILD = "Build"
-_RECORD_LINE = re.compile(r"^[-*] (\(.*)$")
+_ITEM_LABELS = (labels.CRITERIA, labels.VERIFY, labels.REPO, labels.BUILD)
+BUILD = labels.BUILD
+_RECORD_LINE = re.compile(r"^[-*] ((?:\d[\d-]* )?\(.*)$")
 _REVIEW_KINDS = (RecordKind.REVIEW, RecordKind.SELF_REVIEW, RecordKind.RESOLVED)
 
 
@@ -83,6 +89,13 @@ class Item:
     records: tuple[ReviewRecord, ...]
     index: int
     end: int
+    build: str | None = None
+    """Who builds the item, from its Build line: planner or delegate; None without a known
+    value."""
+    has_build_line: bool = False
+    """Whether the item has a Build line, whatever its value."""
+    line_order: tuple[str, ...] = ()
+    """The item's lines in the order written: each label's name, and ``record`` for a record."""
 
 
 @dataclass(frozen=True)
@@ -167,6 +180,7 @@ class _Draft:
     fields: dict[str, list[str]] = field(default_factory=dict)
     records: list[ReviewRecord] = field(default_factory=list)
     open_text: list[str] | None = None
+    order: list[str] = field(default_factory=list)
 
     def finish(self) -> Item:
         def single(label: str) -> str | None:
@@ -179,6 +193,9 @@ class _Draft:
             title=self.title,
             ticked=self.ticked,
             delegate=self.delegate,
+            build=build if (build := single(BUILD)) in BUILD_VALUES else None,
+            has_build_line=BUILD in self.fields,
+            line_order=tuple(self.order),
             criteria=single("Criteria"),
             verify=single("Verify"),
             repo=single("Repo"),
@@ -230,27 +247,33 @@ class _Parser:
             )
             return
         draft.records.append(_from_record(found, index))
+        draft.order.append(RECORD)
 
     def labeled(self, index: int, label: str, value: str) -> None:
         draft = self.draft
         assert draft is not None
+        draft.order.append(label)
         if label in draft.fields:
             self.problem(
-                index, "duplicate-field", f'"{label}:" appears twice under this item. Keep one.'
+                index,
+                "duplicate-field",
+                f'"{label_line(label)}" appears twice under this item. Keep one.',
             )
             return
         if label == BUILD:
             if draft.delegate:
                 self.problem(
-                    index, "repeated-tag", 'The item says "build" twice. Keep the "Build:" line.'
+                    index,
+                    "repeated-tag",
+                    f'The item says "build" twice. Keep the "{label_line(BUILD)}" line.',
                 )
             elif value == DELEGATE:
                 draft.delegate = True
-            else:
+            elif value not in BUILD_VALUES:
                 self.problem(
                     index,
                     "unknown-build-tag",
-                    f'"{value}" is not a build value. The only value is: {DELEGATE}.',
+                    f'"{value}" is not a build value. The values are: {PLANNER} and {DELEGATE}.',
                 )
             draft.fields[label] = [value]
             return
@@ -262,17 +285,19 @@ class _Parser:
         assert draft is not None
         draft.open_text = None
         draft.end = index + 1
-        labeled = _LABELED.match(text)
-        if labeled:
-            self.labeled(index, labeled.group(1), (labeled.group(2) or "").strip())
+        labeled = labels.read_label(text)
+        if labeled and not labeled.bullet and labeled.name in _ITEM_LABELS:
+            self.labeled(index, labeled.name, labeled.value)
         elif records.looks_like_record(text):
             self.item_record(index, text)
-        else:
+        elif labels.plain_label(f"- {text}") is None:
             self.problem(
                 index,
                 "unrecognized-item-line",
-                'A line under an item starts with "Criteria:", "Verify:", "Repo:" or "Build:", '
-                'or is a record that wm writes. Label this line, or write a note with "wm note".',
+                "A line under an item starts with "
+                + ", ".join(f'"{label_line(label)}"' for label in _ITEM_LABELS)
+                + ", or is a record that wm writes. Label this line, or write a note with "
+                '"wm note".',
             )
 
     def item_line(self, index: int, section: TaskSection | None, text: str) -> bool:
@@ -339,8 +364,9 @@ class _Parser:
             self.problem(
                 index,
                 "unrecognized-item-line",
-                'Lines under an item are a list indented by two spaces, such as "  - Criteria: '
-                '...". Fix the indentation, or label the line.',
+                "Lines under an item are a list indented by two spaces, such as "
+                f'"  {label_line(labels.CRITERIA, "...")}". Fix the indentation, or label the '
+                "line.",
             )
 
     def section(self, section: Section) -> TaskSection | None:
@@ -381,13 +407,17 @@ class _Parser:
 
     def check_fields(self) -> None:
         for item in self.items:
-            values = {"Criteria": item.criteria, "Verify": item.verify, "Repo": item.repo}
+            values = {
+                labels.CRITERIA: item.criteria,
+                labels.VERIFY: item.verify,
+                labels.REPO: item.repo,
+            }
             for label, value in values.items():
                 if value is not None and not value:
                     self.problem(
                         item.index,
                         "empty-field",
-                        f'"{label}:" under item {item.number} is empty. '
+                        f'"{label_line(label)}" under item {item.number} is empty. '
                         "Write it, or remove the line.",
                     )
 
@@ -413,7 +443,7 @@ class _Parser:
                 index,
                 "changes-without-items",
                 'A "changes" verdict names the items to rebuild: '
-                '"(review) YYYY-MM-DD changes 1.2 2.1 [by <who>]: <reasons>".',
+                '"YYYY-MM-DD (review) changes 1.2, 2.1 [by <who>]: <reasons>".',
             )
         self.log.append(_from_record(found, index))
 
@@ -467,7 +497,7 @@ class _Parser:
                     index,
                     "unrecognized-log-line",
                     f"The {LOG_SECTION} section holds only the records wm writes, each "
-                    '"- (<kind>) YYYY-MM-DD [<args>] [by <who>]: <text>", and findings under '
+                    '"- YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>", and findings under '
                     f'reviews, each "  - {records.FINDING_SHAPE}".',
                 )
 

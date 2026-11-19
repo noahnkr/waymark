@@ -145,9 +145,9 @@ anything you want built or changed, from a typo to a new feature.
 6. **Proposal**, then **deltas**, then the **design** (decisions with their
    status and who made them), then the **tasks**.
 7. Suggests the **review level** and which items to **delegate**.
-8. **Consistency check:** `- Specs:` matches the deltas, every scenario is
+8. **Consistency check:** `- **Specs:**` matches the deltas, every scenario is
    covered by an item, the design covers every requirement and adds none, the
-   tasks touch what `- Code:` names, and each choice is what the approach does.
+   tasks touch what `- **Code:**` names, and each choice is what the approach does.
 9. Shows the **acceptance summary** and asks you to run `wm accept`.
 
 | Reads | Writes |
@@ -180,8 +180,8 @@ you to accept again if acceptance was withdrawn.
 |---|---|
 | A spec gap | Writes your answer into the delta or the item's criteria; then `wm resolve`. |
 | A conflict | Rewrites the delta against the spec as it now reads. |
-| A decision to settle | `- Status: decided` and `- Decided by: human`; `None.` once no question is left. |
-| The Impact out of step | Updates `- Specs:` to match the deltas. |
+| A decision to settle | `- **Status:** decided` and `- **Decided by:** human`; `None.` once no question is left. |
+| The Impact out of step | Updates `- **Specs:**` to match the deltas. |
 | A rename | A RENAMED section; MODIFIED under the new name to change the text too. |
 | New work | Appends new items; never renumbers. |
 
@@ -242,7 +242,7 @@ offers `/wm-pr`.
 
 | Reads | Writes |
 |---|---|
-| `wm instructions`; `wm show <change>`, for the outcome | the specs, through the merge; `## Outcome` with `- Built:` and `- Differs:`; the change folder moved to `changes/archive/`; through `wm archive`, the milestone's Roadmap line and an `(archived)` record in its Log |
+| `wm instructions`; `wm show <change>`, for the outcome | the specs, through the merge; `## Outcome` with `- **Built:**` and `- **Differs:**`; the change folder moved to `changes/archive/`; through `wm archive`, the milestone's Roadmap line and an `(archived)` record in its Log |
 
 If the archive is refused for an unaccepted change, unticked items or a conflict,
 it goes back to `/wm-apply` or `/wm-update`; a missing review only you may
@@ -267,7 +267,7 @@ gives you the link.
 
 ## `wm-implementer`
 
-A fresh agent that builds one item marked `- Build: delegate`, from the record
+A fresh agent that builds one item marked `- **Build:** delegate`, from the record
 alone. `/wm-apply` starts it with exactly `<change> <item>` for a large item,
 parallel work, or a cold check that the record is enough to build from.
 

@@ -19,8 +19,8 @@ CONTEXT = "Context"
 RULES = "Rules"
 REQUIRED_SECTIONS = (VISION, GOALS, NON_GOALS, CONSTRAINTS, GLOSSARY, CONTEXT, RULES)
 
-GLOSSARY_LINE = re.compile(r"^- \*\*(\S[^*]*?)\*\*: \S")
-"""A glossary entry: ``- **<term>**: <meaning>``."""
+GLOSSARY_LINE = re.compile(r"^- \*\*(\S[^*]*?):\*\* \S")
+"""A glossary entry: ``- **<term>:** <meaning>``."""
 
 _NUMBERED_LINE = re.compile(r"^(\d+)\.[ \t]+\S")
 """An item of a numbered list: ``<n>. <text>``."""
@@ -89,7 +89,7 @@ def _check_numbered(
 
 
 def _check_glossary(doc: Document, start: int, end: int, problems: list[Problem]) -> None:
-    """Every glossary line is an entry: ``- **<term>**: <meaning>``."""
+    """Every glossary line is an entry: ``- **<term>:** <meaning>``."""
     in_comment = False
     for index in range(start, end):
         line = doc.lines[index]
@@ -106,6 +106,7 @@ def _check_glossary(doc: Document, start: int, end: int, problems: list[Problem]
                 doc.path,
                 index + 1,
                 "glossary-format",
-                'A glossary entry is written "- **<term>**: <meaning>", one per line.',
+                'A glossary entry is written "- **<term>:** <meaning>", the colon inside the '
+                "bold, one per line.",
             )
         )

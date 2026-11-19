@@ -66,12 +66,12 @@ def test_scenario_planned_line_dropped(project: Workspace) -> None:
 def test_scenario_active_member_not_dropped(project: Workspace) -> None:
     project.change(
         proposal_text=proposal().replace(
-            "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+            "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n"
         )
     )
     project.write(FILE, milestone("- [add-limit](../../changes/add-limit/proposal.md): cap\n"))
     message = refused(project, "drop", "faster-search", "add-limit", "later", DAY)
-    assert '"- Milestone:"' in message
+    assert '"- **Milestone:**"' in message
 
 
 def test_an_archived_or_unknown_change_line_may_be_dropped(project: Workspace) -> None:
@@ -89,16 +89,16 @@ def test_scenario_log_of_a_plans_changes(project: Workspace) -> None:
     )
     assert project.read(FILE).endswith("\n## Log\n\n" + "".join(f"- {r}\n" for r in log(project)))
     assert log(project) == [
-        "(added) 2026-11-20 add-cache by Ada: cache hot queries",
-        "(moved) 2026-11-20 add-cache first by Ada",
-        "(dropped) 2026-11-20 add-cache by Ada: the index is fast enough",
+        "2026-11-20 (added) add-cache by Ada: cache hot queries",
+        "2026-11-20 (moved) add-cache first by Ada",
+        "2026-11-20 (dropped) add-cache by Ada: the index is fast enough",
     ]
 
 
 def test_records_name_the_git_user_without_by(project: Workspace) -> None:
     project.write(FILE, milestone())
     roadmap.add(project.root, "faster-search", "add-cache", "cache", DAY)
-    assert log(project) == ["(added) 2026-11-20 add-cache by Sam Doe: cache"]
+    assert log(project) == ["2026-11-20 (added) add-cache by Sam Doe: cache"]
 
 
 def test_the_roadmap_keeps_its_line_endings(project: Workspace) -> None:

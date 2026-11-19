@@ -29,74 +29,74 @@
 ## Decisions
 
 ### Decision: When a led-to exploration is archived
-- Status: decided
-- Decided by: human
-- Options: when its targets are archived or closed (with the work); when the work starts, at `--from` (at hand-off); by hand, with a check that warns
-- Choice: with the work
-- Why: the move lands in the same operation, and the same pull request, as the archive that ends it, so no link dangles and nothing is left to tidy. At hand-off an archived file would link to an active change, and the archive would have to re-aim links in archived explorations too.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** when its targets are archived or closed (with the work); when the work starts, at `--from` (at hand-off); by hand, with a check that warns
+- **Choice:** with the work
+- **Why:** the move lands in the same operation, and the same pull request, as the archive that ends it, so no link dangles and nothing is left to tidy. At hand-off an archived file would link to an active change, and the archive would have to re-aim links in archived explorations too.
 
 ### Decision: Parked replaced by dropped
-- Status: decided
-- Decided by: human
-- Options: keep parked beside a new dropped status; replace parked with dropped
-- Choice: replace
-- Why: parked and open both mean waiting; dropped is a different thing, an active decision not to act, and only `wm exploration drop` writes it.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** keep parked beside a new dropped status; replace parked with dropped
+- **Choice:** replace
+- **Why:** parked and open both mean waiting; dropped is a different thing, an active decision not to act, and only `wm exploration drop` writes it.
 
 ### Decision: No migration for parked
-- Status: decided
-- Decided by: human
-- Options: raise the record format and migrate; read parked as open; drop parked outright at format 1
-- Choice: drop it outright at format 1
-- Why: this repository is the only record in use, and it holds no parked exploration.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** raise the record format and migrate; read parked as open; drop parked outright at format 1
+- **Choice:** drop it outright at format 1
+- **Why:** this repository is the only record in use, and it holds no parked exploration.
 
 ### Decision: The drop command
-- Status: decided
-- Decided by: human
-- Options: `wm drop <exploration> --reason`; `wm exploration drop <exploration> --reason`
-- Choice: `wm exploration drop`
-- Why: a command group for explorations leaves room for more subcommands, and reads unambiguously beside `wm roadmap drop`.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** `wm drop <exploration> --reason`; `wm exploration drop <exploration> --reason`
+- **Choice:** `wm exploration drop`
+- **Why:** a command group for explorations leaves room for more subcommands, and reads unambiguously beside `wm roadmap drop`.
 
 ### Decision: Guarding the Status line
-- Status: decided
-- Decided by: human
-- Options: refuse agents' hand edits in the hooks; leave it to `wm check`
-- Choice: the hooks refuse them
-- Why: `led-to` and `dropped` are written only by `wm`; the hooks already guard roadmap lines the same way.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** refuse agents' hand edits in the hooks; leave it to `wm check`
+- **Choice:** the hooks refuse them
+- **Why:** `led-to` and `dropped` are written only by `wm`; the hooks already guard roadmap lines the same way.
 
 ### Decision: More than one led-to target
-- Status: decided
-- Decided by: human
-- Options: append the new link; refuse an exploration that already led somewhere
-- Choice: append
-- Why: one exploration can split into several changes, and it is archived once all of them are.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** append the new link; refuse an exploration that already led somewhere
+- **Choice:** append
+- **Why:** one exploration can split into several changes, and it is archived once all of them are.
 
 ### Decision: An exploration already left behind
-- Status: decided
-- Decided by: human
-- Options: `wm check` reports it and this change moves `lighter-workflow` once; `wm check --fix` moves such explorations
-- Choice: report it, and move `lighter-workflow` once
-- Why: `--fix` promises layout only, never moves; once the archive exists the state can only come from a hand edit.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** `wm check` reports it and this change moves `lighter-workflow` once; `wm check --fix` moves such explorations
+- **Choice:** report it, and move `lighter-workflow` once
+- **Why:** `--fix` promises layout only, never moves; once the archive exists the state can only come from a hand edit.
 
 ### Decision: Archived exploration as a file
-- Status: decided
-- Decided by: planner
-- Options: one file `explorations/archive/<date>-<name>.md`; a folder `explorations/archive/<date>-<name>/exploration.md`
-- Choice: one file
-- Why: an exploration is one file today, its links stay one level deep, and `parse_archive_name` reads the stem as it reads a folder name.
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** one file `explorations/archive/<date>-<name>.md`; a folder `explorations/archive/<date>-<name>/exploration.md`
+- **Choice:** one file
+- **Why:** an exploration is one file today, its links stay one level deep, and `parse_archive_name` reads the stem as it reads a folder name.
 
 ### Decision: Same-day name clash in the archive
-- Status: decided
-- Decided by: planner
-- Options: refuse the whole operation; add a suffix to the file name
-- Choice: refuse
-- Why: it matches `wm close` for a milestone closed twice in a day, keeps archived names parseable, and needs a reused exploration name, which is rare.
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** refuse the whole operation; add a suffix to the file name
+- **Choice:** refuse
+- **Why:** it matches `wm close` for a milestone closed twice in a day, keeps archived names parseable, and needs a reused exploration name, which is rare.
 
 ### Decision: JSON schema versions
-- Status: decided
-- Decided by: planner
-- Options: raise `wm.show.exploration` and `wm.context.explore`; keep them at their versions
-- Choice: raise them; `wm.ls` keeps its version, since it only gains entries
-- Why: `docs/json.md` says a changed field raises the version, and the status enum loses `parked`.
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** raise `wm.show.exploration` and `wm.context.explore`; keep them at their versions
+- **Choice:** raise them; `wm.ls` keeps its version, since it only gains entries
+- **Why:** `docs/json.md` says a changed field raises the version, and the status enum loses `parked`.
 
 ## Open questions
 

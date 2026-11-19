@@ -22,6 +22,8 @@ from waymark.record.artifacts.milestones import Milestone, RoadmapEntry
 from waymark.record.artifacts.tasks import Item, ReviewRecord
 from waymark.record.evidence.fingerprint import change_fingerprint
 from waymark.record.evidence.records import RecordKind
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.links import resolve
 from waymark.record.names import is_valid_name, parse_archive_name
 from waymark.record.record import ARCHIVE, CHANGES, MILESTONES, Record
@@ -371,7 +373,10 @@ def _artifact_step(change: Change) -> tuple[Phase, NextStep] | None:
 
     no_deltas_needed = proposal.no_spec_changes and not change.deltas
     if change.problems_in(SPECS_DIR) or not (change.deltas or no_deltas_needed):
-        missing = 'Draft the deltas, or write "- Specs: none" under the proposal\'s Impact.'
+        missing = (
+            f'Draft the deltas, or write "{label_line(labels.SPECS, "none")}" under the '
+            "proposal's Impact."
+        )
         return Phase.PROPOSED, NextStep(StepKind.SPECS, reason=reason(SPECS_DIR, missing))
 
     reached = Phase.SPECIFIED

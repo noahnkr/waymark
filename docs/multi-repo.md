@@ -112,22 +112,26 @@ works without a pointer.
 Sessions run in the atlas. The planner drafts the change there as usual; what
 changes is that the work is split by repository:
 
-- the proposal's Impact names the repos touched, on its `- Code:` line;
-- a delta may say which repos a spec covers, with a `Repos: api, web` line;
+- the proposal's Impact names the repos touched, on its `- **Code:**` line;
+- a delta may say which repos a spec covers, with a `**Repos:** api, web` line;
 - **every task item names its repo**:
 
 ```markdown
 ## 1. Sharing
 
 - [ ] 1.1 Add the share endpoint
-  - Criteria: POST /notes/{id}/share returns a link that opens the note read-only
-  - Repo: api
+  - **Build:** planner
+  - **Repo:** api
+  - **Criteria:** POST /notes/{id}/share returns a link that opens the note read-only
+  - **Verify:** a test opens the link without signing in
 - [ ] 1.2 Show a share button
-  - Criteria: the button copies the link from the endpoint
-  - Repo: web
+  - **Build:** planner
+  - **Repo:** web
+  - **Criteria:** the button copies the link from the endpoint
+  - **Verify:** a test clicks the button and reads the clipboard
 ```
 
-`wm check` reports an error for an item without a `Repo:` line, or one naming a
+`wm check` reports an error for an item without a `- **Repo:**` line, or one naming a
 repo the settings don't list, and the change can't be accepted until it is fixed.
 
 **Branches.** The change's name is the branch name in the atlas and in every repo

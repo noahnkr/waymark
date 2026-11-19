@@ -5,6 +5,7 @@ folder while a test runs.
 """
 
 import datetime
+import re
 from pathlib import Path
 
 from waymark import __version__
@@ -44,7 +45,7 @@ Fast search for everyone.
 
 ## Glossary
 
-- **Match**: a document that satisfies the query.
+- **Match:** a document that satisfies the query.
 
 ## Context
 
@@ -70,11 +71,13 @@ Cut the result list after sorting.
 
 ### Decision: Where to cut
 
-- Status: decided
-- Decided by: planner
-- Options: in the query, or after sorting
-- Choice: after sorting
-- Why: the order must be final first
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
+  - in the query
+  - after sorting
+- **Choice:** after sorting
+- **Why:** the order must be final first
 
 ## Open questions
 
@@ -90,12 +93,27 @@ TASKS = """# Tasks
 ## 1. Limit
 
 - [ ] 1.1 Cap the result count
-  - Criteria: at most fifty results come back
-  - Verify: a test covers fifty-one matches
+  - **Build:** planner
+  - **Criteria:** at most fifty results come back
+  - **Verify:** a test covers fifty-one matches
 - [ ] 1.2 Document the limit
-  - Criteria: the help text names the limit
-  - Verify: read the help text
+  - **Build:** planner
+  - **Criteria:** the help text names the limit
+  - **Verify:** read the help text
 """
+
+
+_PLAIN_LABEL = re.compile(
+    r"^(\s*(?:[-*] )?)(Owner|Milestone|After|Path|Review|Specs|User-visible|Code|Built|Differs"
+    r"|Build|Repo|Criteria|Verify|Status|Decided by|Options|Choice|Why|From|To|Reason|Repos"
+    r"|Kind|Serves|Verified):",
+    re.MULTILINE,
+)
+
+
+def bold(text: str) -> str:
+    """The text with every known label written bold, the colon inside."""
+    return _PLAIN_LABEL.sub(r"\1**\2:**", text)
 
 
 def document(text: str, path: str = "file.md") -> Document:
@@ -134,7 +152,7 @@ def delta(
 ) -> str:
     parts = [f"# {title}\n"]
     if repos is not None:
-        parts.append(f"Repos: {repos}\n")
+        parts.append(f"**Repos:** {repos}\n")
     if purpose is not None:
         parts.append(f"## Purpose\n\n{purpose}\n")
     if added:
@@ -142,13 +160,18 @@ def delta(
     if modified:
         parts.append("## MODIFIED Requirements\n\n" + "\n".join(modified))
     if removed:
-        blocks = [f"### Requirement: {name}\nReason: {reason}\n" for name, reason in removed]
+        blocks = [f"### Requirement: {name}\n**Reason:** {reason}\n" for name, reason in removed]
         parts.append("## REMOVED Requirements\n\n" + "\n".join(blocks))
     return "\n".join(parts)
 
 
-IMPACT = "- Specs: `search`\n- User-visible: at most fifty results\n- Code: the search module"
-NO_SPECS = "- Specs: none\n- User-visible: at most fifty results\n- Code: the search module"
+IMPACT = (
+    "- **Specs:** `search`\n- **User-visible:** at most fifty results\n"
+    "- **Code:** the search module"
+)
+NO_SPECS = (
+    "- **Specs:** none\n- **User-visible:** at most fifty results\n- **Code:** the search module"
+)
 
 
 GOAL_TEXT = (
@@ -168,7 +191,7 @@ def proposal(
     impact: str = IMPACT,
     outcome: str | None = None,
 ) -> str:
-    facts = f"- Owner: {owner}\n" + ("- Path: short\n" if short else "")
+    facts = f"- **Owner:** {owner}\n" + ("- **Path:** short\n" if short else "")
     text = (
         f"# Limit the results\n\n{facts}\n"
         "## Why\n\nLong result lists are slow.\n\n"
@@ -246,7 +269,7 @@ class Workspace:
         kept = [
             line
             for line in self.read(relative).split("\n")
-            if line.startswith(("- (accepted)", "- (synced)"))
+            if line.startswith("- ") and ("(accepted)" in line or "(synced)" in line)
         ]
         lines = tasks.rstrip("\n").split("\n")
         if "## Log" not in lines:

@@ -25,8 +25,10 @@ DAY = datetime.date(2026, 1, 15)
 TOOL_CONFIG = CONFIG.replace('"some-tool"', '"claude-code"')
 ATLAS_TASKS = (
     "# Tasks\n\n## 1. Limit\n\n"
-    "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty at most\n  - Repo: api\n"
-    "- [ ] 1.2 Show the list\n  - Verify: a test\n  - Criteria: fifty rows\n  - Repo: web\n"
+    "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n  - **Repo:** api\n"
+    "  - **Criteria:** fifty at most\n  - **Verify:** a test\n"
+    "- [ ] 1.2 Show the list\n  - **Build:** planner\n  - **Repo:** web\n"
+    "  - **Criteria:** fifty rows\n  - **Verify:** a test\n"
 )
 
 
@@ -193,8 +195,8 @@ def test_pr_text_gives_the_changes_review_and_its_findings(project: Workspace) -
     body = describe(project.record(), NAME)["body"]
     assert (
         "## Review\n\nSelf-reviewed: fine\n\n"
-        "- (self-review) 2026-01-15 covers 1.1 1.2 by Sam Doe: fine\n"
-        "  - warning `src/a.py:3`: the name is vague\n"
+        "- 2026-01-15 (self-review) covers 1.1, 1.2 by Sam Doe: fine\n"
+        "  - [warning] `src/a.py:3`: the name is vague\n"
     ) in body
 
 
@@ -208,8 +210,8 @@ def test_pr_text_lists_every_review_record(project: Workspace) -> None:
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(project.root, NAME, Verdict.PASS, "fixed", DAY, by="wm-reviewer")
     body = describe(project.record(), NAME)["body"]
-    assert "- (review) 2026-01-15 changes 1.1 covers 1.1 1.2 by Sam Doe: off by one\n" in body
-    assert "- (review) 2026-01-15 pass covers 1.1 1.2 by wm-reviewer: fixed\n" in body
+    assert "- 2026-01-15 (review) changes 1.1; covers 1.1, 1.2 by Sam Doe: off by one\n" in body
+    assert "- 2026-01-15 (review) pass covers 1.1, 1.2 by wm-reviewer: fixed\n" in body
     assert "(accepted)" not in body
 
 
@@ -235,7 +237,10 @@ def test_archived_on_its_branch(project: Workspace) -> None:
     assert "- search: adds Result limit" in body
     assert "- [x] 1.1 Cap the result count\n" in body
     assert "## Review\n\nSelf-reviewed: fine" in body
-    assert "## Outcome\n\n- Built: Searches return the fifty best matches.\n- Differs: none" in body
+    assert (
+        "## Outcome\n\n- **Built:** Searches return the fifty best matches.\n- **Differs:** none"
+        in body
+    )
     folder = f"waymark/changes/archive/{DAY.isoformat()}-{NAME}"
     url = f"https://github.com/someone/shop/blob/{sha}/{folder}/proposal.md"
     assert payload["links"] == [{"name": "change", "url": url}]
@@ -254,7 +259,7 @@ def test_pr_for_a_name_archived_twice_describes_the_latest(project: Workspace) -
     )
     archived(project, "Second.", datetime.date(2026, 2, 1))
     body = describe(project.record(), NAME)["body"]
-    assert "## Outcome\n\n- Built: Second.\n- Differs: none" in body
+    assert "## Outcome\n\n- **Built:** Second.\n- **Differs:** none" in body
     assert "archive/2026-02-01-add-limit/proposal.md" in body
 
 
@@ -279,7 +284,7 @@ def test_scenario_pull_request_of_a_stacked_change(project: Workspace) -> None:
     project.change(
         "add-paging",
         proposal_text=proposal().replace(
-            "- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- After: {NAME}\n"
+            "- **Owner:** Sam Doe\n", f"- **Owner:** Sam Doe\n- **After:** {NAME}\n"
         ),
     )
     payload = describe(project.record(), "add-paging")

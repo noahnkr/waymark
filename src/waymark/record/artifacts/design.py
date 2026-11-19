@@ -4,6 +4,8 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.outline import collect_sections, content, require_title
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document
@@ -14,9 +16,9 @@ DECISIONS = "Decisions"
 RISKS = "Risks and trade-offs"
 OPEN_QUESTIONS = "Open questions"
 REQUIRED_SECTIONS = (CONTEXT, APPROACH, DECISIONS, RISKS)
-DECISION_PARTS = ("Options", "Choice", "Why")
-STATUS = "Status"
-DECIDED_BY = "Decided by"
+DECISION_PARTS = (labels.OPTIONS, labels.CHOICE, labels.WHY)
+STATUS = labels.STATUS
+DECIDED_BY = labels.DECIDED_BY
 PROPOSED = "proposed"
 DECIDED = "decided"
 STATUSES = (PROPOSED, DECIDED)
@@ -24,8 +26,7 @@ DECIDERS = ("human", "planner")
 NO_QUESTIONS = "None."
 
 _DECISION = re.compile(r"^Decision:\s*(\S.*)$")
-_PART = re.compile(r"^\s*(?:[-*]\s+)?(Options|Choice|Why|Status|Decided by):[ \t]*(.*)$")
-_OPTION_SPLIT = re.compile(r";|\bor\b")
+_PARTS = (*DECISION_PARTS, STATUS, DECIDED_BY)
 _LIST_ITEM = re.compile(r"^(?:[-*]|\d+\.)[ \t]+(\S.*)$")
 
 
@@ -41,7 +42,11 @@ class Decision:
     decided_by: str | None = None
     """The ``Decided by:`` value as written; None without the line."""
     options: tuple[str, ...] = ()
-    """The options: the bullets under ``- Options:``, or else the line split on ";" and "or"."""
+    """The options: the bullets under ``- **Options:**``."""
+    options_text: str = ""
+    """Text written on the ``- **Options:**`` line itself, which should be empty."""
+    options_index: int | None = None
+    """The index of the ``- **Options:**`` line; None without one."""
 
 
 @dataclass(frozen=True)
@@ -91,14 +96,18 @@ def parse_design(doc: Document) -> Design:
                     )
                 )
                 continue
-            lines = doc.lines[section.body_start : section.end]
             values: dict[str, str] = {}
             bullets: list[str] = []
             in_options = False
-            for line in lines:
-                if m := _PART.match(line.text):
-                    values.setdefault(m.group(1), m.group(2).strip())
-                    in_options = m.group(1) == "Options"
+            options_index: int | None = None
+            for index in range(section.body_start, section.end):
+                line = doc.lines[index]
+                part = labels.read_label(line.text.strip())
+                if part is not None and part.name in _PARTS:
+                    values.setdefault(part.name, part.value)
+                    in_options = part.name == labels.OPTIONS
+                    if in_options and options_index is None:
+                        options_index = index
                 elif in_options and line.text.startswith((" ", "\t")):
                     if bullet := _LIST_ITEM.match(line.text.strip()):
                         bullets.append(bullet.group(1).strip())
@@ -107,7 +116,7 @@ def parse_design(doc: Document) -> Design:
             parts = set(values)
             missing = [part for part in DECISION_PARTS if part not in parts]
             if missing:
-                wanted = ", ".join(f'"{part}:"' for part in missing)
+                wanted = ", ".join(f'"{label_line(part)}"' for part in missing)
                 problems.append(
                     Problem(
                         doc.path,
@@ -124,7 +133,9 @@ def parse_design(doc: Document) -> Design:
                     section.start,
                     values.get(STATUS),
                     values.get(DECIDED_BY),
-                    tuple(bullets) or _inline_options(values.get("Options", "")),
+                    tuple(bullets),
+                    values.get(labels.OPTIONS, ""),
+                    options_index,
                 )
             )
     questions: tuple[str, ...] | None = None
@@ -160,9 +171,3 @@ def _open_questions(doc: Document, start: int, end: int) -> tuple[tuple[str, ...
         else:
             prose.append(index)
     return tuple(questions), prose
-
-
-def _inline_options(text: str) -> tuple[str, ...]:
-    """The options named on one line, split on ";" and on the word "or"."""
-    parts = (part.strip().rstrip(",").strip() for part in _OPTION_SPLIT.split(text))
-    return tuple(part for part in parts if part)

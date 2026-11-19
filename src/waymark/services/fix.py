@@ -1,11 +1,12 @@
 """``wm check --fix``: bring the record to its standard layout when the human asks.
 
-It covers the charter, the specs, the active changes, the milestones and the
-explorations, never the archive. It changes layout only (``record/layout.py``),
-never wording. Before anything is written it checks, on the fixed text, that
-every task list keeps its records and ticks and every active change keeps its
-acceptance state; a difference would be a fault in wm, so the fix is refused
-and nothing is written. Every file is written, or none.
+It covers the charter, the specs, the active changes, the milestones, the
+explorations and the resources, never the archive. It changes layout only
+(``record/layout.py``), never wording. Before anything is written it checks, on the
+fixed text, that every task list keeps its records, findings and ticks, read as wm
+reads them, and every active change keeps its acceptance state; a difference would
+be a fault in wm, so the fix is refused and nothing is written. Every file is
+written, or none.
 """
 
 import dataclasses
@@ -14,12 +15,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waymark.record.artifacts.changes import Change
+from waymark.record.artifacts.charter import CHARTER_FILE
 from waymark.record.artifacts.deltas import parse_delta
 from waymark.record.artifacts.design import parse_design
 from waymark.record.artifacts.proposal import parse_proposal
 from waymark.record.artifacts.specs import Spec, parse_spec
-from waymark.record.artifacts.tasks import parse_tasks
-from waymark.record.evidence.evidence import evidence
+from waymark.record.artifacts.tasks import ReviewRecord, Tasks, parse_tasks
 from waymark.record.evidence.fingerprint import change_fingerprint
 from waymark.record.markdown.text import Document
 from waymark.record.record import Record
@@ -48,7 +49,7 @@ def fix_layout(start: Path) -> tuple[FixedFile, ...]:
     staged: dict[str, str] = {}
     fixed: list[FixedFile] = []
     for doc in record.documents():
-        text, fixes = standard_layout(doc.text)
+        text, fixes = standard_layout(doc.text, bold_labels=doc.path != CHARTER_FILE)
         if fixes:
             staged[doc.path] = text
             fixed.append(FixedFile(doc.path, fixes))
@@ -95,13 +96,29 @@ def _accepted_after(
     return AcceptanceState.VALID if current == acceptance.fingerprint else AcceptanceState.WITHDRAWN
 
 
+def _record_evidence(record: ReviewRecord) -> ReviewRecord:
+    """A record as evidence: what it says, without the line it sits on."""
+    findings = tuple(dataclasses.replace(finding, index=0) for finding in record.findings)
+    return dataclasses.replace(record, index=0, findings=findings)
+
+
+def _task_evidence(tasks: Tasks) -> tuple[object, ...]:
+    """A task list's ticks and records as wm reads them, whatever shape they are written in."""
+    items = tuple(
+        (item.number, item.ticked, tuple(_record_evidence(r) for r in item.records))
+        for item in tasks.items
+    )
+    return items, tuple(_record_evidence(r) for r in tasks.log)
+
+
 def _guard(record: Record, staged: Mapping[str, str]) -> None:
-    """Refuse a fix that would change any record, tick or acceptance state."""
+    """Refuse a fix that would change any record, finding, tick or acceptance state."""
     for change in record.changes.values():
         if change.tasks is None:
             continue
         doc = change.tasks.doc
-        if evidence(doc.path, doc.text) != evidence(doc.path, staged.get(doc.path, doc.text)):
+        after = parse_tasks(_doc(doc, staged))
+        if _task_evidence(change.tasks) != _task_evidence(after):
             raise Refusal(_FAULT.format(what=f"the records or ticks in {doc.path}"))
     specs = {
         domain: parse_spec(domain, _doc(spec.doc, staged)) for domain, spec in record.specs.items()

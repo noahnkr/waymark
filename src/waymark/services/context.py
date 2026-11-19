@@ -23,6 +23,8 @@ from waymark.record.artifacts.resources import ACCESS, WHAT_IT_IS
 from waymark.record.artifacts.tasks import Item, ReviewRecord
 from waymark.record.evidence.records import RecordKind
 from waymark.record.machine.atlas import Location
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.links import LinkChecker
 from waymark.record.markdown.text import Document
 from waymark.record.record import Record
@@ -117,7 +119,8 @@ def _item_problem(name: str, item: Item, item_state: ItemState) -> str | None:
     if not item.criteria:
         return (
             f"Item {number} has no criteria, so there is nothing to build against. "
-            'Add a "Criteria:" line under it; that edits the change, so it needs accepting again.'
+            f'Add a "{label_line(labels.CRITERIA)}" line under it; that edits the change, so it '
+            "needs accepting again."
         )
     if item.ticked:
         return f"Item {number} is already ticked. Pick an item that is still to apply."

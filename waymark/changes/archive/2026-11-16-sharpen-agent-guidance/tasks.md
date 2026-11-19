@@ -3,37 +3,37 @@
 ## 1. Guidance in the packs
 
 - [x] 1.1 Give the review pack and step the severity rubric, and the implement pack the stopping rules
-  - Criteria:
+  - **Criteria:**
     - a new `services/guidance.py` holds `SEVERITY_RUBRIC` and `STOPPING_RULES`, worded as in the requirements "Severity rubric" and "Stopping rules"
     - the review pack holds `severity_rubric`, and the implement pack `stopping_rules`; their markdown shows "## Severity rubric" and "## When to stop" just before the ending
     - every `wm instructions` payload holds `severity_rubric`: the rubric at the review step, empty elsewhere; the text shows "Severity rubric" after "Checklist" when it isn't empty
     - the schemas gain the fields, the versions stay, and `docs/json.md` is regenerated
-  - Verify:
+  - **Verify:**
     - tests in `tests/services/test_agent_interface.py` for the scenarios "Review pack", "Self-review" and "Implement pack"
     - `uv run --no-sync python -m tools.docs --check`
 
 ## 2. Agents, skill and docs
 
 - [x] 2.1 Point the agents and `wm-apply` at the rubric and the stopping rules
-  - Criteria:
+  - **Criteria:**
     - `wm-reviewer` grades each finding by the pack's severity rubric, in place of its own one-line severity definitions; its format lines and verdict rules stay
     - `wm-implementer` has a "When to stop" section that follows the pack's stopping rules; "Don't guess" stays
     - `wm-apply`'s self-review grades each finding by the rubric `wm instructions` gives at the review step, and the skill still follows the layout `tests/test_skills.py` holds
-  - Verify:
+  - **Verify:**
     - the assets tests and `tests/test_skills.py`
     - read the two agents and `wm-apply` against their old text
 - [x] 2.2 Update the docs and the changelog
-  - Criteria:
+  - **Criteria:**
     - concepts says the review pack and step give the severity rubric, and the implement pack the stopping rules
     - the changelog lists the rubric, the stopping rules and the `severity_rubric` and `stopping_rules` fields
     - the generated docs are regenerated
-  - Verify:
+  - **Verify:**
     - `uv run --no-sync python -m tools.docs --check`
     - codespell
     - `wm check`
 
 ## Log
 
-- (accepted) 2026-11-16 fingerprint c9c1cabd18360233 items 1.1 2.1 2.2 by Noah Roberts
-- (self-review) 2026-11-16 by Noah Roberts: Checked against the three scenarios, the design and each item's criteria, grading by the rubric this change adds (shown by wm instructions at this very step). Review pack, Self-review and Implement pack each have a test, including that the review pack and the review step give the same rubric and that both packs show it before How to finish. The reviewer keeps its format lines and verdict rules; the implementer keeps Don't guess and gains When to stop; wm-apply's self-review points at the rubric and still passes the layout test. The agent snapshots were regenerated and match the sources. Full checks pass: pytest (1125), ruff, mypy, codespell, tools.docs --check, wm check.
-  - suggestion `src/waymark/assets/agents/wm-implementer.md`: its When to stop section summarizes the stopping rules the pack gives, so a later change to the rules must update both
+- 2026-11-16 (accepted) fingerprint c9c1cabd18360233 items 1.1, 2.1, 2.2 by Noah Roberts
+- 2026-11-16 (self-review) by Noah Roberts: Checked against the three scenarios, the design and each item's criteria, grading by the rubric this change adds (shown by wm instructions at this very step). Review pack, Self-review and Implement pack each have a test, including that the review pack and the review step give the same rubric and that both packs show it before How to finish. The reviewer keeps its format lines and verdict rules; the implementer keeps Don't guess and gains When to stop; wm-apply's self-review points at the rubric and still passes the layout test. The agent snapshots were regenerated and match the sources. Full checks pass: pytest (1125), ruff, mypy, codespell, tools.docs --check, wm check.
+  - [suggestion] `src/waymark/assets/agents/wm-implementer.md`: its When to stop section summarizes the stopping rules the pack gives, so a later change to the rules must update both

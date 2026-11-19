@@ -1,6 +1,6 @@
 # Merge milestone files
 
-- Owner: Noah Roberts
+- **Owner:** Noah Roberts
 
 ## Why
 
@@ -25,16 +25,16 @@ This is the fourth change on the `record-format-and-skills` milestone.
 
 ## Impact
 
-- Specs: `authored-formats` (modified)
-- User-visible:
+- **Specs:** `authored-formats` (modified)
+- **User-visible:**
   - a milestone is one `milestone.md` instead of `goal.md` and `roadmap.md`;
   - `wm new milestone` writes `milestone.md`;
   - `wm check` reports a `goal.md` or `roadmap.md` in a milestone folder;
   - the record's two milestones change files, and links to them change.
-- Code: `record/` (milestones, record, templates), `services/` (setup, lifecycle), `views/`
+- **Code:** `record/` (milestones, record, templates), `services/` (setup, lifecycle), `views/`
 - Assets and docs: `wm-explore` and `wm-archive`, which describe a milestone's goal and roadmap; concepts and the changelog.
 
 ## Outcome
 
-- Built: A milestone is one milestone.md with Goal, Done when, Non-goals and Roadmap; wm new milestone writes it; only list lines under ## Roadmap, outside comments, are roadmap entries, and archiving ticks only those; wm check reports goal.md or roadmap.md in any milestone folder; this record's two milestones and the exploration links to them are merged by hand.
-- Differs: Link rewriting for a moved file, listed on the roadmap for this change, was left out. Lines inside a comment under ## Roadmap are also excluded, beyond the design.
+- **Built:** A milestone is one milestone.md with Goal, Done when, Non-goals and Roadmap; wm new milestone writes it; only list lines under ## Roadmap, outside comments, are roadmap entries, and archiving ticks only those; wm check reports goal.md or roadmap.md in any milestone folder; this record's two milestones and the exploration links to them are merged by hand.
+- **Differs:** Link rewriting for a moved file, listed on the roadmap for this change, was left out. Lines inside a comment under ## Roadmap are also excluded, beyond the design.

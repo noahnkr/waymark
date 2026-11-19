@@ -64,40 +64,40 @@
 ## Decisions
 
 ### Decision: Where the level is set
-- Options:
+- **Options:**
   - a `Review:` line in the proposal;
   - derived by `wm` from the deltas.
-- Choice: the proposal line (the human chose it).
-- Why: The human sees and accepts it, and can raise or lower it. `wm check` warns about a risky change at `self`, as the old guidance advised.
+- **Choice:** the proposal line (the human chose it).
+- **Why:** The human sees and accepts it, and can raise or lower it. `wm check` warns about a risky change at `self`, as the old guidance advised.
 
 ### Decision: Where the review is recorded
-- Options:
+- **Options:**
   - a `## Review` section in the task list;
   - a separate `review.md`.
-- Choice: a section in the task list (the human chose it).
-- Why: It keeps the record formats and the parser, and keeps every piece of evidence for a change in one file.
+- **Choice:** a section in the task list (the human chose it).
+- **Why:** It keeps the record formats and the parser, and keeps every piece of evidence for a change in one file.
 
 ### Decision: What a request for changes reopens
-- Options:
+- **Options:**
   - the items the verdict names;
   - the planner decides.
-- Choice: the items named (the human chose it).
-- Why: The reviewer knows where the problem is, and naming the items makes the reopening evidence that `wm` writes.
+- **Choice:** the items named (the human chose it).
+- **Why:** The reviewer knows where the problem is, and naming the items makes the reopening evidence that `wm` writes.
 
 ### Decision: Old tags and records
-- Options:
+- **Options:**
   - migrate them with `wm update`;
   - warn and keep them readable;
   - make the tag an error in active changes and still read archived changes.
-- Choice: an error in active changes, with archived changes still read.
-- Why: This is the only project and nothing is in flight, so a migration would never run. Archived changes are history and are shown as written.
+- **Choice:** an error in active changes, with archived changes still read.
+- **Why:** This is the only project and nothing is in flight, so a migration would never run. Archived changes are history and are shown as written.
 
 ### Decision: How the findings' severities are named
-- Options:
+- **Options:**
   - OpenSpec's `CRITICAL`, `WARNING`, `SUGGESTION`;
   - lowercase `critical`, `warning`, `suggestion`.
-- Choice: lowercase.
-- Why: They match the record's other values (`pass`, `changes`, `spec-gap`).
+- **Choice:** lowercase.
+- **Why:** They match the record's other values (`pass`, `changes`, `spec-gap`).
 
 ## Risks and trade-offs
 

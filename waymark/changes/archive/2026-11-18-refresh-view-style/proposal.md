@@ -1,6 +1,6 @@
 # Refresh view style
 
-- Owner: Noah Roberts
+- **Owner:** Noah Roberts
 
 ## Why
 
@@ -25,14 +25,14 @@ Color itself needs no install: `wm` already writes the standard escape sequences
 
 ## Impact
 
-- Specs: `terminal-output` (new)
-- User-visible:
+- **Specs:** `terminal-output` (new)
+- **User-visible:**
   - views use one 16-color palette, tree lines and roadmap markers, with ASCII stand-ins on consoles that can't show the glyphs
   - prose in `wm show`, `wm inbox` and `wm doctor` wraps to the terminal's width on a terminal
   - `FORCE_COLOR` forces color; `NO_COLOR` still wins
-- Code: `views/style.py`, `views/render.py`, `cli.py` (style detection), the tests in `tests/views/` and the view tests, and the docs (`cli.md` for the environment variables, the CHANGELOG)
+- **Code:** `views/style.py`, `views/render.py`, `cli.py` (style detection), the tests in `tests/views/` and the view tests, and the docs (`cli.md` for the environment variables, the CHANGELOG)
 
 ## Outcome
 
-- Built: The terminal views use one 16-color palette by role, with tree lines for a change's items and filled and open marks for milestones, each with an ASCII stand-in. wm check groups findings by file and wm doctor aligns its checks. On a terminal, prose in wm show, wm inbox, wm check and wm doctor wraps to 60-100 columns, with list lines and criteria hanging under their text. FORCE_COLOR forces color and NO_COLOR wins. docs/cli.md has an Environment section.
-- Differs: wm check wraps too, through items 2.3, 2.4 and 3.2, added after the first review and reviewed on their own. The self-review sent item 1.1 back for hanging list indents. The session-start hook's plain status shows milestone marks instead of a bar, against the proposal's non-goal. Resource sections in wm show are not wrapped. Left open: a one-bullet Criteria moves under its label, which item 2.3's wording can be read against; only '- ' lists move; wrap still indents with no width; and the tools/docs.py string split.
+- **Built:** The terminal views use one 16-color palette by role, with tree lines for a change's items and filled and open marks for milestones, each with an ASCII stand-in. wm check groups findings by file and wm doctor aligns its checks. On a terminal, prose in wm show, wm inbox, wm check and wm doctor wraps to 60-100 columns, with list lines and criteria hanging under their text. FORCE_COLOR forces color and NO_COLOR wins. docs/cli.md has an Environment section.
+- **Differs:** wm check wraps too, through items 2.3, 2.4 and 3.2, added after the first review and reviewed on their own. The self-review sent item 1.1 back for hanging list indents. The session-start hook's plain status shows milestone marks instead of a bar, against the proposal's non-goal. Resource sections in wm show are not wrapped. Left open: a one-bullet Criteria moves under its label, which item 2.3's wording can be read against; only '- ' lists move; wrap still indents with no width; and the tools/docs.py string split.

@@ -53,9 +53,9 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 
 ## Propose and accept
 
-- [ ] Run `/wm-propose` for a small change with **three** items: one plain,
-      and two with a `- Build: delegate` line. Its proposal has
-      `- Review: independent`.
+- [ ] Run `/wm-propose` for a small change with **three** items: one with
+      `- **Build:** planner` and two with `- **Build:** delegate`. Its proposal has
+      `- **Review:** independent`.
       Not on the short path.
 - [ ] Ask the agent to run `wm accept <change>`. **The hook refuses it**, and the
       agent tells you to run it yourself.
@@ -99,7 +99,7 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       `<change> <item>` first: **the hook refuses it**.
 - [ ] The reviewer reads `wm context <change> --for review`. Its verdict is
       written in the `## Log` section at the end of `tasks.md` as a
-      `(review) <date> <verdict> by wm-reviewer` record in the reviewer's own
+      `<date> (review) <verdict> by wm-reviewer` record in the reviewer's own
       words, with any `FINDING:` lines under it. The reviewer can't edit files (ask it to fix something; it is
       refused).
 - [ ] **A request for changes.** If the reviewer asked for changes, the items
@@ -115,7 +115,7 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 - [ ] Ask the agent to run `wm archive <change> --override "x"`. **Refused**.
 - [ ] Run `/wm-archive` on the change's branch, before any pull request. The
       change moves to `changes/archive/<date>-<change>/`, the deltas are in the
-      specs, and the proposal has an Outcome with `- Built:` and `- Differs:` lines. The archive is committed on the
+      specs, and the proposal has an Outcome with `- **Built:**` and `- **Differs:**` lines. The archive is committed on the
       branch.
 - [ ] Run `wm pr <change>`: it describes the archived change, with its
       Outcome, and links to the proposal in the archived folder.

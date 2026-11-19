@@ -6,7 +6,6 @@ spec. A rename keeps the requirement's statement and scenarios; the same delta
 may also modify the requirement under its new name.
 """
 
-import re
 from dataclasses import dataclass
 
 from waymark.record.artifacts.specs import (
@@ -22,6 +21,8 @@ from waymark.record.artifacts.specs import (
     parse_spec,
     requirement_key,
 )
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.outline import (
     collect_sections,
     parse_facts,
@@ -35,9 +36,6 @@ ADDED = "ADDED Requirements"
 MODIFIED = "MODIFIED Requirements"
 REMOVED = "REMOVED Requirements"
 RENAMED = "RENAMED Requirements"
-
-_REASON = re.compile(r"^Reason:\s*(\S.*)$")
-_RENAME_LINE = re.compile(r"^[-*]\s+(From|To):\s*(.*?)\s*$")
 
 
 @dataclass(frozen=True)
@@ -111,6 +109,14 @@ class Merge:
     problems: tuple[Problem, ...]
 
 
+def _reason(text: str) -> labels.Label | None:
+    """A removal's ``Reason:`` line, when it has text."""
+    label = labels.read_label(text)
+    if label is None or label.name != labels.REASON or not label.value:
+        return None
+    return label
+
+
 def _parse_removals(doc: Document, problems: list[Problem]) -> tuple[Removal, ...]:
     sections = {section.title.casefold(): section for section in doc.sections(2)}
     parent = sections.get(REMOVED.casefold())
@@ -119,14 +125,15 @@ def _parse_removals(doc: Document, problems: list[Problem]) -> tuple[Removal, ..
     removals: list[Removal] = []
     for name, section in named_blocks(doc, parent, problems):
         lines = doc.lines[section.body_start : section.end]
-        reason = next((m.group(1).strip() for line in lines if (m := _REASON.match(line.text))), "")
+        reason = next((label.value for line in lines if (label := _reason(line.text))), "")
         if not reason:
             problems.append(
                 Problem(
                     doc.path,
                     section.start + 1,
                     "removal-without-reason",
-                    f'Removing "{name}" needs a reason. Add a "Reason: <why>" line under it.',
+                    f'Removing "{name}" needs a reason. Add a '
+                    f'"{label_line(labels.REASON, "<why>", bullet=False)}" line under it.',
                 )
             )
         removals.append(Removal(name, reason, section.start))
@@ -144,20 +151,27 @@ def _parse_renames(doc: Document, problems: list[Problem]) -> tuple[Rename, ...]
         line = doc.lines[index]
         if line.is_blank or line.in_fence:
             continue
-        match = _RENAME_LINE.match(line.text)
-        if match is None or not match.group(2):
+        match = labels.read_label(line.text)
+        if (
+            match is None
+            or not match.bullet
+            or match.name not in (labels.FROM, labels.TO)
+            or not match.value
+        ):
+            if labels.plain_label(line.text) is not None:
+                continue  # Reported as a plain label, with the bold form to write.
             problems.append(
                 Problem(
                     doc.path,
                     index + 1,
                     "malformed-rename",
-                    'A rename is a "- From: <old name>" line followed by a '
-                    '"- To: <new name>" line.',
+                    f'A rename is a "{label_line(labels.FROM, "<old name>")}" line followed by a '
+                    f'"{label_line(labels.TO, "<new name>")}" line.',
                 )
             )
             continue
-        word, name = match.group(1), match.group(2)
-        if word == "From":
+        word, name = match.name, match.value
+        if word == labels.FROM:
             if pending is not None:
                 problems.append(_unpaired(doc, pending[1]))
             pending = (name, index)
@@ -176,7 +190,8 @@ def _unpaired(doc: Document, index: int) -> Problem:
         doc.path,
         index + 1,
         "malformed-rename",
-        'Every "- From:" line is followed by its own "- To:" line.',
+        f'Every "{label_line(labels.FROM)}" line is followed by its own '
+        f'"{label_line(labels.TO)}" line.',
     )
 
 
@@ -194,7 +209,8 @@ def parse_delta(domain: str, doc: Document) -> Delta:
                     doc.path,
                     facts[REPOS_FACT].index + 1,
                     "empty-fact",
-                    f'"{REPOS_FACT}:" names no repo. List the repos, or remove the line.',
+                    f'"{label_line(REPOS_FACT, bullet=False)}" names no repo. List the repos, '
+                    "or remove the line.",
                 )
             )
     for section in doc.sections(2):
@@ -370,7 +386,7 @@ def _new_spec_text(delta: Delta) -> str:
     newline = delta.doc.newline
     lines = [f"# {delta.title}", ""]
     if delta.repos:
-        lines += [f"{REPOS_FACT}: {', '.join(delta.repos)}", ""]
+        lines += [label_line(REPOS_FACT, ", ".join(delta.repos), bullet=False), ""]
     lines += [f"## {PURPOSE}", "", *(delta.purpose or "").split("\n"), ""]
     if delta.background is not None:
         lines += [f"## {BACKGROUND}", "", *delta.background.split("\n"), ""]
@@ -445,7 +461,7 @@ def _set_background(spec: Spec, background: str, lines: list[str], newline: str)
 
 def _set_repos(spec: Spec, repos: tuple[str, ...], lines: list[str], newline: str) -> None:
     doc = _reparse(spec, lines)
-    fact_line = f"{REPOS_FACT}: {', '.join(repos)}{newline}"
+    fact_line = label_line(REPOS_FACT, ", ".join(repos), bullet=False) + newline
     facts = parse_facts(doc, {REPOS_FACT}, [], prose=True)
     if REPOS_FACT in facts:
         index = facts[REPOS_FACT].index

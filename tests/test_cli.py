@@ -10,7 +10,7 @@ from typing import ClassVar
 import pytest
 
 from tests.conftest import git_init
-from tests.support import Workspace, proposal
+from tests.support import Workspace, bold, proposal
 from waymark import __version__, cli
 from waymark.cli import EXIT_OK, EXIT_REFUSED, EXIT_USAGE, main
 from waymark.services import setup
@@ -211,7 +211,9 @@ def test_wm_check_fix_reports_what_it_fixed(
     project: Workspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """wm check --fix names each fixed file, then reports the check."""
-    project.change(proposal_text=proposal().replace("Paging.", "Paging.   "))
+    project.change(proposal_text=bold(proposal()).replace("Paging.", "Paging.   "))
+    project.write("changes/add-limit/design.md", bold(project.read("changes/add-limit/design.md")))
+    project.write("changes/add-limit/tasks.md", bold(project.read("changes/add-limit/tasks.md")))
     monkeypatch.chdir(project.root)
     assert main(["check", "--fix"]) == EXIT_OK
     out = capsys.readouterr().out
@@ -244,7 +246,7 @@ def test_wm_new_change_takes_a_milestone(
     )
     monkeypatch.chdir(project.root)
     assert main(["new", "change", "add-limit", "--milestone", "faster-search"]) == EXIT_OK
-    assert "- Milestone: faster-search\n" in project.read("changes/add-limit/proposal.md")
+    assert "- **Milestone:** faster-search\n" in project.read("changes/add-limit/proposal.md")
     assert main(["new", "change", "add-cache", "--milestone", "no-such-one"]) == EXIT_REFUSED
     assert not project.path("changes/add-cache").exists()
     assert main(["new", "milestone", "better-ranking", "--milestone", "x"]) == EXIT_REFUSED
@@ -266,7 +268,7 @@ def test_wm_roadmap_commands(project: Workspace, monkeypatch: pytest.MonkeyPatch
     )
     assert main(["roadmap", "drop", "faster-search", "add-cache", "--reason", "fast"]) == EXIT_OK
     text = project.read("milestones/faster-search/milestone.md")
-    assert "- (added) " in text
+    assert " (added) " in text
     assert "add-cache by Ada: cache hot queries" in text
     assert main(["roadmap", "drop", "faster-search", "add-limit", "--reason", "x"]) == EXIT_OK
     for usage in (
@@ -283,7 +285,7 @@ def test_wm_new_change_takes_after(project: Workspace, monkeypatch: pytest.Monke
     monkeypatch.chdir(project.root)
     assert main(["new", "change", "add-limit"]) == EXIT_OK
     assert main(["new", "change", "add-paging", "--after", "add-limit"]) == EXIT_OK
-    assert "- After: add-limit\n" in project.read("changes/add-paging/proposal.md")
+    assert "- **After:** add-limit\n" in project.read("changes/add-paging/proposal.md")
     assert main(["new", "exploration", "paging", "--after", "add-limit"]) == EXIT_REFUSED
     assert not project.path("explorations/paging.md").exists()
 
@@ -291,7 +293,7 @@ def test_wm_new_change_takes_after(project: Workspace, monkeypatch: pytest.Monke
 def test_wm_new_resource_and_its_kind(project: Workspace, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(project.root)
     assert main(["new", "resource", "stripe", "service"]) == EXIT_OK
-    assert "- Kind: service\n" in project.read("resources/stripe.md")
+    assert "- **Kind:** service\n" in project.read("resources/stripe.md")
     assert main(["new", "resource", "mailgun"]) == EXIT_REFUSED
     assert not project.path("resources/mailgun.md").exists()
     for kind in ("change", "milestone", "exploration"):

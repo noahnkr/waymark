@@ -119,6 +119,8 @@ def parse_milestone(doc: Document) -> tuple[Goal, Roadmap]:
             parsed = records.parse(listed.group(1)) if listed else None
             if isinstance(parsed, Record):
                 log.append(parsed)
+            elif isinstance(parsed, records.ParseError):
+                problems.append(Problem(doc.path, index + 1, "malformed-record", parsed.message))
     all_problems = tuple(problems)
     roadmap = Roadmap(doc, tuple(entries), (), tuple(log))
     return Goal(doc, title, sections, all_problems), roadmap

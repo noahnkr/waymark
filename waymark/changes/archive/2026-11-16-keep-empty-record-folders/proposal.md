@@ -1,7 +1,7 @@
 # Keep empty record folders
 
-- Owner: Noah Roberts
-- Path: short
+- **Owner:** Noah Roberts
+- **Path:** short
 
 ## Why
 
@@ -22,13 +22,13 @@
 
 ## Impact
 
-- Specs: `setup` (added)
-- User-visible:
+- **Specs:** `setup` (added)
+- **User-visible:**
   - `wm init` creates the six record folders, each with an empty `.gitkeep`, so a new record is committed with its whole layout
   - `wm update` adds any missing `.gitkeep`, lists it as `created:`, and asks to review and commit `waymark/`
-- Code: `services/setup.py` and `services/integration.py`, the setup, integration and archive tests, and the docs (`record.md`, `smoke-test.md`)
+- **Code:** `services/setup.py` and `services/integration.py`, the setup, integration and archive tests, and the docs (`record.md`, `smoke-test.md`)
 
 ## Outcome
 
-- Built: wm init writes an empty .gitkeep into specs/, changes/, changes/archive/, explorations/, milestones/ and milestones/archive/ when it creates a record, and wm update adds any that are missing, printing created: for each and asking to review and commit waymark/. This repository's record got its six files from wm update.
-- Differs: The README's generated file tree now shows the .gitkeep files, which the proposal's Code line didn't name. Two self-review suggestions are left open: the tests repeat the six folder names instead of importing them, and the CHANGELOG has no unreleased section yet, so this change's line is left for the release audit.
+- **Built:** wm init writes an empty .gitkeep into specs/, changes/, changes/archive/, explorations/, milestones/ and milestones/archive/ when it creates a record, and wm update adds any that are missing, printing created: for each and asking to review and commit waymark/. This repository's record got its six files from wm update.
+- **Differs:** The README's generated file tree now shows the .gitkeep files, which the proposal's Code line didn't name. Two self-review suggestions are left open: the tests repeat the six folder names instead of importing them, and the CHANGELOG has no unreleased section yet, so this change's line is left for the release audit.

@@ -65,4 +65,10 @@ def test_reference_links_are_found() -> None:
 
 
 def test_checkboxes_are_not_links() -> None:
-    assert document("- [x] 1.1 Do it (see notes)\n- [ ] 1.2 Next\n").links() == ()
+    assert (
+        document(
+            "- [x] 1.1 Do it (see notes)\n  - **Build:** planner\n- [ ] 1.2 Next\n"
+            "  - **Build:** planner\n"
+        ).links()
+        == ()
+    )

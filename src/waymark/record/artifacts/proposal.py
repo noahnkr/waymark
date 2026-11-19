@@ -11,6 +11,8 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.outline import (
     collect_sections,
     content,
@@ -21,11 +23,11 @@ from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document
 from waymark.record.terms import ReviewLevel
 
-OWNER = "Owner"
-MILESTONE = "Milestone"
-AFTER = "After"
-PATH = "Path"
-REVIEW = "Review"
+OWNER = labels.OWNER
+MILESTONE = labels.MILESTONE
+AFTER = labels.AFTER
+PATH = labels.PATH
+REVIEW = labels.REVIEW
 SHORT = "short"
 FULL = "full"
 
@@ -36,17 +38,15 @@ IMPACT = "Impact"
 OUTCOME = "Outcome"
 REQUIRED_SECTIONS = (WHY, WHAT_CHANGES, NON_GOALS, IMPACT)
 
-SPECS = "Specs"
-USER_VISIBLE = "User-visible"
-CODE = "Code"
+SPECS = labels.SPECS
+USER_VISIBLE = labels.USER_VISIBLE
+CODE = labels.CODE
 IMPACT_LINES = (SPECS, USER_VISIBLE, CODE)
 NONE = "none"
-BUILT = "Built"
-DIFFERS = "Differs"
+BUILT = labels.BUILT
+DIFFERS = labels.DIFFERS
 
-_OUTCOME_LINE = re.compile(r"^[-*][ \t]+(Built|Differs):(?:[ \t]+(.*))?$")
 
-_IMPACT_LINE = re.compile(r"^[-*][ \t]+(Specs|User-visible|Code):(?:[ \t]+(.*))?$")
 _SPEC_NAME = re.compile(r"`([^`\s]+)`")
 
 
@@ -100,9 +100,9 @@ class Proposal:
         """The Outcome's ``Built`` and ``Differs`` lines that have text."""
         found: dict[str, str] = {}
         for line in (self.outcome or "").split("\n"):
-            match = _OUTCOME_LINE.match(line)
-            if match and (match.group(2) or "").strip():
-                found.setdefault(match.group(1), match.group(2).strip())
+            label = labels.read_label(line)
+            if label and label.bullet and label.name in (BUILT, DIFFERS) and label.value:
+                found.setdefault(label.name, label.value)
         return found
 
     def accepted_text(self) -> str:
@@ -132,7 +132,8 @@ def parse_proposal(doc: Document) -> Proposal:
                 doc.path,
                 1,
                 "missing-owner",
-                f'Every change has one owner. Add a "- {OWNER}: <name>" line under the title.',
+                f'Every change has one owner. Add a "{label_line(OWNER, "<name>")}" line under '
+                "the title.",
             )
         )
 
@@ -146,7 +147,7 @@ def parse_proposal(doc: Document) -> Proposal:
                     doc.path,
                     facts[PATH].index + 1,
                     "invalid-path",
-                    f'"{PATH}:" is "{SHORT}" for the short path or "{FULL}". '
+                    f'"{label_line(PATH)}" is "{SHORT}" for the short path or "{FULL}". '
                     "Fix the value, or remove the line for the full path.",
                 )
             )
@@ -163,8 +164,8 @@ def parse_proposal(doc: Document) -> Proposal:
                     doc.path,
                     facts[REVIEW].index + 1,
                     "invalid-review-level",
-                    f'"{REVIEW}:" is one of {levels}. Fix the value, or remove the line for '
-                    "the project's default.",
+                    f'"{label_line(REVIEW)}" is one of {levels}. Fix the value, or remove the '
+                    "line for the project's default.",
                 )
             )
 
@@ -216,10 +217,10 @@ def _impact_lines(doc: Document, start: int, end: int) -> dict[str, str]:
             if current is not None:
                 current.append(text.strip())
             continue
-        match = _IMPACT_LINE.match(text)
+        label = labels.read_label(text)
         current = None
-        if match and match.group(1) not in lines:
-            current = lines[match.group(1)] = [match.group(2) or ""]
+        if label and label.bullet and label.name in IMPACT_LINES and label.name not in lines:
+            current = lines[label.name] = [label.value]
     return {
         label: "\n".join(part for part in parts if part).strip() for label, parts in lines.items()
     }

@@ -1,7 +1,7 @@
 # Normalize finding places
 
-- Owner: Noah Roberts
-- Path: short
+- **Owner:** Noah Roberts
+- **Path:** short
 
 ## Why
 
@@ -23,13 +23,13 @@
 
 ## Impact
 
-- Specs: `records` (added)
-- User-visible:
+- **Specs:** `records` (added)
+- **User-visible:**
   - `wm review` and `wm verdict` write a finding's absolute path as a path relative to the project, or `<repo>/<path>` in an atlas, and refuse any other absolute path
   - four archived findings of link-milestone-changes no longer show a home folder
-- Code: `services/lifecycle.py` (the findings `wm review` and `wm verdict` take), `record/records.py`, the tests, `docs/record.md`, the CHANGELOG, and the archived `tasks.md` of link-milestone-changes
+- **Code:** `services/lifecycle.py` (the findings `wm review` and `wm verdict` take), `record/records.py`, the tests, `docs/record.md`, the CHANGELOG, and the archived `tasks.md` of link-milestone-changes
 
 ## Outcome
 
-- Built: wm review and wm verdict write an absolute path in a finding's place relative to the project, with forward slashes and .. resolved, or as <repo>/<path> for a registered atlas code repo, and refuse any other absolute path. A relative path written with backslashes gets forward slashes, and prose places are kept as given. The four archived findings of link-milestone-changes no longer hold a home folder, and docs/record.md and the CHANGELOG describe it.
-- Differs: The self-review found and fixed a prose place losing its backslashes and .. not being resolved. The archived findings were repaired by hand, since the hook refuses an agent's edit to Log records. Left open: Git Bash style paths are refused on Windows, and item 1.2's Verify search can't come back empty, so the criterion was checked with the full path.
+- **Built:** wm review and wm verdict write an absolute path in a finding's place relative to the project, with forward slashes and .. resolved, or as <repo>/<path> for a registered atlas code repo, and refuse any other absolute path. A relative path written with backslashes gets forward slashes, and prose places are kept as given. The four archived findings of link-milestone-changes no longer hold a home folder, and docs/record.md and the CHANGELOG describe it.
+- **Differs:** The self-review found and fixed a prose place losing its backslashes and .. not being resolved. The archived findings were repaired by hand, since the hook refuses an agent's edit to Log records. Left open: Git Bash style paths are refused on Windows, and item 1.2's Verify search can't come back empty, so the criterion was checked with the full path.

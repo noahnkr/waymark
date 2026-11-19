@@ -87,7 +87,9 @@ def accepted(project: Workspace, tasks: str = TASKS, **options: Any) -> Workspac
     return project
 
 
-INDEPENDENT = proposal().replace("Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n")
+INDEPENDENT = proposal().replace(
+    "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
+)
 
 
 def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace) -> None:
@@ -226,14 +228,17 @@ def test_scenario_resource_item(project: Workspace) -> None:
     assert rule not in at(project, "specs")["guidance"]
 
 
-ONE_ITEM = HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty\n  - Verify: a test\n"
+ONE_ITEM = (
+    HEAD
+    + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n  - **Verify:** a test\n"
+)
 
 
 def reviewable(project: Workspace, level: str = "independent") -> None:
     """A change with every item ticked, at the given review level."""
     project.change(
         proposal_text=proposal().replace(
-            "Owner: Sam Doe\n", f"Owner: Sam Doe\n- Review: {level}\n"
+            "**Owner:** Sam Doe\n", f"**Owner:** Sam Doe\n- **Review:** {level}\n"
         ),
         tasks=ONE_ITEM,
     )
@@ -332,6 +337,11 @@ def test_instruction_templates_follow_the_formats_wm_parses(project: Workspace) 
     assert parsed.problems == ()
     assert [item.number for item in parsed.items] == ["1.1", "1.2"]
     assert parsed.items[0].criteria is not None
+    for item in parsed.items:
+        first = tasks.split("\n")[item.index + 1]
+        assert first in ("  - **Build:** planner", "  - **Build:** delegate")
+    assert "- **Options:**\n  - <one option considered>\n  - <another>\n" in design
+    assert "- **Decided by:** <human or planner>" in design
     specs = at(project, "specs")["outputs"][0]["template"]
     parsed_delta = parse_delta("search", Document.parse("specs/search.md", specs))
     assert [item.name for item in parsed_delta.added] == ["<name>"]
@@ -345,16 +355,20 @@ def test_instruction_templates_follow_the_formats_wm_parses(project: Workspace) 
 def test_task_instructions_in_an_atlas_ask_for_a_repo_on_every_item(atlas: Workspace) -> None:
     atlas.change(tasks=None)
     step = valid(instructions(atlas.record(), "tasks", NAME))
-    assert "  - Repo: <api | web>" in step["outputs"][0]["template"]
+    template = step["outputs"][0]["template"]
+    assert template.count("  - **Build:** planner\n  - **Repo:** <api | web>\n") == 1
+    assert template.count("  - **Build:** delegate\n  - **Repo:** <api | web>\n") == 1
     assert any("Repo line" in line for line in step["guidance"])
 
 
 def test_review_instructions_follow_the_changes_review_level(project: Workspace) -> None:
     project.change(
         proposal_text=proposal().replace(
-            "Owner: Sam Doe\n", "Owner: Sam Doe\n- Review: independent\n"
+            "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
         ),
-        tasks=HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n",
+        tasks=HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.tick(project.root, NAME, "1.1")
@@ -371,7 +385,12 @@ def mentions_an_implementer(step: dict[str, Any]) -> bool:
 
 
 def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"] == [
@@ -388,7 +407,9 @@ def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Wor
 def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     accepted(
         project,
-        HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Build: delegate\n  - Criteria: fifty\n",
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** delegate\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
     )
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
@@ -398,22 +419,32 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     )
 
 
-@pytest.mark.parametrize("tag", ["", "\n  - Build: delegate"])
+@pytest.mark.parametrize("tag", ["planner", "delegate"])
 def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     project: Workspace, tag: str
 ) -> None:
-    accepted(project, HEAD + f"- [ ] 1.1 Cap it{tag}\n  - Verify: a test\n  - Criteria: fifty\n")
+    accepted(
+        project,
+        HEAD
+        + f"- [ ] 1.1 Cap it\n  - **Build:** {tag}\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"][0] == f"wm reopen {NAME} 1.1"
     assert step["commands"][1] == f"wm context {NAME} 1.1 --for implement"
-    assert mentions_an_implementer(step) == bool(tag)
+    assert mentions_an_implementer(step) == (tag == "delegate")
 
 
 def test_instructions_for_items_waiting_on_the_human_point_to_resolve(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.block(project.root, NAME, "1.1", "waiting")
     step = at(project)
     assert (step["step"], step["item"]) == ("resolve-items", "1.1")
@@ -483,7 +514,12 @@ def test_reviewer_pack_holds_the_whole_change_but_not_how_it_was_built(
 
 
 def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Workspace) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(
         project.root,
@@ -516,7 +552,12 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
 def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
     project: Workspace,
 ) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.add_note(project.root, NAME, "1.1", "half done", DAY)
     lifecycle.block(project.root, NAME, "1.1", "which bound?")
     lifecycle.resolve(project.root, NAME, "1.1", "use an inclusive bound", DAY)
@@ -550,7 +591,7 @@ def test_context_pack_for_an_unaccepted_change_is_refused(project: Workspace) ->
 
 def test_context_pack_for_an_item_without_criteria_is_refused(project: Workspace) -> None:
     accepted(project)
-    project.replace(f"{FOLDER}/tasks.md", "  - Criteria: the help text names the limit\n", "")
+    project.replace(f"{FOLDER}/tasks.md", "  - **Criteria:** the help text names the limit\n", "")
     assert 'acceptance of "add-limit" was withdrawn' in refused(project, "implement", "1.2")
 
 
@@ -593,12 +634,12 @@ def test_implementer_pack_is_refused_for_an_item_that_is_done_or_waiting(
         project,
         HEAD
         + (
-            "- [ ] 1.1 A\n"
-            "  - Verify: a test\n"
-            "  - Criteria: a\n"
-            "- [ ] 1.2 B\n"
-            "  - Verify: a test\n"
-            "  - Criteria: b\n"
+            "- [ ] 1.1 A\n  - **Build:** planner\n"
+            "  - **Criteria:** a\n"
+            "  - **Verify:** a test\n"
+            "- [ ] 1.2 B\n  - **Build:** planner\n"
+            "  - **Criteria:** b\n"
+            "  - **Verify:** a test\n"
         ),
     )
     lifecycle.block(project.root, NAME, "1.1", "waiting for wording")
@@ -645,7 +686,8 @@ def test_pack_in_an_atlas_resolves_the_items_repo_to_its_folder_in_text_only(
     git_init(tmp_path / "suite-api")
     atlas.change(
         tasks=HEAD
-        + "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty\n  - Repo: api\n"
+        + "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n  - **Repo:** api\n"
+        + "  - **Criteria:** fifty\n  - **Verify:** a test\n"
     )
     lifecycle.accept(atlas.root, NAME, DAY)
     built = valid(context_pack(atlas.record(), "implement", NAME, "1.1"))
@@ -666,7 +708,8 @@ def test_delegation_gate_refuses_an_item_whose_repo_is_not_on_this_machine(
     git_init(atlas.root)
     atlas.change(
         tasks=HEAD
-        + "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty\n  - Repo: api\n"
+        + "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n  - **Repo:** api\n"
+        + "  - **Criteria:** fifty\n  - **Verify:** a test\n"
     )
     lifecycle.accept(atlas.root, NAME, DAY)
     with pytest.raises(Refusal, match=r'works in a repo that isn.t here.*"api"'):
@@ -679,7 +722,7 @@ def test_explore_pack_holds_the_charter_and_an_index_of_the_record(project: Work
     project.change("add-order", deltas={"search": delta(added=(requirement("Order"),))})
     project.write(
         "explorations/paging.md",
-        "# Paging\n\n- Status: parked\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        "# Paging\n\n- **Status:** parked\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
         "## Conclusion\n\nlater\n\n## Related\n",
     )
     built = valid(context_pack(project.record(), "explore"))
@@ -718,7 +761,12 @@ def test_context_packs_are_the_same_on_every_machine(project: Workspace) -> None
 def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
     project: Workspace,
 ) -> None:
-    accepted(project, HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty\n")
+    accepted(
+        project,
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+        + "  - **Verify:** a test\n",
+    )
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.verdict(project.root, NAME, Verdict.SPEC_GAP, "no scenario for zero", DAY)
     step = at(project)
@@ -729,7 +777,7 @@ def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
 def test_proposal_instructions_explain_the_review_line(project: Workspace) -> None:
     project.write(f"{FOLDER}/proposal.md", "# Limit\n\nOwner: Sam Doe\n")
     guidance = " ".join(at(project)["guidance"])
-    assert '"- Review: self|independent|none"' in guidance
+    assert '"- **Review:** self|independent|none"' in guidance
     assert "modifies or removes an existing requirement" in guidance
 
 
@@ -765,9 +813,10 @@ def test_reviewer_pack_holds_only_the_items_added_after_a_pass(project: Workspac
     assert "already has the review it needs" in refused(project, "review")
     project.replace(
         f"{FOLDER}/tasks.md",
-        "  - Verify: read the help text\n",
-        "  - Verify: read the help text\n"
-        "- [ ] 1.3 Name it\n  - Criteria: named\n  - Verify: a test\n",
+        "  - **Verify:** read the help text\n",
+        "  - **Verify:** read the help text\n"
+        "- [ ] 1.3 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+        "  - **Verify:** a test\n",
     )
     lifecycle.tick(project.root, NAME, "1.3")
     built = pack(project, "review")
@@ -798,7 +847,7 @@ def member_of_faster_search(project: Workspace) -> None:
     """An independently reviewed change that belongs to the milestone faster-search."""
     project.change(
         proposal_text=INDEPENDENT.replace(
-            "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Milestone: faster-search\n"
+            "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n"
         )
     )
     project.write(
@@ -835,7 +884,9 @@ def test_scenario_change_without_a_milestone(project: Workspace) -> None:
 
 
 def comes_after(other: str) -> str:
-    return proposal().replace("- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- After: {other}\n")
+    return proposal().replace(
+        "- **Owner:** Sam Doe\n", f"- **Owner:** Sam Doe\n- **After:** {other}\n"
+    )
 
 
 def test_scenario_change_without_a_dependency_in_the_instructions(project: Workspace) -> None:
@@ -868,8 +919,8 @@ def test_explore_instructions_have_no_branch(project: Workspace) -> None:
 
 def a_resource(title: str, serves: str, status: str = "active") -> str:
     return (
-        f"# {title}\n\n- Kind: service\n- Serves: {serves}\n- Status: {status}\n"
-        "- Verified: 2026-11-17\n\n"
+        f"# {title}\n\n- **Kind:** service\n- **Serves:** {serves}\n- **Status:** {status}\n"
+        "- **Verified:** 2026-11-17\n\n"
         f"## What it is\n\n{title} takes payments.\n\n"
         f"## Access\n\nThe key is in the vault item {title}.\n\n"
         "## Interface\n\nNone.\n\n## Data\n\nNone.\n\n"
@@ -882,10 +933,12 @@ def billing_change(project: Workspace, *, independent: bool = False) -> Workspac
     """An accepted change with a delta for the spec billing."""
     project.write("specs/billing.md", spec(title="Billing", purpose="How billing behaves."))
     project.write("specs/notifications.md", spec(title="Notifications", purpose="Mail."))
-    impact = "- Specs: `billing`\n- User-visible: refunds\n- Code: billing\n"
+    impact = "- **Specs:** `billing`\n- **User-visible:** refunds\n- **Code:** billing\n"
     text = proposal(impact=impact)
     if independent:
-        text = text.replace("- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Review: independent\n")
+        text = text.replace(
+            "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Review:** independent\n"
+        )
     return accepted(
         project,
         proposal_text=text,
@@ -953,9 +1006,9 @@ def test_scenario_background_from_the_delta(project: Workspace) -> None:
         "specs/billing.md",
         with_background(spec(title="Billing", purpose="How billing."), "Invoices go out monthly."),
     )
-    impact = "- Specs: `billing`\n- User-visible: refunds\n- Code: billing\n"
+    impact = "- **Specs:** `billing`\n- **User-visible:** refunds\n- **Code:** billing\n"
     text = proposal(impact=impact).replace(
-        "- Owner: Sam Doe\n", "- Owner: Sam Doe\n- Review: independent\n"
+        "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Review:** independent\n"
     )
     added = delta(title="Billing", added=(requirement("Refunds"),))
     added = added.replace("## ADDED", "## Background\n\nInvoices go out weekly.\n\n## ADDED")

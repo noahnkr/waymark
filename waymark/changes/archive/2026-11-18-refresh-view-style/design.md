@@ -42,32 +42,32 @@ Items
 ## Decisions
 
 ### Decision: How many colors
-- Status: decided
-- Decided by: human
-- Options: the 16 standard colors; 256 colors; truecolor
-- Choice: the 16 standard colors
-- Why: they follow the user's terminal theme, light or dark, and every terminal that shows color shows them
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the 16 standard colors; 256 colors; truecolor
+- **Choice:** the 16 standard colors
+- **Why:** they follow the user's terminal theme, light or dark, and every terminal that shows color shows them
 
 ### Decision: FORCE_COLOR
-- Status: decided
-- Decided by: human
-- Options: honor `FORCE_COLOR`; color only on a terminal
-- Choice: honor it, with `NO_COLOR` winning
-- Why: it is the common way to ask for color where the output is shown to a person but isn't a terminal; `NO_COLOR` is the stronger, opt-out convention
+- **Status:** decided
+- **Decided by:** human
+- **Options:** honor `FORCE_COLOR`; color only on a terminal
+- **Choice:** honor it, with `NO_COLOR` winning
+- **Why:** it is the common way to ask for color where the output is shown to a person but isn't a terminal; `NO_COLOR` is the stronger, opt-out convention
 
 ### Decision: Paint by role or by color
-- Status: decided
-- Decided by: planner
-- Options: views name roles, and `style.py` maps roles to codes; views name codes, as now
-- Choice: roles
-- Why: one place decides the palette, and add-interactive-init's screens use the same roles
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** views name roles, and `style.py` maps roles to codes; views name codes, as now
+- **Choice:** roles
+- **Why:** one place decides the palette, and add-interactive-init's screens use the same roles
 
 ### Decision: Wrap to what width
-- Status: decided
-- Decided by: planner
-- Options: the terminal's width, clamped to 60–100; the terminal's full width; no wrapping
-- Choice: clamped to 60–100
-- Why: prose past about 100 columns is hard to read on a wide terminal, and below 60 the indents leave too little room; piped output stays unwrapped so agents get whole lines
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** the terminal's width, clamped to 60–100; the terminal's full width; no wrapping
+- **Choice:** clamped to 60–100
+- **Why:** prose past about 100 columns is hard to read on a wide terminal, and below 60 the indents leave too little room; piped output stays unwrapped so agents get whole lines
 
 ## Open questions
 

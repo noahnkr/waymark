@@ -1,7 +1,7 @@
 """Resources: the as-built facts about one thing outside the repo that a project depends on.
 
-A resource is ``resources/<name>.md``: a title, the lines ``- Kind:``, ``- Serves:``,
-``- Status:`` and ``- Verified:``, and six sections that are always present, written
+A resource is ``resources/<name>.md``: a title, the lines ``- **Kind:**``, ``- **Serves:**``,
+``- **Status:**`` and ``- **Verified:**``, and six sections that are always present, written
 ``None.`` when they don't apply. Resources are edited by hand, never through a change's
 deltas, and hold no records.
 """
@@ -11,6 +11,8 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.outline import (
     Fact,
     collect_sections,
@@ -21,10 +23,10 @@ from waymark.record.markdown.outline import (
 from waymark.record.markdown.problems import WHOLE_FILE, Problem
 from waymark.record.markdown.text import Document
 
-KIND = "Kind"
-SERVES = "Serves"
-STATUS = "Status"
-VERIFIED = "Verified"
+KIND = labels.KIND
+SERVES = labels.SERVES
+STATUS = labels.STATUS
+VERIFIED = labels.VERIFIED
 FACTS = (KIND, SERVES, STATUS, VERIFIED)
 
 WHAT_IT_IS = "What it is"
@@ -96,7 +98,7 @@ def parse_resource(name: str, doc: Document) -> Resource:
                     doc.path,
                     WHOLE_FILE,
                     "missing-line",
-                    f'A resource has a "- {key}:" line under its title. Add it.',
+                    f'A resource has a "{label_line(key)}" line under its title. Add it.',
                 )
             )
 
@@ -144,7 +146,7 @@ def parse_resource(name: str, doc: Document) -> Resource:
                     _line(facts[VERIFIED]),
                     "invalid-date",
                     f'"{value}" is not a date. The date is written YYYY-MM-DD, such as '
-                    f'"- {VERIFIED}: 2026-11-17".',
+                    f'"{label_line(VERIFIED, "2026-11-17")}".',
                 )
             )
 
@@ -191,7 +193,7 @@ def unknown_specs(resource: Resource, specs: Mapping[str, object]) -> list[Probl
             resource.serves_line or WHOLE_FILE,
             "unknown-spec",
             f'The resource serves "{name}", which is not a spec (specs: {known}). Fix the name, '
-            f'or write "- {SERVES}: {NONE}".',
+            f'or write "{label_line(SERVES, NONE)}".',
         )
         for name in unknown
     ]

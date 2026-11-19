@@ -152,8 +152,8 @@ def test_close_runs_from_the_command_line(terminal: Terminal) -> None:
 
 def resource_text(title: str, kind: str, serves: str, status: str) -> str:
     return (
-        f"# {title}\n\n- Kind: {kind}\n- Serves: {serves}\n- Status: {status}\n"
-        "- Verified: 2026-11-17\n\n## What it is\n\nIt.\n\n## Access\n\nNone.\n\n"
+        f"# {title}\n\n- **Kind:** {kind}\n- **Serves:** {serves}\n- **Status:** {status}\n"
+        "- **Verified:** 2026-11-17\n\n## What it is\n\nIt.\n\n## Access\n\nNone.\n\n"
         "## Interface\n\nNone.\n\n## Data\n\nNone.\n\n## Configuration\n\n### prod\n\nLive.\n\n"
         "## Verification\n\nNone.\n"
     )
@@ -352,10 +352,10 @@ def test_milestone_roadmap_marks(terminal: Terminal) -> None:
 
 
 LONG_CRITERIA = (
-    "  - Criteria:\n"
+    "  - **Criteria:**\n"
     "    - " + " ".join(["the first criterion holds"] * 5) + "\n"
     "    - " + " ".join(["the second criterion holds"] * 5) + "\n"
-    "  - Verify: a test\n"
+    "  - **Verify:** a test\n"
 )
 
 

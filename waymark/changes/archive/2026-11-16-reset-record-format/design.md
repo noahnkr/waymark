@@ -27,46 +27,46 @@ The readers of older layouts:
 ## Decisions
 
 ### Decision: Format number
-- Status: decided
-- Decided by: human
-- Options: 1; 2, which no released `wm` wrote; keep 3
-- Choice: 1
-- Why: no record outside this repository exists, so the clash with 0.1.x's format 1 doesn't matter, and 1 is the plain first number.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** 1; 2, which no released `wm` wrote; keep 3
+- **Choice:** 1
+- **Why:** no record outside this repository exists, so the clash with 0.1.x's format 1 doesn't matter, and 1 is the plain first number.
 
 ### Decision: How far the cleanup goes
-- Status: decided
-- Decided by: human
-- Options: the migration code only; the migration code and the readers of older layouts; all of that and 0.1.1's atlas pointer and 0.1.0's hooks check
-- Choice: all of it
-- Why: nothing made by an older `wm` is left to read.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the migration code only; the migration code and the readers of older layouts; all of that and 0.1.1's atlas pointer and 0.1.0's hooks check
+- **Choice:** all of it
+- **Why:** nothing made by an older `wm` is left to read.
 
 ### Decision: Reason for another format
-- Status: decided
-- Decided by: human
-- Options: one reason for any other format; one for an older record and one for a newer
-- Choice: one reason
-- Why: without migrations, an older and a newer record need the same thing, the `wm` version that wrote them.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** one reason for any other format; one for an older record and one for a newer
+- **Choice:** one reason
+- **Why:** without migrations, an older and a newer record need the same thing, the `wm` version that wrote them.
 
 ### Decision: Test files named after format 2
-- Status: decided
-- Decided by: human
-- Options: rename them after what they test; leave them
-- Choice: rename them
-- Why: they test the current record lines, and the old names point at a format that no longer exists.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** rename them after what they test; leave them
+- **Choice:** rename them
+- **Why:** they test the current record lines, and the old names point at a format that no longer exists.
 
 ### Decision: Problem code for the kept layout checks
-- Status: decided
-- Decided by: human
-- Options: keep `old-layout`; a new code `layout` for both the glossary and the delta heading checks; `layout` for the delta heading check, with the glossary line left to the existing `glossary-format`
-- Choice: `layout` for the delta heading check; a glossary line in another form is reported as `glossary-format`
-- Why: the line isn't from an older format, just in the wrong form; the glossary already has `glossary-format` for that, and a second code for the same mistake would be confusing.
+- **Status:** decided
+- **Decided by:** human
+- **Options:** keep `old-layout`; a new code `layout` for both the glossary and the delta heading checks; `layout` for the delta heading check, with the glossary line left to the existing `glossary-format`
+- **Choice:** `layout` for the delta heading check; a glossary line in another form is reported as `glossary-format`
+- **Why:** the line isn't from an older format, just in the wrong form; the glossary already has `glossary-format` for that, and a second code for the same mistake would be confusing.
 
 ### Decision: How this repository's record changes format
-- Status: decided
-- Decided by: planner
-- Options: edit `record_format` by hand in the same commit as the code; a one-time migration from 3 to 1, removed afterwards
-- Choice: by hand
-- Why: a migration written to be deleted is the kind of leftover this change removes, and the edit is one number.
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** edit `record_format` by hand in the same commit as the code; a one-time migration from 3 to 1, removed afterwards
+- **Choice:** by hand
+- **Why:** a migration written to be deleted is the kind of leftover this change removes, and the edit is one number.
 
 ## Open questions
 

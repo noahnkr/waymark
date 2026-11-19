@@ -32,6 +32,29 @@ All notable changes to Waymark, one entry per release.
   says what in the record has changed since, and goes on from its Questions and
   Approaches. Its closing offers for a saved exploration are do nothing, update or
   drop it, a proposal, or a milestone, the last two created with `--from`.
+- **Behavior change: labels are bold.** Every label line in the record is
+  written `- **<Label>:** <text>`, the colon inside the bold: a proposal's facts,
+  Impact and Outcome, an item's lines, a decision's parts, a delta's `From`, `To`,
+  `Reason` and `Repos`, an exploration's `Status` and a resource's four lines.
+  The charter's glossary is `- **<term>:** <meaning>`. A label written plain, or
+  with the colon outside, isn't read; `wm check` reports it as `plain-label`, and
+  `wm check --fix` makes it bold.
+- **Behavior change: every task item has a Build line**, `- **Build:** planner`
+  or `- **Build:** delegate`, first among its lines. An item's lines come in the
+  order Build, Repo, Criteria, Verify, before any record. `wm check` reports a
+  missing Build line as `item-incomplete` and lines out of order as `item-order`;
+  `wm check --fix` puts the lines in order.
+- **Behavior change: a decision's options are a nested list**, one option per
+  bullet, at least two. An `- **Options:**` line with text of its own is reported
+  as `decision-options`; options are no longer split on `;` or "or".
+- **Behavior change: records start with their date.** Every record, in a change
+  and in a milestone's Log, is written `<date> (<kind>) [<args>] [by <who>]: <text>`.
+  Item lists in records are separated by `, `, and a `changes` list that `covers`
+  follows ends with `;`, as in `2026-11-20 (review) changes 1.2, 2.2; covers 1.1,
+  1.2, 2.2 by wm-reviewer: <reasons>`. A record in the older shape is reported as
+  `malformed-record`; no command migrates one.
+- **Behavior change: a finding's severity is in brackets**, written
+  ``- [critical] `<place>`: <text>``.
 
 ## [0.4.0] - 2026-11-18
 

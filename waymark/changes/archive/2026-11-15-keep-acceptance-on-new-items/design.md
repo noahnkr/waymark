@@ -40,26 +40,26 @@
 ## Decisions
 
 ### Decision: How the acceptance knows which items it covered
-- Options:
+- **Options:**
   - list the item numbers in the acceptance line;
   - a fingerprint per item;
   - treat every item numbered above the highest one at acceptance as added.
-- Choice: list the item numbers in the line.
-- Why: The line is what the human's approval wrote, so it should say what it covered. Per-item fingerprints would make the line long. A "highest number" rule breaks when a new section is added after the item numbering restarts.
+- **Choice:** list the item numbers in the line.
+- **Why:** The line is what the human's approval wrote, so it should say what it covered. Per-item fingerprints would make the line long. A "highest number" rule breaks when a new section is added after the item numbering restarts.
 
 ### Decision: Added items are not marked
-- Options:
+- **Options:**
   - mark added items in `wm status`, `wm show` and the pull request;
   - treat them like any other item.
-- Choice: treat them like any other item (the human chose it).
-- Why: An added item can't change what the system is said to do, because the deltas are covered. The change's one review checks every item, added ones too, before archive.
+- **Choice:** treat them like any other item (the human chose it).
+- **Why:** An added item can't change what the system is said to do, because the deltas are covered. The change's one review checks every item, added ones too, before archive.
 
 ### Decision: Older acceptance lines
-- Options:
+- **Options:**
   - migrate them with `wm update`;
   - read them as covering every item.
-- Choice: read them as covering every item.
-- Why: Their fingerprint was taken over every item, so that is what they cover. No change is in flight to migrate, and old archived lines keep parsing.
+- **Choice:** read them as covering every item.
+- **Why:** Their fingerprint was taken over every item, so that is what they cover. No change is in flight to migrate, and old archived lines keep parsing.
 
 ## Risks and trade-offs
 

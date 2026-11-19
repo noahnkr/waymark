@@ -39,9 +39,9 @@
 ## REMOVED Requirements
 
 ### Requirement: <name>
-Reason: <why it goes>
+**Reason:** <why it goes>
 
 ## RENAMED Requirements
 
-- From: <old name>
-- To: <new name>
+- **From:** <old name>
+- **To:** <new name>

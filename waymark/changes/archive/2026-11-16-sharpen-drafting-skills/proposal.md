@@ -1,6 +1,6 @@
 # Sharpen drafting skills
 
-- Owner: Noah Roberts
+- **Owner:** Noah Roberts
 
 ## Why
 
@@ -25,14 +25,14 @@ This is the sixth change on the `record-format-and-skills` milestone. The review
 
 ## Impact
 
-- Specs: `skills` (new), `step-guidance` (modified)
-- User-visible:
+- **Specs:** `skills` (new), `step-guidance` (modified)
+- **User-visible:**
   - the nine skills `wm init` installs are rewritten to one layout, and say what to show the human and when to stop;
   - `wm instructions` for the specs and tasks steps gives writing and sizing rules.
-- Code: `services/instructions.py`; the layout test in `tests/`
+- **Code:** `services/instructions.py`; the layout test in `tests/`
 - Assets and docs: all nine skills; concepts and the changelog.
 
 ## Outcome
 
-- Built: All nine skills share one layout (Role, Inputs, Steps, their own sections, Quality bar, Show the human, When to stop, Rules), held by a test; wm-propose gains a Questions step, a Consistency check and a fixed acceptance summary; wm-kickoff has an ordered interview and wm-explore a fuller method; wm instructions gives the specs and tasks steps the writing and sizing rules.
-- Differs: The reviewer's severity rubric and the implementer's stopping rules moved to sharpen-agent-guidance, as the human chose.
+- **Built:** All nine skills share one layout (Role, Inputs, Steps, their own sections, Quality bar, Show the human, When to stop, Rules), held by a test; wm-propose gains a Questions step, a Consistency check and a fixed acceptance summary; wm-kickoff has an ordered interview and wm-explore a fuller method; wm instructions gives the specs and tasks steps the writing and sizing rules.
+- **Differs:** The reviewer's severity rubric and the implementer's stopping rules moved to sharpen-agent-guidance, as the human chose.

@@ -1,7 +1,7 @@
 # Review added items
 
-- Owner: Noah Roberts
-- Path: short
+- **Owner:** Noah Roberts
+- **Path:** short
 
 ## Why
 
@@ -25,12 +25,12 @@ Reviewing the whole change again would repeat work. The items that passed don't 
 
 ## Impact
 
-- Specs: `review` (a requirement is added, "Review of items added after a review"); `records` (the "Who wrote a record" scenarios show what a review covers).
-- User-visible: a behavior change for every user, for the changelog: review records gain `covers <item>...`; an item added after a passing review needs its own review before archive.
-- Code: `record/records.py` (the `covers` arguments), `record/state.py` (the items to review), `services/lifecycle.py`, `services/context.py`, `services/instructions.py`, `hooks/decide.py` (the delegation gate), `views/`.
+- **Specs:** `review` (a requirement is added, "Review of items added after a review"); `records` (the "Who wrote a record" scenarios show what a review covers).
+- **User-visible:** a behavior change for every user, for the changelog: review records gain `covers <item>...`; an item added after a passing review needs its own review before archive.
+- **Code:** `record/records.py` (the `covers` arguments), `record/state.py` (the items to review), `services/lifecycle.py`, `services/context.py`, `services/instructions.py`, `hooks/decide.py` (the delegation gate), `views/`.
 - Assets: `wm-apply`, `wm-update`, `wm-reviewer`. Docs: concepts.
 
 ## Outcome
 
-- Built: Review and self-review records now name the items they cover (covers <item>...), and a record without it covers every item. An item added after a passing review gets a review of just that item: wm instructions, the reviewer's pack, the delegation gate, the archive gate and wm show all work from the items no passing review covers, and the skills and docs say so.
-- Differs: Building 1.1 turned up a spec gap, so the change also modifies the records spec's "Who wrote a record" scenarios to show covers. It stayed at review level self although wm check suggests an independent review. Two self-review suggestions are still open: wm check doesn't report a covers naming an item the change doesn't have, and the reviewer's pack lists fewer items without its version going up.
+- **Built:** Review and self-review records now name the items they cover (covers <item>...), and a record without it covers every item. An item added after a passing review gets a review of just that item: wm instructions, the reviewer's pack, the delegation gate, the archive gate and wm show all work from the items no passing review covers, and the skills and docs say so.
+- **Differs:** Building 1.1 turned up a spec gap, so the change also modifies the records spec's "Who wrote a record" scenarios to show covers. It stayed at review level self although wm check suggests an independent review. Two self-review suggestions are still open: wm check doesn't report a covers naming an item the change doesn't have, and the reviewer's pack lists fewer items without its version going up.

@@ -6,33 +6,33 @@ Who builds a task item of an accepted change. By default the planner builds it, 
 
 ## Requirements
 
-### Requirement: Planner builds by default
-When the next step of an accepted change is to apply an item that isn't tagged for delegation, `wm instructions` SHALL tell the planner to build the item itself from the item's context pack. It SHALL also tell the planner to run the checks the item touches, and to record the result with `wm tick`, `wm block` or `wm gap`.
+### Requirement: Planner builds its items
+When the next step of an accepted change is to apply an item with the line `- **Build:** planner`, `wm instructions` SHALL tell the planner to build the item itself from the item's context pack. It SHALL also tell the planner to run the checks the item touches, and to record the result with `wm tick`, `wm block` or `wm gap`.
 
-#### Scenario: Untagged item
-- GIVEN an accepted change whose next step applies item 1.1, which has no build tag
+#### Scenario: Item built by the planner
+- GIVEN an accepted change whose next step applies item 1.1, which has the line `- **Build:** planner`
 - WHEN the planner runs `wm instructions --change <change>`
 - THEN the guidance tells the planner to build item 1.1 itself and tick it, and doesn't mention starting an implementer
 
-### Requirement: Delegation tag
-A task item MAY carry the line `- Build: delegate` under it. When the next step applies an item with that line, `wm instructions` SHALL tell the planner to start an implementer with the change and item and nothing else. `wm check` SHALL report any other value of `Build:` as an error, and a build tag at the end of an item's title as an old layout that names `wm update`.
+### Requirement: Build line
+Every task item SHALL carry a `- **Build:**` line, first among its lines: `planner` for an item the planner builds, or `delegate` for an item a fresh implementer builds. When the next step applies an item with `- **Build:** delegate`, `wm instructions` SHALL tell the planner to start an implementer with the change and item and nothing else. `wm check` SHALL report any other value of `Build:` as an error that names `planner` and `delegate`, and a build tag at the end of an item's title as an old layout.
 
 #### Scenario: Tagged item
-- GIVEN an accepted change whose next step applies item 1.2, which has the line `- Build: delegate`
+- GIVEN an accepted change whose next step applies item 1.2, which has the line `- **Build:** delegate`
 - WHEN the planner runs `wm instructions --change <change>`
 - THEN the guidance tells the planner to start an implementer for item 1.2 with the change and item and nothing else
 
 #### Scenario: Unknown build value
-- GIVEN a task item with the line `- Build: someone`
+- GIVEN a task item with the line `- **Build:** someone`
 - WHEN `wm check` runs
-- THEN it reports an error on that item that names `delegate` as the only value
+- THEN it reports an error on that item that names `planner` and `delegate` as the values
 
-### Requirement: Delegation tag accepted with the item
-An item's `Build:` line SHALL be part of the item's definition that the human accepts. Adding, removing or changing it SHALL withdraw acceptance, as changing any other part of the item's definition does.
+### Requirement: Build line accepted with the item
+An item's Build line SHALL be part of the item's definition that the human accepts. Changing its value SHALL withdraw acceptance, as changing any other part of the item's definition does.
 
-#### Scenario: Tag added after acceptance
-- GIVEN an accepted change
-- WHEN `- Build: delegate` is added under one of its items
+#### Scenario: Build changed after acceptance
+- GIVEN an accepted change whose item 1.2 has `- **Build:** planner`
+- WHEN the line is changed to `- **Build:** delegate`
 - THEN the change is no longer accepted, and `wm status` asks the human to accept it again
 
 ### Requirement: Planner edits in an atlas

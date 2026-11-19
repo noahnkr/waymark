@@ -1,7 +1,7 @@
 # Reset record format
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -25,16 +25,16 @@ The record is at format 3, and the number tells only of formats 1 and 2, which n
 
 ## Impact
 
-- Specs: `authored-formats` (modified, renamed), `formatting` (modified), `setup` (modified), `atlas` (removed)
-- User-visible:
+- **Specs:** `authored-formats` (modified, renamed), `formatting` (modified), `setup` (modified), `atlas` (removed)
+- **User-visible:**
   - new records are written at `record_format = 1`; a record at format 3, from wm 0.2.0, is refused with the reason to install the `wm` version that wrote it
   - one reason for a record in another format, from every command, with no mention of `wm update`
   - `wm check` no longer has the problem codes `old-layout` and `old-record-format`; lines in an older layout fail the current checks
   - `wm update`'s help no longer says it migrates the record
   - `.waymark/atlas.toml` is no longer read, and `wm doctor` no longer reports `.waymark/hooks/`
-- Code: `record/config.py`, `record/edits.py`, `record/outline.py`, `record/proposal.py`, `record/charter.py`, `record/deltas.py`, `record/tasks.py`, `record/changes.py`, `record/milestones.py`, `record/record.py`, `record/pointer.py`, `record/project.py`, `record/atlas.py`, `services/migrations.py` (removed), `services/integration.py`, `services/common.py`, `services/check.py`, `services/doctor.py`, `services/setup.py`, `services/atlas.py`, `cli.py`, the tests, this repository's `waymark/config.toml`, and the docs (`record.md`, `getting-started.md`, `multi-repo.md`, `cli.md` generated, the CHANGELOG's preamble)
+- **Code:** `record/config.py`, `record/edits.py`, `record/outline.py`, `record/proposal.py`, `record/charter.py`, `record/deltas.py`, `record/tasks.py`, `record/changes.py`, `record/milestones.py`, `record/record.py`, `record/pointer.py`, `record/project.py`, `record/atlas.py`, `services/migrations.py` (removed), `services/integration.py`, `services/common.py`, `services/check.py`, `services/doctor.py`, `services/setup.py`, `services/atlas.py`, `cli.py`, the tests, this repository's `waymark/config.toml`, and the docs (`record.md`, `getting-started.md`, `multi-repo.md`, `cli.md` generated, the CHANGELOG's preamble)
 
 ## Outcome
 
-- Built: The record format is 1, and wm reads and writes only format 1. Every command gives one reason for a record in any other format: install the wm version that wrote it. The migration code, the readers of older layouts, 0.1.1's .waymark/atlas.toml pointer and 0.1.0's .waymark/hooks check are gone, and this repository's record moved from 3 to 1.
-- Differs: The glossary's old-form line is reported as glossary-format instead of the new layout code, a revision decided during the build that withdrew and renewed acceptance. Only proposal facts require the bullet; a spec's Repos line stays a bare fact. The first independent review found the settings template still said wm update advances the format; item 1.1 was rebuilt and the second review passed. getting-started.md's two 0.1.x upgrade paragraphs were replaced, beyond item 2.1's criteria. Left open: the release skill still says to state what wm update migrates (tools/skills/waymark-release/SKILL.md:33), and a task item's delegate always starts as False (tasks.py:292).
+- **Built:** The record format is 1, and wm reads and writes only format 1. Every command gives one reason for a record in any other format: install the wm version that wrote it. The migration code, the readers of older layouts, 0.1.1's .waymark/atlas.toml pointer and 0.1.0's .waymark/hooks check are gone, and this repository's record moved from 3 to 1.
+- **Differs:** The glossary's old-form line is reported as glossary-format instead of the new layout code, a revision decided during the build that withdrew and renewed acceptance. Only proposal facts require the bullet; a spec's Repos line stays a bare fact. The first independent review found the settings template still said wm update advances the format; item 1.1 was rebuilt and the second review passed. getting-started.md's two 0.1.x upgrade paragraphs were replaced, beyond item 2.1's criteria. Left open: the release skill still says to state what wm update migrates (tools/skills/waymark-release/SKILL.md:33), and a task item's delegate always starts as False (tasks.py:292).

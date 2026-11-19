@@ -20,6 +20,7 @@ from tests.support import (
 )
 from waymark.services import lifecycle
 from waymark.services.check import Finding, Severity, check, has_errors
+from waymark.services.instructions import instructions
 from waymark.services.pr import describe
 from waymark.views import payloads
 
@@ -30,7 +31,9 @@ CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 
 
 def reviewed_at(level: str) -> str:
-    return proposal().replace("Owner: Sam Doe\n", f"Owner: Sam Doe\n- Review: {level}\n")
+    return proposal().replace(
+        "**Owner:** Sam Doe\n", f"**Owner:** Sam Doe\n- **Review:** {level}\n"
+    )
 
 
 def findings(project: Workspace) -> list[tuple[str, str, str]]:
@@ -74,7 +77,9 @@ def test_format_problems_are_errors(project: Workspace) -> None:
 
 def test_scenario_fact_without_a_bullet(project: Workspace) -> None:
     project.change()
-    project.replace("changes/add-limit/proposal.md", "- Owner: Sam Doe\n", "Owner: Sam Doe\n")
+    project.replace(
+        "changes/add-limit/proposal.md", "- **Owner:** Sam Doe\n", "**Owner:** Sam Doe\n"
+    )
     result = check(project.root, NOW)
     found = [(f.severity, f.path, f.code) for f in result if f.path.endswith("proposal.md")]
     assert found == [(Severity.ERROR, "changes/add-limit/proposal.md", "missing-owner")]
@@ -84,13 +89,13 @@ def test_scenario_fact_without_a_bullet(project: Workspace) -> None:
 def test_scenario_old_glossary_line(project: Workspace) -> None:
     project.replace(
         "charter.md",
-        "- **Match**: a document that satisfies the query.\n",
+        "- **Match:** a document that satisfies the query.\n",
         "Record: everything in waymark/\n",
     )
     [finding] = [f for f in check(project.root, NOW) if f.path == "charter.md"]
     assert finding.code == "glossary-format"
     assert "wm update" not in finding.message
-    assert "- **<term>**: <meaning>" in finding.message
+    assert "- **<term>:** <meaning>" in finding.message
 
 
 def test_scenario_heading_in_another_case(project: Workspace) -> None:
@@ -124,22 +129,24 @@ def test_scenario_delta_not_named_in_the_impact(project: Workspace) -> None:
 
 
 def test_impact_needs_its_three_lines(project: Workspace) -> None:
-    project.change(proposal_text=proposal(impact="- Specs: `search`"))
+    project.change(proposal_text=proposal(impact="- **Specs:** `search`"))
     [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
     assert finding.code == "impact-format"
-    assert '"- User-visible:", "- Code:"' in finding.message
+    assert '"- **User-visible:**", "- **Code:**"' in finding.message
 
 
 @pytest.mark.parametrize("value", ["", " search (new)"])
 def test_only_specs_none_skips_the_specs_step(project: Workspace, value: str) -> None:
     """Requirement "Structured impact": an empty or unrecognized Specs line is reported."""
-    impact = NO_SPECS.replace("- Specs: none", f"- Specs:{value}")
+    impact = NO_SPECS.replace("- **Specs:** none", f"- **Specs:**{value}")
     project.change(proposal_text=proposal(impact=impact), deltas={})
     [finding] = [f for f in check(project.root, NOW) if f.code.startswith("impact")]
     assert (finding.path, finding.code) == ("changes/add-limit/proposal.md", "impact-format")
     assert "in backticks" in finding.message
     assert project.change_state().next_step.kind.value == "propose"
-    project.replace("changes/add-limit/proposal.md", f"- Specs:{value}\n", "- Specs: none\n")
+    project.replace(
+        "changes/add-limit/proposal.md", f"- **Specs:**{value}\n", "- **Specs:** none\n"
+    )
     assert [f for f in check(project.root, NOW) if f.code.startswith("impact")] == []
 
 
@@ -151,8 +158,8 @@ def test_spec_named_without_a_delta_points_at_the_specs_step(project: Workspace)
 
 
 OLD_DESIGN = (
-    DESIGN.replace("- Status: decided\n", "")
-    .replace("- Decided by: planner\n", "")
+    DESIGN.replace("- **Status:** decided\n", "")
+    .replace("- **Decided by:** planner\n", "")
     .replace("## Open questions\n\nNone.\n\n", "")
 )
 
@@ -160,11 +167,11 @@ OLD_DESIGN = (
 def test_scenario_archived_change_in_an_older_layout(project: Workspace) -> None:
     """Requirement "New work only": archived changes are read as they were written."""
     folder = "changes/archive/2026-01-20-add-limit"
-    project.write(f"{folder}/proposal.md", proposal(impact="Specs: search.", outcome="Done."))
+    project.write(f"{folder}/proposal.md", proposal(impact="**Specs:** search.", outcome="Done."))
     project.write(f"{folder}/specs/search.md", delta(added=(requirement(),), purpose="Search."))
     project.write(f"{folder}/design.md", OLD_DESIGN)
     project.write(f"{folder}/tasks.md", TASKS.replace("- [ ]", "- [x]"))
-    assert "- Status:" not in OLD_DESIGN
+    assert "- **Status:**" not in OLD_DESIGN
     assert "Open questions" not in OLD_DESIGN
     assert check(project.root, NOW) == ()
     record = project.record()
@@ -186,7 +193,9 @@ def test_broken_links_are_errors(project: Workspace) -> None:
 def test_malformed_evidence_is_an_error(project: Workspace) -> None:
     project.change(
         tasks=HEAD
-        + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - (review) approved by me\n"
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+        + "  - (review) approved by me\n"
     )
     assert findings(project) == [("error", "changes/add-limit/tasks.md", "malformed-record")]
 
@@ -194,9 +203,54 @@ def test_malformed_evidence_is_an_error(project: Workspace) -> None:
 def test_unknown_build_tag_is_an_error(project: Workspace) -> None:
     project.change(
         tasks=HEAD
-        + "- [ ] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - Build: someone\n"
+        + "- [ ] 1.1 Cap it\n  - **Build:** someone\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
     )
     assert findings(project) == [("error", "changes/add-limit/tasks.md", "unknown-build-tag")]
+    [problem] = project.record().changes["add-limit"].problems
+    assert "planner" in problem.message
+    assert "delegate" in problem.message
+
+
+def test_scenario_item_built_by_the_planner(project: Workspace) -> None:
+    """Requirement "Planner builds its items": the guidance builds it and never delegates."""
+    project.change(
+        tasks=HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+    )
+    project.accept()
+    assert findings(project) == []
+    guide = instructions(project.record(), "apply", "add-limit")
+    assert guide["item"] == "1.1"
+    assert guide["guidance"][0] == "Build item 1.1 yourself, from its context pack."
+    assert not any("implementer" in line for line in guide["guidance"])
+    assert "wm tick add-limit 1.1" in guide["commands"]
+
+
+def test_scenario_tagged_item_with_a_bold_build_line(project: Workspace) -> None:
+    """Requirement "Build line": a delegate item is handed to an implementer, and nothing else."""
+    project.change(
+        tasks=HEAD
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+        + "- [ ] 1.2 Rebuild\n  - **Build:** delegate\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+    )
+    project.accept()
+    guide = instructions(project.record(), "apply", "add-limit")
+    assert guide["item"] == "1.2"
+    assert guide["guidance"][0] == (
+        "Start an implementer for item 1.2 with the change and item and nothing else."
+    )
+
+
+def test_tasks_guidance_asks_for_a_build_line_on_every_item(project: Workspace) -> None:
+    project.change(tasks=None)
+    guidance = " ".join(instructions(project.record(), "tasks", "add-limit")["guidance"])
+    assert "Give every item a '- **Build:**' line" in guidance
+    assert "'planner'" in guidance
+    assert "'delegate'" in guidance
 
 
 def test_delta_that_does_not_match_its_spec_is_an_error(project: Workspace) -> None:
@@ -227,7 +281,9 @@ def test_overlapping_changes_are_a_warning(project: Workspace) -> None:
 def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> None:
     project.change(
         proposal_text=reviewed_at("none"),
-        tasks=HEAD + "- [ ] 1.1 Rename it\n  - Criteria: done\n  - Verify: a test\n",
+        tasks=HEAD
+        + "- [ ] 1.1 Rename it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, "add-limit", DAY)
     assert findings(project) == []
@@ -246,7 +302,7 @@ def test_exploration_without_a_status_line_is_missing_its_status(project: Worksp
 
 def exploration(status: str) -> str:
     return (
-        f"# P\n\n- Status: {status}\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
+        f"# P\n\n- **Status:** {status}\n\n## Context\n\n## Questions\n\n## Approaches\n\n"
         "## Conclusion\n\n## Related\n"
     )
 
@@ -331,7 +387,9 @@ def test_risky_change_at_self(project: Workspace) -> None:
 def test_not_archived_warning_says_to_archive_before_the_pull_request(project: Workspace) -> None:
     project.change(
         proposal_text=reviewed_at("none"),
-        tasks=HEAD + "- [ ] 1.1 Rename it\n  - Criteria: done\n  - Verify: a test\n",
+        tasks=HEAD
+        + "- [ ] 1.1 Rename it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
@@ -375,7 +433,7 @@ LINKED = "- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"
 
 def milestone_named(milestone_name: str) -> str:
     return proposal().replace(
-        "- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- Milestone: {milestone_name}\n"
+        "- **Owner:** Sam Doe\n", f"- **Owner:** Sam Doe\n- **Milestone:** {milestone_name}\n"
     )
 
 
@@ -407,7 +465,7 @@ def test_scenario_linked_change_names_no_milestone(project: Workspace) -> None:
     project.write("milestones/faster-search/milestone.md", milestone(LINKED))
     [(severity, code, _, message)] = milestone_findings(project)
     assert (severity, code) == ("error", "milestone-missing")
-    assert '"- Milestone: faster-search"' in message
+    assert '"- **Milestone:** faster-search"' in message
 
 
 def test_scenario_unknown_milestone(project: Workspace) -> None:
@@ -439,7 +497,10 @@ def test_a_change_on_two_roadmaps(project: Workspace) -> None:
 def test_archived_changes_are_not_checked_against_roadmaps(project: Workspace) -> None:
     project.change(
         proposal_text=milestone_named("no-such-milestone"),
-        tasks="# Tasks\n\n## 1. Limit\n\n- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: ok\n",
+        tasks=(
+            "# Tasks\n\n## 1. Limit\n\n- [ ] 1.1 Cap it\n  - **Build:** planner\n"
+            "  - **Criteria:** ok\n  - **Verify:** a test\n"
+        ),
     )
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.tick(project.root, "add-limit", "1.1")
@@ -449,7 +510,9 @@ def test_archived_changes_are_not_checked_against_roadmaps(project: Workspace) -
 
 
 def after_named(other: str) -> str:
-    return proposal().replace("- Owner: Sam Doe\n", f"- Owner: Sam Doe\n- After: {other}\n")
+    return proposal().replace(
+        "- **Owner:** Sam Doe\n", f"- **Owner:** Sam Doe\n- **After:** {other}\n"
+    )
 
 
 def after_findings(project: Workspace) -> list[tuple[str, str, str, int, str]]:
@@ -515,10 +578,114 @@ def test_scenario_dependency_merged(project: Workspace) -> None:
     assert '"add-limit"' in message
     assert "Rebase" in message
     assert "pull request" in message
-    assert '"- After:"' in message
+    assert '"- **After:**"' in message
 
 
 def test_an_unmerged_dependency_is_not_warned_about(project: Workspace) -> None:
     project.change("add-limit")
     project.change("add-paging", proposal_text=after_named("add-limit"))
     assert after_findings(project) == []
+
+
+ITEM_1_1 = (
+    "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n  - **Verify:** a test\n"
+)
+
+
+def item_problems(project: Workspace, item_1_2: str) -> list[tuple[str, int, str]]:
+    tasks = HEAD + ITEM_1_1 + item_1_2
+    project.change(tasks=tasks)
+    line = tasks.split("\n").index(item_1_2.split("\n", maxsplit=1)[0]) + 1
+    problems = project.record().changes["add-limit"].problems
+    return [(p.code, p.line - line, p.message) for p in problems]
+
+
+def test_scenario_item_without_a_build_line(project: Workspace) -> None:
+    [(code, offset, message)] = item_problems(
+        project, "- [ ] 1.2 Name it\n  - **Criteria:** named\n  - **Verify:** a test\n"
+    )
+    assert (code, offset) == ("item-incomplete", 0)
+    assert '"- **Build:**"' in message
+    assert "planner" in message
+    assert "delegate" in message
+
+
+def test_scenario_build_line_last(project: Workspace) -> None:
+    [(code, offset, message)] = item_problems(
+        project,
+        "- [ ] 1.2 Name it\n  - **Criteria:** named\n  - **Verify:** a test\n"
+        "  - **Build:** delegate\n",
+    )
+    assert (code, offset) == ("item-order", 0)
+    assert "Build, Repo, Criteria, Verify" in message
+
+
+def test_scenario_lines_in_order(project: Workspace) -> None:
+    problems = item_problems(
+        project,
+        "- [ ] 1.2 Name it\n  - **Build:** planner\n  - **Criteria:**\n    - named\n"
+        "    - short\n  - **Verify:** a test\n",
+    )
+    assert problems == []
+
+
+def test_a_label_after_a_record_is_out_of_order(project: Workspace) -> None:
+    [(code, _, _)] = item_problems(
+        project,
+        "- [ ] 1.2 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+        "  - 2026-01-16 (note) by Sam Doe: halfway\n  - **Verify:** a test\n",
+    )
+    assert code == "item-order"
+
+
+def test_scenario_malformed_record_and_kind_before_the_date(project: Workspace) -> None:
+    for record in (
+        "(blocked) the API key is missing",
+        "(blocked) 2026-11-20 by Ada: the API key is missing",
+    ):
+        [(code, offset, message)] = item_problems(
+            project,
+            "- [ ] 1.2 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+            f"  - **Verify:** a test\n  - {record}\n",
+        )
+        assert (code, offset) == ("malformed-record", 4)
+        assert "YYYY-MM-DD (blocked) [by <who>]: <reason>" in message
+
+
+def test_scenario_item_list_without_commas(project: Workspace) -> None:
+    tasks = (
+        HEAD
+        + ITEM_1_1
+        + "\n## Log\n\n- 2026-11-20 (accepted) fingerprint 0123456789abcdef items 1.1 1.2 by Ada\n"
+    )
+    project.change(tasks=tasks)
+    [problem] = project.record().changes["add-limit"].problems
+    assert problem.code == "malformed-record"
+    assert problem.line == tasks.split("\n").index(tasks.split("\n")[-2]) + 1
+    assert "YYYY-MM-DD (accepted) fingerprint <digest> items <item>, <item>... [by <who>]" in (
+        problem.message
+    )
+
+
+def test_scenario_severity_without_brackets(project: Workspace) -> None:
+    tasks = (
+        HEAD
+        + ITEM_1_1
+        + "\n## Log\n\n- 2026-11-20 (self-review) by Ada: fine\n"
+        + "  - warning `src/a.py:12`: the limit is not checked\n"
+    )
+    project.change(tasks=tasks)
+    [problem] = project.record().changes["add-limit"].problems
+    assert problem.line == len(tasks.split("\n")) - 1
+    assert "- [<severity>] `<place>`: <text>" in problem.message
+
+
+def test_an_old_shaped_record_in_a_milestone_log_is_reported(project: Workspace) -> None:
+    project.write(
+        "milestones/faster-search/milestone.md",
+        milestone("- add-limit: cap the results\n")
+        + "\n## Log\n\n- (added) 2026-11-20 add-limit by Ada: cap the results\n",
+    )
+    problems = [p for p in project.record().problems if p.code == "malformed-record"]
+    assert [p.path for p in problems] == ["milestones/faster-search/milestone.md"]
+    assert "YYYY-MM-DD (added) <change> [by <who>]: <description>" in problems[0].message

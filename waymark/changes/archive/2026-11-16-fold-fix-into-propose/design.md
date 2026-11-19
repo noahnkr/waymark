@@ -31,46 +31,46 @@
 ## Decisions
 
 ### Decision: Who chooses the path
-- Status: decided
-- Decided by: human
-- Options: the human picks it in `wm-propose`, as today; `wm-propose` chooses it from what it finds
-- Choice: `wm-propose` chooses it
-- Why: the conversation belongs in `wm-explore`; once the human asks for the work, the size follows from what the specs and the code show
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the human picks it in `wm-propose`, as today; `wm-propose` chooses it from what it finds
+- **Choice:** `wm-propose` chooses it
+- **Why:** the conversation belongs in `wm-explore`; once the human asks for the work, the size follows from what the specs and the code show
 
 ### Decision: Approval of tiny work
-- Status: decided
-- Decided by: human
-- Options: picking the offer in `wm-explore` counts as the yes; a one-line confirmation in `wm-propose` before building; the pull request is the only approval
-- Choice: a one-line confirmation before building
-- Why: `wm-propose` can be started without `wm-explore`, and the `paths` requirement asks for the human's yes in the session before tiny work; one line costs one message
+- **Status:** decided
+- **Decided by:** human
+- **Options:** picking the offer in `wm-explore` counts as the yes; a one-line confirmation in `wm-propose` before building; the pull request is the only approval
+- **Choice:** a one-line confirmation before building
+- **Why:** `wm-propose` can be started without `wm-explore`, and the `paths` requirement asks for the human's yes in the session before tiny work; one line costs one message
 
 ### Decision: Open questions on a small change
-- Status: decided
-- Decided by: human
-- Options: a short change carries them as a gap; any change with open questions takes the full path
-- Choice: the full path
-- Why: the design's open questions already block acceptance; a short change has nowhere to hold them
+- **Status:** decided
+- **Decided by:** human
+- **Options:** a short change carries them as a gap; any change with open questions takes the full path
+- **Choice:** the full path
+- **Why:** the design's open questions already block acceptance; a short change has nowhere to hold them
 
 ### Decision: Removing retired skills
-- Status: decided
-- Decided by: human
-- Options: leave stale skills to the user; `wm init` and `wm update` remove `wm-*` folders `wm` no longer ships
-- Choice: remove them
-- Why: the `.gitignore` block already claims `wm-*` skill folders as `wm`'s, so nothing of the user's is lost, and a stale `/wm-fix` would contradict the new flow
+- **Status:** decided
+- **Decided by:** human
+- **Options:** leave stale skills to the user; `wm init` and `wm update` remove `wm-*` folders `wm` no longer ships
+- **Choice:** remove them
+- **Why:** the `.gitignore` block already claims `wm-*` skill folders as `wm`'s, so nothing of the user's is lost, and a stale `/wm-fix` would contradict the new flow
 
 ### Decision: Where a tool's skills folder is named
-- Status: decided
-- Decided by: planner
-- Options: a `skill_folder` attribute on the adapter; parse it from the adapter's `ignored` patterns; name `.claude/skills` in `integration.py`
-- Choice: a `skill_folder` attribute
-- Why: constraint 6 keeps tool names in the adapters, and parsing ignore patterns would tie pruning to their spelling
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** a `skill_folder` attribute on the adapter; parse it from the adapter's `ignored` patterns; name `.claude/skills` in `integration.py`
+- **Choice:** a `skill_folder` attribute
+- **Why:** constraint 6 keeps tool names in the adapters, and parsing ignore patterns would tie pruning to their spelling
 
 ### Decision: How a folder is removed
-- Status: decided
-- Decided by: planner
-- Options: `Transaction.delete_folder`, committed with the rest; `shutil.rmtree` in the service
-- Choice: `Transaction.delete_folder`
-- Why: constraint 6 keeps file access in `record/`, and constraint 5 asks that a multi-file operation completes or leaves everything as it was
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** `Transaction.delete_folder`, committed with the rest; `shutil.rmtree` in the service
+- **Choice:** `Transaction.delete_folder`
+- **Why:** constraint 6 keeps file access in `record/`, and constraint 5 asks that a multi-file operation completes or leaves everything as it was
 
 ## Open questions
 

@@ -52,7 +52,7 @@ class Session:
         if review is not None:
             owner = text.index("Owner:")
             end = text.index("\n", owner) + 1
-            text = text[:end] + f"- Review: {review}\n" + text[end:]
+            text = text[:end] + f"- **Review:** {review}\n" + text[end:]
         for hint, body in (
             ("<!-- The problem or opportunity, and why now. -->", "Long lists are slow."),
             ("<!-- What will be different once this change is archived. -->", "A capped list."),
@@ -95,11 +95,12 @@ def test_change_runs_from_init_to_archive_with_the_record_in_the_repo(session: S
     session.write(
         f"changes/{name}/tasks.md",
         HEAD
-        + "- [ ] 1.1 Cap the results\n  - Verify: a test\n  - Criteria: fifty at most\n"
+        + "- [ ] 1.1 Cap the results\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+        + "  - **Verify:** a test\n"
         + (
-            "- [ ] 1.2 Explain the cap\n"
-            "  - Verify: a test\n"
-            "  - Criteria: the help text names the limit\n"
+            "- [ ] 1.2 Explain the cap\n  - **Build:** planner\n"
+            "  - **Criteria:** the help text names the limit\n"
+            "  - **Verify:** a test\n"
         ),
     )
     assert session.step(name) == (Phase.PLANNED, StepKind.ACCEPT, None)
@@ -190,24 +191,26 @@ def test_change_runs_from_init_to_archive_in_an_atlas_with_two_code_repos(
     session.write(f"changes/{name}/design.md", DESIGN)
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Add the endpoint\n  - Verify: a test\n  - Criteria: fifty at most\n"
-        "- [ ] 1.2 Show the capped list\n"
-        "  - Verify: a test\n"
-        "  - Criteria: the page shows fifty rows\n"
-        "  - Repo: web\n",
+        HEAD
+        + "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+        + "  - **Verify:** a test\n"
+        "- [ ] 1.2 Show the capped list\n  - **Build:** planner\n"
+        "  - **Repo:** web\n"
+        "  - **Criteria:** the page shows fifty rows\n"
+        "  - **Verify:** a test\n",
     )
     assert session.step(name) == (Phase.DESIGNED, StepKind.TASKS, None)
     assert "item-without-repo" in session.run("check", expect=EXIT_REFUSED)
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Add the endpoint\n"
-        "  - Verify: a test\n"
-        "  - Criteria: fifty at most\n"
-        "  - Repo: api\n"
-        "- [ ] 1.2 Show the capped list\n"
-        "  - Verify: a test\n"
-        "  - Criteria: the page shows fifty rows\n"
-        "  - Repo: web\n",
+        HEAD + "- [ ] 1.1 Add the endpoint\n  - **Build:** planner\n"
+        "  - **Repo:** api\n"
+        "  - **Criteria:** fifty at most\n"
+        "  - **Verify:** a test\n"
+        "- [ ] 1.2 Show the capped list\n  - **Build:** planner\n"
+        "  - **Repo:** web\n"
+        "  - **Criteria:** the page shows fifty rows\n"
+        "  - **Verify:** a test\n",
     )
     session.run("accept", name)
     status = session.run("status")
@@ -239,7 +242,9 @@ def test_small_change_takes_the_short_path_with_two_approvals(session: Session) 
     assert session.step(name) == (Phase.SPECIFIED, StepKind.TASKS, None)
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Fix the word\n  - Verify: a test\n  - Criteria: the word is right\n",
+        HEAD
+        + "- [ ] 1.1 Fix the word\n  - **Build:** planner\n  - **Criteria:** the word is right\n"
+        + "  - **Verify:** a test\n",
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")
@@ -257,7 +262,9 @@ def test_override_archives_a_change_whose_review_is_missing(session: Session) ->
     session.fill_proposal(name, NO_SPECS)
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Cap it\n  - Verify: a test\n  - Criteria: fifty at most\n",
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+        + "  - **Verify:** a test\n",
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")
@@ -265,10 +272,10 @@ def test_override_archives_a_change_whose_review_is_missing(session: Session) ->
     assert "--override" in refusal
     session.run("archive", name, "--built", "Done.", "--override", "checked by hand")
     text = session.read(f"changes/archive/{TODAY}-{name}/proposal.md")
-    assert text.endswith("## Outcome\n\n- Built: Done.\n- Differs: none\n")
+    assert text.endswith("## Outcome\n\n- **Built:** Done.\n- **Differs:** none\n")
     tasks = session.read(f"changes/archive/{TODAY}-{name}/tasks.md")
     assert tasks.endswith(": checked by hand\n")
-    assert f"- (override) {TODAY} by " in tasks
+    assert f"- {TODAY} (override) by " in tasks
 
 
 def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:
@@ -284,7 +291,9 @@ def test_change_in_a_milestone_moves_its_roadmap_on(session: Session) -> None:
     )
     session.write(
         f"changes/{name}/tasks.md",
-        HEAD + "- [ ] 1.1 Fix the word\n  - Criteria: done\n  - Verify: a test\n",
+        HEAD
+        + "- [ ] 1.1 Fix the word\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n",
     )
     session.run("accept", name)
     session.run("tick", name, "1.1")
@@ -301,7 +310,7 @@ def test_exploration_is_dropped_from_the_command_line(session: Session) -> None:
     session.run("new", "exploration", "result-paging")
     output = session.run("exploration", "drop", "result-paging", "--reason", "Not needed.")
     assert f"explorations/archive/{TODAY}-result-paging.md" in output
-    assert "- Status: dropped" in session.read(f"explorations/archive/{TODAY}-result-paging.md")
+    assert "- **Status:** dropped" in session.read(f"explorations/archive/{TODAY}-result-paging.md")
     with pytest.raises(SystemExit) as exit_info:
         main(["exploration", "drop", "result-paging"])
     assert exit_info.value.code == EXIT_USAGE

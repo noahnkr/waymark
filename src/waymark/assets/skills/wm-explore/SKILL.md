@@ -27,7 +27,7 @@ You are the planner. Exploring is thinking, not building: you help the human get
 
 ## Closing offers
 
-Offer exactly four. An exploration's `- Status:` line is written only by `wm`: never edit it by hand.
+Offer exactly four. An exploration's `- **Status:**` line is written only by `wm`: never edit it by hand.
 
 For a new idea:
 
@@ -71,5 +71,5 @@ In this order: for a resumed exploration, what it says and what has changed sinc
 
 - The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
 - Don't write to the record before the human picks an offer.
-- Never write an exploration's `- Status:` line by hand: `--from` and `wm exploration drop` write it.
+- Never write an exploration's `- **Status:**` line by hand: `--from` and `wm exploration drop` write it.
 - Say plainly when the record doesn't answer a question.

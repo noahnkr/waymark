@@ -1,6 +1,6 @@
 # {{title}}
 
-- Status: open
+- **Status:** open
 
 <!-- "open" while it waits to be decided or built. Only wm changes this line:
      "wm new change <name> --from <exploration>" or "wm new milestone <name> --from

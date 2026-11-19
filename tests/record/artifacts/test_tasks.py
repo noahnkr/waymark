@@ -15,7 +15,7 @@ def codes(text: str) -> list[str]:
 
 
 def test_items_are_numbered_by_section_and_addressed_by_number() -> None:
-    tasks = parse(TASKS + "\n## 2. Docs\n\n- [x] 2.1 Explain the limit\n")
+    tasks = parse(TASKS + "\n## 2. Docs\n\n- [x] 2.1 Explain the limit\n  - **Build:** planner\n")
     assert tasks.problems == ()
     assert [(section.number, section.title) for section in tasks.sections] == [
         (1, "Limit"),
@@ -31,7 +31,9 @@ def test_items_are_numbered_by_section_and_addressed_by_number() -> None:
 
 def test_item_carries_its_criteria_verification_and_repo() -> None:
     tasks = parse(
-        HEAD + "- [ ] 1.1 Cap it\n  - Criteria: fifty at most\n  - Verify: a test\n  - Repo: api\n"
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Repo:** api\n"
+        + "  - **Criteria:** fifty at most\n  - **Verify:** a test\n"
     )
     (item,) = tasks.items
     assert (item.criteria, item.verify, item.repo) == ("fifty at most", "a test", "api")
@@ -39,41 +41,45 @@ def test_item_carries_its_criteria_verification_and_repo() -> None:
 
 
 def test_build_tag_marks_an_item_for_delegation() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Sort it\n  - Build: delegate\n- [ ] 1.2 Tidy up\n")
+    tasks = parse(
+        HEAD
+        + "- [ ] 1.1 Sort it\n  - **Build:** delegate\n- [ ] 1.2 Tidy up\n  - **Build:** planner\n"
+    )
     assert tasks.problems == ()
     tagged, plain = tasks.items
     assert [item.title for item in tasks.items] == ["Sort it", "Tidy up"]
     assert (tagged.delegate, plain.delegate) == (True, False)
 
 
-def test_unknown_build_tag_is_a_problem_that_names_delegate() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - Build: someone\n")
+def test_unknown_build_tag_is_a_problem_that_names_both_values() -> None:
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - **Build:** someone\n")
     (problem,) = tasks.problems
     assert problem.code == "unknown-build-tag"
     assert '"someone"' in problem.message
-    assert "The only value is: delegate." in problem.message
+    assert "The values are: planner and delegate." in problem.message
     (item,) = tasks.items
     assert item.title == "Cap it"
     assert not item.delegate
 
 
 def test_a_trailing_build_tag_stays_part_of_the_title() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `build: delegate`\n")
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it   `build: delegate`\n  - **Build:** planner\n")
     assert tasks.problems == ()
     assert tasks.items[0].title == "Cap it   `build: delegate`"
     assert not tasks.items[0].delegate
 
 
 def test_the_build_line_given_twice_is_a_problem() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - Build: delegate\n  - Build: delegate\n")
+    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - **Build:** delegate\n  - **Build:** delegate\n")
     assert [problem.code for problem in tasks.problems] == ["duplicate-field"]
 
 
 def test_field_may_continue_over_indented_lines() -> None:
     tasks = parse(
         HEAD
-        + "- [ ] 1.1 Cap it\n  - Criteria:\n    - fifty at most\n    - order kept\n"
-        + "  - Verify: a test\n"
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:**\n    - fifty at most\n"
+        + "    - order kept\n"
+        + "  - **Verify:** a test\n"
     )
     assert tasks.problems == ()
     assert tasks.items[0].criteria == "- fifty at most\n- order kept"
@@ -81,20 +87,35 @@ def test_field_may_continue_over_indented_lines() -> None:
 
 
 def test_item_number_matches_its_section() -> None:
-    assert codes(HEAD + "- [ ] 2.1 Cap it\n") == ["item-number"]
+    assert codes(HEAD + "- [ ] 2.1 Cap it\n  - **Build:** planner\n") == ["item-number"]
 
 
 def test_item_numbers_are_never_reused() -> None:
-    assert codes(HEAD + "- [ ] 1.1 Cap it\n- [ ] 1.1 Tidy up\n") == ["item-number"]
-    assert codes(HEAD + "- [ ] 1.2 Cap it\n- [ ] 1.1 Tidy up\n") == ["item-number"]
+    assert codes(
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n- [ ] 1.1 Tidy up\n  - **Build:** planner\n"
+    ) == ["item-number"]
+    assert codes(
+        HEAD
+        + "- [ ] 1.2 Cap it\n  - **Build:** planner\n- [ ] 1.1 Tidy up\n  - **Build:** planner\n"
+    ) == ["item-number"]
 
 
 def test_item_numbers_may_have_gaps() -> None:
-    assert codes(HEAD + "- [ ] 1.1 Cap it\n- [ ] 1.4 Tidy up\n") == []
+    assert (
+        codes(
+            HEAD
+            + "- [ ] 1.1 Cap it\n  - **Build:** planner\n- [ ] 1.4 Tidy up\n"
+            + "  - **Build:** planner\n"
+        )
+        == []
+    )
 
 
 def test_section_numbers_are_never_reused() -> None:
-    assert codes(HEAD + "- [ ] 1.1 Cap it\n\n## 1. Again\n") == ["section-number"]
+    assert codes(HEAD + "- [ ] 1.1 Cap it\n  - **Build:** planner\n\n## 1. Again\n") == [
+        "section-number"
+    ]
 
 
 def test_section_heading_must_be_numbered() -> None:
@@ -102,7 +123,9 @@ def test_section_heading_must_be_numbered() -> None:
 
 
 def test_item_outside_a_section_is_a_problem() -> None:
-    assert codes("# Tasks\n\n- [ ] 1.1 Cap it\n") == ["item-outside-section"]
+    assert codes("# Tasks\n\n- [ ] 1.1 Cap it\n  - **Build:** planner\n") == [
+        "item-outside-section"
+    ]
 
 
 def test_list_line_that_is_not_an_item_is_a_problem() -> None:
@@ -112,19 +135,22 @@ def test_list_line_that_is_not_an_item_is_a_problem() -> None:
 
 
 def test_prose_between_items_is_allowed() -> None:
-    tasks = parse(HEAD + "Start with the query path.\n\n- [ ] 1.1 Cap it\n")
+    tasks = parse(HEAD + "Start with the query path.\n\n- [ ] 1.1 Cap it\n  - **Build:** planner\n")
     assert tasks.problems == ()
     assert len(tasks.items) == 1
 
 
 def test_unlabeled_line_under_an_item_is_a_problem() -> None:
-    assert codes(HEAD + "- [ ] 1.1 Cap it\n  - fifty at most\n") == ["unrecognized-item-line"]
-    assert codes(HEAD + "- [ ] 1.1 Cap it\n  - Criterion: fifty at most\n") == [
+    assert codes(HEAD + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - fifty at most\n") == [
         "unrecognized-item-line"
     ]
+    assert codes(
+        HEAD + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - Criterion: fifty at most\n"
+    ) == ["unrecognized-item-line"]
 
 
 def test_field_given_twice_is_a_problem() -> None:
-    assert codes(HEAD + "- [ ] 1.1 Cap it\n  - Criteria: a\n  - Criteria: b\n") == [
-        "duplicate-field"
-    ]
+    assert codes(
+        HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** a\n  - **Criteria:** b\n"
+    ) == ["duplicate-field"]

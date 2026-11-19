@@ -15,32 +15,32 @@
 ## Decisions
 
 ### Decision: Rules as one list or scoped
-- Status: decided
-- Decided by: human
-- Options: one list for every agent; step headings as today; tags on each rule naming the steps or areas it applies to
-- Choice: one list for every agent
-- Why: a project has few rules, so every agent can get all of them, and scoping hid rules from the agents that needed them; a fact for one area goes in its spec's Background instead
+- **Status:** decided
+- **Decided by:** human
+- **Options:** one list for every agent; step headings as today; tags on each rule naming the steps or areas it applies to
+- **Choice:** one list for every agent
+- **Why:** a project has few rules, so every agent can get all of them, and scoping hid rules from the agents that needed them; a fact for one area goes in its spec's Background instead
 
 ### Decision: Numbered or bulleted
-- Status: decided
-- Decided by: human
-- Options: a numbered list like Goals and Constraints; a bullet list
-- Choice: numbered
-- Why: the charter's lists read alike, the existing check covers it, and a review can cite a rule by number
+- **Status:** decided
+- **Decided by:** human
+- **Options:** a numbered list like Goals and Constraints; a bullet list
+- **Choice:** numbered
+- **Why:** the charter's lists read alike, the existing check covers it, and a review can cite a rule by number
 
 ### Decision: Charters with step headings
-- Status: decided
-- Decided by: human
-- Options: report them as errors with no migration; flatten them in `wm check --fix` or `wm update`
-- Choice: report them as errors, with no migration
-- Why: this repository's record is the only one, and it is rewritten in this change
+- **Status:** decided
+- **Decided by:** human
+- **Options:** report them as errors with no migration; flatten them in `wm check --fix` or `wm update`
+- **Choice:** report them as errors, with no migration
+- **Why:** this repository's record is the only one, and it is rewritten in this change
 
 ### Decision: The `rules` field
-- Status: decided
-- Decided by: planner
-- Options: keep `rules` as a string holding the whole list; make it a list of strings, one per rule
-- Choice: keep it a string
-- Why: no payload changes shape, so no schema version is raised; agents read the list as written
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** keep `rules` as a string holding the whole list; make it a list of strings, one per rule
+- **Choice:** keep it a string
+- **Why:** no payload changes shape, so no schema version is raised; agents read the list as written
 
 ## Open questions
 

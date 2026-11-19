@@ -23,53 +23,53 @@
 ## Decisions
 
 ### Decision: How a change names what it comes after
-- Status: decided
-- Decided by: human
-- Options: one `- After: <change>` line; a list of changes
-- Choice: one change, in an `- After:` line, written by `wm new change --after`
-- Why: a branch has one base, which matches how a stacked pull request works
+- **Status:** decided
+- **Decided by:** human
+- **Options:** one `- After: <change>` line; a list of changes
+- **Choice:** one change, in an `- After:` line, written by `wm new change --after`
+- **Why:** a branch has one base, which matches how a stacked pull request works
 
 ### Decision: Where the default branch comes from
-- Status: decided
-- Decided by: human
-- Options: the `origin` remote's HEAD, falling back to `main`; a `base_branch` setting in `config.toml`
-- Choice: the remote's HEAD, or `main`
-- Why: nothing to configure, and it follows the repository
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the `origin` remote's HEAD, falling back to `main`; a `base_branch` setting in `config.toml`
+- **Choice:** the remote's HEAD, or `main`
+- **Why:** nothing to configure, and it follows the repository
 
 ### Decision: When a base counts as merged
-- Status: decided
-- Decided by: human
-- Options: the change it comes after is archived in the record, or git finds its branch in the default branch; archived in the record only; archived in the record, or the default branch holds its archived folder
-- Choice: archived in the record, or the default branch holds its archived folder
-- Why: a change is archived on its own branch before its pull request, so its archived folder is on the default branch exactly when it has merged, whether by a merge commit, a squash or a rebase; asking whether its branch is an ancestor of the default branch counted a just-created dependency branch, with no commits of its own, as merged, and missed squash and rebase merges. This was revised after the independent review found both
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the change it comes after is archived in the record, or git finds its branch in the default branch; archived in the record only; archived in the record, or the default branch holds its archived folder
+- **Choice:** archived in the record, or the default branch holds its archived folder
+- **Why:** a change is archived on its own branch before its pull request, so its archived folder is on the default branch exactly when it has merged, whether by a merge commit, a squash or a rebase; asking whether its branch is an ancestor of the default branch counted a just-created dependency branch, with no commits of its own, as merged, and missed squash and rebase merges. This was revised after the independent review found both
 
 ### Decision: How `wm status` shows a base
-- Status: decided
-- Decided by: human
-- Options: an `on <base>` line under a change whose base isn't the default branch; a branch line under every change
-- Choice: the line only for a change not based on the default branch, with branch and base always in the JSON
-- Why: ordinary changes stay one line, and a stacked one stands out
+- **Status:** decided
+- **Decided by:** human
+- **Options:** an `on <base>` line under a change whose base isn't the default branch; a branch line under every change
+- **Choice:** the line only for a change not based on the default branch, with branch and base always in the JSON
+- **Why:** ordinary changes stay one line, and a stacked one stands out
 
 ### Decision: Showing the checked-out branch in a single repository
-- Status: decided
-- Decided by: planner
-- Options: warn when a change's branch isn't checked out; say nothing
-- Choice: say nothing
-- Why: in one repository only one branch is checked out at a time, so every other change would warn; an atlas already reports its repos' branches
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** warn when a change's branch isn't checked out; say nothing
+- **Choice:** say nothing
+- **Why:** in one repository only one branch is checked out at a time, so every other change would warn; an atlas already reports its repos' branches
 
 ### Decision: Where branches are worked out
-- Status: decided
-- Decided by: planner
-- Options: in `record/state.py`, with the change states; in a new `record/branches.py`, used by the views and the check
-- Choice: a new `record/branches.py`
-- Why: it calls git, which `derive_state` doesn't, and caching the git calls once per command keeps the views fast
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** in `record/state.py`, with the change states; in a new `record/branches.py`, used by the views and the check
+- **Choice:** a new `record/branches.py`
+- **Why:** it calls git, which `derive_state` doesn't, and caching the git calls once per command keeps the views fast
 
 ### Decision: Errors and the warning
-- Status: decided
-- Decided by: planner
-- Options: errors for an unknown change, the change itself and a cycle, with a warning for a merged base; every case a warning
-- Choice: errors for the three that make the base unknowable, a warning for a merged base
-- Why: an unknown or circular `- After:` leaves no base to give, while a merged base still has one, the default branch, and only asks the human to tidy up
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** errors for an unknown change, the change itself and a cycle, with a warning for a merged base; every case a warning
+- **Choice:** errors for the three that make the base unknowable, a warning for a merged base
+- **Why:** an unknown or circular `- After:` leaves no base to give, while a merged base still has one, the default branch, and only asks the human to tidy up
 
 ## Open questions
 

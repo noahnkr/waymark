@@ -30,6 +30,6 @@ Make a milestone, when the human chooses one, a part of the workflow rather than
 
 ## Log
 
-- (archived) 2026-11-17 add-milestone-log by Noah Roberts
-- (proposed) 2026-11-17 add-change-dependencies by Noah Roberts
-- (archived) 2026-11-17 add-change-dependencies by Noah Roberts
+- 2026-11-17 (archived) add-milestone-log by Noah Roberts
+- 2026-11-17 (proposed) add-change-dependencies by Noah Roberts
+- 2026-11-17 (archived) add-change-dependencies by Noah Roberts

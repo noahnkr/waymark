@@ -28,9 +28,11 @@ from waymark.record.artifacts.proposal import (
     Proposal,
     parse_proposal,
 )
-from waymark.record.artifacts.tasks import Tasks, parse_tasks
+from waymark.record.artifacts.tasks import DELEGATE, PLANNER, Tasks, parse_tasks
 from waymark.record.evidence.records import RecordKind
 from waymark.record.machine.files import RecordFiles
+from waymark.record.markdown import labels
+from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.problems import WHOLE_FILE, Problem
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.terms import Layout, ReviewLevel
@@ -126,37 +128,75 @@ def _load_deltas(files: RecordFiles, path: str, problems: list[Problem]) -> dict
 
 
 def _check_items(tasks: Tasks, problems: list[Problem]) -> None:
-    """Every item says how it is done: a Criteria line and a Verify line."""
+    """Every item says who builds it and how it is done, in its lines' order."""
     for item in tasks.items:
         missing = [
             label
-            for label, value in (("Criteria", item.criteria), ("Verify", item.verify))
-            if value is None
+            for label, there in (
+                (labels.BUILD, item.has_build_line),
+                (labels.CRITERIA, item.criteria is not None),
+                (labels.VERIFY, item.verify is not None),
+            )
+            if not there
         ]
         if missing:
-            lines = " and ".join(f'a "- {label}:" line' for label in missing)
+            lines = " and ".join(f'a "{label_line(label)}" line' for label in missing)
+            message = (
+                f"Item {item.number} says who builds it and how it is done: add {lines} under it."
+            )
+            if labels.BUILD in missing:
+                message += (
+                    f' The Build line is "{label_line(labels.BUILD, PLANNER)}" or '
+                    f'"{label_line(labels.BUILD, DELEGATE)}".'
+                )
+            problems.append(Problem(tasks.doc.path, item.index + 1, "item-incomplete", message))
+        if not _in_order(item.line_order):
+            order = ", ".join(labels.ITEM_ORDER)
             problems.append(
                 Problem(
                     tasks.doc.path,
                     item.index + 1,
-                    "item-incomplete",
-                    f"Item {item.number} says how it is done: add {lines} under it.",
+                    "item-order",
+                    f"The lines under item {item.number} come in the order {order}, before any "
+                    'record. Reorder them, or run "wm check --fix".',
                 )
             )
+
+
+def _in_order(order: tuple[str, ...]) -> bool:
+    """Whether an item's label lines follow the item order and come before its records."""
+    ranks = [
+        labels.ITEM_ORDER.index(line) if line in labels.ITEM_ORDER else len(labels.ITEM_ORDER)
+        for line in order
+    ]
+    return ranks == sorted(ranks)
 
 
 def _check_decisions(design: Design, problems: list[Problem]) -> None:
     """Each decision weighs options, says whether it is settled and who made it; open questions
     are listed."""
     for decision in design.decisions:
-        if len(decision.options) < 2:  # noqa: PLR2004 - a decision weighs at least two options
+        options = label_line(labels.OPTIONS)
+        if decision.options_text:
+            line = decision.options_index if decision.options_index is not None else decision.index
+            problems.append(
+                Problem(
+                    design.doc.path,
+                    line + 1,
+                    "decision-options",
+                    f'Decision "{decision.name}" has text on its "{options}" line. Write one '
+                    "option per bullet under the line, at least two, and leave the line itself "
+                    "empty.",
+                )
+            )
+        elif len(decision.options) < 2:  # noqa: PLR2004 - a decision weighs at least two options
             problems.append(
                 Problem(
                     design.doc.path,
                     decision.index + 1,
                     "decision-options",
-                    f'Decision "{decision.name}" weighs at least two options. List them as '
-                    'bullets under "- Options:", or on the line joined by "or" or ";".',
+                    f'Decision "{decision.name}" weighs at least two options. List them under '
+                    f'"{options}", one option per bullet.',
                 )
             )
         for label, value, allowed in (
@@ -165,7 +205,7 @@ def _check_decisions(design: Design, problems: list[Problem]) -> None:
         ):
             if value in allowed:
                 continue
-            choices = " or ".join(f'"- {label}: {choice}"' for choice in allowed)
+            choices = " or ".join(f'"{label_line(label, choice)}"' for choice in allowed)
             found = f'"{value}" is not one of them' if value else "the line is missing"
             problems.append(
                 Problem(
@@ -206,14 +246,14 @@ def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -
         return  # An empty Impact is already reported as an empty section.
     missing = [label for label in IMPACT_LINES if label not in proposal.impact]
     if missing:
-        wanted = ", ".join(f'"- {label}:"' for label in missing)
+        wanted = ", ".join(f'"{label_line(label)}"' for label in missing)
         problems.append(
             Problem(
                 proposal.doc.path,
                 WHOLE_FILE,
                 "impact-format",
                 f"The Impact holds a {wanted} line. Under Specs, name each spec with a delta "
-                f'in backticks, or write "- {SPECS}: {NONE}".',
+                f'in backticks, or write "{label_line(SPECS, NONE)}".',
             )
         )
     if proposal.impact_specs is None:
@@ -223,8 +263,9 @@ def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -
                     proposal.doc.path,
                     WHOLE_FILE,
                     "impact-format",
-                    f'The Impact\'s "- {SPECS}:" line names each spec with a delta in backticks, '
-                    f'such as "- {SPECS}: `search`", or says "- {SPECS}: {NONE}".',
+                    f'The Impact\'s "{label_line(SPECS)}" line names each spec with a delta in '
+                    f'backticks, such as "{label_line(SPECS, "`search`")}", or says '
+                    f'"{label_line(SPECS, NONE)}".',
                 )
             )
         return
@@ -235,8 +276,8 @@ def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -
                 proposal.doc.path,
                 WHOLE_FILE,
                 "impact-mismatch",
-                f'The change has a delta for `{domain}`, but the Impact\'s "{SPECS}:" line '
-                "doesn't name it. Add it there, or remove the delta.",
+                f"The change has a delta for `{domain}`, but the Impact's "
+                f'"{label_line(SPECS)}" line doesn\'t name it. Add it there, or remove the delta.',
             )
         )
     for domain in sorted(named - set(change.deltas), key=proposal.impact_specs.index):
@@ -245,16 +286,29 @@ def _check_impact(change: Change, proposal: Proposal, problems: list[Problem]) -
                 f"{change.path}/{SPECS_DIR}",
                 WHOLE_FILE,
                 "impact-mismatch",
-                f'The Impact\'s "{SPECS}:" line names `{domain}`, but the change has no delta '
-                f"for it. Draft {SPECS_DIR}/{domain}.md, or take it off the line.",
+                f'The Impact\'s "{label_line(SPECS)}" line names `{domain}`, '
+                f"but the change has no delta for it. Draft {SPECS_DIR}/{domain}.md, "
+                "or take it off the line.",
             )
         )
+
+
+def _check_labels(change: Change, problems: list[Problem]) -> None:
+    """Every label in the change's files is written bold, the colon inside."""
+    parts = (change.proposal, change.design, change.tasks)
+    docs = [
+        *(part.doc for part in parts if part is not None),
+        *(delta.doc for delta in change.deltas.values()),
+    ]
+    for doc in docs:
+        problems.extend(labels.plain_label_problems(doc))
 
 
 def _check_against_config(change: Change, config: Config | None, problems: list[Problem]) -> None:
     """Rules that span files: the short path's limits, and repos in an atlas."""
     proposal, tasks = change.proposal, change.tasks
     default = config.default_review if config else ReviewLevel.SELF
+    _check_labels(change, problems)
     if proposal is not None:
         _check_impact(change, proposal, problems)
     if tasks is not None:
@@ -268,7 +322,7 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
                 WHOLE_FILE,
                 "short-path-design",
                 f"A change on the short path has no design. Remove {DESIGN_FILE}, or remove "
-                f'the "{PATH}: {SHORT}" line from the proposal.',
+                f'the "{label_line(PATH, SHORT)}" line from the proposal.',
             )
         )
     if (
@@ -282,8 +336,8 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
                 WHOLE_FILE,
                 "short-path-review",
                 "A change on the short path is reviewed at self or none, not independently. "
-                f'Remove the "{PATH}: {SHORT}" line, or set "{REVIEW}: self" or '
-                f'"{REVIEW}: none".',
+                f'Remove the "{label_line(PATH, SHORT)}" line, or set '
+                f'"{label_line(REVIEW, "self")}" or "{label_line(REVIEW, "none")}".',
             )
         )
     if config is None:
@@ -298,7 +352,8 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
                     item.index + 1,
                     "item-without-repo",
                     f"In an atlas every item names the repo it works in. Add a "
-                    f'"Repo: <name>" line under item {item.number} (repos: {known}).',
+                    f'"{label_line(labels.REPO, "<name>")}" line under item {item.number} '
+                    f"(repos: {known}).",
                 )
             )
         elif item.repo is not None and item.repo not in config.repo_names:
@@ -310,7 +365,8 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
                     f'Item {item.number} names the repo "{item.repo}", which the settings '
                     f"don't list (repos: {known}). Fix the name, or add the repo to the settings."
                     if atlas
-                    else f'Item {item.number} has a "Repo:" line, but this project is not an '
+                    else f'Item {item.number} has a "{label_line(labels.REPO)}" line, but this '
+                    "project is not an "
                     "atlas. Remove the line.",
                 )
             )
@@ -325,8 +381,8 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
                         f'The delta names the repo "{repo}", which the settings don\'t list '
                         f"(repos: {known}). Fix the name, or add the repo to the settings."
                         if atlas
-                        else 'The delta has a "Repos:" line, but this project is not an atlas. '
-                        "Remove the line.",
+                        else f'The delta has a "{label_line(labels.REPOS, bullet=False)}" '
+                        "line, but this project is not an atlas. Remove the line.",
                     )
                 )
 

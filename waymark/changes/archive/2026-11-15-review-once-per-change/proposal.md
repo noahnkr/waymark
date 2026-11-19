@@ -1,7 +1,7 @@
 # Review once per change
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -36,7 +36,7 @@ Across the 8 independent reviews so far, none has found a bug. A slice is the wr
   - `wm review`, `wm verdict` and `wm resolve` take a change where they took an item for reviews;
   - the reviewer agent is started with `<change>`;
   - `wm show --json` and `wm pr` show the review per change.
-- Code: `record/` (proposal, tasks, state, fingerprint), `services/` (lifecycle, instructions, context, check, pr), `hooks/decide.py` (delegation and the reviewer's ending), `views/` and `cli.py`.
+- **Code:** `record/` (proposal, tasks, state, fingerprint), `services/` (lifecycle, instructions, context, check, pr), `hooks/decide.py` (delegation and the reviewer's ending), `views/` and `cli.py`.
 - Assets: `wm-apply`, `wm-propose`, `wm-update`, `wm-onboard` and `wm-pr`, and the `wm-reviewer` definition.
 - Docs: concepts, getting started, the smoke test, architecture, the README and the regenerated CLI and JSON references.
 
