@@ -269,11 +269,11 @@ The acceptance names the items it covers: **adding** an item keeps it, while
     - at most fifty results come back
     - they are the best matches
   - **Verify:** a test with fifty-one matches
-  - 2026-01-15 (note) by Sam Doe: the cap sits after sorting
 
 ## Log
 
 - 2026-01-15 (accepted) fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
+- 2026-01-15 (note) 1.1 by Sam Doe: the cap sits after sorting
 - 2026-01-16 (self-review) covers 1.1 by Sam Doe: every criterion holds
   - [suggestion] `docs/search.md`: name the limit in the help text
 ```

@@ -96,8 +96,9 @@ exploration with `/wm-explore <exploration>`.
 1. **A saved exploration:** when you name one, or the idea matches one and you
    say it is that one, it reads it with `wm show`, says what in the record has
    changed since, and goes on from its Questions and Approaches.
-2. **What the record says:** the specs, changes in flight, milestones and saved
-   explorations that bear on the idea, and which requirements it would touch.
+2. **What the record says:** the specs, changes in flight, milestones, saved
+   explorations and resources that bear on the idea, and which requirements it
+   would touch.
 3. **The problem:** what it solves, and for whom.
 4. **The questions:** it answers what the record or the code can, and leaves the
    rest for you.
@@ -113,7 +114,7 @@ exploration with `/wm-explore <exploration>`.
 
 | Reads | Writes, only on an offer |
 |---|---|
-| `wm context --for explore`; `wm show <spec\|change\|exploration>`, with `--from <atlas>` for a referenced atlas; the code, without changing it | an exploration through `wm new exploration`, or its sections; `wm exploration drop`; or a milestone with its Goal, created with `--from` when it comes from an exploration, and its Roadmap lines through `wm roadmap add` |
+| `wm context --for explore`; `wm show <spec\|change\|exploration>`, with `--from <atlas>` for a referenced atlas; `wm show <name> --kind resource`; the code, without changing it | an exploration through `wm new exploration`, or its sections; `wm exploration drop`; or a milestone with its Goal, created with `--from` when it comes from an exploration, and its Roadmap lines through `wm roadmap add` |
 
 **Stops** when you pick an offer (it does that one only), when you want to stop
 (it makes the offers), or when the idea is already in flight or in the specs.
@@ -217,7 +218,7 @@ and handles the verdict. **Use it** when a change is accepted and ready to build
 
 | Reads | Writes |
 |---|---|
-| `wm instructions --change <name>`; each item's context pack; `wm show` after an agent returns | code, one commit per item; ticks and `(blocked)`, `(gap)`, `(note)` under items; `(self-review)` or `(review)` in the Log; `(resolved)` |
+| `wm instructions --change <name>`; each item's context pack; `wm show` after an agent returns | code, one commit per item; ticks; in the Log, `(blocked)`, `(gap)` and `(note)` naming their item, `(self-review)` or `(review)`, and `(resolved)` |
 
 **Shows you**, after each item, what was built, the checks and their result, and
 the commit; after the review, the verdict and each finding. **Stops** when the
@@ -284,7 +285,7 @@ RESULT: <done | partial | spec-gap | blocked>: <a short note>
 
 | Reads | Writes |
 |---|---|
-| the implement pack: the item and its criteria, the proposal, deltas, design, the requirements touched as they stand, Context, the project's rules, the stopping rules | code in its item's repo; `wm note --by wm-implementer`, the one writing command it may run; its ending, which `wm` records as a tick, `(blocked)`, `(gap)` or `(note)` |
+| the implement pack: the item and its criteria, the proposal, deltas, design, the requirements touched as they stand, the resources that serve their specs, Context, the project's rules, the stopping rules | code in its item's repo; `wm note --by wm-implementer`, the one writing command it may run; its ending, which `wm` records as a tick, `(blocked)`, `(gap)` or `(note)` |
 
 ## `wm-reviewer`
 
@@ -307,4 +308,4 @@ VERDICT: <pass | changes <item>... | spec-gap>: <reasons>
 
 | Reads | Writes |
 |---|---|
-| the review pack: the items to review (every item, or those no passing review covers) with their criteria, verification and location, the deltas, the design, earlier reviews and resolutions, Context, the project's rules, the severity rubric; the code | nothing: `wm` records its ending as a `(review)` record with each finding under it; a `changes` verdict reopens the items it names; `wm` refuses a pass with a critical finding |
+| the review pack: the items to review (every item, or those no passing review covers) with their criteria, verification and location, the deltas, the resources that serve their specs, the design, earlier reviews and resolutions, Context, the project's rules, the severity rubric; the code | nothing: `wm` records its ending as a `(review)` record with each finding under it; a `changes` verdict reopens the items it names; `wm` refuses a pass with a critical finding |

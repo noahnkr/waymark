@@ -22,8 +22,9 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       ends with the next step. Then: nothing is staged,
       `git status` shows only `waymark/` and `.gitignore` as new, and
       `git config core.hooksPath` prints nothing. `waymark/specs/`,
-      `changes/`, `changes/archive/`, `explorations/`, `milestones/` and
-      `milestones/archive/` each hold an empty `.gitkeep`. Run `wm doctor`: no
+      `changes/`, `changes/archive/`, `explorations/`, `explorations/archive/`,
+      `milestones/`, `milestones/archive/` and `resources/` each hold an empty
+      `.gitkeep`. Run `wm doctor`: no
       errors.
 - [ ] Commit `waymark/` and `.gitignore` as `chore: set up waymark`.
 - [ ] **A fresh clone.** Clone the scratch repository into another folder and
@@ -63,10 +64,10 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 
 ## Apply and review
 
-- [ ] Run `/wm-apply`. **The planner builds the untagged item itself**: it reads
+- [ ] Run `/wm-apply`. **The planner builds the `planner` item itself**: it reads
       `wm context <change> <item> --for implement`, runs the checks the item
       touches and ticks the item with `wm tick`. It starts no implementer.
-- [ ] For a tagged item, the planner starts the `wm-implementer` agent with a
+- [ ] For a `delegate` item, the planner starts the `wm-implementer` agent with a
       prompt of exactly `<change> <item>`.
 - [ ] Ask the planner to delegate an item with extra words in the prompt
       ("build 1.1 carefully"). **The hook refuses the delegation.**
@@ -120,6 +121,11 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 - [ ] Run `wm pr <change>`: it describes the archived change, with its
       Outcome, and links to the proposal in the archived folder.
 - [ ] `wm check` passes, and `wm status` shows the change as recently archived.
+- [ ] **Resources.** Run `wm new resource payments service`, and set its
+      `- **Serves:**` line to the spec the change created. `wm check` passes,
+      `wm ls resources` lists it, and `wm show payments --kind resource` prints
+      it. Set `- **Serves:**` to a name that isn't a spec: `wm check` reports
+      `unknown-spec`. Delete the resource.
 - [ ] Add trailing spaces and a `*` list marker to the charter, then run
       `wm check --fix`. It names `charter.md` with its fixes, the wording is
       unchanged, and a second run says there is nothing to fix.
@@ -147,9 +153,9 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       `.claude/settings.local.json`.
 - [ ] **Hooks see those edits (G57).** An implementer's edit in the wrong code
       repo is refused; in its item's repo it is allowed.
-- [ ] **The planner's edits.** While an untagged item that names one repo is
-      being built, the planner's edit in that repo is allowed. Its edit in the
-      other repo is refused, with a reason that names the repo it may edit now.
+- [ ] **The planner's edits.** While an item with `- **Build:** planner` that
+      names one repo is being built, the planner's edit in that repo is
+      allowed, and so is its edit in the other repo.
 
 ## Record the result
 
@@ -160,4 +166,4 @@ Smoke test: passed on <date> with Claude Code <version> on <operating system>.
 ```
 
 List anything that failed and how it was fixed. In the README, replace the
-"Claude Code version last verified" value with the version you tested.
+"Version last verified" value with the version you tested.

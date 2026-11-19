@@ -55,7 +55,7 @@ adapter for another agent tool, and how to work on the code.
 | `record/` | The only code that reads or writes the record's files. At its top: loading the whole record (`record.py`), state derivation (`state.py`), the fixed vocabulary (`terms.py`) and names (`names.py`). The rest is in five packages, below. |
 | `services/` | What the commands do, and every gate. A refused command raises `Refusal` with what is wrong and what to do next. |
 | `views/` | Payloads, their JSON schemas, and the text and JSON renderers. One payload feeds both renderings. |
-| `hooks/` | Tool-neutral hook decisions on six neutral events. |
+| `hooks/` | Tool-neutral hook decisions on seven neutral events. |
 | `adapters/` | One adapter per agent tool. Only code here may name a tool. |
 | `assets/` | The skills and agent definitions, written once and tool-neutral. |
 
@@ -150,7 +150,6 @@ and again whenever they change:
 uv run --no-sync python -m tools.install_skills
 ```
 
-
 | Skill | For |
 |---|---|
 | `waymark-write-docs` | The house style and fact rules for any docs edit |
@@ -176,7 +175,7 @@ is committed.
 
 **Commits** follow [Conventional Commits](https://www.conventionalcommits.org/),
 scoped by component (`record`, `services`, `views`, `hooks`, `adapter-claude`,
-`cli`, `skills`, `docs`, `ci`, `build`), in American English.
+`cli`, `skills`, `docs`, `ci`, `build`, `release`, `plan`), in American English.
 
 ## Releasing
 
