@@ -1,7 +1,7 @@
 # Standardize record lines
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -48,7 +48,7 @@ This is the first change on the `record-format-and-skills` milestone. The later 
   - `wm note` is new, and an implementer may no longer add note lines to the task list by hand;
   - `wm check --fix` is new;
   - the charter constraint on careful writes gains an exception for `--fix`.
-- Code: `record/` (a records module, tasks, proposal, evidence, fingerprint, state), `services/` (lifecycle, check, migrations, pr), `hooks/decide.py` (the evidence guard and agent endings), `views/` and `cli.py`.
+- **Code:** `record/` (a records module, tasks, proposal, evidence, fingerprint, state), `services/` (lifecycle, check, migrations, pr), `hooks/decide.py` (the evidence guard and agent endings), `views/` and `cli.py`.
 - Assets: `wm-apply`, `wm-update`, `wm-propose`, `wm-archive`, and the `wm-implementer` and `wm-reviewer` definitions.
 - Docs: concepts, getting started, the smoke test, architecture, the README and the regenerated CLI and JSON references; the charter's constraints.
 

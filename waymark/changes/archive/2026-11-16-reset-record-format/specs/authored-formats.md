@@ -70,5 +70,5 @@ A milestone SHALL be a folder holding one file, `milestone.md`: a title, then th
 
 ## RENAMED Requirements
 
-- From: Record format 3
-- To: Record format 1
+- **From:** Record format 3
+- **To:** Record format 1

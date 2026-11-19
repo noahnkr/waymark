@@ -1,7 +1,7 @@
 # Tidy authored notes
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -36,7 +36,7 @@ These are layout changes a migration can make without guessing. This is the seco
 - Spec `records`: the requirement "Record format 2" is removed, and the purpose no longer speaks of migrating.
 - Spec `building`: the delegation tag becomes a `Build:` sub-line; the requirements that name the tag are modified.
 - **Behavior change for every user, for the changelog:** the record format goes to 3, and `wm update` no longer migrates an older record; proposal facts, the glossary, the build tag, delta headings and the exploration's state change form; `RENAMED` is new in deltas.
-- Code: `record/` (outline, proposal, charter, tasks, deltas, explorations, layout, templates, fingerprint), `services/` (migrations, instructions, lifecycle), `views/`.
+- **Code:** `record/` (outline, proposal, charter, tasks, deltas, explorations, layout, templates, fingerprint), `services/` (migrations, instructions, lifecycle), `views/`.
 - Assets: `wm-propose`, `wm-update`, `wm-kickoff`, `wm-explore`, `wm-apply`. Docs: concepts, getting started, the README example, the changelog.
 
 ## Outcome

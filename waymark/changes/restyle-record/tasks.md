@@ -71,7 +71,7 @@
     - tests in `tests/services/test_fix.py` for the scenarios Layout fixed, Fenced code left alone, Plain label made bold and Item lines put in order
     - `uv run --no-sync pytest tests/services/test_fix.py tests/record/writing`
     - `wm check`
-- [ ] 4.2 Rewrite the archive once with an uncommitted script
+- [x] 4.2 Rewrite the archive once with an uncommitted script
   - **Build:** planner
   - **Criteria:**
     - a Python script run from the scratchpad, never committed, rewrites every archived change, milestone and exploration: line-start labels into the bold form (and the glossary form where one appears), each record into date-first order, item lists in records into commas with `;` before `covers`, and finding severities into brackets

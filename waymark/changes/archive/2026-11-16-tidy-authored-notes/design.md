@@ -45,25 +45,25 @@
 ## Decisions
 
 ### Decision: How a rename is written
-- Options:
+- **Options:**
   - a `## RENAMED Requirements` section with `- From:` and `- To:` pairs;
   - a `Renamed from:` line under a modified requirement.
-- Choice: a RENAMED section (the human chose it in the exploration of the milestone).
-- Why: It matches OpenSpec's delta sections, and a rename doesn't need to restate the requirement.
+- **Choice:** a RENAMED section (the human chose it in the exploration of the milestone).
+- **Why:** It matches OpenSpec's delta sections, and a rename doesn't need to restate the requirement.
 
 ### Decision: Where the exploration's state lives
-- Options:
+- **Options:**
   - a `- Status:` fact under the title;
   - keep reading it from the Conclusion.
-- Choice: a `- Status:` fact (the human chose it).
-- Why: The state is visible at the top and doesn't depend on how the Conclusion is worded. The Conclusion keeps the reason and the link text.
+- **Choice:** a `- Status:` fact (the human chose it).
+- **Why:** The state is visible at the top and doesn't depend on how the Conclusion is worded. The Conclusion keeps the reason and the link text.
 
 ### Decision: Acceptance across the migration
-- Options:
+- **Options:**
   - accept active changes again after the migration;
   - make the fingerprint ignore these layouts.
-- Choice: accept again.
-- Why: It is what format 2 did, it needs no special case in the fingerprint, and the only active change, `review-added-items`, is not accepted yet.
+- **Choice:** accept again.
+- **Why:** It is what format 2 did, it needs no special case in the fingerprint, and the only active change, `review-added-items`, is not accepted yet.
 
 ## Risks and trade-offs
 

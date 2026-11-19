@@ -81,4 +81,4 @@ Messages about the agent tool files SHALL tell the user to run `wm init` to set 
 ## REMOVED Requirements
 
 ### Requirement: Git hooks not staged
-Reason: `wm` no longer installs git hooks. Commit messages are checked by the agent's command hook, and `wm check` runs in CI.
+**Reason:** `wm` no longer installs git hooks. Commit messages are checked by the agent's command hook, and `wm check` runs in CI.

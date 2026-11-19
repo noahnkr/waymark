@@ -1,7 +1,7 @@
 # Add tiny path
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -43,7 +43,7 @@ The exploration `lighter-workflow` asked for paths that scale with the size of t
   - a new `wm-fix` skill, written by `wm init` and `wm update`;
   - in an atlas, the planner may edit any code repo;
   - `wm instructions` at the specs step asks for functional requirements.
-- Code: `hooks/decide.py` (the atlas edit rule), `services/instructions.py` (the specs guidance), `assets/` (the new skill), and the adapters' skill count.
+- **Code:** `hooks/decide.py` (the atlas edit rule), `services/instructions.py` (the specs guidance), `assets/` (the new skill), and the adapters' skill count.
 - Assets: the new `wm-fix` skill, plus `wm-propose`, `wm-explore` and `wm-onboard`.
 - Docs: concepts, getting started, the multi-repo guide, the smoke test, the README and the charter.
 

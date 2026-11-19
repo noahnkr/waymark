@@ -20,53 +20,53 @@ The edit guard (`hooks/decide.py`, `_edit`) refuses a planner's edit under `spec
 ## Decisions
 
 ### Decision: Where the kind comes from on `wm new`
-- Status: decided
-- Decided by: human
-- Options: a required argument (`wm new resource stripe service`); a placeholder that fails `wm check` until filled; a default kind of `service`
-- Choice: a required argument, with `- Serves: none`, `- Status: active` and `- Verified:` set to the day it runs
-- Why: the new file is valid from the start without guessing its kind; the planner creates a resource from facts it has just looked at, so today is its verified date
+- **Status:** decided
+- **Decided by:** human
+- **Options:** a required argument (`wm new resource stripe service`); a placeholder that fails `wm check` until filled; a default kind of `service`
+- **Choice:** a required argument, with `- Serves: none`, `- Status: active` and `- Verified:` set to the day it runs
+- **Why:** the new file is valid from the start without guessing its kind; the planner creates a resource from facts it has just looked at, so today is its verified date
 
 ### Decision: How resources are changed
-- Status: decided
-- Decided by: human
-- Options: edited by hand like docs, inside or outside a change; changed only through a change, with resource deltas accepted and archived like spec deltas
-- Choice: edited by hand, with an item in a change that alters something outside the repo
-- Why: a resource records what the outside world is, not what is intended, so there is nothing to accept up front; drift outside any change is recorded at its own size, and a change's edits are seen in its review
+- **Status:** decided
+- **Decided by:** human
+- **Options:** edited by hand like docs, inside or outside a change; changed only through a change, with resource deltas accepted and archived like spec deltas
+- **Choice:** edited by hand, with an item in a change that alters something outside the repo
+- **Why:** a resource records what the outside world is, not what is intended, so there is nothing to accept up front; drift outside any change is recorded at its own size, and a change's edits are seen in its review
 
 ### Decision: How environments are held
-- Status: decided
-- Decided by: human
-- Options: one note per environment; one note per account or deployment, with environments as `###` subsections
-- Choice: one note per account or deployment, environments as subsections; separate accounts and separate deployments get separate notes
-- Why: dev and prod of one deployment share almost everything, and splitting them duplicates it; `wm` doesn't read the subsections, so they need no format
+- **Status:** decided
+- **Decided by:** human
+- **Options:** one note per environment; one note per account or deployment, with environments as `###` subsections
+- **Choice:** one note per account or deployment, environments as subsections; separate accounts and separate deployments get separate notes
+- **Why:** dev and prod of one deployment share almost everything, and splitting them duplicates it; `wm` doesn't read the subsections, so they need no format
 
 ### Decision: Sections when they don't apply
-- Status: decided
-- Decided by: human
-- Options: the six sections always present, `None.` when they don't apply; sections chosen per kind
-- Choice: always present
-- Why: one layout for every kind is easy to check and to search, and kinds differ only in which sections hold the most
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the six sections always present, `None.` when they don't apply; sections chosen per kind
+- **Choice:** always present
+- **Why:** one layout for every kind is easy to check and to search, and kinds differ only in which sections hold the most
 
 ### Decision: What the implement and review packs carry
-- Status: decided
-- Decided by: human
-- Options: the full text of each serving resource; What it is, Access and the outline, the rest read on demand; an index only
-- Choice: What it is, Access and the outline
-- Why: the agent always knows what exists and how to reach it, without the bulk of tables it may not need; an index alone depends on the agent noticing
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the full text of each serving resource; What it is, Access and the outline, the rest read on demand; an index only
+- **Choice:** What it is, Access and the outline
+- **Why:** the agent always knows what exists and how to reach it, without the bulk of tables it may not need; an index alone depends on the agent noticing
 
 ### Decision: How the edit guard admits implementers
-- Status: decided
-- Decided by: human
-- Options: implementers may edit resources only; implementers may edit nothing in the record, and the planner builds every resource item
-- Choice: resources only
-- Why: a resource item can then be delegated like any other, while the rest of the record stays closed to implementers
+- **Status:** decided
+- **Decided by:** human
+- **Options:** implementers may edit resources only; implementers may edit nothing in the record, and the planner builds every resource item
+- **Choice:** resources only
+- **Why:** a resource item can then be delegated like any other, while the rest of the record stays closed to implementers
 
 ### Decision: Where the resource rules live in the specs
-- Status: decided
-- Decided by: planner
-- Options: a new `resources` spec; the layout in `authored-formats` and the behavior spread over `records`, `setup` and others
-- Choice: a new `resources` spec, with only the edits other specs already own (the tiny path, implementer edits, folders, sizing rules) made in theirs
-- Why: one place to read what a resource is; `authored-formats` stays about the notes written for a change
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** a new `resources` spec; the layout in `authored-formats` and the behavior spread over `records`, `setup` and others
+- **Choice:** a new `resources` spec, with only the edits other specs already own (the tiny path, implementer edits, folders, sizing rules) made in theirs
+- **Why:** one place to read what a resource is; `authored-formats` stays about the notes written for a change
 
 ## Open questions
 

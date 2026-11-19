@@ -1,8 +1,8 @@
 # Add spec background
 
-- Owner: Noah Roberts
-- Milestone: context-beyond-the-code
-- Review: independent
+- **Owner:** Noah Roberts
+- **Milestone:** context-beyond-the-code
+- **Review:** independent
 
 ## Why
 
@@ -26,15 +26,15 @@ A spec already scopes its area: a change that touches the area has a delta for i
 
 ## Impact
 
-- Specs: `authored-formats` (added), `agent-guidance` (added)
-- User-visible:
+- **Specs:** `authored-formats` (added), `agent-guidance` (added)
+- **User-visible:**
   - specs and deltas may have a `## Background` section; `wm check` reports an empty one
   - archiving or syncing a delta with a Background sets the spec's Background
   - `wm context --for implement` and `--for review` carry the Background of each spec the change touches, in text and JSON
   - the delta template and the specs-step guidance describe the section
-- Code: `record/specs.py`, `record/deltas.py`, `record/templates/delta.md`, `services/context.py`, `services/instructions.py`, `views/` (render, schemas), the `wm-propose` skill in `assets/`, the tests, and the docs (`record.md`, `concepts.md`, `json.md` generated, the CHANGELOG)
+- **Code:** `record/specs.py`, `record/deltas.py`, `record/templates/delta.md`, `services/context.py`, `services/instructions.py`, `views/` (render, schemas), the `wm-propose` skill in `assets/`, the tests, and the docs (`record.md`, `concepts.md`, `json.md` generated, the CHANGELOG)
 
 ## Outcome
 
-- Built: A spec and a delta may have a ## Background section. A delta's Background replaces the spec's whole at archive or sync, and wm check reports an empty one. The implement and review packs carry each touched spec's Background in a new backgrounds field. The delta template, the specs-step guidance and /wm-propose say where a fact goes, and the docs and CHANGELOG describe it.
-- Differs: Two suggestions from the independent review are left open. The Background text in the packs isn't fenced the way requirements and deltas are. The archive scenarios are tested through the merge functions, not through a full wm archive or wm sync run.
+- **Built:** A spec and a delta may have a ## Background section. A delta's Background replaces the spec's whole at archive or sync, and wm check reports an empty one. The implement and review packs carry each touched spec's Background in a new backgrounds field. The delta template, the specs-step guidance and /wm-propose say where a fact goes, and the docs and CHANGELOG describe it.
+- **Differs:** Two suggestions from the independent review are left open. The Background text in the packs isn't fenced the way requirements and deltas are. The archive scenarios are tested through the merge functions, not through a full wm archive or wm sync run.

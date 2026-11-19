@@ -36,4 +36,4 @@ An acceptance SHALL cover the change's proposal, its deltas, its design, the liv
 ## REMOVED Requirements
 
 ### Requirement: Acceptance without an item list
-Reason: Every `(accepted)` record names its items. The format 2 migration writes every item of the change into an old acceptance that named none, and keeps its fingerprint, so the change is accepted again in format 2 anyway.
+**Reason:** Every `(accepted)` record names its items. The format 2 migration writes every item of the change into an old acceptance that named none, and keeps its fingerprint, so the change is accepted again in format 2 anyway.

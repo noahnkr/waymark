@@ -31,4 +31,4 @@
 ## REMOVED Requirements
 
 ### Requirement: No review tag on items
-Reason: The format 2 migration removes every `review:` tag from items and turns the review records under items into `(note)` records, in active and archived changes alike, so no change carries them any more. A tag left by hand is reported like any other text that doesn't belong on an item line.
+**Reason:** The format 2 migration removes every `review:` tag from items and turns the review records under items into `(note)` records, in active and archived changes alike, so no change carries them any more. A tag left by hand is reported like any other text that doesn't belong on an item line.

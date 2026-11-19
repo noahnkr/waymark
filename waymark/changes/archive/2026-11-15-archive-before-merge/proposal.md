@@ -1,8 +1,8 @@
 # Archive before merge
 
-- Owner: Noah Roberts
-- Path: short
-- Review: self
+- **Owner:** Noah Roberts
+- **Path:** short
+- **Review:** self
 
 ## Why
 
@@ -27,7 +27,7 @@ Nothing in `wm` needs the merge first. Only the guidance says so: the `wm-archiv
 
 - New spec `archiving`: archiving before the pull request, and a pull request described from an archived change.
 - **Behavior change for every user, for the changelog:** a change is archived on its branch before its pull request, and `wm pr` works on an archived change.
-- Code: `services/pr.py` and `services/common.py` (finding an archived change), `services/instructions.py` and `services/check.py` (the wording).
+- **Code:** `services/pr.py` and `services/common.py` (finding an archived change), `services/instructions.py` and `services/check.py` (the wording).
 - Assets: the `wm-archive`, `wm-apply` and `wm-pr` skills.
 - Docs: concepts, getting started and the smoke test, with `docs/cli.md` regenerated if the help text changes.
 

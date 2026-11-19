@@ -70,8 +70,8 @@ Each template `wm` writes for a proposal, delta, design, task list, charter or e
 
 ## RENAMED Requirements
 
-- From: Criteria as a nested list
-- To: Criteria and verification as nested lists
+- **From:** Criteria as a nested list
+- **To:** Criteria and verification as nested lists
 
 ## MODIFIED Requirements
 

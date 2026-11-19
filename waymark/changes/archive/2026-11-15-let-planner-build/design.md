@@ -35,33 +35,33 @@
 ## Decisions
 
 ### Decision: How delegation is marked
-- Options:
+- **Options:**
   - a `build: delegate` tag on the item;
   - the planner decides at apply, with nothing in the record;
   - an item field line, `Build: delegate`.
-- Choice: a `build: delegate` tag.
-- Why: The human sees it and confirms it at accept, and it follows the `review:` tag the format already has. A field line would add a fourth labeled line for what is a yes or no.
+- **Choice:** a `build: delegate` tag.
+- **Why:** The human sees it and confirms it at accept, and it follows the `review:` tag the format already has. A field line would add a fourth labeled line for what is a yes or no.
 
 ### Decision: Whether the tag is enforced
-- Options:
+- **Options:**
   - the hooks refuse planner edits while a tagged item is being built;
   - guidance only.
-- Choice: guidance only.
-- Why: The hook can't tell which item a planner edit belongs to, and the planner also edits the record during apply. Refusing all code edits while a tagged item is next would block legitimate fixes. The tag decides what `wm instructions` and the skills say, as review levels do for the self-review.
+- **Choice:** guidance only.
+- **Why:** The hook can't tell which item a planner edit belongs to, and the planner also edits the record during apply. Refusing all code edits while a tagged item is next would block legitimate fixes. The tag decides what `wm instructions` and the skills say, as review levels do for the self-review.
 
 ### Decision: Keeping existing acceptances valid
-- Options:
+- **Options:**
   - add the delegate flag to every item's fingerprint part;
   - add it only when the tag is present.
-- Choice: only when present.
-- Why: Adding it everywhere would change the fingerprint of every accepted change in every project on upgrade, and withdraw acceptance with nothing having changed.
+- **Choice:** only when present.
+- **Why:** Adding it everywhere would change the fingerprint of every accepted change in every project on upgrade, and withdraw acceptance with nothing having changed.
 
 ### Decision: Planner edits in an atlas
-- Options:
+- **Options:**
   - the same rule as implementers;
   - any code repo.
-- Choice: the same rule as implementers (the human chose it).
-- Why: It keeps the atlas guard rail that code changes happen only for an accepted item, and it reuses `working_repos`.
+- **Choice:** the same rule as implementers (the human chose it).
+- **Why:** It keeps the atlas guard rail that code changes happen only for an accepted item, and it reuses `working_repos`.
 
 ## Risks and trade-offs
 

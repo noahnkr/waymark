@@ -1,7 +1,7 @@
 # Keep acceptance on new items
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -33,7 +33,7 @@ Items get added for ordinary reasons: a spec gap that needs one more step, a rev
   - the `Accepted:` line now lists the items it covers.
 
   Older lines still work, so no migration is needed.
-- Code: `record/proposal.py` (the line's format), `record/fingerprint.py` (the accepted items), `record/state.py`, `services/lifecycle.py` (accept and sync), and the test support.
+- **Code:** `record/proposal.py` (the line's format), `record/fingerprint.py` (the accepted items), `record/state.py`, `services/lifecycle.py` (accept and sync), and the test support.
 - Assets: `wm-update` and `wm-apply`.
 - Docs: concepts.
 

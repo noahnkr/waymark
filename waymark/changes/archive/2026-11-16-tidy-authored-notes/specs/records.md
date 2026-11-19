@@ -7,4 +7,4 @@ The lines `wm` writes into a change as evidence: their one shape, where they go,
 ## REMOVED Requirements
 
 ### Requirement: Record format 2
-Reason: Waymark has no record left in format 1, so the migration from it is removed with its code. Which formats this version reads, and what `wm update` does with an older record, is the requirement "Record format 3" in the `authored-formats` spec.
+**Reason:** Waymark has no record left in format 1, so the migration from it is removed with its code. Which formats this version reads, and what `wm update` does with an older record, is the requirement "Record format 3" in the `authored-formats` spec.

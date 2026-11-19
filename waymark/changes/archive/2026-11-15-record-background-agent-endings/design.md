@@ -43,28 +43,28 @@
 ## Decisions
 
 ### Decision: Which event carries the handed-back report
-- Options: `PreToolUse` on `SubagentHandback`; `PostToolUse` on it; reading the agent's transcript at `SubagentStop`.
-- Choice: `PreToolUse`.
-- Why:
+- **Options:** `PreToolUse` on `SubagentHandback`; `PostToolUse` on it; reading the agent's transcript at `SubagentStop`.
+- **Choice:** `PreToolUse`.
+- **Why:**
   - Only `PreToolUse` can refuse, so an agent whose report lacks its ending is sent back to add it, exactly as `SubagentStop` does for a final message.
   - The transcript's format belongs to Claude Code and isn't documented as stable.
 
 ### Decision: How the stop knows a handback was recorded
-- Options:
+- **Options:**
   - a marker per `agent_id` in the clone's git folder;
   - searching the record for evidence matching the agent's item, which the stop event can't name;
   - never refusing at `SubagentStop` when the message lacks an ending;
   - reading the transcript.
-- Choice: a marker per `agent_id`.
-- Why:
+- **Choice:** a marker per `agent_id`.
+- **Why:**
   - The stop event carries no item, so the record can't answer it.
   - Never refusing would break the foreground case, where the refusal is what makes agents end correctly.
   - A marker file in the git folder is per clone, never shared, and is written and read only by the hooks. It's state the hooks pass between two events, not a cache of the record.
 
 ### Decision: Keep `SubagentStop`
-- Options: replace it with the handback; keep both.
-- Choice: keep both.
-- Why: foreground agents still end with a final message, and other modes or versions of Claude Code may not use the handback.
+- **Options:** replace it with the handback; keep both.
+- **Choice:** keep both.
+- **Why:** foreground agents still end with a final message, and other modes or versions of Claude Code may not use the handback.
 
 ## Risks and trade-offs
 

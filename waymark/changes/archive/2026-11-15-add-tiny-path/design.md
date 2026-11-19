@@ -35,33 +35,33 @@
 ## Decisions
 
 ### Decision: How tiny work is approved
-- Options:
+- **Options:**
   - the human's yes in the session;
   - a record entry that `wm` writes.
-- Choice: the human's yes in the session (the human chose it).
-- Why: Tiny work changes nothing the record describes, so a record entry would be paperwork. The merge is the second approval.
+- **Choice:** the human's yes in the session (the human chose it).
+- **Why:** Tiny work changes nothing the record describes, so a record entry would be paperwork. The merge is the second approval.
 
 ### Decision: What qualifies as tiny
-- Options:
+- **Options:**
   - no requirement changes;
   - no requirement changes and a size limit;
   - docs and typos only.
-- Choice: no requirement changes (the human chose it).
-- Why: The specs are what Waymark protects. A large refactor that changes no behavior needs no spec work, and a one-line change that does needs a change.
+- **Choice:** no requirement changes (the human chose it).
+- **Why:** The specs are what Waymark protects. A large refactor that changes no behavior needs no spec work, and a one-line change that does needs a change.
 
 ### Decision: Planner edits in an atlas
-- Options:
+- **Options:**
   - keep the limit to the item being built, and have no tiny path in an atlas;
   - let the planner edit any code repo.
-- Choice: let the planner edit any code repo (the human chose it).
-- Why: The planner already edits any file in a single repository. The limit kept an atlas stricter for no reason the record holds. Implementers keep their limit, since they are started for one item.
+- **Choice:** let the planner edit any code repo (the human chose it).
+- **Why:** The planner already edits any file in a single repository. The limit kept an atlas stricter for no reason the record holds. Implementers keep their limit, since they are started for one item.
 
 ### Decision: A separate skill for the tiny path
-- Options:
+- **Options:**
   - a `wm-fix` skill;
   - a branch inside `wm-propose`.
-- Choice: a `wm-fix` skill.
-- Why: `wm-propose` writes no code by rule, and tiny work is mostly code. A skill of its own also lets the human start the tiny path directly.
+- **Choice:** a `wm-fix` skill.
+- **Why:** `wm-propose` writes no code by rule, and tiny work is mostly code. A skill of its own also lets the human start the tiny path directly.
 
 ## Risks and trade-offs
 

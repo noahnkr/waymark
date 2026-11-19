@@ -1,6 +1,6 @@
 # Record background agent endings
 
-- Owner: Noah Roberts
+- **Owner:** Noah Roberts
 
 ## Why
 
@@ -25,7 +25,7 @@ So no result was recorded for any of the 11 agent runs of `keep-agent-setup-loca
 
 - New spec: `agent-results` (recording an agent's result from its ending, however it hands its report back).
 - Users see that ticks and verdicts are recorded again in Claude Code when agents run in the background, as they do by default. That's a fix, for the changelog.
-- Code: `adapters/claude_code.py` (hook events and the agent definitions), `hooks/events.py` and `hooks/decide.py`, and the settings that `wm update` and `wm init` render.
+- **Code:** `adapters/claude_code.py` (hook events and the agent definitions), `hooks/events.py` and `hooks/decide.py`, and the settings that `wm update` and `wm init` render.
 - Docs: `docs/smoke-test.md`, and `docs/architecture.md` where it describes the agent stop.
 
 ## Outcome

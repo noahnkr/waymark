@@ -95,57 +95,57 @@
 ## Decisions
 
 ### Decision: How a fix keeps acceptance
-- Options:
+- **Options:**
   - hash every fingerprint part after `standard_layout`;
   - have `--fix` skip accepted changes and the specs they modify;
   - have `--fix` write a fresh acceptance for an accepted change.
-- Choice: hash after `standard_layout`.
-- Why: Layout then can't withdraw acceptance, whoever changes it, so a hand edit that only fixes layout keeps acceptance too. Skipping accepted changes leaves the files that matter most untidy. Writing an acceptance for the human breaks "only the human accepts".
+- **Choice:** hash after `standard_layout`.
+- **Why:** Layout then can't withdraw acceptance, whoever changes it, so a hand edit that only fixes layout keeps acceptance too. Skipping accepted changes leaves the files that matter most untidy. Writing an acceptance for the human breaks "only the human accepts".
 
 ### Decision: What stays of format 1
-- Options:
+- **Options:**
   - migrate every change, archived ones too, and read only format 2;
   - drop only the old hash, and keep reading archived changes in format 1;
   - keep format 1 readers and the old hash, migrating only active changes.
-- Choice: migrate every change and read only format 2 (the human chose it).
-- Why: One format means one parser, no format switch, no old hash and no requirements kept only for history. Git keeps the files as they were. The cost is one re-acceptance of each active change, and old per-item reviews kept as notes rather than as reviews.
+- **Choice:** migrate every change and read only format 2 (the human chose it).
+- **Why:** One format means one parser, no format switch, no old hash and no requirements kept only for history. Git keeps the files as they were. The cost is one re-acceptance of each active change, and old per-item reviews kept as notes rather than as reviews.
 
 ### Decision: Where the record shapes live
-- Options:
+- **Options:**
   - one module with a table per kind;
   - a regex and an f-string per kind, as now.
-- Choice: one module with a table per kind.
-- Why: Each shape is defined once, the error messages are built from the same table, and a later kind is one table row.
+- **Choice:** one module with a table per kind.
+- **Why:** Each shape is defined once, the error messages are built from the same table, and a later kind is one table row.
 
 ### Decision: The date of a migrated line that had none
-- Options:
+- **Options:**
   - the date of the last commit that touched the file;
   - the day of the migration;
   - a placeholder such as `undated`.
-- Choice: the last commit that touched the file, or the day of the migration when it isn't committed.
-- Why: That date is the nearest true one `wm` can find, and it keeps every record dated, so the parser needs no special case.
+- **Choice:** the last commit that touched the file, or the day of the migration when it isn't committed.
+- **Why:** That date is the nearest true one `wm` can find, and it keeps every record dated, so the parser needs no special case.
 
 ### Decision: Implementer access to the record
-- Options:
+- **Options:**
   - no edits to the record at all, with notes through `wm note`;
   - hand edits that add a `(note)` record, checked by the hook.
-- Choice: no edits (the human chose it).
-- Why: Every record then comes from `wm`, and the hook's one exception goes away.
+- **Choice:** no edits (the human chose it).
+- **Why:** Every record then comes from `wm`, and the hook's one exception goes away.
 
 ### Decision: Re-acceptance
-- Options:
+- **Options:**
   - append a new `(accepted)` record, where the latest counts;
   - replace the record.
-- Choice: append (the human chose it).
-- Why: The Log only grows, and the history of acceptances stays visible.
+- **Choice:** append (the human chose it).
+- **Why:** The Log only grows, and the history of acceptances stays visible.
 
 ### Decision: Order of who and the arguments
-- Options:
+- **Options:**
   - arguments, then `by <who>`;
   - `by <who>` first;
   - parts set off by ` · `.
-- Choice: arguments, then `by <who>` (the human chose it).
-- Why: A git name has spaces. With the arguments a closed set per kind, `by` can run to `: ` or the end of the line, and the record reads as a sentence.
+- **Choice:** arguments, then `by <who>` (the human chose it).
+- **Why:** A git name has spaces. With the arguments a closed set per kind, `by` can run to `: ` or the end of the line, and the record reads as a sentence.
 
 ## Risks and trade-offs
 

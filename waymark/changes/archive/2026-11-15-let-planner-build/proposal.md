@@ -1,6 +1,6 @@
 # Let planner build
 
-- Owner: Noah Roberts
+- **Owner:** Noah Roberts
 
 ## Why
 
@@ -29,7 +29,7 @@ On `drop-waymark-folder` that came to 8 implementer runs, about 775k tokens and 
   - `wm instructions` at the apply step tells the planner to build the item unless the item is tagged `build: delegate`;
   - the task list format gains the `build: delegate` tag;
   - in an atlas, the hooks let the planner edit an accepted item's code repo.
-- Code: `record/tasks.py` (the tag), `record/fingerprint.py` (the tag becomes part of what is accepted), `services/instructions.py`, `hooks/decide.py`, and the item templates and JSON schema in `views/`.
+- **Code:** `record/tasks.py` (the tag), `record/fingerprint.py` (the tag becomes part of what is accepted), `services/instructions.py`, `hooks/decide.py`, and the item templates and JSON schema in `views/`.
 - Assets: the `wm-apply`, `wm-propose`, `wm-onboard` and `wm-update` skills, and the `wm-implementer` definition.
 - Docs: concepts, getting started, the multi-repo guide, the smoke test, architecture, the README and the regenerated CLI and JSON references. The charter's vision and its apply rule change too.
 

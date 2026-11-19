@@ -1,6 +1,6 @@
 # Drop waymark folder
 
-- Owner: Noah Roberts
+- **Owner:** Noah Roberts
 
 ## Why
 
@@ -46,7 +46,7 @@ OpenSpec, a comparable tool, enforces commit messages with no git hooks at all. 
   - `wm git-hooks` and `wm run-hook` are gone;
   - a project using husky, lefthook or pre-commit has to drop its two `wm run-hook` lines;
   - pointers move into `waymark/config.toml`.
-- Code:
+- **Code:**
   - removed: `record/githooks.py` and `services/githooks.py`, plus the hook templates, the `git-hooks` and `run-hook` commands, and the hooks checks in `services/doctor.py` and `views/`;
   - changed: `hooks/decide.py` (commands), `record/pointer.py`, `record/project.py`, `services/atlas.py`, `services/integration.py` and `services/setup.py`;
 - Docs: getting started, the multi-repo guide, concepts, the smoke test, architecture and the regenerated CLI reference.

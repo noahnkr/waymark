@@ -26,53 +26,53 @@
 ## Decisions
 
 ### Decision: How the proposal names its milestone
-- Status: decided
-- Decided by: human
-- Options: the milestone's folder name; a Markdown link to its `milestone.md`
-- Choice: the folder name, `- Milestone: stronger-milestones`
-- Why: it is easy to type and to check, and nothing rewrites it when a change is archived or a milestone closed
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the milestone's folder name; a Markdown link to its `milestone.md`
+- **Choice:** the folder name, `- Milestone: stronger-milestones`
+- **Why:** it is easy to type and to check, and nothing rewrites it when a change is archived or a milestone closed
 
 ### Decision: How strict the check is
-- Status: decided
-- Decided by: human
-- Options: errors both ways; an error one way and a warning the other; warnings only
-- Choice: errors both ways, for active changes only
-- Why: a roadmap and a proposal that disagree leave the change's milestone unclear, which is what this change is meant to stop. Unmerged branches with hand-linked changes add the line when they are rebased
+- **Status:** decided
+- **Decided by:** human
+- **Options:** errors both ways; an error one way and a warning the other; warnings only
+- **Choice:** errors both ways, for active changes only
+- **Why:** a roadmap and a proposal that disagree leave the change's milestone unclear, which is what this change is meant to stop. Unmerged branches with hand-linked changes add the line when they are rebased
 
 ### Decision: What `--milestone` does to the roadmap
-- Status: decided
-- Decided by: human
-- Options: link a planned line or add a new one; only link an existing planned line
-- Choice: link a planned line that starts with the change's name, or add a linked line at the end
-- Why: the usual case, a planned line, keeps its description, and a change not planned yet still joins the milestone in one command
+- **Status:** decided
+- **Decided by:** human
+- **Options:** link a planned line or add a new one; only link an existing planned line
+- **Choice:** link a planned line that starts with the change's name, or add a linked line at the end
+- **Why:** the usual case, a planned line, keeps its description, and a change not planned yet still joins the milestone in one command
 
 ### Decision: Where "Milestone as one file" lives
-- Status: decided
-- Decided by: human
-- Options: move it to the new `milestones` spec; leave it in `authored-formats`
-- Choice: move it, unchanged
-- Why: the milestone asks for milestone behavior in one spec; the move removes a requirement, so the change is reviewed independently
+- **Status:** decided
+- **Decided by:** human
+- **Options:** move it to the new `milestones` spec; leave it in `authored-formats`
+- **Choice:** move it, unchanged
+- **Why:** the milestone asks for milestone behavior in one spec; the move removes a requirement, so the change is reviewed independently
 
 ### Decision: A change on two roadmaps
-- Status: decided
-- Decided by: planner
-- Options: an error; a warning; allow it and use the proposal's line
-- Choice: an error
-- Why: the proposal names one milestone, so a second roadmap linking the change always disagrees with it
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** an error; a warning; allow it and use the proposal's line
+- **Choice:** an error
+- **Why:** the proposal names one milestone, so a second roadmap linking the change always disagrees with it
 
 ### Decision: Where the check runs
-- Status: decided
-- Decided by: planner
-- Options: in `record/record.py` with the per-file problems; in `services/check.py` as findings over the whole record
-- Choice: `services/check.py`, with the links derived in `record/state.py`
-- Why: the check compares two files, a proposal and roadmaps, as the other record-wide findings in `check.py` do, and `state.py` already resolves roadmap links
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** in `record/record.py` with the per-file problems; in `services/check.py` as findings over the whole record
+- **Choice:** `services/check.py`, with the links derived in `record/state.py`
+- **Why:** the check compares two files, a proposal and roadmaps, as the other record-wide findings in `check.py` do, and `state.py` already resolves roadmap links
 
 ### Decision: The milestone in the packs
-- Status: decided
-- Decided by: planner
-- Options: a `milestone` field with name, goal and non-goals; the whole `milestone.md`; only the name, for the agent to look up
-- Choice: a `milestone` field with name, goal and non-goals, null without one
-- Why: the milestone asks for its Goal and Non-goals only, and an agent shouldn't need another command to get them; a new field keeps the pack's version
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** a `milestone` field with name, goal and non-goals; the whole `milestone.md`; only the name, for the agent to look up
+- **Choice:** a `milestone` field with name, goal and non-goals, null without one
+- **Why:** the milestone asks for its Goal and Non-goals only, and an agent shouldn't need another command to get them; a new field keeps the pack's version
 
 ## Open questions
 

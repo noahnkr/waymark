@@ -40,49 +40,49 @@
 ## Decisions
 
 ### Decision: Split the agent guidance out
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - this change covers the skills, and `sharpen-agent-guidance` the reviewer's rubric and the implementer's stopping rules;
   - one change for all eight roadmap items.
-- Choice: two changes.
-- Why: The agent definitions and their context packs are a different part of the code; two smaller changes review better.
+- **Choice:** two changes.
+- **Why:** The agent definitions and their context packs are a different part of the code; two smaller changes review better.
 
 ### Decision: How the layout is held
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - a requirement and a test over the shipped skills;
   - a convention only.
-- Choice: a requirement and a test.
-- Why: Without a check, the layout drifts back the next time a skill is edited.
+- **Choice:** a requirement and a test.
+- **Why:** Without a check, the layout drifts back the next time a skill is edited.
 
 ### Decision: Where the writing and sizing rules live
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - in `wm instructions` for the specs and tasks steps;
   - in the text of `wm-propose` and `wm-update`.
-- Choice: `wm instructions`.
-- Why: The milestone's goal says writing rules come from `wm instructions`, so they reach the planner at the step whatever skill it follows.
+- **Choice:** `wm instructions`.
+- **Why:** The milestone's goal says writing rules come from `wm instructions`, so they reach the planner at the step whatever skill it follows.
 
 ### Decision: Skill-specific sections
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - allow a skill's own sections between Steps and Quality bar;
   - fold every extra section into Steps.
-- Choice: allow them between Steps and Quality bar.
-- Why: `wm-apply`'s loop and `wm-update`'s common cases read better as their own sections than as long numbered steps.
+- **Choice:** allow them between Steps and Quality bar.
+- **Why:** `wm-apply`'s loop and `wm-update`'s common cases read better as their own sections than as long numbered steps.
 
 ### Decision: Where the layout test lives
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - a new `tests/test_skills.py` over `assets.SKILLS`;
   - inside the integration tests that check `wm init` copies the skills.
-- Choice: a new `tests/test_skills.py`.
-- Why: The layout is a property of the shipped files, not of installing them; the test stays fast and says plainly what it holds.
+- **Choice:** a new `tests/test_skills.py`.
+- **Why:** The layout is a property of the shipped files, not of installing them; the test stays fast and says plainly what it holds.
 
 ## Open questions
 

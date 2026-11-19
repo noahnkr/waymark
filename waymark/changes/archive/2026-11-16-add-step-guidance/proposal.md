@@ -1,6 +1,6 @@
 # Add step guidance
 
-- Owner: Noah Roberts
+- **Owner:** Noah Roberts
 
 ## Why
 
@@ -27,15 +27,15 @@ This is the fifth change on the `record-format-and-skills` milestone.
 
 ## Impact
 
-- Specs: `step-guidance` (new), `authored-formats` (modified)
-- User-visible:
+- **Specs:** `step-guidance` (new), `authored-formats` (modified)
+- **User-visible:**
   - `wm instructions` shows a "Checklist" for the drafting steps and the "Shared rules" for every step, and its JSON gains `checklist` and `shared_rules`;
   - `wm check` reports a task item without `- Criteria:` or `- Verify:`, and a decision with fewer than two options;
   - the skills' Rules sections are shorter and point at the shared rules.
-- Code: `services/instructions.py`, `views/` (the instructions view and its JSON schema), `record/` (tasks, design, changes)
+- **Code:** `services/instructions.py`, `views/` (the instructions view and its JSON schema), `record/` (tasks, design, changes)
 - Assets and docs: all nine skills; concepts, `docs/json.md` (generated), the changelog.
 
 ## Outcome
 
-- Built: wm instructions gives the propose, specs, design and tasks steps a checklist that marks the checks wm check enforces, and every step the five shared rules, in JSON as checklist and shared_rules; the nine skills point at the shared rules instead of repeating them; wm check reports an active item without a Criteria or Verify line (item-incomplete) and a decision with fewer than two options (decision-options).
-- Differs: Don't merge stays in wm-pr and wm-fix because it is stricter than the shared rule. The Item has no criteria refusal in services/context.py is left in place though it can no longer be reached.
+- **Built:** wm instructions gives the propose, specs, design and tasks steps a checklist that marks the checks wm check enforces, and every step the five shared rules, in JSON as checklist and shared_rules; the nine skills point at the shared rules instead of repeating them; wm check reports an active item without a Criteria or Verify line (item-incomplete) and a decision with fewer than two options (decision-options).
+- **Differs:** Don't merge stays in wm-pr and wm-fix because it is stricter than the shared rule. The Item has no criteria refusal in services/context.py is left in place though it can no longer be reached.

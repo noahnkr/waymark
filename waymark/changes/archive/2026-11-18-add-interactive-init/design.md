@@ -17,39 +17,39 @@
 ## Decisions
 
 ### Decision: What init asks
-- Status: decided
-- Decided by: human
-- Options: project or atlas, agent tools, and CI; those plus commit scopes and the review default; agent tools only
-- Choice: project or atlas, agent tools, and CI
-- Why: they are the choices made once at setup that today need a flag or a second command; the rest belongs to the charter and the settings, drafted later
+- **Status:** decided
+- **Decided by:** human
+- **Options:** project or atlas, agent tools, and CI; those plus commit scopes and the review default; agent tools only
+- **Choice:** project or atlas, agent tools, and CI
+- **Why:** they are the choices made once at setup that today need a flag or a second command; the rest belongs to the charter and the settings, drafted later
 
 ### Decision: A tool list with one tool
-- Status: decided
-- Decided by: human
-- Options: build the checklist now, listing every adapter; show a confirmation until a second adapter exists
-- Choice: build the checklist now
-- Why: a new adapter then appears with no change to `init`, and the one entry still shows whether the tool was found
+- **Status:** decided
+- **Decided by:** human
+- **Options:** build the checklist now, listing every adapter; show a confirmation until a second adapter exists
+- **Choice:** build the checklist now
+- **Why:** a new adapter then appears with no change to `init`, and the one entry still shows whether the tool was found
 
 ### Decision: The welcome mark
-- Status: decided
-- Decided by: human
-- Options: the banner's four-pointed star, 11 rows, animated; a smaller 7-row star; a cairn; a wordmark; the star with the banner's dotted trail
-- Choice: the 11-row star, centered against the text, growing in and then twinkling
-- Why: it is the mark the README's banner uses; the dotted trail didn't read well in a terminal
+- **Status:** decided
+- **Decided by:** human
+- **Options:** the banner's four-pointed star, 11 rows, animated; a smaller 7-row star; a cairn; a wordmark; the star with the banner's dotted trail
+- **Choice:** the 11-row star, centered against the text, growing in and then twinkling
+- **Why:** it is the mark the README's banner uses; the dotted trail didn't read well in a terminal
 
 ### Decision: Where the prompts come from
-- Status: decided
-- Decided by: planner
-- Options: a small standard-library prompt module; a third-party prompt library
-- Choice: a standard-library module
-- Why: the charter allows only the standard library at runtime
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** a small standard-library prompt module; a third-party prompt library
+- **Choice:** a standard-library module
+- **Why:** the charter allows only the standard library at runtime
 
 ### Decision: Defaults without questions
-- Status: decided
-- Decided by: planner
-- Options: `--yes` and non-terminal runs behave as `wm init` does today (a project, every tool, no CI); they take the interactive defaults (detected tools, CI yes)
-- Choice: as today
-- Why: agents and scripts that run `wm init` see no change; the interactive defaults only start a question the human then answers
+- **Status:** decided
+- **Decided by:** planner
+- **Options:** `--yes` and non-terminal runs behave as `wm init` does today (a project, every tool, no CI); they take the interactive defaults (detected tools, CI yes)
+- **Choice:** as today
+- **Why:** agents and scripts that run `wm init` see no change; the interactive defaults only start a question the human then answers
 
 ## Open questions
 

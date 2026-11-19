@@ -1,7 +1,7 @@
 # Structure authored notes
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -37,17 +37,17 @@ This is the third change on the `record-format-and-skills` milestone.
 
 ## Impact
 
-- Specs: `authored-formats` (modified)
-- User-visible:
+- **Specs:** `authored-formats` (modified)
+- **User-visible:**
   - the proposal's Impact, the archived Outcome, the charter's goals and constraints and the design's decisions change form;
   - `wm archive --outcome` is replaced by `--built` and `--differs`;
   - `wm accept` refuses a change with a proposed decision or an open question;
   - `wm check` reports an Impact that doesn't match the deltas;
   - an exploration without a `- Status:` line is reported as `missing-status`, and a `Parked:` Conclusion no longer parks it.
-- Code: `record/` (proposal, charter, design, explorations, state, templates), `services/` (lifecycle, setup, check), `cli.py`, `views/`
+- **Code:** `record/` (proposal, charter, design, explorations, state, templates), `services/` (lifecycle, setup, check), `cli.py`, `views/`
 - Assets and docs: `wm-propose`, `wm-update`, `wm-kickoff`, `wm-archive`; concepts, getting started, the changelog.
 
 ## Outcome
 
-- Built: The proposal's Impact as Specs, User-visible and Code lines, checked against the deltas; wm archive --built and --differs; numbered charter goals and constraints; design decisions with Status and Decided by lines and open questions that block acceptance; nested Verify; exploration status from its Status line alone; template examples, with comments left out of the fingerprint.
-- Differs: A Specs line that is empty or names no spec in backticks gives impact-format, not the impact-mismatch the design's risk note describes. Inline code is kept when comments are left out of the fingerprint.
+- **Built:** The proposal's Impact as Specs, User-visible and Code lines, checked against the deltas; wm archive --built and --differs; numbered charter goals and constraints; design decisions with Status and Decided by lines and open questions that block acceptance; nested Verify; exploration status from its Status line alone; template examples, with comments left out of the fingerprint.
+- **Differs:** A Specs line that is empty or names no spec in backticks gives impact-format, not the impact-mismatch the design's risk note describes. Inline code is kept when comments are left out of the fingerprint.

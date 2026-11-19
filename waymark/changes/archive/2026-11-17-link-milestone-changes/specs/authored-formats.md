@@ -18,4 +18,4 @@ A proposal's facts SHALL be bullet lines between its title and its first section
 ## REMOVED Requirements
 
 ### Requirement: Milestone as one file
-Reason: Moved to the `milestones` spec unchanged, so every milestone requirement is in one spec.
+**Reason:** Moved to the `milestones` spec unchanged, so every milestone requirement is in one spec.

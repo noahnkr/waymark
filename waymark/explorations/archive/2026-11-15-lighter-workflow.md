@@ -1,6 +1,6 @@
 # Lighter workflow
 
-- Status: led-to [lighter-workflow](../../milestones/archive/2026-11-15-lighter-workflow/milestone.md)
+- **Status:** led-to [lighter-workflow](../../milestones/archive/2026-11-15-lighter-workflow/milestone.md)
 
 ## Context
 
@@ -105,7 +105,7 @@ Decided on 2026-11-15: B and C together, with A's tactics. The planner builds by
 
 ## Related
 
-- Specs: `setup`, `agent-results`, `atlas`, `commits`
+- **Specs:** `setup`, `agent-results`, `atlas`, `commits`
 - Archived changes: `2026-11-15-keep-agent-setup-local`, `2026-11-15-record-background-agent-endings`, `2026-11-15-check-release-pin`, `2026-11-15-drop-waymark-folder`
 - `docs/concepts.md`: the workflow, the roles, the review levels and the gates
 - README, "What it costs", which promises time and token figures measured on Waymark itself

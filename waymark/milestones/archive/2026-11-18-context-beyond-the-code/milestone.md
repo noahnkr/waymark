@@ -26,7 +26,7 @@ Give every fact an agent needs, and can't find in the code or in the requirement
 
 ## Log
 
-- (proposed) 2026-11-17 add-resources by Noah Roberts
-- (archived) 2026-11-18 add-resources by Noah Roberts
-- (archived) 2026-11-18 add-spec-background by Noah Roberts
-- (archived) 2026-11-18 flatten-charter-rules by Noah Roberts
+- 2026-11-17 (proposed) add-resources by Noah Roberts
+- 2026-11-18 (archived) add-resources by Noah Roberts
+- 2026-11-18 (archived) add-spec-background by Noah Roberts
+- 2026-11-18 (archived) flatten-charter-rules by Noah Roberts

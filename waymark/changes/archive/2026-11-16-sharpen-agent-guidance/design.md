@@ -22,58 +22,58 @@
 ## Decisions
 
 ### Decision: Where the guidance lives
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - in the context packs and `wm instructions`, with the agent files pointing at them;
   - in the agent files only.
-- Choice: the context packs and `wm instructions`.
-- Why: Like the shared rules, they then come from `wm`, reach any agent tool, and the planner's self-review uses the same rubric.
+- **Choice:** the context packs and `wm instructions`.
+- **Why:** Like the shared rules, they then come from `wm`, reach any agent tool, and the planner's self-review uses the same rubric.
 
 ### Decision: The rubric's grading
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - grade by what a finding breaks, with the higher severity when torn;
   - keep today's one-line definitions.
-- Choice: by what it breaks.
-- Why: It ties each severity to something the reviewer can point at, so two reviews grade the same problem the same way.
+- **Choice:** by what it breaks.
+- **Why:** It ties each severity to something the reviewer can point at, so two reviews grade the same problem the same way.
 
 ### Decision: The attempt limit
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - stop with `partial` after three attempts at the same failing check;
   - no limit.
-- Choice: three attempts.
-- Why: A fourth try at the same failure rarely succeeds where three didn't, and the planner is better placed to change course.
+- **Choice:** three attempts.
+- **Why:** A fourth try at the same failure rarely succeeds where three didn't, and the planner is better placed to change course.
 
 ### Decision: The rubric for self-review
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - the same rubric for a self-review;
   - the independent reviewer only.
-- Choice: the same rubric.
-- Why: A self-review and an independent one should grade the same finding the same way.
+- **Choice:** the same rubric.
+- **Why:** A self-review and an independent one should grade the same finding the same way.
 
 ### Decision: One module for both texts
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - a new `services/guidance.py` that both the packs and the instructions import;
   - keep the rubric in `services/context.py` and import it from there.
-- Choice: a new `services/guidance.py`.
-- Why: Neither service owns the texts; a small module keeps them in one place without one service depending on the other for wording.
+- **Choice:** a new `services/guidance.py`.
+- **Why:** Neither service owns the texts; a small module keeps them in one place without one service depending on the other for wording.
 
 ### Decision: The field at other steps
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - `severity_rubric` in every instructions payload, empty except at the review step;
   - the field only at the review step.
-- Choice: every payload, empty elsewhere.
-- Why: The schema stays one shape for every step, as `checklist` does.
+- **Choice:** every payload, empty elsewhere.
+- **Why:** The schema stays one shape for every step, as `checklist` does.
 
 ## Open questions
 

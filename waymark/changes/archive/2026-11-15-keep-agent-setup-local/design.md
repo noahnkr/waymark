@@ -65,29 +65,29 @@
 ## Decisions
 
 ### Decision: Where the ignore lines go
-- Options: the committed `.gitignore`; the clone's `.git/info/exclude`, which `keep_local` already uses for per-machine files.
-- Choice: the committed `.gitignore`.
-- Why: The exclude file belongs to one clone. A teammate who clones and runs an agent tool before `wm init` would see `.claude/` as new files to commit. `.gitignore` travels with the repository, so every clone is protected from the start.
+- **Options:** the committed `.gitignore`; the clone's `.git/info/exclude`, which `keep_local` already uses for per-machine files.
+- **Choice:** the committed `.gitignore`.
+- **Why:** The exclude file belongs to one clone. A teammate who clones and runs an agent tool before `wm init` would see `.claude/` as new files to commit. `.gitignore` travels with the repository, so every clone is protected from the start.
 
 ### Decision: How the paths to ignore are known
-- Options: list the paths that `integration_files` renders; have each adapter declare glob patterns; ignore whole tool folders (`/.claude/`).
-- Choice: each adapter declares patterns (`Adapter.ignored`).
-- Why: Rendering gives dozens of single files, which would make a long block that changes with every new skill. Whole folders would also ignore files the project owns, such as its own skills in `.claude/skills/`. Patterns stay short and match only what `wm` writes. The one exception is `settings.json`, which `wm` merges into.
+- **Options:** list the paths that `integration_files` renders; have each adapter declare glob patterns; ignore whole tool folders (`/.claude/`).
+- **Choice:** each adapter declares patterns (`Adapter.ignored`).
+- **Why:** Rendering gives dozens of single files, which would make a long block that changes with every new skill. Whole folders would also ignore files the project owns, such as its own skills in `.claude/skills/`. Patterns stay short and match only what `wm` writes. The one exception is `settings.json`, which `wm` merges into.
 
 ### Decision: One block for every case
-- Options: separate blocks for agent files and for hooks; one block whose contents depend on whether the repository has a record.
-- Choice: one block, worked out from the repository each time.
-- Why: Whichever command runs last (`init`, `update` or `git-hooks`) writes the same block for the same repository, so they can't undo each other. There is one marker pair to find and replace.
+- **Options:** separate blocks for agent files and for hooks; one block whose contents depend on whether the repository has a record.
+- **Choice:** one block, worked out from the repository each time.
+- **Why:** Whichever command runs last (`init`, `update` or `git-hooks`) writes the same block for the same repository, so they can't undo each other. There is one marker pair to find and replace.
 
 ### Decision: `wm init` on an existing record, rather than a new command
-- Options: a new `wm setup`; tell users to run `wm update`; let `wm init` set up the machine when the record exists.
-- Choice: `wm init`.
-- Why: It is the command people already run first. `wm update` also migrates the record, which a fresh clone should never do by accident. A new command would mean one more thing to learn.
+- **Options:** a new `wm setup`; tell users to run `wm update`; let `wm init` set up the machine when the record exists.
+- **Choice:** `wm init`.
+- **Why:** It is the command people already run first. `wm update` also migrates the record, which a fresh clone should never do by accident. A new command would mean one more thing to learn.
 
 ### Decision: Untracking is left to the user
-- Options: `wm update` runs `git rm --cached` on tracked machine files; `wm doctor` reports them with the command.
-- Choice: report only.
-- Why: Untracking changes what the whole team shares. That is the user's decision, like every other commit. It also keeps `wm` to the local, careful writes in the charter's constraints.
+- **Options:** `wm update` runs `git rm --cached` on tracked machine files; `wm doctor` reports them with the command.
+- **Choice:** report only.
+- **Why:** Untracking changes what the whole team shares. That is the user's decision, like every other commit. It also keeps `wm` to the local, careful writes in the charter's constraints.
 
 ## Risks and trade-offs
 

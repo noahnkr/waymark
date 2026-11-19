@@ -13,7 +13,7 @@
    - Propose:
      - enforced: every section is filled in (`empty-section`); the Impact has its three lines and `Specs:` matches the deltas (`impact-format`, `impact-mismatch`);
      - judged: Why states the problem and why now, not the solution; Non-goals name what a reader might expect and won't get; `User-visible:` names everything users will see change, for the changelog.
-   - Specs:
+   - **Specs:**
      - enforced: every requirement says SHALL (`requirement-without-shall`); every requirement has a scenario with WHEN and THEN (`requirement-without-scenario`, `scenario-incomplete`); a new spec has a Purpose (`delta-without-purpose`); a modified, removed or renamed requirement is in the spec, and an added one isn't (`delta-requirement-missing`, `delta-requirement-exists`);
      - judged: each THEN can be checked by someone who didn't write it; no file names, functions or internals in a requirement.
    - Design:
@@ -36,49 +36,49 @@
 ## Decisions
 
 ### Decision: Checklist next to the guidance
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - a separate checklist next to "What to do";
   - turn "What to do" into the checklist.
-- Choice: a separate checklist.
-- Why: "What to do" says how to draft; the checklist says what must hold before moving on, and marks what `wm check` already catches.
+- **Choice:** a separate checklist.
+- **Why:** "What to do" says how to draft; the checklist says what must hold before moving on, and marks what `wm check` already catches.
 
 ### Decision: Where the shared rules live
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - in `wm`, with the skills dropping their copies;
   - in `wm`, with the skills keeping theirs.
-- Choice: in `wm`, the skills dropping their copies.
-- Why: One place to change them, and no drift between nine copies.
+- **Choice:** in `wm`, the skills dropping their copies.
+- **Why:** One place to change them, and no drift between nine copies.
 
 ### Decision: Which new checks
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - items need Criteria and Verify, and decisions need two options;
   - only one of them, or neither.
-- Choice: both.
-- Why: Both catch a weak draft mechanically; a scenario per requirement is already checked.
+- **Choice:** both.
+- **Why:** Both catch a weak draft mechanically; a scenario per requirement is already checked.
 
 ### Decision: How a check knows it is enforced
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - each check names the problem codes that enforce it, and a test holds that each code exists;
   - a plain true or false per check.
-- Choice: the problem codes.
-- Why: A check marked enforced can't silently stop being enforced: removing or renaming the code fails the test.
+- **Choice:** the problem codes.
+- **Why:** A check marked enforced can't silently stop being enforced: removing or renaming the code fails the test.
 
 ### Decision: Counting inline options
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - split the line on ";" and on the word "or";
   - also split on commas.
-- Choice: ";" and "or".
-- Why: Options often contain commas ("in the query, or after sorting"); splitting on them would count one option as two.
+- **Choice:** ";" and "or".
+- **Why:** Options often contain commas ("in the query, or after sorting"); splitting on them would count one option as two.
 
 ## Open questions
 

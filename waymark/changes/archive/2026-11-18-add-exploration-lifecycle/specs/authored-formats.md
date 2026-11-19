@@ -7,4 +7,4 @@ The layouts of what humans and the planner write in the record: the proposal's f
 ## REMOVED Requirements
 
 ### Requirement: Exploration status
-Reason: Moved to the `explorations` spec, with `parked` replaced by `dropped`, which only `wm exploration drop` writes.
+**Reason:** Moved to the `explorations` spec, with `parked` replaced by `dropped`, which only `wm exploration drop` writes.

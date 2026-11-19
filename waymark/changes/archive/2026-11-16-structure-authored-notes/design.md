@@ -43,67 +43,67 @@
 ## Decisions
 
 ### Decision: How the Impact is written
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - labeled bullets `- Specs:`, `- User-visible:`, `- Code:`;
   - `### Specs`, `### User-visible` and `### Code` subsections.
-- Choice: labeled bullets.
-- Why: They match the proposal's facts and the task item's sub-lines, and stay short on GitHub.
+- **Choice:** labeled bullets.
+- **Why:** They match the proposal's facts and the task item's sub-lines, and stay short on GitHub.
 
 ### Decision: What the Outcome holds
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - `- Built:` and `- Differs:`;
   - the same plus `- Follow-ups:`.
-- Choice: `Built` and `Differs`.
-- Why: What differs from the proposal is what a reader of the archive needs to find; follow-ups belong in the roadmap or a new change.
+- **Choice:** `Built` and `Differs`.
+- **Why:** What differs from the proposal is what a reader of the archive needs to find; follow-ups belong in the roadmap or a new change.
 
 ### Decision: How new work is told from old
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - hold only active changes, the charter and explorations to the new layouts;
   - record format 4, with a migration for the mechanical parts.
-- Choice: active work only.
-- Why: Most of the new structure can't be made mechanically from old text, and archived changes are already read as they were written.
+- **Choice:** active work only.
+- **Why:** Most of the new structure can't be made mechanically from old text, and archived changes are already read as they were written.
 
 ### Decision: Who may decide
-- Status: decided
-- Decided by: human
-- Options:
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
   - `human` or `planner`;
   - a person's name.
-- Choice: `human` or `planner`.
-- Why: What matters at acceptance is whether the human made the call or is trusting the planner's; names are already in git and the Log.
+- **Choice:** `human` or `planner`.
+- **Why:** What matters at acceptance is whether the human made the call or is trusting the planner's; names are already in git and the Log.
 
 ### Decision: Where an unsettled design stops acceptance
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - keep the next step at `design` while something is unsettled;
   - a separate check in `wm accept`.
-- Choice: keep the next step at `design`.
-- Why: `wm accept` already refuses at a drafting step and quotes its reason, and `wm status` and `wm instructions` then point at the same thing without new code paths.
+- **Choice:** keep the next step at `design`.
+- **Why:** `wm accept` already refuses at a drafting step and quotes its reason, and `wm status` and `wm instructions` then point at the same thing without new code paths.
 
 ### Decision: Comments and the fingerprint
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - hash each part without its comments;
   - keep hashing comments.
-- Choice: without comments.
-- Why: With examples in every template, deleting or editing one would otherwise withdraw acceptance for no change in meaning. An active change accepted before this lands has to be accepted again; none is accepted now.
+- **Choice:** without comments.
+- **Why:** With examples in every template, deleting or editing one would otherwise withdraw acceptance for no change in meaning. An active change accepted before this lands has to be accepted again; none is accepted now.
 
 ### Decision: This repository's charter
-- Status: decided
-- Decided by: planner
-- Options:
+- **Status:** decided
+- **Decided by:** planner
+- **Options:**
   - number its goals and constraints by hand, in the item that adds the check;
   - a one-off migration.
-- Choice: by hand.
-- Why: It is one file with a dozen or so lines, and there is no migration framework in use to hang it on.
+- **Choice:** by hand.
+- **Why:** It is one file with a dozen or so lines, and there is no migration framework in use to hang it on.
 
 ## Open questions
 

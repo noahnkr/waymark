@@ -1,7 +1,7 @@
 # Add exploration lifecycle
 
-- Owner: Noah Roberts
-- Review: independent
+- **Owner:** Noah Roberts
+- **Review:** independent
 
 ## Why
 
@@ -32,12 +32,12 @@ The backlog should hold only live ideas, every way an exploration ends should be
 
 ## Impact
 
-- Specs:
+- **Specs:**
   - `explorations` (added: statuses, the from option, archiving with the work, dropping, status lines as evidence, archived explorations in show and ls, the stale led-to check);
   - `authored-formats` (Exploration status removed, moved to the new spec);
   - `skills` (Explore's closing offers modified for a resumed exploration; resuming an exploration added);
   - `setup` (Record folders kept in git modified: the explorations archive folder gets a gitkeep).
-- User-visible:
+- **User-visible:**
   - new command `wm exploration drop <exploration> --reason "<why>"`;
   - new `--from <exploration>` option on `wm new change` and `wm new milestone`;
   - `wm archive` and `wm close` move explorations to `explorations/archive/<date>-<name>.md`;
@@ -47,9 +47,9 @@ The backlog should hold only live ideas, every way an exploration ends should be
   - agents' edits to an exploration's Status line are refused;
   - `wm check` reports a `led-to` exploration left active after its work is archived;
   - `/wm-explore <exploration>` resumes a saved exploration.
-- Code: the exploration artifact and state (`record/artifacts/explorations.py`, `record/state.py`, `record/record.py`), the exploration template, `wm new` (`services/setup.py`, `cli.py`), `wm archive` and `wm close` (`services/lifecycle.py`), a new drop service and command, `wm check` (`services/check.py`), the views (`views/payloads.py`, `views/render.py`, `views/schemas.py`), the hooks (`hooks/decide.py`, `record/evidence/evidence.py`), the `wm-explore` and `wm-propose` skills, the docs and the CHANGELOG, and this record's `lighter-workflow` exploration.
+- **Code:** the exploration artifact and state (`record/artifacts/explorations.py`, `record/state.py`, `record/record.py`), the exploration template, `wm new` (`services/setup.py`, `cli.py`), `wm archive` and `wm close` (`services/lifecycle.py`), a new drop service and command, `wm check` (`services/check.py`), the views (`views/payloads.py`, `views/render.py`, `views/schemas.py`), the hooks (`hooks/decide.py`, `record/evidence/evidence.py`), the `wm-explore` and `wm-propose` skills, the docs and the CHANGELOG, and this record's `lighter-workflow` exploration.
 
 ## Outcome
 
-- Built: An exploration is open, led-to or dropped, and only wm writes its status line: wm new change --from and wm new milestone --from write led-to, and wm exploration drop --reason writes dropped with the reason and archives it. wm archive and wm close move an exploration to explorations/archive/<date>-<name>.md once all its work is archived, re-aiming links to it; wm show and wm ls --archived read archived ones; wm check reports exploration-not-archived; the hooks refuse an agent's hand edit to the status line; /wm-explore <exploration> resumes a saved one with four offers. lighter-workflow is archived.
-- Differs: Beyond the design, the move also re-aims links to the exploration from the rest of the active record, including the change or milestone archived with it (the first independent review found these dangling), and wm exploration drop refuses an exploration with no Conclusion. The show.exploration JSON field is archived_on, matching wm.show.change; item 1.2's criterion was revised to say so, and the change was accepted again. Item 1.3's commit scope was services, since check isn't a project scope.
+- **Built:** An exploration is open, led-to or dropped, and only wm writes its status line: wm new change --from and wm new milestone --from write led-to, and wm exploration drop --reason writes dropped with the reason and archives it. wm archive and wm close move an exploration to explorations/archive/<date>-<name>.md once all its work is archived, re-aiming links to it; wm show and wm ls --archived read archived ones; wm check reports exploration-not-archived; the hooks refuse an agent's hand edit to the status line; /wm-explore <exploration> resumes a saved one with four offers. lighter-workflow is archived.
+- **Differs:** Beyond the design, the move also re-aims links to the exploration from the rest of the active record, including the change or milestone archived with it (the first independent review found these dangling), and wm exploration drop refuses an exploration with no Conclusion. The show.exploration JSON field is archived_on, matching wm.show.change; item 1.2's criterion was revised to say so, and the change was accepted again. Item 1.3's commit scope was services, since check isn't a project scope.
