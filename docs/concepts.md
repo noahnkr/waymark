@@ -21,7 +21,7 @@ design     how it will be built, and the decisions taken (skipped on the short p
 tasks      one checklist; each item has criteria and a way to verify it
 accept     YOU approve the change; nothing is built before this
 apply      each item built from the record: by the planner, or by a fresh
-           implementer agent when the item has a `- Build: delegate` line
+           implementer agent when its `- **Build:**` line says `delegate`
 review     the whole change checked once, at its level, and the review written
            in the Log at the end of the task list
 archive    YOU approve finishing it, on the change's branch before its pull request;
@@ -41,14 +41,14 @@ Each change lives on a branch named after it, and merges on its own.
 
 - **Base:** a change branches from the default branch, the `origin` remote's HEAD
   or `main`. A change that needs another change not merged yet says so with an
-  `- After: <change>` line, written by `wm new change <name> --after <change>`,
+  `- **After:** <change>` line, written by `wm new change <name> --after <change>`,
   and branches from that change's branch instead.
 - **Shown:** `wm instructions` and `wm pr` give a change's branch and base, and
   its pull request goes into the base. `wm status` adds an `on <base>` line under
   a change whose base isn't the default branch.
 - **Merged base:** once the change it comes after is archived or merged, `wm
   check` warns: rebase onto the default branch, retarget the pull request, and
-  take the `- After:` line off.
+  take the `- **After:**` line off.
 - **Milestones:** a new milestone goes on a `plan-<milestone>` branch and lands
   on the default branch in a plan pull request before its changes are proposed.
 
@@ -61,7 +61,7 @@ repo.
 | Path | For | What it takes |
 |---|---|---|
 | **Tiny** | work that adds, changes or removes no requirement: a typo, a docs fix, a bug where the code disagrees with a spec, a refactor, a dependency bump | no change folder: `/wm-propose` says in one line what it will change and the requirement it keeps to, builds after your yes, then commits and offers a pull request. Nothing is written to the record; your merge is the second approval |
-| **Short** | a small change | a change with a proposal, deltas and a task list, but no design (a `- Path: short` line); review level `self` or `none` |
+| **Short** | a small change | a change with a proposal, deltas and a task list, but no design (a `- **Path:** short` line); review level `self` or `none` |
 | **Full** | anything bigger | a change with a design, and an independent review when it is risky |
 
 The test for tiny is the specs, not the size: if every requirement still holds
@@ -72,9 +72,9 @@ turns out to change a requirement, it stops and becomes a change. Specs can't
 be edited by hand on any path.
 
 **Changing what was accepted withdraws the acceptance.** That covers the
-proposal (its `- Review:` line included), the deltas, the design and the
+proposal (its `- **Review:**` line included), the deltas, the design and the
 definition of each item the acceptance names (its number, title, criteria,
-verification, repo and `- Build:` line), including removing the item. It needs
+verification, repo and `- **Build:**` line), including removing the item. It needs
 accepting again. Ticks and records, such as blockers, notes and reviews,
 don't count. Neither does layout: the fingerprint is taken over the standard
 layout, so `wm check --fix` never withdraws an acceptance.
@@ -84,7 +84,7 @@ list's Log that names the items it covers, and an item added later is built like
 any other:
 
 ```
-- (accepted) 2026-01-15 fingerprint 6cec39a287bf99f2 items 1.1 1.2 by Sam Doe
+- 2026-01-15 (accepted) fingerprint 6cec39a287bf99f2 items 1.1, 1.2 by Sam Doe
 ```
 
 Accepting again adds a new `(accepted)` record; the latest one counts.
@@ -101,7 +101,7 @@ archived changes, and the archive keeps the history of why.
 
 An exploration is saved thinking on an idea that isn't a change yet: research,
 or an idea kept for later. `/wm-explore` saves one when you pick that offer. Its
-`- Status:` line says where it stands, and only `wm` writes it.
+`- **Status:**` line says where it stands, and only `wm` writes it.
 
 | Status | Means | Written by |
 |---|---|---|
@@ -134,7 +134,7 @@ waymark/
 ```
 
 There is no stored status and no frontmatter. What you write uses
-`- Label:` lines, such as `- Owner:` in a proposal or `- Criteria:` under an
+`- **<Label>:**` lines, such as `- **Owner:**` in a proposal or `- **Criteria:**` under an
 item (see [What you write](#what-you-write)). What `wm` writes is a record (see
 [Records](#records)). Everything else is worked out from where files are and
 what they say. Templates are built into `wm`; `wm instructions` hands an agent
@@ -187,27 +187,31 @@ the end of the task list:
 
 ```markdown
 - [x] 1.1 Cap the result count
-  - Criteria:
+  - **Build:** planner
+  - **Criteria:**
     - at most fifty results come back
     - they are the fifty best matches
-  - Verify:
+  - **Verify:**
     - a test searches an index with fifty-one matches
     - `wm check` here
-  - (note) 2026-01-15 by Sam Doe: the cap sits after sorting
+  - 2026-01-15 (note) by Sam Doe: the cap sits after sorting
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
-- (review) 2026-01-16 pass covers 1.1 by wm-reviewer: the boundary is covered
-  - suggestion `docs/search.md`: name the limit in the help text
+- 2026-01-15 (accepted) fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
+- 2026-01-16 (review) pass covers 1.1 by wm-reviewer: the boundary is covered
+  - [suggestion] `docs/search.md`: name the limit in the help text
 ```
 
 ### What you write
 
-You and your agents write sections of prose and `- Label:` lines: a proposal's
-`- Owner:` and its Impact's `- Specs:`, `- User-visible:` and `- Code:`; an
-item's `- Criteria:`, `- Verify:` and `- Build: delegate`; a decision's
-`- Status:` and `- Decided by:`. An exploration's `- Status:` is written by `wm`
+You and your agents write sections of prose and label lines, the label in bold
+with the colon inside, `- **<Label>:**`: a proposal's
+`- **Owner:**` and its Impact's `- **Specs:**`, `- **User-visible:**` and `- **Code:**`; an
+item's `- **Build:**`, `- **Criteria:**` and `- **Verify:**`, in that order; a
+decision's `- **Status:**`, `- **Decided by:**`, and its options as a nested list
+under `- **Options:**`. `wm check` reports a label written plain, and
+`wm check --fix` makes it bold. An exploration's `- **Status:**` is written by `wm`
 (see [Explorations](#explorations)). Each note has a fixed set of sections, and
 `wm check` holds it to them.
 [The record](record.md) covers every note in detail: its sections, the lines it
@@ -221,8 +225,11 @@ hold for active work. Archived changes are read as they were written.
 Every line `wm` writes is a dated record of one shape:
 
 ```
-(<kind>) YYYY-MM-DD [<args>] [by <who>]: <text>
+YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>
 ```
+
+A list of items among the arguments is separated by `, `, and a list that
+another argument follows ends with `;`.
 
 | Where | Kinds |
 |---|---|
@@ -247,7 +254,7 @@ Every line `wm` writes is a dated record of one shape:
 
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
-| Is | the main agent session, working with you | a fresh agent, started for an item with a `- Build: delegate` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
+| Is | the main agent session, working with you | a fresh agent, started for an item with a `- **Build:** delegate` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
 | Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch and their specs' Background, the project's context and rules, its milestone's Goal and Non-goals, and when to stop | the criteria of the items to review, the deltas and their scenarios, their specs' Background, the design, earlier reviews and what each covers, its milestone's Goal and Non-goals, the severity rubric, the code; **not** how it was built |
 | May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
@@ -267,23 +274,25 @@ review context pack and `wm instructions` at the review step both give it.
 
 ## Who builds an item
 
-By default the planner builds each item itself. It reads the item's context pack
+Every item has a `- **Build:**` line, first among its lines. With
+`- **Build:** planner`, the planner builds the item itself. It reads the item's context pack
 (`wm context <change> <item> --for implement`), builds the item, runs the checks
 the item touches, and records the result with `wm tick`, `wm block` or `wm gap`.
 
-An item with a `- Build: delegate` line goes to a fresh implementer instead:
+An item with `- **Build:** delegate` goes to a fresh implementer instead:
 
 ```markdown
 - [ ] 1.2 Rebuild the search index
-  - Criteria: the index holds every document
-  - Build: delegate
+  - **Build:** delegate
+  - **Criteria:** the index holds every document
+  - **Verify:** a search finds a document added last
 ```
 
 - **When to delegate:** a large item, items that can be built in parallel, or an
   item where a cold check that the record is enough to build from is worth its
   cost.
-- **Where:** a line under the item. `delegate` is the only value; `wm check`
-  reports any other.
+- **Where:** the first line under the item. The values are `planner` and
+  `delegate`; `wm check` reports any other, and an item without the line.
 - **Accepted with the item:** adding, removing or changing the line withdraws
   acceptance.
 - **Guidance, not a gate:** the line decides what `wm instructions` and the
@@ -295,7 +304,7 @@ A change is reviewed once, as a whole, after every item is ticked. The review
 checks it against its deltas' scenarios, its design and each item's criteria: is
 it complete, correct and coherent?
 
-The change's level is the `- Review:` line in its proposal, or the project's
+The change's level is the `- **Review:**` line in its proposal, or the project's
 `default_review` when the line is absent:
 
 | Level | For | What is recorded |
@@ -306,16 +315,16 @@ The change's level is the `- Review:` line in its proposal, or the project's
 
 - **Findings:** each review can carry findings, given as
   `<critical | warning | suggestion>: <place>: <text>` and written under it as
-  ``<severity> `<place>`: <text>``. A place that holds `: ` is given in
+  ``- [<severity>] `<place>`: <text>``. A place that holds `: ` is given in
   backticks. A `pass` or a self-review with a critical finding is refused.
 - **Changes:** a `changes` verdict names the items to rebuild, such as
-  `(review) 2026-01-15 changes 1.2 2.1 covers 1.1 1.2 2.1 by wm-reviewer: <reasons>`. Those
+  `2026-01-15 (review) changes 1.2, 2.1; covers 1.1, 1.2, 2.1 by wm-reviewer: <reasons>`. Those
   items are reopened and built again, and the change then needs an independent review.
 - **Added items:** an item added after a passing review is reviewed on its own.
   Once it is ticked, the next step is a review of the items no passing review
   covers, at the change's level. The reviewer's pack holds only those items, and
   the record covers just them, such as
-  `(review) 2026-01-20 pass covers 1.3 by wm-reviewer: <reasons>`. The items the
+  `2026-01-20 (review) pass covers 1.3 by wm-reviewer: <reasons>`. The items the
   earlier review passed aren't reviewed again.
 - **To you:** a second `changes` verdict, or a `spec-gap`, goes to you. You
   record your decision with `wm resolve <change> review "<what was decided>"`.
@@ -367,21 +376,21 @@ and pull request, through the workflow `wm ci` writes.
 | **Proposal** | Why a change is wanted, what it changes, its non-goals and impact. Its outcome is added at archive. |
 | **Delta** | A change's edits to one spec: requirements added, modified, removed or renamed. Deltas merge into the specs at archive. |
 | **Design** | How a change will be built, including its decisions: the options, the choice and why. |
-| **Task item** | One checkbox in a change's task list, with its criteria, how to verify it, an optional `- Build: delegate` line, and the records of building it. |
+| **Task item** | One checkbox in a change's task list, with its criteria, how to verify it, its `- **Build:**` line, and the records of building it. |
 | **Acceptance** | Your explicit approval of a change before any of it is built. Only you can give it. |
 | **Tiny path** | The route for work that adds, changes or removes no requirement: no change, just your yes, a conventional commit and a pull request. |
-| **Short path** | The light route for a small change: no design, and review level `self` or `none`. Marked by a `- Path: short` line in the proposal. |
+| **Short path** | The light route for a small change: no design, and review level `self` or `none`. Marked by a `- **Path:** short` line in the proposal. |
 | **Conflict** | A delta that no longer applies to its spec (a *mismatch*, which blocks its change), or two active changes that name the same requirement (an *overlap*, which is reported). |
 | **Sync** | Merging an applied change's deltas into the specs without archiving it yet. |
 | **Archive** | Finishing a change: its deltas merged into the specs, its outcome written, and its folder moved to a dated archive. |
 | **Owner** | The one person responsible for a change. |
 | **Exploration** | Saved thinking on a topic (questions, approaches, a conclusion): `open` until it leads to a change or milestone or is dropped, then archived. |
 | **Resource** | The as-built facts about one thing outside the repo that the project depends on, such as a service, a platform or a dataset, in `resources/<name>.md`. A spec says what the system does and changes only through a change; a resource says what the outside world is, and is edited by hand when that world changes. See [the record](record.md#resource). |
-| **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. A member change names it in a `- Milestone:` line that `wm check` holds to the roadmap, is created with `wm new change <name> --milestone <milestone>`, and its agents see the milestone's Goal and Non-goals. The roadmap changes only through `wm roadmap add`, `drop` and `move`, each recorded in the milestone's Log, and `wm close` needs every line archived. See [the record](record.md#milestone). |
+| **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. A member change names it in a `- **Milestone:**` line that `wm check` holds to the roadmap, is created with `wm new change <name> --milestone <milestone>`, and its agents see the milestone's Goal and Non-goals. The roadmap changes only through `wm roadmap add`, `drop` and `move`, each recorded in the milestone's Log, and `wm close` needs every line archived. See [the record](record.md#milestone). |
 | **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |
-| **Implementer** | A fresh agent that builds one task item with a `- Build: delegate` line, from the record alone. |
+| **Implementer** | A fresh agent that builds one task item with a `- **Build:** delegate` line, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one whole change against its scenarios, design and criteria, without seeing how it was built. |
-| **Review level** | How a change is checked: `self`, `independent` or `none`. Set by the `- Review:` line in its proposal. |
+| **Review level** | How a change is checked: `self`, `independent` or `none`. Set by the `- **Review:**` line in its proposal. |
 | **Log** | The last section of a change's task list, where `wm` keeps the dated records about the whole change: its acceptances, sync, reviews and any override. |
 | **Finding** | One thing a review found, with a severity (`critical`, `warning` or `suggestion`), a place and a text. |
 | **Context pack** | The excerpts of the record that `wm` assembles for one job: exploring, implementing or reviewing. |

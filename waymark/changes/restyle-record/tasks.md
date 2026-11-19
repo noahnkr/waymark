@@ -113,7 +113,7 @@
     - the skills keep the section layout the Skill layout requirement holds
   - **Verify:**
     - `uv run --no-sync pytest tests/test_skills.py tests/adapters`
-- [ ] 6.2 Update the docs and the CHANGELOG
+- [x] 6.2 Update the docs and the CHANGELOG
   - **Build:** planner
   - **Criteria:**
     - `README.md` and `docs/concepts.md`, `getting-started.md`, `multi-repo.md`, `record.md`, `skills.md` and `smoke-test.md` show bold labels, the Build line on every item, options as a list, comma-separated item lists and bracketed severities, following the `waymark-write-docs` skill

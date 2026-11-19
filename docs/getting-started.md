@@ -124,10 +124,10 @@ and explains each one as it happens:
    are blocked from running it. A design decision still marked `proposed`, or a
    question listed under its Open questions, has to be settled first.
 5. **Apply.** The agent builds each item itself, from the record, and records
-   the result. An item with a `- Build: delegate` line goes to a fresh
+   the result. An item whose `- **Build:**` line says `delegate` goes to a fresh
    implementer agent instead (see [who builds an item](concepts.md#who-builds-an-item)).
    What `wm` writes about an item is a dated record under it, such as
-   `(blocked) 2026-01-15 by Sam Doe: <reason>` (see [records](concepts.md#records)).
+   `2026-01-15 (blocked) by Sam Doe: <reason>` (see [records](concepts.md#records)).
 6. **Review.** Once every item is built, the whole change is checked once at
    its level, and the review and its findings are written in the `## Log` at the
    end of the task list (see [review](concepts.md#review)).
