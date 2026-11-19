@@ -105,7 +105,7 @@
 
 ## 6. Skills and docs
 
-- [ ] 6.1 Show the new layouts in the skills and the agent definition
+- [x] 6.1 Show the new layouts in the skills and the agent definition
   - **Build:** planner
   - **Criteria:**
     - `wm-propose` tells the planner to give every item a `- **Build:**` line, `planner` or `delegate`, first among its lines, and writes decision options as a nested list
