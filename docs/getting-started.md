@@ -135,10 +135,10 @@ and explains each one as it happens:
 7. **Archive.** Your second approval. Once you agree, the change is archived on
    its branch, before its pull request: its deltas merge into the specs and its
    outcome is written, what was built and how it differs from the proposal,
-   with `wm archive <change> --built "…" --differs "…"`. `/wm-pr` then describes the pull request, outcome included. `wm` refuses while
-   any item is unbuilt or the change is unreviewed; only you can archive past a
-   missing review,
-   with `wm archive <change> --override "<reason>"`.
+   with `wm archive <change> --built "…" --differs "…"`. `/wm-pr` then
+   describes the pull request, outcome included. `wm` refuses while any item is
+   unbuilt or the change is unreviewed; only you can archive past a missing
+   review, with `wm archive <change> --override "<reason>"`.
 
 ## Every day after that
 
@@ -150,6 +150,7 @@ and explains each one as it happens:
 | Build an accepted change | the `/wm-apply` skill |
 | Revise a change | the `/wm-update` skill |
 | Think an idea through first | the `/wm-explore` skill |
+| Write down a service, platform or account the project depends on | `wm new resource <name> <kind>`, then fill it in ([resources](concepts.md#resources)) |
 | Open a pull request for a change | the `/wm-pr` skill |
 | Archive a finished change | the `/wm-archive` skill |
 | Check the record's health | `wm check` |

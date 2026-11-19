@@ -186,8 +186,8 @@ Side by side, as the hints expect, the code repos are found at once; run
 with its folder. `wm atlas doctor` says what is missing.
 
 A code repo where `wm` 0.1.1 ran `wm git-hooks` still points git at hooks that
-call `wm run-hook`, which is gone, so its commits fail. Clean it up as
-[Getting started](getting-started.md#upgrading) describes.
+call `wm run-hook`, which is gone, so its commits fail. Run
+`git config --unset core.hooksPath` there, and delete the hooks folder it named.
 
 ## Reading another atlas's specs
 
