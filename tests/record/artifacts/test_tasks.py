@@ -46,12 +46,12 @@ def test_build_tag_marks_an_item_for_delegation() -> None:
     assert (tagged.delegate, plain.delegate) == (True, False)
 
 
-def test_unknown_build_tag_is_a_problem_that_names_delegate() -> None:
+def test_unknown_build_tag_is_a_problem_that_names_both_values() -> None:
     tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - Build: someone\n")
     (problem,) = tasks.problems
     assert problem.code == "unknown-build-tag"
     assert '"someone"' in problem.message
-    assert "The only value is: delegate." in problem.message
+    assert "The values are: planner and delegate." in problem.message
     (item,) = tasks.items
     assert item.title == "Cap it"
     assert not item.delegate

@@ -22,6 +22,7 @@ from waymark.record.terms import ReviewSeverity, Verdict
 LOG_SECTION = "Log"
 DELEGATE = "delegate"
 PLANNER = "planner"
+BUILD_VALUES = (PLANNER, DELEGATE)
 
 _SECTION = re.compile(r"^(\d+)\.\s+(\S.*)$")
 _ITEM = re.compile(r"^- \[([ xX])\] (\d+)\.(\d+)\s+(\S.*?)\s*$")
@@ -86,6 +87,9 @@ class Item:
     records: tuple[ReviewRecord, ...]
     index: int
     end: int
+    build: str | None = None
+    """Who builds the item, from its Build line: planner or delegate; None without a known
+    value."""
 
 
 @dataclass(frozen=True)
@@ -182,6 +186,7 @@ class _Draft:
             title=self.title,
             ticked=self.ticked,
             delegate=self.delegate,
+            build=build if (build := single(BUILD)) in BUILD_VALUES else None,
             criteria=single("Criteria"),
             verify=single("Verify"),
             repo=single("Repo"),
@@ -253,11 +258,11 @@ class _Parser:
                 )
             elif value == DELEGATE:
                 draft.delegate = True
-            elif value != PLANNER:
+            elif value not in BUILD_VALUES:
                 self.problem(
                     index,
                     "unknown-build-tag",
-                    f'"{value}" is not a build value. The only value is: {DELEGATE}.',
+                    f'"{value}" is not a build value. The values are: {PLANNER} and {DELEGATE}.',
                 )
             draft.fields[label] = [value]
             return

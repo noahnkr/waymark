@@ -17,6 +17,7 @@ from waymark.record.artifacts.changes import (
     Change,
 )
 from waymark.record.artifacts.charter import CHARTER_FILE
+from waymark.record.artifacts.tasks import DELEGATE, PLANNER
 from waymark.record.machine.branches import Branches
 from waymark.record.machine.project import RECORD_DIR
 from waymark.record.markdown import labels
@@ -278,9 +279,10 @@ def _drafting(
         f"Criteria and Verify may each be a nested list under '{label_line(labels.CRITERIA)}' "
         f"or '{label_line(labels.VERIFY)}', "
         "one criterion or one verification step per bullet.",
-        f"Add a '{label_line(labels.BUILD, 'delegate')}' line under an item only when a fresh "
-        "implementer should build it: a large item, one built in parallel, or one worth a cold "
-        "check that the record is enough.",
+        f"Give every item a '{label_line(labels.BUILD)}' line, first among its lines: "
+        f"'{PLANNER}' when the planner builds it, or '{DELEGATE}' when a fresh implementer should "
+        "build it: a large item, one built in parallel, or one worth a cold check that the record "
+        "is enough.",
         "Don't tick items or write records; wm writes those.",
         *SIZING_RULES,
     ]
@@ -303,7 +305,7 @@ def _working(  # noqa: PLR0911 - one return per step
     number = item or "<item>"
     if step is StepKind.APPLY:
         built = change.tasks.item(item) if change.tasks and item else None
-        if built is not None and built.delegate:
+        if built is not None and built.build == DELEGATE:
             guidance = [
                 f"Start an implementer for item {number} with the change and item and nothing "
                 "else.",

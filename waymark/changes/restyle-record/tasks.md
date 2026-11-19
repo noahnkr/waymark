@@ -25,7 +25,7 @@
 
 ## 2. Build line and options
 
-- [ ] 2.1 Read `planner` as a Build value and follow it
+- [x] 2.1 Read `planner` as a Build value and follow it
   - Criteria:
     - `- Build: planner` and `- Build: delegate` are read; any other value is reported with a message that names `planner` and `delegate`
     - `wm instructions` tells the planner to build an item whose Build value is `planner` itself, and to start an implementer for `delegate`

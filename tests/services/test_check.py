@@ -20,6 +20,7 @@ from tests.support import (
 )
 from waymark.services import lifecycle
 from waymark.services.check import Finding, Severity, check, has_errors
+from waymark.services.instructions import instructions
 from waymark.services.pr import describe
 from waymark.views import payloads
 
@@ -197,6 +198,50 @@ def test_unknown_build_tag_is_an_error(project: Workspace) -> None:
         + "- [ ] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - Build: someone\n"
     )
     assert findings(project) == [("error", "changes/add-limit/tasks.md", "unknown-build-tag")]
+    [problem] = project.record().changes["add-limit"].problems
+    assert "planner" in problem.message
+    assert "delegate" in problem.message
+
+
+def test_scenario_item_built_by_the_planner(project: Workspace) -> None:
+    """Requirement "Planner builds its items": the guidance builds it and never delegates."""
+    project.change(
+        tasks=HEAD
+        + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+    )
+    project.accept()
+    assert findings(project) == []
+    guide = instructions(project.record(), "apply", "add-limit")
+    assert guide["item"] == "1.1"
+    assert guide["guidance"][0] == "Build item 1.1 yourself, from its context pack."
+    assert not any("implementer" in line for line in guide["guidance"])
+    assert "wm tick add-limit 1.1" in guide["commands"]
+
+
+def test_scenario_tagged_item_with_a_bold_build_line(project: Workspace) -> None:
+    """Requirement "Build line": a delegate item is handed to an implementer, and nothing else."""
+    project.change(
+        tasks=HEAD
+        + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+        + "- [ ] 1.2 Rebuild\n  - **Build:** delegate\n  - **Criteria:** done\n"
+        + "  - **Verify:** a test\n"
+    )
+    project.accept()
+    guide = instructions(project.record(), "apply", "add-limit")
+    assert guide["item"] == "1.2"
+    assert guide["guidance"][0] == (
+        "Start an implementer for item 1.2 with the change and item and nothing else."
+    )
+
+
+def test_tasks_guidance_asks_for_a_build_line_on_every_item(project: Workspace) -> None:
+    project.change(tasks=None)
+    guidance = " ".join(instructions(project.record(), "tasks", "add-limit")["guidance"])
+    assert "Give every item a '- **Build:**' line" in guidance
+    assert "'planner'" in guidance
+    assert "'delegate'" in guidance
 
 
 def test_delta_that_does_not_match_its_spec_is_an_error(project: Workspace) -> None:

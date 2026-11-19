@@ -152,3 +152,63 @@ def test_acceptance_comes_from_the_latest_accepted_record(workspace: Workspace) 
     assert change.acceptance is not None
     assert change.acceptance.date == datetime.date(2026, 11, 21)
     assert acceptance_state(record, change) is AcceptanceState.VALID
+
+
+PLANNED = (
+    "# Tasks\n\n## 1. Limit\n\n"
+    "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
+    "  - **Verify:** a test\n"
+    "- [ ] 1.2 Rebuild the index\n  - **Build:** planner\n  - **Criteria:** rebuilt\n"
+    "  - **Verify:** the index answers\n"
+)
+
+
+def test_build_values_are_read() -> None:
+    """Requirement "Build line": planner and delegate are the values; no line is no value."""
+    tasks = parse(
+        PLANNED.replace(
+            "**Build:** planner\n  - **Criteria:** rebuilt",
+            "**Build:** delegate\n  - **Criteria:** rebuilt",
+        )
+    )
+    assert tasks.problems == ()
+    assert [(item.build, item.delegate) for item in tasks.items] == [
+        ("planner", False),
+        ("delegate", True),
+    ]
+    bare = parse(PLANNED.replace("  - **Build:** planner\n", ""))
+    assert [item.build for item in bare.items] == [None, None]
+
+
+def test_scenario_build_changed_after_acceptance(workspace: Workspace) -> None:
+    """Requirement "Build line accepted with the item": changing the value withdraws acceptance."""
+    workspace.change(tasks=PLANNED)
+    workspace.accept()
+    assert workspace.change_state().acceptance is AcceptanceState.VALID
+    workspace.replace(
+        "changes/add-limit/tasks.md",
+        "  - **Build:** planner\n  - **Criteria:** rebuilt",
+        "  - **Build:** delegate\n  - **Criteria:** rebuilt",
+    )
+    assert workspace.change_state().acceptance is AcceptanceState.WITHDRAWN
+
+
+def test_an_item_without_a_build_line_hashes_as_before(workspace: Workspace) -> None:
+    """Adding planner Build lines changes the items' definitions; no line hashes as it did."""
+    bare = PLANNED.replace("  - **Build:** planner\n", "")
+    workspace.change(tasks=bare)
+    record = workspace.record()
+    change = record.changes["add-limit"]
+    before = change_fingerprint(change, record.specs, record.default_review, ["1.1", "1.2"])
+    workspace.change(tasks=bare.replace("  - **Criteria:** fifty", "  - Criteria: fifty"))
+    record = workspace.record()
+    same = change_fingerprint(
+        record.changes["add-limit"], record.specs, record.default_review, ["1.1", "1.2"]
+    )
+    assert same == before
+    workspace.change(tasks=PLANNED)
+    record = workspace.record()
+    planned = change_fingerprint(
+        record.changes["add-limit"], record.specs, record.default_review, ["1.1", "1.2"]
+    )
+    assert planned != before
