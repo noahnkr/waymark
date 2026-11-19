@@ -25,8 +25,8 @@ def test_item_records_are_read_under_their_item() -> None:
     tasks = parse(
         HEAD
         + ITEM
-        + "  - (blocked) 2026-11-20 by Ada: the API key is missing\n"
-        + "  - (note) 2026-11-20 by wm-implementer: partial: the parser is done\n"
+        + "  - 2026-11-20 (blocked) by Ada: the API key is missing\n"
+        + "  - 2026-11-20 (note) by wm-implementer: partial: the parser is done\n"
     )
     assert tasks.problems == ()
     item = tasks.items[0]
@@ -41,8 +41,8 @@ def test_scenario_resolved_item_keeps_its_blocker() -> None:
     tasks = parse(
         HEAD
         + ITEM
-        + "  - (blocked) 2026-11-20 by Ada: the API key is missing\n"
-        + "  - (resolved) 2026-11-21 by Sam: use the test key\n"
+        + "  - 2026-11-20 (blocked) by Ada: the API key is missing\n"
+        + "  - 2026-11-21 (resolved) by Sam: use the test key\n"
     )
     item = tasks.items[0]
     assert item.blocked is None
@@ -53,9 +53,9 @@ def test_a_gap_after_a_resolution_is_open_again() -> None:
     tasks = parse(
         HEAD
         + ITEM
-        + "  - (gap) 2026-11-20: the maximum\n"
-        + "  - (resolved) 2026-11-21: fifty\n"
-        + "  - (gap) 2026-11-22: the default\n"
+        + "  - 2026-11-20 (gap): the maximum\n"
+        + "  - 2026-11-21 (resolved): fifty\n"
+        + "  - 2026-11-22 (gap): the default\n"
     )
     assert tasks.items[0].spec_gap == "the default"
 
@@ -64,10 +64,10 @@ def test_the_log_holds_the_change_records_and_their_findings() -> None:
     tasks = parse(
         HEAD
         + "- [x] 1.1 Cap it\n\n## Log\n\n"
-        + "- (accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 items 1.1 by Ada\n"
-        + "- (synced) 2026-11-21 by Ada\n"
-        + "- (review) 2026-11-22 changes 1.1 by wm-reviewer: the cap is off by one\n"
-        + "  - critical `src/a.py:12`: fifty-one come back\n"
+        + "- 2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1 by Ada\n"
+        + "- 2026-11-21 (synced) by Ada\n"
+        + "- 2026-11-22 (review) changes 1.1 by wm-reviewer: the cap is off by one\n"
+        + "  - [critical] `src/a.py:12`: fifty-one come back\n"
     )
     assert tasks.problems == ()
     assert [record.kind for record in tasks.log] == [
@@ -94,35 +94,35 @@ def test_scenario_malformed_record_under_an_item() -> None:
     tasks = parse(HEAD + ITEM + "  - (blocked) the API key is missing\n")
     [problem] = tasks.problems
     assert problem.code == "malformed-record"
-    assert "(blocked) YYYY-MM-DD [by <who>]: <reason>" in problem.message
+    assert "YYYY-MM-DD (blocked) [by <who>]: <reason>" in problem.message
 
 
 def test_records_in_the_wrong_place_are_reported() -> None:
     assert codes(
-        HEAD + ITEM + "  - (accepted) 2026-11-20 fingerprint 81577cca8ff3ca11 items 1.1\n"
+        HEAD + ITEM + "  - 2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1\n"
     ) == ["misplaced-record"]
-    assert codes(HEAD + ITEM + "\n## Log\n\n- (blocked) 2026-11-20: the key\n") == [
+    assert codes(HEAD + ITEM + "\n## Log\n\n- 2026-11-20 (blocked): the key\n") == [
         "misplaced-record"
     ]
 
 
 def test_milestone_records_in_a_task_list_are_reported() -> None:
-    assert codes(HEAD + ITEM + "  - (proposed) 2026-11-20 add-cache\n") == ["misplaced-record"]
-    assert codes(HEAD + ITEM + "\n## Log\n\n- (archived) 2026-11-20 add-cache\n") == [
+    assert codes(HEAD + ITEM + "  - 2026-11-20 (proposed) add-cache\n") == ["misplaced-record"]
+    assert codes(HEAD + ITEM + "\n## Log\n\n- 2026-11-20 (archived) add-cache\n") == [
         "misplaced-record"
     ]
 
 
 def test_the_log_section_comes_last() -> None:
-    text = HEAD + ITEM + "\n## Log\n\n- (synced) 2026-11-20\n\n## 2. Docs\n\n- [ ] 2.1 Say so\n"
+    text = HEAD + ITEM + "\n## Log\n\n- 2026-11-20 (synced)\n\n## 2. Docs\n\n- [ ] 2.1 Say so\n"
     assert codes(text) == ["log-section-last"]
 
 
 def test_a_changes_verdict_names_items_the_task_list_has() -> None:
-    assert codes(HEAD + ITEM + "\n## Log\n\n- (review) 2026-11-20 changes 9.9: wrong\n") == [
+    assert codes(HEAD + ITEM + "\n## Log\n\n- 2026-11-20 (review) changes 9.9: wrong\n") == [
         "unknown-item"
     ]
-    assert codes(HEAD + ITEM + "\n## Log\n\n- (review) 2026-11-20 changes: wrong\n") == [
+    assert codes(HEAD + ITEM + "\n## Log\n\n- 2026-11-20 (review) changes: wrong\n") == [
         "changes-without-items"
     ]
 
@@ -132,7 +132,7 @@ def _accept_in_log(workspace: Workspace, items: list[str], fingerprint: str) -> 
     text = workspace.read("changes/add-limit/tasks.md")
     workspace.write(
         "changes/add-limit/tasks.md",
-        text + f"\n## Log\n\n- (accepted) 2026-11-20 fingerprint {fingerprint}{covered} by Ada\n",
+        text + f"\n## Log\n\n- 2026-11-20 (accepted) fingerprint {fingerprint}{covered} by Ada\n",
     )
 
 
@@ -145,7 +145,7 @@ def test_acceptance_comes_from_the_latest_accepted_record(workspace: Workspace) 
     workspace.replace(
         "changes/add-limit/tasks.md",
         "by Ada\n",
-        f"by Ada\n- (accepted) 2026-11-21 fingerprint {fingerprint} items 1.1 1.2 by Ada\n",
+        f"by Ada\n- 2026-11-21 (accepted) fingerprint {fingerprint} items 1.1, 1.2 by Ada\n",
     )
     record = workspace.record()
     change = record.changes["add-limit"]

@@ -319,8 +319,8 @@ setting until the person picks one.
 
 ## Log
 
-- (accepted) 2026-01-15 fingerprint 01204aef70272f6b items 1.1 1.2 1.3 by Alex Example
-- (self-review) 2026-01-15 covers 1.1 1.2 1.3 by Alex Example: every criterion holds, and both scenarios have a test
+- 2026-01-15 (accepted) fingerprint 01204aef70272f6b items 1.1, 1.2, 1.3 by Alex Example
+- 2026-01-15 (self-review) covers 1.1, 1.2, 1.3 by Alex Example: every criterion holds, and both scenarios have a test
 ```
 
 </details>

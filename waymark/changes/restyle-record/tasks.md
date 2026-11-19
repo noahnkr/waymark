@@ -44,7 +44,7 @@
 
 ## 3. Records
 
-- [ ] 3.1 Write records date first, item lists with commas and findings with bracketed severities
+- [x] 3.1 Write records date first, item lists with commas and findings with bracketed severities
   - Criteria:
     - every record, in a change and in a milestone's Log, is written `<date> (<kind>) …`, and read in that order and the old one; `--fix` and the hook's evidence detection recognize both
     - `(accepted)`, `(review)` and `(self-review)` records write their item lists separated by `, `, and a `changes` list followed by `covers` ends with `;`; they are read with commas, and with spaces as before; the record shapes in messages show the new order and the commas

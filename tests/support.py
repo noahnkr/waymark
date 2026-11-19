@@ -248,7 +248,7 @@ class Workspace:
         kept = [
             line
             for line in self.read(relative).split("\n")
-            if line.startswith(("- (accepted)", "- (synced)"))
+            if line.startswith("- ") and ("(accepted)" in line or "(synced)" in line)
         ]
         lines = tasks.rstrip("\n").split("\n")
         if "## Log" not in lines:

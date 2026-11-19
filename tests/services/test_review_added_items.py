@@ -53,8 +53,8 @@ def test_scenario_item_added_after_a_pass(project: Workspace) -> None:
 
     lifecycle.verdict(project.root, NAME, Verdict.PASS, "names fifty", LATER, by="wm-reviewer")
     text = project.read(TASKS_FILE)
-    assert text.endswith("- (review) 2026-02-01 pass covers 1.3 by wm-reviewer: names fifty\n")
-    assert "- (review) 2026-01-15 pass covers 1.1 1.2 by wm-reviewer: fine\n" in text
+    assert text.endswith("- 2026-02-01 (review) pass covers 1.3 by wm-reviewer: names fifty\n")
+    assert "- 2026-01-15 (review) pass covers 1.1, 1.2 by wm-reviewer: fine\n" in text
     state = project.change_state()
     assert state.review.reviewed
     assert state.review.uncovered == ()
@@ -72,7 +72,7 @@ def test_a_self_review_of_added_items_covers_just_them(project: Workspace) -> No
     passed_then_added(project, "self")
     lifecycle.self_review(project.root, NAME, "names fifty", LATER)
     assert project.read(TASKS_FILE).endswith(
-        "- (self-review) 2026-02-01 covers 1.3 by Sam Doe: names fifty\n"
+        "- 2026-02-01 (self-review) covers 1.3 by Sam Doe: names fifty\n"
     )
     assert project.change_state().review.reviewed
 
@@ -82,7 +82,7 @@ def test_a_changes_verdict_on_added_items_rebuilds_them_and_reviews_them_again(
 ) -> None:
     passed_then_added(project)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "says 51", LATER, items=["1.3"])
-    assert "- (review) 2026-02-01 changes 1.3 covers 1.3 by Sam Doe: says 51\n" in project.read(
+    assert "- 2026-02-01 (review) changes 1.3; covers 1.3 by Sam Doe: says 51\n" in project.read(
         TASKS_FILE
     )
     lifecycle.reopen(project.root, NAME, "1.3", LATER)
@@ -110,7 +110,7 @@ def test_scenario_older_review_records(project: Workspace) -> None:
     lifecycle.tick(project.root, NAME, "1.2")
     project.write(
         TASKS_FILE,
-        project.read(TASKS_FILE) + "- (self-review) 2026-01-15 by Sam Doe: written before covers\n",
+        project.read(TASKS_FILE) + "- 2026-01-15 (self-review) by Sam Doe: written before covers\n",
     )
     state = project.change_state()
     assert state.review.reviewed

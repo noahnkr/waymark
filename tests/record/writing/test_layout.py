@@ -55,8 +55,8 @@ def test_record_lines_take_their_standard_shape() -> None:
     result, fixes = standard_layout(text)
     assert result == (
         "# Tasks\n\n## Log\n\n"
-        "- (review) 2026-11-20 pass by Ada: fine\n"
-        "  - warning `a.py:1`: vague\n"
+        "- 2026-11-20 (review) pass by Ada: fine\n"
+        "  - [warning] `a.py:1`: vague\n"
     )
     assert fixes == (Fix.RECORD_LINES,)
 

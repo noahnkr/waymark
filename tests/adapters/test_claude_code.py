@@ -268,7 +268,7 @@ def test_implementers_edit_of_the_record_is_denied(hooks: Hooks) -> None:
     note = {
         "file_path": tasks,
         "old_string": "fifty-one matches\n",
-        "new_string": "fifty-one matches\n  - (note) 2026-01-15: used the existing sorter\n",
+        "new_string": "fifty-one matches\n  - 2026-01-15 (note): used the existing sorter\n",
     }
     assert "wm note" in denied(hooks.tool("Edit", note, "wm-implementer"))
     reply = hooks.tool("Write", {"file_path": proposal, "content": "# x\n"}, "wm-implementer")
@@ -377,7 +377,7 @@ def test_reviewers_verdict_is_written_as_the_review_record(hooks: Hooks) -> None
     assert "Recorded the verdict changes" in reply["systemMessage"]
     text = hooks.project.read(TASKS_FILE)
     assert (
-        f"- (review) {today} changes 1.1 covers 1.1 1.2 by wm-reviewer: off by one at fifty\n"
+        f"- {today} (review) changes 1.1; covers 1.1, 1.2 by wm-reviewer: off by one at fifty\n"
         in text
     )
 
@@ -402,7 +402,7 @@ def test_reviewers_handed_back_verdict_is_written_as_the_review_record(hooks: Ho
     reply = hooks.handback("wm-reviewer", "CHANGE: add-limit\nVERDICT: pass: caps at fifty")
     assert "Recorded the verdict pass" in reply["systemMessage"]
     text = hooks.project.read(TASKS_FILE)
-    assert f"- (review) {today} pass covers 1.1 1.2 by wm-reviewer: caps at fifty\n" in text
+    assert f"- {today} (review) pass covers 1.1, 1.2 by wm-reviewer: caps at fifty\n" in text
 
 
 def test_handed_back_report_without_its_ending_is_denied(hooks: Hooks) -> None:

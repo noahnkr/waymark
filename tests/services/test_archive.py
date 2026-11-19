@@ -152,7 +152,7 @@ def test_archive_override_passes_missing_reviews_and_records_the_reason(
         "## Outcome\n\n- **Built:** Shipped.\n- **Differs:** none\n"
     )
     assert project.read(f"{ARCHIVED}/tasks.md").endswith(
-        "- (override) 2026-02-01 by Sam Doe: reviewed in the pull request\n"
+        "- 2026-02-01 (override) by Sam Doe: reviewed in the pull request\n"
     )
     assert project.record().changes == {}
 
@@ -565,8 +565,8 @@ def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     lifecycle.sync(project.root, NAME, DAY)
     text = project.read(tasks)
-    assert " items 1.1 1.2 by " in text
-    assert "- (synced) 2026-01-15 fingerprint " in text
+    assert " items 1.1, 1.2 by " in text
+    assert "- 2026-01-15 (synced) fingerprint " in text
     assert project.change_state(NAME).acceptance is AcceptanceState.VALID
 
 
@@ -593,7 +593,7 @@ def test_scenario_member_change_archived(project: Workspace) -> None:
     lifecycle.archive(project.root, NAME, LATER, built="Shipped.", by="Ada")
     text = project.read("milestones/faster-search/milestone.md")
     assert f"- [x] [add-limit](../../{ARCHIVED}/proposal.md): cap\n" in text
-    assert text.endswith("\n## Log\n\n- (archived) 2026-02-01 add-limit by Ada\n")
+    assert text.endswith("\n## Log\n\n- 2026-02-01 (archived) add-limit by Ada\n")
 
 
 def test_a_change_without_a_milestone_writes_no_milestone_record(project: Workspace) -> None:

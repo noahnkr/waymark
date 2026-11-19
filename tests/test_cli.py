@@ -266,7 +266,7 @@ def test_wm_roadmap_commands(project: Workspace, monkeypatch: pytest.MonkeyPatch
     )
     assert main(["roadmap", "drop", "faster-search", "add-cache", "--reason", "fast"]) == EXIT_OK
     text = project.read("milestones/faster-search/milestone.md")
-    assert "- (added) " in text
+    assert " (added) " in text
     assert "add-cache by Ada: cache hot queries" in text
     assert main(["roadmap", "drop", "faster-search", "add-limit", "--reason", "x"]) == EXIT_OK
     for usage in (

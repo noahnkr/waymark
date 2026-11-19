@@ -6,9 +6,9 @@ from waymark.record.evidence.evidence import evidence, evidence_changes
 PATH = "changes/add-limit/tasks.md"
 LOGGED = TASKS + (
     "\n## Log\n\n"
-    "- (accepted) 2026-01-15 fingerprint 0123456789abcdef items 1.1 1.2 by Sam Doe\n"
-    "- (review) 2026-01-16 pass by wm-reviewer: fine\n"
-    "  - suggestion `docs/search.md`: say the limit\n"
+    "- 2026-01-15 (accepted) fingerprint 0123456789abcdef items 1.1, 1.2 by Sam Doe\n"
+    "- 2026-01-16 (review) pass by wm-reviewer: fine\n"
+    "  - [suggestion] `docs/search.md`: say the limit\n"
 )
 
 
@@ -20,11 +20,11 @@ def test_records_and_ticks_are_evidence() -> None:
         "- [ ] 1.2 Document the limit\n"
         "  - Criteria: the help text names the limit\n"
         "  - Verify: read the help text\n"
-        "  - (blocked) 2026-01-16 by Sam Doe: the key\n",
+        "  - 2026-01-16 (blocked) by Sam Doe: the key\n",
     )
     found = evidence(PATH, text)
     assert found["the tick on item 1.1"] == 1
-    assert found['"(blocked) 2026-01-16 by Sam Doe: the key" under item 1.2'] == 1
+    assert found['"2026-01-16 (blocked) by Sam Doe: the key" under item 1.2'] == 1
     assert sum(1 for name in found if name.endswith("in the Log section")) == 3
 
 
@@ -51,14 +51,14 @@ def test_other_files_hold_no_evidence() -> None:
 MILESTONE_PATH = "milestones/faster-search/milestone.md"
 PLANNED = milestone(
     "<!-- one line per change -->\n- add-limit: cap\n- [x] [add-index](../x/proposal.md)\n"
-) + ("\n## Log\n\n- (added) 2026-11-20 add-limit by Ada: cap\n")
+) + ("\n## Log\n\n- 2026-11-20 (added) add-limit by Ada: cap\n")
 
 
 def test_roadmap_lines_and_the_milestone_log_are_evidence() -> None:
     found = evidence(MILESTONE_PATH, PLANNED)
     assert found['the roadmap line "add-limit: cap"'] == 1
     assert found['the roadmap line "[x] [add-index](../x/proposal.md)"'] == 1
-    assert found['"- (added) 2026-11-20 add-limit by Ada: cap" in the milestone\'s Log'] == 1
+    assert found['"- 2026-11-20 (added) add-limit by Ada: cap" in the milestone\'s Log'] == 1
     assert len(found) == 3
 
 
@@ -78,3 +78,12 @@ def test_adding_or_rewording_a_roadmap_line_changes_evidence() -> None:
 
 def test_an_archived_milestone_has_no_evidence() -> None:
     assert evidence("milestones/archive/2026-01-01-faster-search/milestone.md", PLANNED) == {}
+
+
+def test_records_in_the_old_shape_are_evidence_too() -> None:
+    text = TASKS.replace(
+        "  - Verify: read the help text\n",
+        "  - Verify: read the help text\n  - (blocked) 2026-01-16 by Sam Doe: the key\n",
+    )
+    found = evidence(PATH, text)
+    assert found['"(blocked) 2026-01-16 by Sam Doe: the key" under item 1.2'] == 1

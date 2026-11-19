@@ -28,7 +28,7 @@ TASKS_FILE = f"{FOLDER}/tasks.md"
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 REVIEW = "\n## Log\n\n"
-SELF_REVIEW = REVIEW + "- (self-review) 2026-01-16: matches the criteria\n"
+SELF_REVIEW = REVIEW + "- 2026-01-16 (self-review): matches the criteria\n"
 
 
 def reviewed_at(level: str, *, short: bool = False) -> str:
@@ -312,7 +312,7 @@ def test_independent_change_needs_a_passing_review(workspace: Workspace) -> None
         HEAD
         + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n"
         + REVIEW
-        + "- (review) 2026-01-16 pass: boundary covered\n",
+        + "- 2026-01-16 (review) pass: boundary covered\n",
         level="independent",
     )
     assert state.review.reviewed
@@ -334,7 +334,7 @@ def test_two_items_named(workspace: Workspace) -> None:
         "  - Criteria: done\n"
         "  - Verify: a test\n"
     )
-    verdict = REVIEW + "- (review) 2026-01-16 changes 1.2 2.1: off by one\n"
+    verdict = REVIEW + "- 2026-01-16 (review) changes 1.2, 2.1: off by one\n"
     state = with_tasks(workspace, items + verdict)
     assert state.review.reopen == ("1.2", "2.1")
     assert [item.redo for item in state.items] == [False, True, True]
@@ -344,7 +344,7 @@ def test_two_items_named(workspace: Workspace) -> None:
     workspace.replace(
         TASKS_FILE,
         "- [x] 1.2 Page it\n  - Criteria: done\n  - Verify: a test\n",
-        "- [ ] 1.2 Page it\n  - Criteria: done\n  - Verify: a test\n  - (reopened) 2026-01-17\n",
+        "- [ ] 1.2 Page it\n  - Criteria: done\n  - Verify: a test\n  - 2026-01-17 (reopened)\n",
     )
     state = workspace.change_state()
     assert state.review.reopen == ("2.1",)
@@ -353,7 +353,7 @@ def test_two_items_named(workspace: Workspace) -> None:
     workspace.replace(
         TASKS_FILE,
         "- [x] 2.1 Explain\n  - Criteria: done\n  - Verify: a test\n",
-        "- [ ] 2.1 Explain\n  - Criteria: done\n  - Verify: a test\n  - (reopened) 2026-01-17\n",
+        "- [ ] 2.1 Explain\n  - Criteria: done\n  - Verify: a test\n  - 2026-01-17 (reopened)\n",
     )
     assert step(workspace.change_state()) == (Phase.APPLYING, StepKind.APPLY, "1.2", False)
 
@@ -363,9 +363,9 @@ def test_two_items_named(workspace: Workspace) -> None:
     assert state.review.level is ReviewLevel.INDEPENDENT
     assert step(state) == (Phase.APPLYING, StepKind.REVIEW, None, False)
 
-    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- (self-review) 2026-01-18: fixed\n")
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- 2026-01-18 (self-review): fixed\n")
     assert not workspace.change_state().review.reviewed
-    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- (review) 2026-01-18 pass: fixed\n")
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- 2026-01-18 (review) pass: fixed\n")
     assert workspace.change_state().applied
 
 
@@ -373,16 +373,16 @@ def test_second_request_for_changes(workspace: Workspace) -> None:
     state = with_tasks(
         workspace,
         HEAD
-        + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - (reopened) 2026-01-17\n"
+        + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n  - 2026-01-17 (reopened)\n"
         + REVIEW
-        + "- (review) 2026-01-16 changes 1.1: off by one\n"
-        + "- (review) 2026-01-18 changes 1.1: still off by one\n",
+        + "- 2026-01-16 (review) changes 1.1: off by one\n"
+        + "- 2026-01-18 (review) changes 1.1: still off by one\n",
     )
     assert state.review.escalated == "a second review asked for changes: still off by one"
     assert state.review.reopen == ()
     assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, None, True)
 
-    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- (resolved) 2026-01-19: keep it\n")
+    workspace.write(TASKS_FILE, workspace.read(TASKS_FILE) + "- 2026-01-19 (resolved): keep it\n")
     state = workspace.change_state()
     assert state.review.escalated is None
     assert state.review.reopen == ()
@@ -396,7 +396,7 @@ def test_spec_gap_verdict_goes_to_the_human(workspace: Workspace) -> None:
         HEAD
         + "- [x] 1.1 Cap it\n  - Criteria: done\n  - Verify: a test\n"
         + REVIEW
-        + "- (review) 2026-01-16 spec-gap: no scenario for zero results\n",
+        + "- 2026-01-16 (review) spec-gap: no scenario for zero results\n",
     )
     assert state.review.escalated == "the reviewer found a spec gap: no scenario for zero results"
     assert step(state) == (Phase.APPLYING, StepKind.RESOLVE_ITEMS, None, True)
@@ -410,7 +410,7 @@ def test_spec_gap_from_the_builder_goes_to_the_human(workspace: Workspace) -> No
             "- [ ] 1.1 Cap it\n"
             "  - Criteria: done\n"
             "  - Verify: a test\n"
-            "  - (gap) 2026-01-16: no limit given\n"
+            "  - 2026-01-16 (gap): no limit given\n"
             "- [ ] 1.2 Next\n"
             "  - Criteria: done\n"
             "  - Verify: a test\n"
@@ -434,7 +434,7 @@ def test_blocked_item_is_skipped_until_only_blocked_items_remain(workspace: Work
             "- [ ] 1.1 Cap it\n"
             "  - Criteria: done\n"
             "  - Verify: a test\n"
-            "  - (blocked) 2026-01-16: waiting for wording\n"
+            "  - 2026-01-16 (blocked): waiting for wording\n"
             "- [ ] 1.2 Next\n"
             "  - Criteria: done\n"
             "  - Verify: a test\n"

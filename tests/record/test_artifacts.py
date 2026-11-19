@@ -231,8 +231,8 @@ def test_proposal_review_line_sets_the_change_review_level() -> None:
 
 LOGGED = (
     "\n## Log\n\n"
-    "- (added) 2026-11-20 add-cache by Ada: cache hot queries\n"
-    "- (moved) 2026-11-20 add-cache first by Ada\n"
+    "- 2026-11-20 (added) add-cache by Ada: cache hot queries\n"
+    "- 2026-11-20 (moved) add-cache first by Ada\n"
     "- a line that isn't a record\n"
 )
 
@@ -259,23 +259,23 @@ def test_scenario_log_not_last() -> None:
 
 def test_records_are_appended_to_a_milestone_log() -> None:
     doc = document(milestone("- add-cache: cache hot queries\n\n"), "milestones/m/milestone.md")
-    first = append_milestone_log(doc, "(proposed) 2026-11-20 add-cache by Ada")
+    first = append_milestone_log(doc, "2026-11-20 (proposed) add-cache by Ada")
     assert first.endswith(
-        "- add-cache: cache hot queries\n\n## Log\n\n- (proposed) 2026-11-20 add-cache by Ada\n"
+        "- add-cache: cache hot queries\n\n## Log\n\n- 2026-11-20 (proposed) add-cache by Ada\n"
     )
     second = append_milestone_log(
-        document(first, "milestones/m/milestone.md"), "(archived) 2026-11-21 add-cache by Ada"
+        document(first, "milestones/m/milestone.md"), "2026-11-21 (archived) add-cache by Ada"
     )
     assert second.endswith(
-        "- (proposed) 2026-11-20 add-cache by Ada\n- (archived) 2026-11-21 add-cache by Ada\n"
+        "- 2026-11-20 (proposed) add-cache by Ada\n- 2026-11-21 (archived) add-cache by Ada\n"
     )
 
 
 def test_a_milestone_log_keeps_the_file_line_endings() -> None:
     text = milestone("- add-cache: cache hot queries\n").replace("\n", "\r\n")
-    appended = append_milestone_log(document(text), "(proposed) 2026-11-20 add-cache")
+    appended = append_milestone_log(document(text), "2026-11-20 (proposed) add-cache")
     assert "\n" not in appended.replace("\r\n", "")
-    assert appended.endswith("## Log\r\n\r\n- (proposed) 2026-11-20 add-cache\r\n")
+    assert appended.endswith("## Log\r\n\r\n- 2026-11-20 (proposed) add-cache\r\n")
 
 
 def test_scenario_new_milestone_has_no_log() -> None:

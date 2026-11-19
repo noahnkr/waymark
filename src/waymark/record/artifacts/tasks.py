@@ -30,7 +30,7 @@ _LIST_LINE = re.compile(r"^(?:[-*+]|\d+[.)])(?:\s|$)")
 _FIELD = re.compile(r"^  [-*] (\S.*)$")
 _ITEM_LABELS = (labels.CRITERIA, labels.VERIFY, labels.REPO, labels.BUILD)
 BUILD = labels.BUILD
-_RECORD_LINE = re.compile(r"^[-*] (\(.*)$")
+_RECORD_LINE = re.compile(r"^[-*] ((?:\d{4}-\d{2}-\d{2} )?\(.*)$")
 _REVIEW_KINDS = (RecordKind.REVIEW, RecordKind.SELF_REVIEW, RecordKind.RESOLVED)
 
 
@@ -432,7 +432,7 @@ class _Parser:
                 index,
                 "changes-without-items",
                 'A "changes" verdict names the items to rebuild: '
-                '"(review) YYYY-MM-DD changes 1.2 2.1 [by <who>]: <reasons>".',
+                '"YYYY-MM-DD (review) changes 1.2, 2.1 [by <who>]: <reasons>".',
             )
         self.log.append(_from_record(found, index))
 
@@ -486,7 +486,7 @@ class _Parser:
                     index,
                     "unrecognized-log-line",
                     f"The {LOG_SECTION} section holds only the records wm writes, each "
-                    '"- (<kind>) YYYY-MM-DD [<args>] [by <who>]: <text>", and findings under '
+                    '"- YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>", and findings under '
                     f'reviews, each "  - {records.FINDING_SHAPE}".',
                 )
 

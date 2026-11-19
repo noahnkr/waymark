@@ -1,12 +1,17 @@
 """Records: the dated lines wm writes into a change as evidence.
 
-Every record has one shape, ``(<kind>) <YYYY-MM-DD> [<args>] [by <who>]: <text>``.
+Every record has one shape, ``<YYYY-MM-DD> (<kind>) [<args>] [by <who>]: <text>``.
 The kind's arguments come first, so ``by`` can run to ``: `` or the end of the
 line and the name may hold spaces. A kind without text ends after who wrote it.
-This module is the only place a record's text is built or read; the table of
-kinds says what each one carries.
+A list of items among the arguments is separated by ``, ``, and a list that
+another argument follows ends with ``;``. This module is the only place a
+record's text is built or read; the table of kinds says what each one carries.
 
-Findings sit under a review record as ``<severity> `<place>`: <text>``.
+Findings sit under a review record as ``[<severity>] `<place>`: <text>``.
+
+While the record moves to these shapes, a record is also read with its kind
+before its date and its item lists separated by spaces, and a finding with its
+severity bare.
 """
 
 import datetime
@@ -67,11 +72,14 @@ class Grammar(Enum):
 
     NONE = "none"
     VERDICT = "verdict"
-    """A verdict, the item numbers a ``changes`` verdict names, then optionally ``covers``."""
+    """A verdict, the item numbers a ``changes`` verdict names, then optionally ``covers``.
+
+    The verdict's list ends with ``;`` when ``covers`` follows it.
+    """
     COVERS = "covers"
-    """Optionally ``covers <number> <number>...``: the items a review was of."""
+    """Optionally ``covers <number>, <number>...``: the items a review was of."""
     ACCEPTANCE = "acceptance"
-    """``fingerprint <hex16>``, then ``items <number> <number>...``."""
+    """``fingerprint <hex16>``, then ``items <number>, <number>...``."""
     SYNC = "sync"
     """Optionally ``fingerprint <hex16>``: the acceptance stamped again for the merged specs."""
     CHANGE_NAME = "change-name"
@@ -95,92 +103,93 @@ KINDS: dict[RecordKind, KindSpec] = {
         Grammar.ACCEPTANCE,
         has_text=False,
         level=Level.CHANGE,
-        shape="(accepted) YYYY-MM-DD fingerprint <digest> items <item> <item>... [by <who>]",
+        shape="YYYY-MM-DD (accepted) fingerprint <digest> items <item>, <item>... [by <who>]",
     ),
     RecordKind.SYNCED: KindSpec(
         Grammar.SYNC,
         has_text=False,
         level=Level.CHANGE,
-        shape="(synced) YYYY-MM-DD [fingerprint <digest>] [by <who>]",
+        shape="YYYY-MM-DD (synced) [fingerprint <digest>] [by <who>]",
     ),
     RecordKind.OVERRIDE: KindSpec(
         Grammar.NONE,
         has_text=True,
         level=Level.CHANGE,
-        shape="(override) YYYY-MM-DD [by <who>]: <reason>",
+        shape="YYYY-MM-DD (override) [by <who>]: <reason>",
     ),
     RecordKind.SELF_REVIEW: KindSpec(
         Grammar.COVERS,
         has_text=True,
         level=Level.CHANGE,
-        shape="(self-review) YYYY-MM-DD [covers <item>...] [by <who>]: <summary>",
+        shape="YYYY-MM-DD (self-review) [covers <item>, <item>...] [by <who>]: <summary>",
     ),
     RecordKind.REVIEW: KindSpec(
         Grammar.VERDICT,
         has_text=True,
         level=Level.CHANGE,
         shape=(
-            "(review) YYYY-MM-DD pass|changes <item>...|spec-gap [covers <item>...] "
-            "[by <who>]: <reasons>"
+            "YYYY-MM-DD (review) pass|changes <item>, <item>...[;]|spec-gap "
+            "[covers <item>, <item>...] [by <who>]: <reasons>"
         ),
     ),
     RecordKind.RESOLVED: KindSpec(
         Grammar.NONE,
         has_text=True,
         level=Level.BOTH,
-        shape="(resolved) YYYY-MM-DD [by <who>]: <what was decided>",
+        shape="YYYY-MM-DD (resolved) [by <who>]: <what was decided>",
     ),
     RecordKind.REOPENED: KindSpec(
-        Grammar.NONE, has_text=False, level=Level.ITEM, shape="(reopened) YYYY-MM-DD [by <who>]"
+        Grammar.NONE, has_text=False, level=Level.ITEM, shape="YYYY-MM-DD (reopened) [by <who>]"
     ),
     RecordKind.BLOCKED: KindSpec(
         Grammar.NONE,
         has_text=True,
         level=Level.ITEM,
-        shape="(blocked) YYYY-MM-DD [by <who>]: <reason>",
+        shape="YYYY-MM-DD (blocked) [by <who>]: <reason>",
     ),
     RecordKind.GAP: KindSpec(
         Grammar.NONE,
         has_text=True,
         level=Level.ITEM,
-        shape="(gap) YYYY-MM-DD [by <who>]: <what is missing>",
+        shape="YYYY-MM-DD (gap) [by <who>]: <what is missing>",
     ),
     RecordKind.NOTE: KindSpec(
-        Grammar.NONE, has_text=True, level=Level.ITEM, shape="(note) YYYY-MM-DD [by <who>]: <text>"
+        Grammar.NONE, has_text=True, level=Level.ITEM, shape="YYYY-MM-DD (note) [by <who>]: <text>"
     ),
     RecordKind.ADDED: KindSpec(
         Grammar.CHANGE_NAME,
         has_text=True,
         level=Level.MILESTONE,
-        shape="(added) YYYY-MM-DD <change> [by <who>]: <description>",
+        shape="YYYY-MM-DD (added) <change> [by <who>]: <description>",
     ),
     RecordKind.DROPPED: KindSpec(
         Grammar.CHANGE_NAME,
         has_text=True,
         level=Level.MILESTONE,
-        shape="(dropped) YYYY-MM-DD <change> [by <who>]: <reason>",
+        shape="YYYY-MM-DD (dropped) <change> [by <who>]: <reason>",
     ),
     RecordKind.MOVED: KindSpec(
         Grammar.MOVE,
         has_text=False,
         level=Level.MILESTONE,
-        shape="(moved) YYYY-MM-DD <change> after <change>|first [by <who>]",
+        shape="YYYY-MM-DD (moved) <change> after <change>|first [by <who>]",
     ),
     RecordKind.PROPOSED: KindSpec(
         Grammar.CHANGE_NAME,
         has_text=False,
         level=Level.MILESTONE,
-        shape="(proposed) YYYY-MM-DD <change> [by <who>]",
+        shape="YYYY-MM-DD (proposed) <change> [by <who>]",
     ),
     RecordKind.ARCHIVED: KindSpec(
         Grammar.CHANGE_NAME,
         has_text=False,
         level=Level.MILESTONE,
-        shape="(archived) YYYY-MM-DD <change> [by <who>]",
+        shape="YYYY-MM-DD (archived) <change> [by <who>]",
     ),
 }
 
 _START = re.compile(r"^\(([a-z][a-z-]*)\)(?=\s|$)")
+_DATE_FIRST = re.compile(r"^(\d{4}-\d{2}-\d{2}) \(([a-z][a-z-]*)\)(?=\s|:|$)(.*)$")
 _HEAD = re.compile(r"^\(([a-z][a-z-]*)\) (\d{4}-\d{2}-\d{2})(?=\s|:|$)(.*)$")
 _ITEM_NUMBER = re.compile(r"^\d+\.\d+$")
 _DIGEST = re.compile(r"^[0-9a-f]{16}$")
@@ -221,15 +230,23 @@ def shape(kind: RecordKind) -> str:
 
 
 def looks_like_record(text: str) -> bool:
-    """Whether a line's text starts like a record: a lowercase word in parentheses."""
-    return _START.match(text) is not None
+    """Whether a line's text starts like a record: a lowercase word in parentheses, after a
+    date or first."""
+    return _START.match(text) is not None or _DATE_FIRST.match(text) is not None
+
+
+def _items(numbers: Sequence[str], *, followed: bool = False) -> str:
+    """A list of items in a record: separated by commas, ending with ``;`` when another
+    argument follows it."""
+    return ", ".join(numbers) + (";" if followed else "")
 
 
 def _arguments(record: Record) -> list[str]:  # noqa: PLR0911 - one return per grammar
     grammar = KINDS[record.kind].grammar
     if grammar is Grammar.VERDICT:
         assert record.verdict is not None
-        return [record.verdict.value, *(record.items or ()), *_covers_words(record)]
+        listed = [_items(record.items, followed=bool(record.covers))] if record.items else []
+        return [record.verdict.value, *listed, *_covers_words(record)]
     if grammar is Grammar.COVERS:
         return _covers_words(record)
     if grammar is Grammar.SYNC:
@@ -238,7 +255,7 @@ def _arguments(record: Record) -> list[str]:  # noqa: PLR0911 - one return per g
         assert record.fingerprint is not None
         parts = ["fingerprint", record.fingerprint]
         if record.items is not None:
-            parts += ["items", *record.items]
+            parts += ["items", _items(record.items)]
         return parts
     if grammar is Grammar.CHANGE_NAME:
         assert record.change is not None
@@ -250,13 +267,13 @@ def _arguments(record: Record) -> list[str]:  # noqa: PLR0911 - one return per g
 
 
 def _covers_words(record: Record) -> list[str]:
-    return ["covers", *record.covers] if record.covers else []
+    return ["covers", _items(record.covers)] if record.covers else []
 
 
 def render(record: Record) -> str:
     """A record's text, without the list marker in front of it."""
     spec = KINDS[record.kind]
-    words = [f"({record.kind.value})", record.date.isoformat(), *_arguments(record)]
+    words = [record.date.isoformat(), f"({record.kind.value})", *_arguments(record)]
     if record.who:
         words += ["by", record.who]
     line = " ".join(words)
@@ -273,13 +290,22 @@ def _fail(kind: RecordKind | None, reason: str) -> ParseError:
     return ParseError(kind, f'{reason} A "{kind.value}" record is written "{shape(kind)}".')
 
 
+def _kind_first(text: str) -> str:
+    """A record's text with its kind before its date, the order the reader works in."""
+    date_first = _DATE_FIRST.match(text)
+    if date_first is None:
+        return text
+    return f"({date_first.group(2)}) {date_first.group(1)}{date_first.group(3)}"
+
+
 def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one return per refusal
     """Read a record from a line's text, without its list marker.
 
     None when the text doesn't start like a record at all; a ParseError when it
-    does but has the wrong shape or an unknown kind.
+    does but has the wrong shape or an unknown kind. The date may come first or
+    after the kind.
     """
-    text = text.strip()
+    text = _kind_first(text.strip())
     start = _START.match(text)
     if start is None:
         return None
@@ -307,6 +333,8 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
     if not spec.has_text and separator:
         return _fail(kind, "This kind of record has no text after a colon.")
     words, who = _split_who(body.strip())
+    if spec.grammar in (Grammar.VERDICT, Grammar.COVERS, Grammar.ACCEPTANCE):
+        words = _list_words(words)
     if who == "":
         return _fail(kind, 'The name after "by" is missing.')
     text_value = line_text.strip() if spec.has_text else None
@@ -339,6 +367,11 @@ def _split_who(body: str) -> tuple[list[str], str | None]:
         return words, None
     at = words.index("by")
     return words[:at], " ".join(words[at + 1 :])
+
+
+def _list_words(words: list[str]) -> list[str]:
+    """The argument words with the commas and semicolons of item lists taken out."""
+    return " ".join(words).replace(",", " ").replace(";", " ").split()
 
 
 _Arguments = tuple[Verdict | None, tuple[str, ...] | None, str | None, tuple[str, ...] | None]
@@ -442,10 +475,12 @@ class Finding:
     text: str
 
 
-FINDING_SHAPE = "<severity> `<place>`: <text>"
+FINDING_SHAPE = "[<severity>] `<place>`: <text>"
 FINDING_ARGUMENT = "<critical|warning|suggestion>: <place>: <text>"
 
-_FINDING = re.compile(r"^(critical|warning|suggestion)\s+`([^`]+)`:\s+(\S.*)$")
+_FINDING = re.compile(
+    r"^(?:\[(critical|warning|suggestion)\]|(critical|warning|suggestion))\s+`([^`]+)`:\s+(\S.*)$"
+)
 _FINDING_ARGUMENT_QUOTED = re.compile(r"^(critical|warning|suggestion): `([^`]+)`: (\S.*)$")
 _FINDING_ARGUMENT = re.compile(r"^(critical|warning|suggestion): (\S.*?): (\S.*)$")
 
@@ -454,7 +489,7 @@ def render_finding(finding: Finding) -> str:
     """A finding's text, without the list marker in front of it."""
     if "`" in finding.place:
         raise RecordError("A finding's place can't hold a backtick.")
-    return f"{finding.severity.value} `{finding.place}`: {finding.text}"
+    return f"[{finding.severity.value}] `{finding.place}`: {finding.text}"
 
 
 def parse_finding(text: str) -> Finding | None:
@@ -462,7 +497,8 @@ def parse_finding(text: str) -> Finding | None:
     match = _FINDING.match(text.strip())
     if match is None:
         return None
-    return Finding(ReviewSeverity(match.group(1)), match.group(2), match.group(3).strip())
+    severity = match.group(1) or match.group(2)
+    return Finding(ReviewSeverity(severity), match.group(3), match.group(4).strip())
 
 
 def parse_finding_argument(text: str) -> Finding | None:

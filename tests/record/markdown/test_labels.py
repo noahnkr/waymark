@@ -53,6 +53,6 @@ def test_other_lines_are_not_labels() -> None:
         "- the help text names the limit",
         "- **bold** prose: with a colon",
         "Criteria",
-        "- (accepted) 2026-11-18 fingerprint 0123456789abcdef items 1.1 by Ada",
+        "- 2026-11-18 (accepted) fingerprint 0123456789abcdef items 1.1 by Ada",
     ):
         assert read_label(text) is None
