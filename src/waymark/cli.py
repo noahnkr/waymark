@@ -551,7 +551,8 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         commands,
         "note",
         _note,
-        "Write a note under an item still to be finished, such as a partial result.",
+        "Write a note about an item still to be finished, such as a partial result, in "
+        "the change's Log.",
     )
     note.add_argument("text", help="the note")
     _by(note)

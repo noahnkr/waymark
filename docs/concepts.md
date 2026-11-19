@@ -231,17 +231,24 @@ YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>
 A list of items among the arguments is separated by `, `, and a list that
 another argument follows ends with `;`.
 
-| Where | Kinds |
-|---|---|
-| Under an item | `(blocked)`, `(gap)`, `(note)`, `(reopened)`, `(resolved)` |
-| In the `## Log` | `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)`, `(override)` |
+Every record of a change goes in the `## Log` at the end of its task list, in
+the order it was written. An item holds only its definition and its tick.
+
+| About | Kinds | Example |
+|---|---|---|
+| One item, named after the kind | `(blocked)`, `(gap)`, `(note)`, `(reopened)`, `(resolved)` | `2026-11-20 (blocked) 1.2 by Ada: the API key is missing` |
+| The whole change | `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)`, `(override)` | `2026-11-20 (resolved) by Ada: keep the cap` |
+
+`wm show` and the implement context pack gather each item's records from the
+Log and show them with the item. `wm check` reports a record written under an
+item as `misplaced-record`.
 
 - **Who:** your git name, `wm-implementer` or `wm-reviewer` for an agent's
   result, or the `--by` value that every writing command takes.
 - **Never edited:** a later record supersedes an earlier one. `wm resolve` adds
   a `(resolved)` record and the blocker stays.
-- **Notes:** `wm note <change> <item> "<text>"` writes one under an unticked
-  item.
+- **Notes:** `wm note <change> <item> "<text>"` writes one about an unticked
+  item in the Log.
 - **Covers:** a `(review)` or `(self-review)` record names the items it covers,
   as `covers <item>...` before `by`. A record without `covers`, written before
   Waymark had it, covers every item.

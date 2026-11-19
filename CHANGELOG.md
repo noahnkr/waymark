@@ -55,6 +55,15 @@ All notable changes to Waymark, one entry per release.
   `malformed-record`; no command migrates one.
 - **Behavior change: a finding's severity is in brackets**, written
   ``- [critical] `<place>`: <text>``.
+- **Behavior change: every record of a change goes in its `## Log`.** `wm block`,
+  `wm gap`, `wm note`, `wm reopen`, `wm resolve <change> <item>` and an
+  implementer's ending write their record into the Log, naming the item after
+  the kind, as in `2026-11-20 (blocked) 1.2 by Ada: the API key is missing`, and
+  write nothing under the item. `wm check` reports a record under an item in an
+  active change as `misplaced-record`, and a record naming an item the change
+  doesn't have as `unknown-item`. `wm show` and the implement context pack still
+  show each item's records with the item. Each record in the `wm.show.change`
+  JSON has an `item` field, and the Log in `wm show` names it.
 
 ## [0.4.0] - 2026-11-18
 

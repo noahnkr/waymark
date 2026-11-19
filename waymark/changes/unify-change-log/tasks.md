@@ -50,7 +50,7 @@
 
 ## 3. Skills and docs
 
-- [ ] 3.1 Update the skills, the agent definitions, the docs and the CHANGELOG
+- [x] 3.1 Update the skills, the agent definitions, the docs and the CHANGELOG
   - **Build:** planner
   - **Criteria:**
     - `wm-apply` and the `wm-implementer` and `wm-reviewer` agents say an item's records are in the change's Log, naming the item

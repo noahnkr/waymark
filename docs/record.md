@@ -229,7 +229,7 @@ syncs and reviews.
 - **Sections** are numbered, `## 1. <title>`.
 - **Items** are `- [ ] 1.1 <title>`, numbered by section and never renumbered;
   new items are appended. Only `wm tick` ticks one.
-- **Lines under an item**, in this order, before any record:
+- **Lines under an item**, in this order:
 
   | Line | Meaning |
   |---|---|
@@ -238,11 +238,15 @@ syncs and reviews.
   | `- **Criteria:**` | What must be true. Several go as a nested list, one per bullet. Required. |
   | `- **Verify:**` | How to check it. May be a nested list too. Required. |
 
-- **Records under an item**, written by `wm`: `(blocked)`, `(gap)`, `(note)`,
-  `(reopened)`, `(resolved)`.
-- **`## Log`**, always last, written by `wm`: `(accepted)`, `(synced)`,
-  `(self-review)`, `(review)`, `(resolved)`, `(override)`. A review's findings sit
-  under it as ``- [<severity>] `<place>`: <text>``.
+- **An item holds only its definition and its tick.** `wm check` reports a
+  record under an item as `misplaced-record`.
+- **`## Log`**, always last, written by `wm`, holds every record of the change
+  in the order it was written. A record about one item names the item after
+  the kind: `(blocked)`, `(gap)`, `(note)`, `(reopened)`, and `(resolved)` with
+  an item, as in `2026-11-20 (note) 1.2 by Ada: <text>`. The records about the
+  whole change are `(accepted)`, `(synced)`, `(self-review)`, `(review)`,
+  `(resolved)` without an item, and `(override)`. A review's findings sit under
+  it as ``- [<severity>] `<place>`: <text>``.
 
 A finding's place is a path relative to the project's top folder, such as
 `src/limit.py:12`, or `<repo>/<path>` for a code repo in an atlas. When
