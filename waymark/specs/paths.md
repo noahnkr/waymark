@@ -26,7 +26,7 @@ Work that adds, changes or removes no requirement MAY be done without a change, 
 
 #### Scenario: Resource updated as tiny work
 - GIVEN a project with no change in flight, and an active resource whose Configuration names a schedule at 05:00
-- WHEN the planner changes the schedule to 06:00 and the `- Verified:` date, and commits it with a conventional message
+- WHEN the planner changes the schedule to 06:00 and the `- **Verified:**` date, and commits it with a conventional message
 - THEN `wm status` shows no change in flight, and `wm check` reports the record healthy
 
 ### Requirement: Short and full paths

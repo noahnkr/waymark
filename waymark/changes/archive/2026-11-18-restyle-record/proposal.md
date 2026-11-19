@@ -41,3 +41,8 @@ This record is Waymark's only instance, so the layouts can change in place: the 
   - a finding's severity is written in brackets, `[critical]`
   - `wm check` reports a plain label, a missing Build line, an item's lines out of order and a one-line Options; `wm check --fix` fixes the first and third
 - **Code:** `record/` (the artifact readers, `markdown/outline.py`, `evidence/records.py` and `evidence.py`, `writing/layout.py` and the templates), `services/` (check, setup, lifecycle, context, instructions), `hooks/decide.py`, the skills and agent definitions in `assets/`, the tests, the docs and the CHANGELOG, and this record's active and archived files
+
+## Outcome
+
+- **Built:** Every label in the record is bold (`- **<Label>:**`), read only in that form and reported otherwise. Every item has a Build line (planner or delegate) first, the item order is checked, and `wm check --fix` bolds labels and reorders items. Options are counted only as nested bullets. Records start with their date and use comma-separated item lists, and findings put their severity in brackets. The active record and the archive were converted; the skills, agents, docs and CHANGELOG show the new layouts.
+- **Differs:** `wm show` and the context packs still print records and labels in the old shapes (the reviewer's two warnings, left for a follow-up). `wm check --fix` doesn't bold labels in the charter, which reads none. The reviewer agent definition was updated too, though only the implementer was named.
