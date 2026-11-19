@@ -972,6 +972,12 @@ Printed by `wm show` for a change.
                 "text": {
                   "type": "string"
                 },
+                "item": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "items": {
                   "type": "array",
                   "items": {
@@ -1018,6 +1024,7 @@ Printed by `wm show` for a change.
                 "by",
                 "verdict",
                 "text",
+                "item",
                 "items",
                 "covers",
                 "findings"
@@ -1124,6 +1131,12 @@ Printed by `wm show` for a change.
           "text": {
             "type": "string"
           },
+          "item": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "items": {
             "type": "array",
             "items": {
@@ -1170,6 +1183,7 @@ Printed by `wm show` for a change.
           "by",
           "verdict",
           "text",
+          "item",
           "items",
           "covers",
           "findings"

@@ -413,6 +413,7 @@ def _record(record: ReviewRecord, numbers: tuple[str, ...] = ()) -> Payload:
         "by": record.who,
         "verdict": record.verdict.value if record.verdict else None,
         "text": record.text,
+        "item": record.item,
         "items": list(record.covers if record.kind is RecordKind.ACCEPTED else record.items),
         "covers": list(record.covers or numbers) if reviews else [],
         "findings": [

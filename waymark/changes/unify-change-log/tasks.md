@@ -19,7 +19,7 @@
   - **Verify:**
     - `uv run --no-sync pytest tests/services tests/test_lifecycle_cli.py tests/test_agent_cli.py`
     - `wm check`
-- [ ] 1.3 Show each item's records with it
+- [x] 1.3 Show each item's records with it
   - **Build:** planner
   - **Criteria:**
     - `wm show <change>` shows each item's records under the item in text and in JSON, gathered from the Log, and the Log as written; the implement pack shows an item's notes and resolutions as before
