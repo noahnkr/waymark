@@ -450,7 +450,7 @@ edit the same requirement are caught once both are on the same branch. See
 - **[Architecture](docs/architecture.md)**: how `wm` is built, and how to add an agent tool
 - **[Smoke test](docs/smoke-test.md)**: the manual walk-through before a release
 
-Works with Claude Code. Version last verified: **2.1.327**, on Windows.
+Works with Claude Code. Version last verified: **2.1.328**, on Windows.
 
 ## License
 
