@@ -1,14 +1,18 @@
 """Task lists: numbered sections of checkbox items, then the change's Log.
 
 An item's definition is its number, title, build tag, criteria, verification and
-repo. Its evidence is its tick and the records under it: blockers, spec gaps,
-notes, reopenings and resolutions. The records about the whole change, with the
-findings under its reviews, sit in a ``## Log`` section at the end. Every record
-is read through ``record/evidence/records.py``.
+repo. Its evidence is its tick and its records: blockers, spec gaps, notes,
+reopenings and resolutions. The change's records sit in a ``## Log`` section at
+the end, with the findings under its reviews; a record about one item names the
+item, and is gathered into that item's records once the whole list is read. A
+record still written under an item is read into that item. Every record is read
+through ``record/evidence/records.py``.
 """
 
+import dataclasses
 import datetime
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from waymark.record.evidence import records
@@ -66,6 +70,8 @@ class ReviewRecord:
     who: str | None = None
     fingerprint: str | None = None
     covers: tuple[str, ...] = ()
+    item: str | None = None
+    """The item a record about one item is about; None for a record about the change."""
 
 
 @dataclass(frozen=True)
@@ -116,7 +122,7 @@ class Tasks:
     items: tuple[Item, ...]
     problems: tuple[Problem, ...]
     log: tuple[ReviewRecord, ...] = ()
-    """Every record in the Log section, in order."""
+    """Every record in the Log section, in order, those about one item included."""
     review_records: tuple[ReviewRecord, ...] = ()
     """The Log's reviews, self-reviews and resolutions of the review."""
     log_section: Section | None = None
@@ -125,11 +131,18 @@ class Tasks:
         return next((item for item in self.items if item.number == number), None)
 
     def latest(self, kind: RecordKind) -> ReviewRecord | None:
-        """The last record of a kind in the Log, or None."""
-        return next((record for record in reversed(self.log) if record.kind is kind), None)
+        """The last record of a kind in the Log about the whole change, or None."""
+        return next(
+            (
+                record
+                for record in reversed(self.log)
+                if record.kind is kind and record.item is None
+            ),
+            None,
+        )
 
 
-def _open_stoppers(found: list[ReviewRecord]) -> tuple[str | None, str | None]:
+def _open_stoppers(found: Sequence[ReviewRecord]) -> tuple[str | None, str | None]:
     """The blocker and the spec gap that no later ``(resolved)`` record closed."""
     blocked: str | None = None
     spec_gap: str | None = None
@@ -141,6 +154,18 @@ def _open_stoppers(found: list[ReviewRecord]) -> tuple[str | None, str | None]:
         elif record.kind is RecordKind.RESOLVED:
             blocked = spec_gap = None
     return blocked, spec_gap
+
+
+def _with_records(item: Item, found: Sequence[ReviewRecord]) -> Item:
+    """An item with its records, and the blocker, spec gap and notes they give."""
+    blocked, spec_gap = _open_stoppers(found)
+    return dataclasses.replace(
+        item,
+        records=tuple(found),
+        blocked=blocked,
+        spec_gap=spec_gap,
+        notes=tuple(r.text for r in found if r.kind is RecordKind.NOTE),
+    )
 
 
 def _milestone_record(kind: RecordKind) -> str:
@@ -163,6 +188,7 @@ def _from_record(record: records.Record, index: int) -> ReviewRecord:
         who=record.who,
         fingerprint=record.fingerprint,
         covers=(record.items or ()) if is_acceptance else (record.covers or ()),
+        item=record.item,
     )
 
 
@@ -186,8 +212,7 @@ class _Draft:
         def single(label: str) -> str | None:
             return "\n".join(self.fields[label]).strip() if label in self.fields else None
 
-        blocked, spec_gap = _open_stoppers(self.records)
-        return Item(
+        item = Item(
             number=self.number,
             section=self.section,
             title=self.title,
@@ -199,13 +224,14 @@ class _Draft:
             criteria=single("Criteria"),
             verify=single("Verify"),
             repo=single("Repo"),
-            blocked=blocked,
-            spec_gap=spec_gap,
-            notes=tuple(r.text for r in self.records if r.kind is RecordKind.NOTE),
-            records=tuple(self.records),
+            blocked=None,
+            spec_gap=None,
+            notes=(),
+            records=(),
             index=self.index,
             end=self.end,
         )
+        return _with_records(item, self.records)
 
 
 class _Parser:
@@ -246,7 +272,15 @@ class _Parser:
                 f"the {LOG_SECTION} section at the end of the task list.",
             )
             return
-        draft.records.append(_from_record(found, index))
+        if found.item is not None and found.item != draft.number:
+            self.problem(
+                index,
+                "misplaced-record",
+                f"This record names item {found.item} but sits under item {draft.number}. "
+                f"Records belong in the {LOG_SECTION} section, naming their item.",
+            )
+            return
+        draft.records.append(dataclasses.replace(_from_record(found, index), item=draft.number))
         draft.order.append(RECORD)
 
     def labeled(self, index: int, label: str, value: str) -> None:
@@ -431,11 +465,12 @@ class _Parser:
         if records.KINDS[found.kind].level is records.Level.MILESTONE:
             self.problem(index, "misplaced-record", _milestone_record(found.kind))
             return
-        if records.KINDS[found.kind].level is records.Level.ITEM:
+        if records.KINDS[found.kind].level is records.Level.ITEM and found.item is None:
             self.problem(
                 index,
-                "misplaced-record",
-                f'A "({found.kind.value})" record is about one item, so it goes under that item.',
+                "malformed-record",
+                f'A "({found.kind.value})" record is about one item, so it names the item after '
+                f'its kind: "{records.shape(found.kind)}".',
             )
             return
         if found.kind is RecordKind.REVIEW and found.verdict is Verdict.CHANGES and not found.items:
@@ -512,6 +547,20 @@ class _Parser:
                     f"This verdict names {', '.join(unknown)}, which the task list doesn't "
                     "have. Name the change's own items.",
                 )
+            if record.item is not None and record.item not in numbers:
+                self.problem(
+                    record.index,
+                    "unknown-item",
+                    f"This record names item {record.item}, which the task list doesn't have. "
+                    "Name one of the change's own items.",
+                )
+
+    def gather_item_records(self) -> None:
+        """Add to each item the Log's records that name it, after those written under it."""
+        for at, item in enumerate(self.items):
+            named = [record for record in self.log if record.item == item.number]
+            if named:
+                self.items[at] = _with_records(item, [*item.records, *named])
 
     def parse(self) -> Tasks:
         doc = self.doc
@@ -546,13 +595,14 @@ class _Parser:
         self.check_numbering()
         self.check_fields()
         self.check_named_items()
+        self.gather_item_records()
         return Tasks(
             doc,
             tuple(self.sections),
             tuple(self.items),
             tuple(self.problems),
             tuple(self.log),
-            tuple(r for r in self.log if r.kind in _REVIEW_KINDS),
+            tuple(r for r in self.log if r.kind in _REVIEW_KINDS and r.item is None),
             self.log_section,
         )
 

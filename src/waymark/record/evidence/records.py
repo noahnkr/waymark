@@ -57,8 +57,8 @@ class RecordKind(StrEnum):
 
 
 class Level(Enum):
-    """Where a kind of record goes: under an item, in the change's Log, either, or in a
-    milestone's Log."""
+    """Where a kind of record goes: in the change's Log naming an item, in the change's Log
+    about the whole change, either, or in a milestone's Log."""
 
     ITEM = "item"
     CHANGE = "change"
@@ -70,6 +70,9 @@ class Grammar(Enum):
     """The arguments a kind of record carries before who wrote it."""
 
     NONE = "none"
+    ITEM = "item"
+    """One item number: the item a record is about. A record in the Log names it; one still
+    written under its item may leave it out."""
     VERDICT = "verdict"
     """A verdict, the item numbers a ``changes`` verdict names, then optionally ``covers``.
 
@@ -132,28 +135,34 @@ KINDS: dict[RecordKind, KindSpec] = {
         ),
     ),
     RecordKind.RESOLVED: KindSpec(
-        Grammar.NONE,
+        Grammar.ITEM,
         has_text=True,
         level=Level.BOTH,
-        shape="YYYY-MM-DD (resolved) [by <who>]: <what was decided>",
+        shape="YYYY-MM-DD (resolved) [<item>] [by <who>]: <what was decided>",
     ),
     RecordKind.REOPENED: KindSpec(
-        Grammar.NONE, has_text=False, level=Level.ITEM, shape="YYYY-MM-DD (reopened) [by <who>]"
+        Grammar.ITEM,
+        has_text=False,
+        level=Level.ITEM,
+        shape="YYYY-MM-DD (reopened) <item> [by <who>]",
     ),
     RecordKind.BLOCKED: KindSpec(
-        Grammar.NONE,
+        Grammar.ITEM,
         has_text=True,
         level=Level.ITEM,
-        shape="YYYY-MM-DD (blocked) [by <who>]: <reason>",
+        shape="YYYY-MM-DD (blocked) <item> [by <who>]: <reason>",
     ),
     RecordKind.GAP: KindSpec(
-        Grammar.NONE,
+        Grammar.ITEM,
         has_text=True,
         level=Level.ITEM,
-        shape="YYYY-MM-DD (gap) [by <who>]: <what is missing>",
+        shape="YYYY-MM-DD (gap) <item> [by <who>]: <what is missing>",
     ),
     RecordKind.NOTE: KindSpec(
-        Grammar.NONE, has_text=True, level=Level.ITEM, shape="YYYY-MM-DD (note) [by <who>]: <text>"
+        Grammar.ITEM,
+        has_text=True,
+        level=Level.ITEM,
+        shape="YYYY-MM-DD (note) <item> [by <who>]: <text>",
     ),
     RecordKind.ADDED: KindSpec(
         Grammar.CHANGE_NAME,
@@ -213,6 +222,8 @@ class Record:
     """The change whose roadmap line a milestone record is about."""
     after: str | None = None
     """For ``(moved)``, the change the line went after; None when it went first."""
+    item: str | None = None
+    """The item a record about one item names; None when it names none."""
 
 
 @dataclass(frozen=True)
@@ -242,6 +253,8 @@ def _items(numbers: Sequence[str], *, followed: bool = False) -> str:
 
 def _arguments(record: Record) -> list[str]:  # noqa: PLR0911 - one return per grammar
     grammar = KINDS[record.kind].grammar
+    if grammar is Grammar.ITEM:
+        return [record.item] if record.item else []
     if grammar is Grammar.VERDICT:
         assert record.verdict is not None
         listed = [_items(record.items, followed=bool(record.covers))] if record.items else []
@@ -350,12 +363,12 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
     if who == "":
         return _fail(kind, 'The name after "by" is missing.')
     text_value = line_text.strip() if spec.has_text else None
-    if spec.grammar in (Grammar.CHANGE_NAME, Grammar.MOVE):
-        place = _change_arguments(kind, spec.grammar, words)
-        if isinstance(place, ParseError):
-            return place
-        change, after = place
-        return Record(kind, date, who=who, text=text_value, change=change, after=after)
+    if spec.grammar in (Grammar.CHANGE_NAME, Grammar.MOVE, Grammar.ITEM):
+        named = _named_arguments(kind, spec.grammar, words)
+        if isinstance(named, ParseError):
+            return named
+        change, after, item = named
+        return Record(kind, date, who=who, text=text_value, change=change, after=after, item=item)
     found = _read_arguments(kind, spec.grammar, words)
     if isinstance(found, ParseError):
         return found
@@ -370,6 +383,21 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
         fingerprint=fingerprint,
         covers=covers,
     )
+
+
+def _named_arguments(
+    kind: RecordKind, grammar: Grammar, words: list[str]
+) -> tuple[str | None, str | None, str | None] | ParseError:
+    """The change, the change it went after, and the item, for a record that names an item
+    or a change on a milestone's roadmap."""
+    if grammar is Grammar.ITEM:
+        if len(words) > 1 or (words and not _ITEM_NUMBER.match(words[0])):
+            return _fail(kind, "Only one item number such as 1.2 may follow the kind.")
+        return None, None, words[0] if words else None
+    place = _change_arguments(kind, grammar, words)
+    if isinstance(place, ParseError):
+        return place
+    return place[0], place[1], None
 
 
 def _split_who(body: str) -> tuple[list[str], str | None]:

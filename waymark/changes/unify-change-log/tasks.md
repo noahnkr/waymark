@@ -2,7 +2,7 @@
 
 ## 1. Item records in the Log
 
-- [ ] 1.1 Read item records from the Log, naming their item
+- [x] 1.1 Read item records from the Log, naming their item
   - **Build:** planner
   - **Criteria:**
     - `(blocked)`, `(gap)`, `(note)` and `(reopened)` take one item number after the kind, and `(resolved)` an optional one; a record naming an item the change doesn't have is reported as `unknown-item`
@@ -60,3 +60,7 @@
     - `uv run --no-sync pytest tests/test_skills.py tests/adapters`
     - `uv run --no-sync python -m tools.docs --check`
     - the full checks: `pytest`, `ruff format --check .`, `ruff check .`, `mypy`, `codespell`
+
+## Log
+
+- 2026-11-18 (accepted) fingerprint 3bcdcf537052f64f items 1.1, 1.2, 1.3, 2.1, 2.2, 3.1 by Noah Roberts

@@ -649,7 +649,7 @@ def test_scenario_malformed_record_and_kind_before_the_date(project: Workspace) 
             f"  - **Verify:** a test\n  - {record}\n",
         )
         assert (code, offset) == ("malformed-record", 4)
-        assert "YYYY-MM-DD (blocked) [by <who>]: <reason>" in message
+        assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in message
 
 
 def test_scenario_item_list_without_commas(project: Workspace) -> None:
