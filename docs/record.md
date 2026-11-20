@@ -455,13 +455,14 @@ before this rule keep the names they were written with.
 A record's text is a one-line summary. When it has several points, each goes
 under it as a detail, `- <text>`, from a `--detail` given once per point:
 
-```
+```text
 - 2026-11-20 (note) 1.2 by planner for Ada: partly built
   - the parser is done
   - the CLI flag is not
-``` A later record
-supersedes an earlier one; `wm resolve` adds a `(resolved)` record and the
-blocker stays.
+```
+
+A later record supersedes an earlier one; `wm resolve` adds a `(resolved)`
+record and the blocker stays.
 
 | Record | Where | Written by |
 |---|---|---|

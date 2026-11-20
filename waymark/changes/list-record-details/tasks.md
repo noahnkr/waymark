@@ -64,3 +64,11 @@
 - 2026-11-20 (ticked) 1.5 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.2 by planner for Noah Roberts
+- 2026-11-20 (review) changes 2.2; covers 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by reviewer: docs/record.md's details example leaves its code fence open, so everything after it renders as code; close the fence on its own line, and add DETAIL lines to the ending blocks in docs/skills.md and the concepts.md table while there. Items 1.1-1.5 and 2.1 meet their criteria and every check passes.
+  - [critical] `docs/record.md:462`: the closing code fence of the details example is followed by text ("``` A later record"), so the fence never closes and the rest of the Records section, its table included, renders as one code block; put the fence on its own line (item 2.2, rule 7)
+  - [warning] `src/waymark/record/evidence/records.py:466`: check_detail accepts a detail that starts with a bare severity word ("warning signs remain"), which the Log parser (tasks.py review_sub_line) then reports as malformed-finding under a review, so `wm review --self --detail`, `wm verdict --detail` or a reviewer's DETAIL line can write a record that `wm check` reports as an error
+  - [warning] `docs/skills.md:305`: the reviewer's and implementer's ending blocks, and the "Ends with" row in docs/concepts.md:312, don't mention DETAIL lines; they are now incomplete and no item covers them (rule 4)
+  - [suggestion] `tests/services/test_lifecycle_records.py`: --detail is tested only at the service level, and `wm resolve <change> review` with details is untested; parsing a few CLI invocations would cover the wiring in cli.py
+  - [suggestion] `src/waymark/record/artifacts/tasks.py:367`: a bracketed severity under a detailed non-review record is reported as misplaced-finding, not the malformed-detail the design names; it still meets the criterion, but code and design disagree
+- 2026-11-20 (reopened) 2.2 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.2 by planner for Noah Roberts
