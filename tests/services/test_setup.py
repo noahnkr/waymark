@@ -828,6 +828,19 @@ def test_scenario_planned_roadmap_line(project: Workspace) -> None:
     assert [f.code for f in found if "milestone" in f.code] == []
 
 
+def test_new_change_in_a_milestone_takes_by(project: Workspace) -> None:
+    """Requirement "Who wrote a record": wm new change writes (proposed), so it takes --by."""
+    project.write(MILESTONE_FILE, faster_search("- add-limit: cap the results\n"))
+    setup.create_change(
+        project.root,
+        "add-limit",
+        milestone="faster-search",
+        today=datetime.date(2026, 11, 20),
+        by="Ada",
+    )
+    assert project.read(MILESTONE_FILE).endswith("- 2026-11-20 (proposed) add-limit by Ada\n")
+
+
 def test_a_planned_line_with_only_the_name_becomes_a_link(project: Workspace) -> None:
     project.write(MILESTONE_FILE, faster_search("- [ ] add-limit\n"))
     setup.create_change(project.root, "add-limit", milestone="faster-search")

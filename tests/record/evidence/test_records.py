@@ -89,6 +89,22 @@ ONE_OF_EACH = [
 ]
 
 
+@pytest.mark.parametrize(
+    "line",
+    [
+        "2026-11-16 (note) 1.2 by wm-implementer: partial: the parser is done",
+        "2026-11-16 (review) pass covers 1.1, 1.2 by wm-reviewer: fine",
+        "2026-11-16 (note) 1.2 by Noah Roberts: written by the planner before the rule",
+    ],
+)
+def test_records_written_under_the_old_names_are_read_as_they_are(line: str) -> None:
+    """Requirement "Who wrote a record": records already written keep who they name."""
+    found = parse(line)
+    assert isinstance(found, Record)
+    assert render(found) == line
+    assert found.who == line.split(" by ", 1)[1].split(":", 1)[0]
+
+
 def test_new_kinds_have_their_shapes() -> None:
     rendered = {render(record) for record in ONE_OF_EACH}
     assert {

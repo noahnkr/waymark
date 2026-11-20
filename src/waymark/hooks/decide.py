@@ -307,12 +307,16 @@ def _commit_messages(project: Project, event: Event) -> Decision:
 
 
 def _by_implementer(arguments: tuple[str, ...]) -> bool:
-    """Whether a command's arguments say ``--by implementer``, in either spelling."""
-    pairs = zip(arguments, (*arguments[1:], ""), strict=True)
-    return any(
-        (flag == "--by" and value == IMPLEMENTER) or flag == f"--by={IMPLEMENTER}"
-        for flag, value in pairs
-    )
+    """Whether a command's arguments name the implementer with ``--by``, and nobody else.
+
+    Every ``--by`` must say ``implementer``, in either spelling, since the last one given
+    is the one that counts.
+    """
+    pairs = list(zip(arguments, (*arguments[1:], ""), strict=True))
+    named = [value for flag, value in pairs if flag == "--by"] + [
+        flag.removeprefix("--by=") for flag, _ in pairs if flag.startswith("--by=")
+    ]
+    return bool(named) and all(value == IMPLEMENTER for value in named)
 
 
 def _command(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one return per rule

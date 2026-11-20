@@ -65,3 +65,12 @@
 - 2026-11-20 (ticked) 1.5 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.2 by planner for Noah Roberts
+- 2026-11-20 (review) changes 1.2, 1.3, 2.1, 2.2; covers 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by reviewer: README evidence takes today's date from an undated tick in tools/docs.py:392 and will fail tools.docs --check from tomorrow (1.3); wm new change --milestone writes (proposed) without accepting --by (1.2); wm-update records one revision instead of one after each confirmed edit (2.1); docs/record.md milestone Log example and docs/getting-started.md still show the old authors (2.2)
+  - [critical] `tools/docs.py:392`: lifecycle.tick(root, CHANGE, item) passes no date, so the README evidence gets (ticked) records dated the day it was generated (2026-11-20, among 2026-01-15 records), and tools.docs --check and the README staleness test will fail from 2026-11-21 (item 1.3; pass DAY and regenerate)
+  - [critical] `src/waymark/cli.py:516 and src/waymark/services/setup.py:229`: wm new change --milestone writes a (proposed) record but takes no --by, breaking 1.2's "--by takes the place of the kind's author on every writing command" and the spec's "Every command that writes a record SHALL accept --by <who>"
+  - [critical] `docs/record.md:316-320`: the milestone Log example still names "by Ada" for (added), (moved), (proposed) and (dropped), which the new rule writes "by planner for Ada", contradicting the Records section (item 2.2); docs/getting-started.md:132 still shows "(blocked) 1.2 by Sam Doe"
+  - [critical] `src/waymark/assets/skills/wm-update/SKILL.md step 5`: wm revise runs once after all edits, while 2.1's criterion and the design say wm-update runs it after each confirmed edit to an accepted change
+  - [warning] `src/waymark/hooks/decide.py:309`: _by_implementer passes if "--by implementer" appears anywhere, so "wm note ... --by implementer --by Ada" gets through and argparse writes "by Ada"; no test covers it
+  - [warning] `tests/record/evidence/test_records.py`: no test reads records signed with the old names (by wm-implementer, by wm-reviewer), so "records already written are read as they are" holds only by accident
+- 2026-11-20 (reopened) 1.2 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.2 by planner for Noah Roberts

@@ -190,10 +190,11 @@ def _new(args: argparse.Namespace) -> int:
                 after=args.after,
                 today=_today(),
                 source=args.source,
+                by=args.by,
             )
         )
-    if args.short or args.owner or args.milestone or args.after:
-        raise Refusal("--short, --owner, --milestone and --after apply to a change only.")
+    if args.short or args.owner or args.milestone or args.after or args.by:
+        raise Refusal("--short, --owner, --milestone, --after and --by apply to a change only.")
     if args.kind == "milestone":
         return _report(setup.create_milestone(_here(), args.name, args.source))
     if args.source:
@@ -538,6 +539,14 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         dest="source",
         metavar="EXPLORATION",
         help="the exploration a change or milestone comes from; its status then leads to it",
+    )
+    new.add_argument(
+        "--by",
+        metavar="NAME",
+        help=(
+            "who the (proposed) record in a change's milestone names as its writer "
+            '(default: "planner for <your git name>")'
+        ),
     )
     new.set_defaults(handler=_new)
 

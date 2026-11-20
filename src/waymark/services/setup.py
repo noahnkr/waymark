@@ -170,6 +170,14 @@ def _require_new_name(name: str, kind: str, taken: bool) -> None:
         raise Refusal(f'There already is {article} {kind} named "{name}". Pick another name.')
 
 
+def _proposed_by(record: Record, by: str | None) -> str | None:
+    """Who the milestone's ``(proposed)`` record names: --by, else the planner."""
+    try:
+        return records.who_for(record.project.root, RecordKind.PROPOSED, by)
+    except records.RecordError as error:
+        raise Refusal(str(error)) from error
+
+
 def create_change(  # noqa: PLR0913 - the change's facts, and the day for its milestone's log
     start: Path,
     name: str,
@@ -180,6 +188,7 @@ def create_change(  # noqa: PLR0913 - the change's facts, and the day for its mi
     after: str | None = None,
     today: datetime.date | None = None,
     source: str | None = None,
+    by: str | None = None,
 ) -> Done:
     """Create a change folder with a proposal skeleton, linked from its milestone if it has one.
 
@@ -226,7 +235,7 @@ def create_change(  # noqa: PLR0913 - the change's facts, and the day for its mi
         entry = records.Record(
             RecordKind.PROPOSED,
             today or datetime.date.today(),
-            who=records.who_for(record.project.root, RecordKind.PROPOSED, None),
+            who=_proposed_by(record, by),
             change=name,
         )
         transaction.write(doc.path, append_milestone_log(linked, records.render(entry)))

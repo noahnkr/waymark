@@ -286,6 +286,11 @@ def test_scenario_implementers_note_without_by(accepted: Workspace) -> None:
         assert "--by implementer" in decision.reason
     assert accepted.read(TASKS_FILE) == before
     assert command(accepted, 'wm note add-limit 1.1 "x" --by=implementer', Role.IMPLEMENTER).allow
+    for line in (
+        'wm note add-limit 1.1 "x" --by implementer --by Ada',
+        'wm note add-limit 1.1 "x" --by implementer --by=Ada',
+    ):
+        assert not command(accepted, line, Role.IMPLEMENTER).allow, line
 
 
 def test_specs_are_never_edited_by_an_agent(accepted: Workspace) -> None:
