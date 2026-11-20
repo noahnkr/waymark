@@ -80,3 +80,5 @@
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
 - 2026-11-20 (reopened) 2.2 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.2 by planner for Noah Roberts
+- 2026-11-20 (review) pass covers 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by reviewer: every criterion and delta scenario holds, the earlier review's four critical findings and two warnings are fixed, and pytest (1505), tools.docs --check, ruff, mypy and wm check pass; codespell could not run here because of a uv trampoline error on this machine
+  - [suggestion] `src/waymark/record/evidence/records.py who_for`: the design calls this function `author(root, kind, by, *, human=False)` but it is still named `who_for`; it behaves as designed, only the name differs
