@@ -37,7 +37,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Teach the skills and agents to give details
+- [x] 2.1 Teach the skills and agents to give details
   - **Build:** planner
   - **Criteria:**
     - `wm-apply` and `wm-update` say to give several points as `--detail` lines rather than one long text
@@ -62,3 +62,4 @@
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.4 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.5 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
