@@ -78,3 +78,5 @@
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
 - 2026-11-20 (reopened) 2.1 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
+- 2026-11-20 (reopened) 2.2 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.2 by planner for Noah Roberts

@@ -313,10 +313,10 @@ Each change to the plan writes a record in the milestone's `## Log`, which `wm`
 creates at the end of the file the first time:
 
 ```
-2026-11-20 (added) add-cache by Ada: cache hot queries
-2026-11-20 (moved) add-cache first by Ada
-2026-11-21 (proposed) add-limit by Ada
-2026-11-21 (dropped) add-cache by Ada: the index is fast enough
+2026-11-20 (added) add-cache by planner for Ada: cache hot queries
+2026-11-20 (moved) add-cache first by planner for Ada
+2026-11-21 (proposed) add-limit by planner for Ada
+2026-11-21 (dropped) add-cache by planner for Ada: the index is fast enough
 2026-11-22 (archived) add-limit by Ada
 ```
 
