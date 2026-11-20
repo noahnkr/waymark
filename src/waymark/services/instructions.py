@@ -17,17 +17,16 @@ from waymark.record.artifacts.changes import (
     Change,
 )
 from waymark.record.artifacts.charter import CHARTER_FILE
-from waymark.record.artifacts.tasks import DELEGATE, PLANNER
 from waymark.record.machine.branches import Branches
 from waymark.record.machine.project import RECORD_DIR
 from waymark.record.markdown import labels
 from waymark.record.markdown.labels import label_line
 from waymark.record.record import SPECS, Record
 from waymark.record.state import AcceptanceState, ChangeState, StepKind
-from waymark.record.terms import Layout, ReviewLevel
+from waymark.record.terms import BuildRole, Layout, ReviewLevel
 from waymark.record.writing import templates
 from waymark.services.common import Refusal, find_change, state_of
-from waymark.services.guidance import SEVERITY_RUBRIC
+from waymark.services.guidance import SEVERITY_RUBRIC, human_items_note
 
 INSTRUCTIONS_VERSION = 1
 EXPLORE = "explore"
@@ -280,9 +279,10 @@ def _drafting(
         f"or '{label_line(labels.VERIFY)}', "
         "one criterion or one verification step per bullet.",
         f"Give every item a '{label_line(labels.BUILD)}' line, first among its lines: "
-        f"'{PLANNER}' when the planner builds it, or '{DELEGATE}' when a fresh implementer should "
-        "build it: a large item, one built in parallel, or one worth a cold check that the record "
-        "is enough.",
+        f"'{BuildRole.PLANNER}' when the planner builds it; '{BuildRole.IMPLEMENTER}' when a "
+        "fresh implementer should build it: a large item, one built in parallel, or one worth a "
+        f"cold check that the record is enough; or '{BuildRole.HUMAN}' for work only the human "
+        "can do, such as filling in a form, a manual test or setting up a platform.",
         "Don't tick items or write records; wm writes those.",
         *SIZING_RULES,
     ]
@@ -296,6 +296,39 @@ def _drafting(
     return outputs, read, guidance
 
 
+def _apply(name: str, number: str, role: BuildRole | None) -> tuple[list[str], list[str]]:
+    """The guidance and commands for applying an item, by the role that builds it."""
+    if role is BuildRole.IMPLEMENTER:
+        return [
+            f"Start an implementer for item {number} with the change and item and nothing else.",
+            "The implementer begins from its context pack and ends with a RESULT line.",
+            "If the tool has no isolated agents, build the item yourself from the same pack.",
+        ], [f"wm context {name} {number} --for implement"]
+    if role is BuildRole.HUMAN:
+        return [
+            f"Item {number} is the human's to do: give them its criteria and verification as "
+            "the steps to take.",
+            f"Tick it with wm tick only after the human says it is done. Don't do item {number} "
+            "yourself.",
+            "If they can't do it now, block it with what it waits on, and go on with the "
+            "change's other items.",
+        ], [
+            f"wm tick {name} {number}",
+            f'wm block {name} {number} "waiting for <what>"',
+        ]
+    return [
+        f"Build item {number} yourself, from its context pack.",
+        "Run the checks the item touches.",
+        "Then record the result: tick the item when its criteria hold, or record "
+        "what blocks it, or the spec gap if the record isn't enough to build it.",
+    ], [
+        f"wm context {name} {number} --for implement",
+        f"wm tick {name} {number}",
+        f'wm block {name} {number} "<reason>"',
+        f'wm gap {name} {number} "<what is missing>"',
+    ]
+
+
 def _working(  # noqa: PLR0911 - one return per step
     change: Change, state: ChangeState, step: StepKind
 ) -> tuple[list[str], list[str]]:
@@ -305,27 +338,7 @@ def _working(  # noqa: PLR0911 - one return per step
     number = item or "<item>"
     if step is StepKind.APPLY:
         built = change.tasks.item(item) if change.tasks and item else None
-        if built is not None and built.build == DELEGATE:
-            guidance = [
-                f"Start an implementer for item {number} with the change and item and nothing "
-                "else.",
-                "The implementer begins from its context pack and ends with a RESULT line.",
-                "If the tool has no isolated agents, build the item yourself from the same pack.",
-            ]
-            commands = [f"wm context {name} {number} --for implement"]
-        else:
-            guidance = [
-                f"Build item {number} yourself, from its context pack.",
-                "Run the checks the item touches.",
-                "Then record the result: tick the item when its criteria hold, or record "
-                "what blocks it, or the spec gap if the record isn't enough to build it.",
-            ]
-            commands = [
-                f"wm context {name} {number} --for implement",
-                f"wm tick {name} {number}",
-                f'wm block {name} {number} "<reason>"',
-                f'wm gap {name} {number} "<what is missing>"',
-            ]
+        guidance, commands = _apply(name, number, built.build if built else None)
         if state.next_step.reason:
             commands.insert(0, f"wm reopen {name} {number}")
         return guidance, commands
@@ -341,6 +354,13 @@ def _working(  # noqa: PLR0911 - one return per step
             if uncovered
             else []
         )
+        human = tuple(
+            item.number
+            for item in (change.tasks.items if change.tasks else ())
+            if item.build is BuildRole.HUMAN and item.number in state.review.to_review
+        )
+        if (note := human_items_note(human)) is not None:
+            scope.append(note)
         if state.review.level is ReviewLevel.INDEPENDENT:
             guidance = [
                 *scope,

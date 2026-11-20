@@ -4,6 +4,20 @@ All notable changes to Waymark, one entry per release.
 
 ## [Unreleased]
 
+- **Behavior change: an item's Build line names a role.** The roles are
+  `planner`, `implementer` and `human`. `implementer` replaces `delegate`, which
+  `wm check` now reports as unknown: change `- **Build:** delegate` to
+  `- **Build:** implementer` in any active change, then accept it again.
+- **Items only you can do.** A `- **Build:** human` item, such as filling in a
+  form, a manual test or setting up a platform, is handed to you by
+  `wm instructions` with its steps, and ticked by the planner after your yes. While
+  it waits, the planner blocks it and goes on with the other items. An
+  implementer started on one is refused, and the review pack and review guidance
+  name the items you did.
+- **JSON:** `wm show --json` gives each item `build` (`planner`, `implementer`,
+  `human` or null) in place of `delegate`, at `show.change` version 4. The
+  implement and review packs carry each item's `build`, and the review pack
+  `human_items` and `human_note`, at version 3.
 - **Skills ask less of you.** `wm-archive` shows the outcome it will write and
   runs `wm archive` itself once you say yes, instead of asking you to type the
   command. `wm-explore` and `wm-propose` label open questions Q1, Q2, options

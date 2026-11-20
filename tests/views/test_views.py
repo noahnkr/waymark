@@ -60,7 +60,7 @@ def busy(project: Workspace) -> Workspace:
         + "  - **Verify:** a test\n"
         + (
             "- [ ] 1.4 Translate it\n"
-            "  - **Build:** delegate\n"
+            "  - **Build:** implementer\n"
             "  - **Criteria:** two languages\n"
             "  - **Verify:** a test\n"
         ),
@@ -277,6 +277,38 @@ def test_empty_inbox_says_nothing_needs_the_human(project: Workspace) -> None:
     assert render.to_text(payload, PLAIN) == "x Nothing needs you."
 
 
+ROLES = (
+    "# Tasks\n\n## 1. Limit\n\n"
+    "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n  - **Verify:** a test\n"
+    "- [ ] 1.2 Add the DNS record\n  - **Build:** human\n  - **Criteria:** it resolves\n"
+    "  - **Verify:** dig answers\n"
+    "- [ ] 1.3 Translate it\n  - **Build:** implementer\n  - **Criteria:** in French\n"
+    "  - **Verify:** a test\n"
+)
+
+
+def test_scenario_role_in_the_json(project: Workspace) -> None:
+    """Requirement "Build line": wm show --json gives each item's role as build."""
+    project.change(tasks=ROLES)
+    payload = valid(payloads.show(project.record(), "add-limit"))
+    assert payload["version"] == VERSIONS["show.change"] == 4
+    builds = [(item["number"], item["build"]) for item in payload["items"]]
+    assert builds == [("1.1", "planner"), ("1.2", "human"), ("1.3", "implementer")]
+    assert all("delegate" not in item for item in payload["items"])
+
+
+def test_show_tags_implementer_and_human_items_and_not_planner_ones(project: Workspace) -> None:
+    project.change(tasks=ROLES)
+    text = render.to_text(payloads.show(project.record(), "add-limit"), Style(width=100))
+    cap, dns, translate = (
+        next(line for line in text.splitlines() if title in line)
+        for title in ("Cap it", "Add the DNS record", "Translate it")
+    )
+    assert "build:" not in cap
+    assert "build: human" in dns
+    assert "build: implementer" in translate
+
+
 def test_show_change_holds_everything_about_it(project: Workspace) -> None:
     payload = valid(payloads.show(busy(project).record(), "add-order"))
     assert payload["path"] == "changes/add-order"
@@ -290,8 +322,9 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
     assert payload["design"] == {"decisions": ["Where to cut"]}
     items = {item["number"]: item for item in payload["items"]}
     assert "level" not in items["1.1"]
-    assert items["1.1"]["delegate"] is False
-    assert (items["1.4"]["title"], items["1.4"]["delegate"]) == ("Translate it", True)
+    assert items["1.1"]["build"] == "planner"
+    assert (items["1.4"]["title"], items["1.4"]["build"]) == ("Translate it", "implementer")
+    assert all("delegate" not in item for item in payload["items"])
     assert items["1.1"]["records"] == []
     assert items["1.2"]["blocked"] == "waiting for the wording"
     assert items["1.3"]["spec_gap"] == "which channel?"

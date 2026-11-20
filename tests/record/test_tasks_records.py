@@ -7,7 +7,7 @@ from waymark.record.artifacts.tasks import Tasks, parse_tasks
 from waymark.record.evidence.fingerprint import change_fingerprint
 from waymark.record.evidence.records import RecordKind
 from waymark.record.state import AcceptanceState, acceptance_state
-from waymark.record.terms import ReviewSeverity, Verdict
+from waymark.record.terms import BuildRole, ReviewSeverity, Verdict
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 ITEM = (
@@ -255,18 +255,15 @@ PLANNED = (
 
 
 def test_build_values_are_read() -> None:
-    """Requirement "Build line": planner and delegate are the values; no line is no value."""
+    """Requirement "Build line": the line names one of three roles; no line is no role."""
     tasks = parse(
         PLANNED.replace(
             "**Build:** planner\n  - **Criteria:** rebuilt",
-            "**Build:** delegate\n  - **Criteria:** rebuilt",
+            "**Build:** implementer\n  - **Criteria:** rebuilt",
         )
     )
     assert tasks.problems == ()
-    assert [(item.build, item.delegate) for item in tasks.items] == [
-        ("planner", False),
-        ("delegate", True),
-    ]
+    assert [item.build for item in tasks.items] == [BuildRole.PLANNER, BuildRole.IMPLEMENTER]
     bare = parse(PLANNED.replace("  - **Build:** planner\n", ""))
     assert [item.build for item in bare.items] == [None, None]
 
@@ -279,7 +276,7 @@ def test_scenario_build_changed_after_acceptance(workspace: Workspace) -> None:
     workspace.replace(
         "changes/add-limit/tasks.md",
         "  - **Build:** planner\n  - **Criteria:** rebuilt",
-        "  - **Build:** delegate\n  - **Criteria:** rebuilt",
+        "  - **Build:** implementer\n  - **Criteria:** rebuilt",
     )
     assert workspace.change_state().acceptance is AcceptanceState.WITHDRAWN
 

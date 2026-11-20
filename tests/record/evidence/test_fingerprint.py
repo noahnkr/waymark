@@ -65,7 +65,7 @@ def test_editing_the_design_withdraws_acceptance(workspace: Workspace) -> None:
             "  - **Criteria:** at most fifty results come back\n"
             "  - **Verify:** a test covers fifty-one matches\n",
             "- [ ] 1.1 Cap the result count\n"
-            "  - **Build:** delegate\n"
+            "  - **Build:** implementer\n"
             "  - **Criteria:** at most fifty results come back\n"
             "  - **Verify:** a test covers fifty-one matches\n",
         ),
@@ -82,7 +82,7 @@ def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
     accepted(workspace).replace(
         "changes/add-limit/tasks.md",
         "1.2 Document the limit\n  - **Build:** planner\n",
-        "1.2 Document the limit\n  - **Build:** delegate\n",
+        "1.2 Document the limit\n  - **Build:** implementer\n",
     )
     state = workspace.change_state()
     assert state.acceptance is AcceptanceState.WITHDRAWN
@@ -93,12 +93,12 @@ def test_tag_added_after_acceptance_withdraws_it(workspace: Workspace) -> None:
 def test_removing_the_build_tag_withdraws_acceptance(workspace: Workspace) -> None:
     workspace.change(
         tasks=TASKS.replace(
-            "1.2 Document the limit\n", "1.2 Document the limit\n  - **Build:** delegate\n"
+            "1.2 Document the limit\n", "1.2 Document the limit\n  - **Build:** implementer\n"
         )
     )
     workspace.accept()
     assert acceptance(workspace) is AcceptanceState.VALID
-    workspace.replace("changes/add-limit/tasks.md", "  - **Build:** delegate\n", "")
+    workspace.replace("changes/add-limit/tasks.md", "  - **Build:** implementer\n", "")
     assert acceptance(workspace) is AcceptanceState.WITHDRAWN
 
 

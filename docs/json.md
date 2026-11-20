@@ -10,15 +10,15 @@ Every read command takes `--json`. Each payload starts with `schema` (its name) 
 | [`wm.inbox`](#wminbox) | 1 | `wm inbox` |
 | [`wm.ls`](#wmls) | 1 | `wm ls` |
 | [`wm.check`](#wmcheck) | 1 | `wm check` |
-| [`wm.show.change`](#wmshowchange) | 3 | `wm show` for a change |
+| [`wm.show.change`](#wmshowchange) | 4 | `wm show` for a change |
 | [`wm.show.spec`](#wmshowspec) | 1 | `wm show` for a spec |
 | [`wm.show.milestone`](#wmshowmilestone) | 1 | `wm show` for a milestone |
 | [`wm.show.exploration`](#wmshowexploration) | 2 | `wm show` for an exploration |
 | [`wm.show.resource`](#wmshowresource) | 1 | `wm show` for a resource |
 | [`wm.instructions`](#wminstructions) | 1 | `wm instructions` |
 | [`wm.context.explore`](#wmcontextexplore) | 2 | `wm context --for explore` |
-| [`wm.context.implement`](#wmcontextimplement) | 2 | `wm context <change> <item> --for implement` |
-| [`wm.context.review`](#wmcontextreview) | 2 | `wm context <change> --for review` |
+| [`wm.context.implement`](#wmcontextimplement) | 3 | `wm context <change> <item> --for implement` |
+| [`wm.context.review`](#wmcontextreview) | 3 | `wm context <change> --for review` |
 | [`wm.pr`](#wmpr) | 1 | `wm pr` |
 | [`wm.doctor`](#wmdoctor) | 1 | `wm doctor`, `wm atlas doctor` |
 
@@ -551,7 +551,7 @@ Printed by `wm show` for a change.
       "const": "wm.show.change"
     },
     "version": {
-      "const": 3
+      "const": 4
     },
     "name": {
       "type": "string"
@@ -888,8 +888,13 @@ Printed by `wm show` for a change.
           "ticked": {
             "type": "boolean"
           },
-          "delegate": {
-            "type": "boolean"
+          "build": {
+            "enum": [
+              "planner",
+              "implementer",
+              "human",
+              null
+            ]
           },
           "needs_human": {
             "type": [
@@ -1041,7 +1046,7 @@ Printed by `wm show` for a change.
           "number",
           "title",
           "ticked",
-          "delegate",
+          "build",
           "needs_human",
           "criteria",
           "verify",
@@ -2079,7 +2084,7 @@ Printed by `wm context <change> <item> --for implement`.
       "const": "wm.context.implement"
     },
     "version": {
-      "const": 2
+      "const": 3
     },
     "for": {
       "const": "implement"
@@ -2095,6 +2100,14 @@ Printed by `wm context <change> <item> --for implement`.
         },
         "title": {
           "type": "string"
+        },
+        "build": {
+          "enum": [
+            "planner",
+            "implementer",
+            "human",
+            null
+          ]
         },
         "criteria": {
           "type": [
@@ -2207,6 +2220,7 @@ Printed by `wm context <change> <item> --for implement`.
       "required": [
         "number",
         "title",
+        "build",
         "criteria",
         "verify",
         "repo",
@@ -2430,7 +2444,7 @@ Printed by `wm context <change> --for review`.
       "const": "wm.context.review"
     },
     "version": {
-      "const": 2
+      "const": 3
     },
     "for": {
       "const": "review"
@@ -2458,6 +2472,14 @@ Printed by `wm context <change> --for review`.
           },
           "title": {
             "type": "string"
+          },
+          "build": {
+            "enum": [
+              "planner",
+              "implementer",
+              "human",
+              null
+            ]
           },
           "criteria": {
             "type": [
@@ -2487,6 +2509,7 @@ Printed by `wm context <change> --for review`.
         "required": [
           "number",
           "title",
+          "build",
           "criteria",
           "verify",
           "repo",
@@ -2494,6 +2517,18 @@ Printed by `wm context <change> --for review`.
         ],
         "additionalProperties": false
       }
+    },
+    "human_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_note": {
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "reviews": {
       "type": "array",
@@ -2721,6 +2756,8 @@ Printed by `wm context <change> --for review`.
     "review_level",
     "uncovered_only",
     "items",
+    "human_items",
+    "human_note",
     "reviews",
     "resolutions",
     "context",

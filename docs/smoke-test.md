@@ -55,7 +55,7 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 ## Propose and accept
 
 - [ ] Run `/wm-propose` for a small change with **three** items: one with
-      `- **Build:** planner` and two with `- **Build:** delegate`. Its proposal has
+      `- **Build:** planner` and two with `- **Build:** implementer`. Its proposal has
       `- **Review:** independent`.
       Not on the short path.
 - [ ] Ask the agent to run `wm accept <change>`. **The hook refuses it**, and the
@@ -67,7 +67,7 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 - [ ] Run `/wm-apply`. **The planner builds the `planner` item itself**: it reads
       `wm context <change> <item> --for implement`, runs the checks the item
       touches and ticks the item with `wm tick`. It starts no implementer.
-- [ ] For a `delegate` item, the planner starts the `wm-implementer` agent with a
+- [ ] For an `implementer` item, the planner starts the `wm-implementer` agent with a
       prompt of exactly `<change> <item>`.
 - [ ] Ask the planner to delegate an item with extra words in the prompt
       ("build 1.1 carefully"). **The hook refuses the delegation.**

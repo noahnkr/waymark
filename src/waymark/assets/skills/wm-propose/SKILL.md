@@ -34,7 +34,10 @@ You are the planner. You find out how big the work is, and you choose its path; 
    - **Design.** How it will be built, with each decision's options, choice and reason. The options go as a nested list under `- **Options:**`, one option per bullet, at least two. Skipped on the short path. Each decision has a `- **Status:**` line, `proposed` until the human has settled it and then `decided`, and a `- **Decided by:**` line, `human` when the human made the call and `planner` when you did. List what is still undecided under `## Open questions`, or write `None.`. The change can't be accepted while a decision is proposed or a question is listed: bring each one to the human, then record their answer.
    - **Tasks.** Items small enough to build from the record alone, each with criteria that can be checked and a way to verify it. An item's lines come in the order `- **Build:**`, `- **Repo:**` (in an atlas), `- **Criteria:**`, `- **Verify:**`. Several criteria go as a nested list under `- **Criteria:**`, one per bullet; several ways to verify go under `- **Verify:**` the same way. A change that sets up or alters something outside the repo gets its own item to create or update that thing's resource.
 6. **Review level.** Suggest one. The change is reviewed once, as a whole, after every item is built. `wm new change` has already written a `- **Review:**` line with the project's default; set its value. Make it `independent` when the change modifies or removes an existing requirement, or touches security, data integrity or money, and `none` for docs, renames and changes of a few lines. On the short path it is `self` or `none`. Items carry no review level.
-7. **Who builds.** Give every item a `- **Build:**` line, first among its lines: `- **Build:** planner` for an item you build in the session, which is most of them, or `- **Build:** delegate` to have a fresh implementer build it from the record alone: for a large item, for items that can be built in parallel, or where a cold check that the record is enough to build from is worth its cost.
+7. **Who builds.** Give every item a `- **Build:**` line, first among its lines, naming the role that builds it:
+   - `- **Build:** planner` for an item you build in the session, which is most of them;
+   - `- **Build:** implementer` to have a fresh implementer build it from the record alone: for a large item, for items that can be built in parallel, or where a cold check that the record is enough to build from is worth its cost;
+   - `- **Build:** human` for work only the human can do, such as filling in a form, a manual test or setting up a platform. Write its criteria and verification as the steps the human takes. You tick it after their yes.
 8. **Consistency check.** When `wm instructions` says the next step is `accept`, check the artifacts against each other before showing the summary:
    - the Impact's `**Specs:**` names exactly the deltas (`wm check` holds this);
    - every scenario in the deltas is covered by some item's criteria;
@@ -76,7 +79,7 @@ For a change, after each step, what you drafted, in a few lines. Before acceptan
 - **Deltas:** per spec, the requirements added, modified, removed or renamed.
 - **Decisions:** each one, with who made it.
 - **Review level:** and why.
-- **Items:** each with a line on what it builds, and which you suggest to delegate.
+- **Items:** each with a line on what it builds, and its role: which you build, which go to an implementer, and which are the human's.
 
 Then ask for `wm accept <name>`.
 

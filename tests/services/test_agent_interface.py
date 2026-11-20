@@ -335,7 +335,7 @@ def test_instruction_templates_follow_the_formats_wm_parses(project: Workspace) 
     assert parsed.items[0].criteria is not None
     for item in parsed.items:
         first = tasks.split("\n")[item.index + 1]
-        assert first in ("  - **Build:** planner", "  - **Build:** delegate")
+        assert first in ("  - **Build:** planner", "  - **Build:** implementer")
     assert "- **Options:**\n  - <one option considered>\n  - <another>\n" in design
     assert "- **Decided by:** <human or planner>" in design
     specs = at(project, "specs")["outputs"][0]["template"]
@@ -353,7 +353,7 @@ def test_task_instructions_in_an_atlas_ask_for_a_repo_on_every_item(atlas: Works
     step = valid(instructions(atlas.record(), "tasks", NAME))
     template = step["outputs"][0]["template"]
     assert template.count("  - **Build:** planner\n  - **Repo:** <api | web>\n") == 1
-    assert template.count("  - **Build:** delegate\n  - **Repo:** <api | web>\n") == 1
+    assert template.count("  - **Build:** implementer\n  - **Repo:** <api | web>\n") == 1
     assert any("Repo line" in line for line in step["guidance"])
 
 
@@ -376,6 +376,42 @@ def test_review_instructions_follow_the_changes_review_level(project: Workspace)
 def mentions_an_implementer(step: dict[str, Any]) -> bool:
     text = render.to_text(step, PLAIN) + render.to_json(step)
     return "implementer" in text.lower()
+
+
+HUMAN_ITEMS = (
+    HEAD
+    + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+    + "  - **Verify:** a test\n"
+    + "- [ ] 1.2 Add the DNS record\n  - **Build:** human\n"
+    + "  - **Criteria:** the record points at the server\n  - **Verify:** dig answers\n"
+    + "- [ ] 1.3 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+    + "  - **Verify:** a test\n"
+)
+
+
+def test_scenario_item_for_the_human(project: Workspace) -> None:
+    """Requirement "Human does their items": the planner hands the item to the human."""
+    accepted(project, HUMAN_ITEMS)
+    lifecycle.tick(project.root, NAME, "1.1")
+    step = at(project)
+    assert (step["step"], step["item"]) == ("apply", "1.2")
+    assert step["commands"] == [
+        f"wm tick {NAME} 1.2",
+        f'wm block {NAME} 1.2 "waiting for <what>"',
+    ]
+    guidance = " ".join(step["guidance"])
+    assert "give them its criteria and verification as the steps" in guidance
+    assert "only after the human says it is done" in guidance
+    assert "Build item" not in guidance
+    assert not mentions_an_implementer(step)
+
+
+def test_scenario_human_item_waits(project: Workspace) -> None:
+    """Requirement "Human does their items": a blocked human item lets the change go on."""
+    accepted(project, HUMAN_ITEMS)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.block(project.root, NAME, "1.2", "waiting for the DNS record")
+    assert at(project)["item"] == "1.3"
 
 
 def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Workspace) -> None:
@@ -402,7 +438,7 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     accepted(
         project,
         HEAD
-        + "- [ ] 1.1 Cap it\n  - **Build:** delegate\n  - **Criteria:** fifty\n"
+        + "- [ ] 1.1 Cap it\n  - **Build:** implementer\n  - **Criteria:** fifty\n"
         + "  - **Verify:** a test\n",
     )
     step = at(project)
@@ -413,7 +449,7 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     )
 
 
-@pytest.mark.parametrize("tag", ["planner", "delegate"])
+@pytest.mark.parametrize("tag", ["planner", "implementer"])
 def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     project: Workspace, tag: str
 ) -> None:
@@ -429,7 +465,7 @@ def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"][0] == f"wm reopen {NAME} 1.1"
     assert step["commands"][1] == f"wm context {NAME} 1.1 --for implement"
-    assert mentions_an_implementer(step) == (tag == "delegate")
+    assert mentions_an_implementer(step) == (tag == "implementer")
 
 
 def test_instructions_for_items_waiting_on_the_human_point_to_resolve(project: Workspace) -> None:
@@ -848,6 +884,41 @@ def test_reviewer_pack_holds_every_item_for_a_first_review(project: Workspace) -
     assert built["uncovered_only"] is False
     assert [item["number"] for item in built["items"]] == ["1.1", "1.2"]
     assert "Review the whole change at level independent" in render.to_text(built, PLAIN)
+
+
+def test_scenario_human_item_in_the_review_pack(project: Workspace) -> None:
+    """Requirement "Human items in a review": the pack names the human's item and its tick."""
+    accepted(project, HUMAN_ITEMS, proposal_text=INDEPENDENT)
+    for item in ("1.1", "1.2", "1.3"):
+        lifecycle.tick(project.root, NAME, item)
+    built = pack(project, "review")
+    assert [item["build"] for item in built["items"]] == ["planner", "human", "planner"]
+    assert built["human_items"] == ["1.2"]
+    text = render.to_text(built, PLAIN)
+    assert "## Done by the human" in text
+    assert "Item 1.2 was done by the human: its tick is the human's confirmation" in text
+    assert "Still check anything they left in the repo" in text
+
+
+def test_scenario_self_review_with_a_human_item(project: Workspace) -> None:
+    """Requirement "Human items in a review": the self-review guidance names the human's item."""
+    accepted(project, HUMAN_ITEMS)
+    for item in ("1.1", "1.2", "1.3"):
+        lifecycle.tick(project.root, NAME, item)
+    step = at(project)
+    assert step["step"] == "review"
+    guidance = " ".join(step["guidance"])
+    assert "Item 1.2 was done by the human: its tick is the human's confirmation" in guidance
+
+
+def test_review_without_human_items_says_nothing_about_them(project: Workspace) -> None:
+    accepted(project, proposal_text=INDEPENDENT)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    built = pack(project, "review")
+    assert (built["human_items"], built["human_note"]) == ([], None)
+    assert "Done by the human" not in render.to_text(built, PLAIN)
+    assert "by the human" not in " ".join(at(project)["guidance"])
 
 
 def member_of_faster_search(project: Workspace) -> None:

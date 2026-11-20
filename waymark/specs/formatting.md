@@ -40,9 +40,9 @@ It SHALL keep each file's line endings, and SHALL NOT change wording, fenced cod
 - THEN they read `- **Record:** everything in waymark/` and `- **Atlas:** a separate repository`, and the output names the charter as fixed
 
 #### Scenario: Item lines put in order
-- GIVEN an active change whose item 1.2 has `- **Criteria:**` with two bullets under it, then `- **Verify:** wm check`, then `- **Build:** delegate`
+- GIVEN an active change whose item 1.2 has `- **Criteria:**` with two bullets under it, then `- **Verify:** wm check`, then `- **Build:** implementer`
 - WHEN the human runs `wm check --fix`
-- THEN item 1.2's lines are `- **Build:** delegate`, then the Criteria line with its two bullets, then the Verify line, and the output names the task list as fixed
+- THEN item 1.2's lines are `- **Build:** implementer`, then the Criteria line with its two bullets, then the Verify line, and the output names the task list as fixed
 
 ### Requirement: Report what was fixed
 `wm check --fix` SHALL name each file it rewrote and the kinds of fix it made there, and SHALL say so when there was nothing to fix. Its result SHALL be that of `wm check` on the fixed record: it fails when an error remains.

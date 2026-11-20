@@ -172,7 +172,7 @@ def test_the_charter_keeps_its_lines(project: Workspace) -> None:
 
 ORDERED = (
     "- [ ] 1.2 Rebuild the index\n"
-    "  - **Build:** delegate\n"
+    "  - **Build:** implementer\n"
     "  - **Criteria:**\n"
     "    - rebuilt\n"
     "    - answers\n"
@@ -187,7 +187,7 @@ def test_scenario_item_lines_put_in_order(project: Workspace) -> None:
         "    - rebuilt\n"
         "    - answers\n"
         "  - **Verify:** wm check\n"
-        "  - **Build:** delegate\n"
+        "  - **Build:** implementer\n"
     )
     tasks = "# Tasks\n\n## 1. Limit\n\n" + bold(TASKS.split("## 1. Limit\n\n")[1])
     tasks = tasks.replace("- [ ] 1.2 Document the limit", "- [ ] 1.3 Document the limit")

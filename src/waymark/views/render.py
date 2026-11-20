@@ -234,7 +234,8 @@ def _painted(text: str, style: Style, *roles: str) -> list[str]:
 def _item_lines(item: Payload, style: Style, *, last: bool) -> list[str]:
     """One item of a change's tree: its head on a branch, everything under it on the stem."""
     mark = style.symbol("done") if item["ticked"] else style.symbol("todo")
-    tags = ["build: delegate"] if item["delegate"] else []
+    role = item["build"]
+    tags = [f"build: {role}"] if role and role != "planner" else []
     if item["repo"]:
         tags.append(f"repo: {item['repo']}")
     branch = style.symbol("last" if last else "branch")
@@ -521,6 +522,8 @@ def _review_head(payload: Payload) -> list[str]:
     lines.append("## Its items")
     for item in payload["items"]:
         lines += ["", *_definition_lines(item)]
+    if payload["human_note"]:
+        lines += ["", "## Done by the human", "", payload["human_note"]]
     if payload["reviews"] or payload["resolutions"]:
         lines += ["", "## Earlier reviews", ""]
         for review in payload["reviews"]:

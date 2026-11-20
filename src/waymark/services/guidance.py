@@ -26,3 +26,16 @@ STOPPING_RULES = (
     "finish the item as asked.",
 )
 """When an implementer stops, and the result it ends with."""
+
+
+def human_items_note(numbers: tuple[str, ...]) -> str | None:
+    """What a review takes as given for the items the human did; None when there are none."""
+    if not numbers:
+        return None
+    named = f"Item {numbers[0]} was" if len(numbers) == 1 else f"Items {', '.join(numbers)} were"
+    its = "its tick is" if len(numbers) == 1 else "their ticks are"
+    return (
+        f"{named} done by the human: {its} the human's confirmation of what only they could "
+        "check, so take that as given. Still check anything they left in the repo, such as a "
+        "resource they updated."
+    )

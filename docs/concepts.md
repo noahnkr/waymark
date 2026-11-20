@@ -20,8 +20,9 @@ specs      deltas: the change's edits to the living specs
 design     how it will be built, and the decisions taken (skipped on the short path)
 tasks      one checklist; each item has criteria and a way to verify it
 accept     YOU approve the change; nothing is built before this
-apply      each item built from the record: by the planner, or by a fresh
-           implementer agent when its `- **Build:**` line says `delegate`
+apply      each item built from the record: by the planner, by a fresh
+           implementer agent when its `- **Build:**` line says `implementer`,
+           or by you when it says `human`
 review     the whole change checked once, at its level, and the review written
            in the Log at the end of the task list
 archive    YOU approve finishing it, on the change's branch before its pull request;
@@ -293,7 +294,7 @@ covers its sections and checks.
 
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
-| Is | the main agent session, working with you | a fresh agent, started for an item with a `- **Build:** delegate` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
+| Is | the main agent session, working with you | a fresh agent, started for an item with a `- **Build:** implementer` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
 | Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch and their specs' Background, the resources that serve those specs, the project's context and rules, its milestone's Goal and Non-goals, and when to stop | the criteria of the items to review, the deltas and their scenarios, their specs' Background and resources, the design, earlier reviews and what each covers, its milestone's Goal and Non-goals, the severity rubric, the code; **not** how it was built |
 | May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
 | Ends with | | `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
@@ -318,24 +319,33 @@ Every item has a `- **Build:**` line, first among its lines. With
 (`wm context <change> <item> --for implement`), builds the item, runs the checks
 the item touches, and records the result with `wm tick`, `wm block` or `wm gap`.
 
-An item with `- **Build:** delegate` goes to a fresh implementer instead:
+An item with `- **Build:** implementer` goes to a fresh implementer instead:
 
 ```markdown
 - [ ] 1.2 Rebuild the search index
-  - **Build:** delegate
+  - **Build:** implementer
   - **Criteria:** the index holds every document
   - **Verify:** a search finds a document added last
 ```
 
-- **When to delegate:** a large item, items that can be built in parallel, or an
-  item where a cold check that the record is enough to build from is worth its
-  cost.
-- **Where:** the first line under the item. The values are `planner` and
-  `delegate`; `wm check` reports any other, and an item without the line.
+An item with `- **Build:** human` is work only you can do, such as filling in a
+form, a manual test or setting up a platform. The planner gives you its criteria
+and verification as the steps, and ticks it with `wm tick` once you say it is
+done. If you can't do it now, the planner blocks it with `wm block`, naming what
+it waits on, and goes on with the other items. The review takes your tick as your
+confirmation, and still checks anything the item left in the repo.
+
+- **When to use an implementer:** a large item, items that can be built in
+  parallel, or an item where a cold check that the record is enough to build
+  from is worth its cost.
+- **Where:** the first line under the item. The roles are `planner`,
+  `implementer` and `human`; `wm check` reports any other, and an item without
+  the line.
 - **Accepted with the item:** adding, removing or changing the line withdraws
   acceptance.
-- **Guidance, not a gate:** the line decides what `wm instructions` and the
-  skills say. The hooks don't enforce it.
+- **Mostly guidance:** the line decides what `wm instructions` and the skills
+  say. The one gate is that the hooks refuse an implementer started on a `human`
+  item.
 
 ## Review
 
@@ -444,7 +454,7 @@ files.
 | **Resource** | The as-built facts about one thing outside the repo that the project depends on, such as a service, a platform or a dataset, in `resources/<name>.md`. A spec says what the system does and changes only through a change; a resource says what the outside world is, and is edited by hand when that world changes. See [the record](record.md#resource). |
 | **Milestone** | An optional goal that several changes work toward, with a roadmap listing them, both in one `milestone.md`. See [Milestones](#milestones). |
 | **Planner** | The main agent session, working with you: it explores, drafts, builds items or delegates them, and archives. |
-| **Implementer** | A fresh agent that builds one task item with a `- **Build:** delegate` line, from the record alone. |
+| **Implementer** | A fresh agent that builds one task item with a `- **Build:** implementer` line, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one whole change against its scenarios, design and criteria, without seeing how it was built. |
 | **Review level** | How a change is checked: `self`, `independent` or `none`. Set by the `- **Review:**` line in its proposal. |
 | **Log** | The last section of a change's task list, where `wm` keeps the dated records about the whole change: its acceptances, sync, reviews and any override. |

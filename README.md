@@ -120,8 +120,11 @@ You work through skills, as slash commands in Claude Code:
 | `/wm-archive` | Finish a change and update the specs |
 | `/wm-pr` | Open the pull request, once you say yes |
 
-`/wm-apply` can also hand work to two agents of its own: an implementer that
-builds one task you marked to hand off, and a reviewer that checks a risky
+Each task's `- **Build:**` line names who builds it: `planner` for your
+session, which builds most tasks; `implementer` for a fresh agent that builds it
+from the plan alone; or `human` for work only you can do, such as a manual test
+or setting up a platform, which your session hands to you and ticks after your
+yes. `/wm-apply` starts the implementer, and a reviewer that checks a risky
 change. [Skills and agents](docs/skills.md) covers what each one reads, writes
 and shows you.
 
@@ -424,7 +427,7 @@ edit the same requirement are caught once both are on the same branch. See
   never calls a model or goes online.
 - **Tokens:** most of the work happens in your normal session, which already
   knows the change. A fresh agent, which has to read the plan from scratch, is
-  only started for a task you mark to hand off or for checking a risky change.
+  only started for an `implementer` task or for checking a risky change.
 - **Your time:** answering the agent's questions while it writes the plan,
   approving each change twice, and settling what `wm inbox` lists, such as a
   gap in the plan or a blocked task.
