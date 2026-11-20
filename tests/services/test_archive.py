@@ -26,6 +26,7 @@ from waymark.record.state import (
 from waymark.record.terms import Phase, Verdict
 from waymark.services import lifecycle
 from waymark.services.common import Refusal
+from waymark.services.pr import describe
 
 NAME = "add-limit"
 DAY = datetime.date(2026, 1, 15)
@@ -232,6 +233,27 @@ def test_scenario_archived_with_an_outcome(project: Workspace) -> None:
     assert text.endswith(
         "## Outcome\n\n- **Built:** The result limit.\n- **Differs:** Fifty, not twenty.\n"
     )
+
+
+def test_scenario_outcome_as_a_list(project: Workspace) -> None:
+    """Requirement "Structured outcome": several values become nested bullets under the label."""
+    applied(project)
+    lifecycle.archive(
+        project.root,
+        NAME,
+        LATER,
+        built=["The result limit.", "A flag to change it."],
+        differs=["Fifty, not twenty."],
+    )
+    text = project.read(f"{ARCHIVED}/proposal.md")
+    assert text.endswith(
+        "## Outcome\n\n- **Built:**\n  - The result limit.\n  - A flag to change it.\n"
+        "- **Differs:** Fifty, not twenty.\n"
+    )
+    archived = project.record()
+    assert archived.problems == ()
+    description = describe(archived, NAME)
+    assert "  - A flag to change it." in description["body"]
 
 
 def test_scenario_nothing_differs(project: Workspace) -> None:

@@ -678,11 +678,17 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     summary = "Archive an applied change, once the human says yes."
     archive = commands.add_parser("archive", help=summary, description=summary)
     archive.add_argument("change", help="the change's name")
-    archive.add_argument("--built", metavar="TEXT", help="what was built, for the outcome")
+    archive.add_argument(
+        "--built",
+        action="append",
+        metavar="TEXT",
+        help="what was built, for the outcome; repeatable, for a list",
+    )
     archive.add_argument(
         "--differs",
+        action="append",
         metavar="TEXT",
-        help="how it differs from the proposal; none when left out",
+        help="how it differs from the proposal, none when left out; repeatable, for a list",
     )
     archive.add_argument(
         "--override",

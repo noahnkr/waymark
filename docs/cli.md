@@ -289,8 +289,8 @@ wm archive <change> [--built TEXT] [--differs TEXT] [--override REASON] [--by NA
 ```
 
 - `change`: the change's name
-- `--built`: what was built, for the outcome
-- `--differs`: how it differs from the proposal; none when left out
+- `--built`: what was built, for the outcome; repeatable, for a list
+- `--differs`: how it differs from the proposal, none when left out; repeatable, for a list
 - `--override`: archive although review records are missing; the reason is recorded
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 

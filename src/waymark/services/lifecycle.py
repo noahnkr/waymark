@@ -683,20 +683,46 @@ _OUTCOME_FORM = (
 )
 
 
-def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | None) -> str:
+def _values(given: str | Sequence[str] | None) -> list[str]:
+    """--built or --differs as a list: given once, more than once, or not at all."""
+    if given is None:
+        return []
+    return [given] if isinstance(given, str) else list(given)
+
+
+def _outcome_line(label: str, values: Sequence[str], what: str) -> str:
+    """One Outcome label: its value on the line, or several as nested bullets under it."""
+    texts = [one_line(value, what) for value in values]
+    if len(texts) == 1:
+        return label_line(label, texts[0])
+    return "\n".join([label_line(label), *(f"  - {text}" for text in texts)])
+
+
+def _outcome(
+    name: str,
+    proposal: Proposal,
+    built: str | Sequence[str] | None,
+    differs: str | Sequence[str] | None,
+) -> str:
     """The Outcome to write: from --built and --differs, or the one in the proposal."""
-    if differs is not None and built is None:
+    built_values, differs_values = _values(built), _values(differs)
+    if differs_values and not built_values:
         raise Refusal("--differs goes with --built. Pass both, or neither.")
     existing = proposal.outcome
-    if built is not None:
+    if built_values:
         if existing:
             raise Refusal(
                 f'The proposal of "{name}" already has an outcome. Drop --built and --differs, '
                 "or edit the outcome in the proposal."
             )
-        text = one_line(built, "what was built")
-        diff = one_line(differs, "how it differs from the proposal") if differs else NONE
-        return f"{label_line(BUILT, text)}\n{label_line(DIFFERS, diff)}"
+        return "\n".join(
+            [
+                _outcome_line(BUILT, built_values, "what was built"),
+                _outcome_line(
+                    DIFFERS, differs_values or [NONE], "how it differs from the proposal"
+                ),
+            ]
+        )
     if not existing:
         raise Refusal(
             'Archiving records what came of the change. Pass --built "<what was built>" and, '
@@ -819,8 +845,8 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
     name: str,
     today: datetime.date,
     *,
-    built: str | None = None,
-    differs: str | None = None,
+    built: str | Sequence[str] | None = None,
+    differs: str | Sequence[str] | None = None,
     override: str | None = None,
     by: str | None = None,
 ) -> Done:

@@ -21,7 +21,7 @@
     - `DETAIL:` lines before the ending become details, in order, under the `(note)`, `(blocked)` or `(gap)` of an implementer and the `(review)` of a reviewer, after its findings
     - a `done` ending writes its `(ticked)` record without details
   - **Verify:** tests named after the scenarios Reviewer's details and Implementer's details, and one for a `done` ending with a `DETAIL:` line
-- [ ] 1.4 Take --built and --differs more than once
+- [x] 1.4 Take --built and --differs more than once
   - **Build:** planner
   - **Criteria:**
     - a value given once is written inline on its label's line, as before
@@ -60,3 +60,4 @@
 - 2026-11-20 (ticked) 1.1 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.2 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.4 by planner for Noah Roberts
