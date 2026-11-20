@@ -2,6 +2,15 @@
 
 All notable changes to Waymark, one entry per release.
 
+## [Unreleased]
+
+- **Skills ask less of you.** `wm-archive` shows the outcome it will write and
+  runs `wm archive` itself once you say yes, instead of asking you to type the
+  command. `wm-explore` and `wm-propose` label open questions Q1, Q2, options
+  A, B and closing offers 1 to 4, so an answer can't be mistaken for a choice.
+  `wm-propose` writes its own bold step names with the colon inside the bold,
+  as `wm check` expects of labels.
+
 ## [0.5.0] - 2026-11-19
 
 Explorations get a lifecycle, and the record one style: bold labels, records

@@ -20,7 +20,7 @@ You are the planner. Archiving completes a change: its deltas become part of the
 1. Run `wm instructions --change <name> --json`. If the step is not `archive`, see When to stop.
 2. Make sure you are on the change's branch and its work is committed. Ask the human whether to archive now.
 3. Draft the outcome with the human, in two parts: what was built, and how it differs from the proposal, if it does. A sentence or two each.
-4. Ask the human to run `wm archive <name> --built "<what was built>" --differs "<how it differs>"`, or run it when they tell you to. Leave `--differs` out when nothing differs; `wm` writes `none`. The outcome lands in the proposal as `- **Built:**` and `- **Differs:**` lines under `## Outcome`.
+4. Show the human the outcome as you will write it, and run `wm archive <name> --built "<what was built>" --differs "<how it differs>"` yourself once they say yes. Don't ask them to type it. Leave `--differs` out when nothing differs; `wm` writes `none`. The outcome lands in the proposal as `- **Built:**` and `- **Differs:**` lines under `## Outcome`.
 5. Run `wm check` and `wm status`.
 6. If the change belongs to a milestone, `wm archive` has already linked the archived change from its roadmap and written an `(archived)` record in its `## Log`. Ask whether the milestone's path changed: does the roadmap still fit? Change it only with `wm roadmap add`, `wm roadmap drop --reason` or `wm roadmap move`; a hand edit to a roadmap line is refused. A milestone closes with `wm close <milestone>` once every line on its roadmap is archived.
 7. Commit the record on the change's branch: the specs, the archived change and anything else `wm` rewrote.

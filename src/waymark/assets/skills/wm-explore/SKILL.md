@@ -59,7 +59,7 @@ Create a branch `plan-<name>` from the default branch, then run `wm new mileston
 
 ## Show the human
 
-In this order: for a resumed exploration, what it says and what has changed since; what the record says, the problem, the open questions, the approaches with their for, against and cost, and your recommendation. Then the four closing offers, numbered.
+In this order: for a resumed exploration, what it says and what has changed since; what the record says, the problem, the open questions, numbered Q1, Q2 and on, the approaches with their for, against and cost, lettered A, B and on, and your recommendation. Then the four closing offers, numbered 1 to 4. The labels keep an answer to a question apart from a choice of approach or offer: the human answers "Q2", picks "B", or takes offer "3".
 
 ## When to stop
 

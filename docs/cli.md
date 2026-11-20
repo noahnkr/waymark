@@ -260,7 +260,7 @@ wm sync <change> [--by NAME]
 
 ## wm archive
 
-Archive an applied change. For the human to run.
+Archive an applied change, once the human says yes.
 
 ```
 wm archive <change> [--built TEXT] [--differs TEXT] [--override REASON] [--by NAME]
