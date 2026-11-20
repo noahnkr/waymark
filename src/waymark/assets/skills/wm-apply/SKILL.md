@@ -1,13 +1,13 @@
 ---
 name: wm-apply
-description: Build an accepted Waymark change item by item - build each item yourself or delegate it to an implementer when it is tagged so, commit it, then review the whole change once and handle the verdict. Use when a change is accepted and ready to build.
+description: Build an accepted Waymark change item by item - build each item yourself, delegate it to an implementer, or hand it to the human, as its Build line says, commit it, then review the whole change once and handle the verdict. Use when a change is accepted and ready to build.
 ---
 
 # Apply
 
 ## Role
 
-You are the planner. You build each item yourself, from the record, unless its `- **Build:**` line says `delegate`: then a fresh implementer that sees only the record builds it. Either way the record is the source of truth. Once every item is built, the whole change is reviewed once, at its review level. You build or delegate, record, commit and review.
+You are the planner. You build each item yourself, from the record, unless its `- **Build:**` line names another role: for `implementer`, a fresh implementer that sees only the record builds it; for `human`, the human does it and you tick it after their yes. Either way the record is the source of truth. Once every item is built, the whole change is reviewed once, at its review level. You build or delegate, record, commit and review.
 
 ## Inputs
 
@@ -27,7 +27,7 @@ You are the planner. You build each item yourself, from the record, unless its `
 ### Step `apply`
 
 - If the commands start with `wm reopen`, run it first: a review of the change named this item to rebuild. Read what the review found with `wm show <name>` before you start.
-- `wm instructions` says who builds the item. An item with `- **Build:** planner`, you build yourself; one with `- **Build:** delegate`, you delegate.
+- `wm instructions` says who builds the item. An item with `- **Build:** planner`, you build yourself; one with `- **Build:** implementer`, you delegate to an implementer; one with `- **Build:** human`, you hand to the human.
 
 **An item with `- **Build:** planner`.**
 
@@ -40,7 +40,7 @@ You are the planner. You build each item yourself, from the record, unless its `
    - something outside the item stops you: `wm block <name> <item> "<reason>"`;
    - the record isn't enough to build it: `wm gap <name> <item> "<what is missing>"`.
 
-**An item with `- **Build:** delegate`.**
+**An item with `- **Build:** implementer`.**
 
 - Start the `wm-implementer` agent with a prompt of exactly `<name> <item>` and nothing else, for example `add-search-limit 1.2`. It builds its own context from the record.
 - When it returns, run `wm show <name> --json` and look at the item:
@@ -48,6 +48,14 @@ You are the planner. You build each item yourself, from the record, unless its `
   - an open `(blocked)` or `(gap)` record for it: that item waits on the human; go on to the next step;
   - neither, and the agent reported `partial`: delegate the item again;
   - neither, and your tool recorded nothing: record the result yourself with `wm tick`, `wm block` or `wm gap`, using the agent's own words.
+
+**An item with `- **Build:** human`.**
+
+The item is work only the human can do, such as filling in a form, a manual test or setting up a platform. Don't do it yourself, and don't start an implementer for it; `wm` refuses one.
+
+1. Give the human the item's criteria and verification as the steps to take, from `wm show <name>`.
+2. When they say it is done, run `wm tick <name> <item>`. Tick it only on their yes.
+3. If they can't do it now, run `wm block <name> <item> "waiting for <what>"` and go on with the change's other items. Once it is done, they settle it with `wm resolve`, and you tick it.
 
 A blocked item, or one with a spec gap, waits on the human; go on to the next step.
 
@@ -119,4 +127,4 @@ After the review: the verdict, and each finding with its severity and place. Whe
 - Whoever builds an item builds it from the record; what isn't written there gets written there first.
 - Start an implementer with the change and item only, and a reviewer with the change only. Don't explain the task in the prompt: what they need is in the record, and if it isn't, that is a spec gap.
 - Record a reviewer's verdict in the reviewer's words, never your retelling.
-- If your tool has no isolated agents, build a tagged item yourself as you would an untagged one. A change that needs an independent review then needs the human, or another session that didn't build it, to review it.
+- If your tool has no isolated agents, build an `implementer` item yourself as you would a `planner` one. A change that needs an independent review then needs the human, or another session that didn't build it, to review it.

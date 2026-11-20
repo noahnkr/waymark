@@ -31,7 +31,7 @@
 
 ## 2. Skills, docs and the archive
 
-- [ ] 2.1 Name the three roles in the skills and agent definitions
+- [x] 2.1 Name the three roles in the skills and agent definitions
   - **Build:** planner
   - **Criteria:**
     - `wm-propose` step 7 offers `planner`, `implementer` and `human`, saying when each fits, and `human` for work only the human can do, such as filling in a form, a manual test or setting up a platform
