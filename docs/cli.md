@@ -195,6 +195,19 @@ wm note <change> <item> <text> [--by NAME]
 - `text`: the note
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
+## wm revise
+
+Record why an accepted change was edited, before the human accepts it again.
+
+```
+wm revise <change> <why> [--parts PARTS] [--by NAME]
+```
+
+- `change`: the change's name
+- `why`: what the edit changed, and why
+- `--parts`: the parts it changed, separated by commas: item numbers, "proposal", "design" or "specs/<area>"
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+
 ## wm review
 
 Record a self-review of a change, once every item is ticked.

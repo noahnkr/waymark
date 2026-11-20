@@ -126,6 +126,7 @@ def test_accepting_again_after_an_edit_adds_an_acceptance_record(project: Worksp
     accepted(project)
     project.replace(PROPOSAL_FILE, "Paging.", "Paging and sorting.")
     assert project.change_state().acceptance is AcceptanceState.WITHDRAWN
+    lifecycle.revise(project.root, NAME, "paging and sorting", parts=["proposal"])
     lifecycle.accept(project.root, NAME, datetime.date(2026, 3, 1))
     text = project.read(TASKS_FILE)
     assert text.count("(accepted)") == 2
@@ -483,6 +484,7 @@ def test_accepted_again(project: Workspace) -> None:
     )
     assert project.change_state().acceptance is AcceptanceState.VALID
     project.write(f"changes/{NAME}/design.md", DESIGN.replace("after sorting", "after ranking"))
+    lifecycle.revise(project.root, NAME, "cut after ranking", DAY, parts=["design"])
     assert project.change_state().acceptance is AcceptanceState.WITHDRAWN
     lifecycle.accept(project.root, NAME, DAY)
     assert " items 1.1, 1.2, 1.3 by " in project.read(TASKS_FILE)

@@ -75,6 +75,7 @@ def test_scenario_accepted_again(latest: Workspace) -> None:
     )
     latest.replace(f"changes/{NAME}/design.md", "## Context", "## Context\n\nMore context.")
     assert latest.change_state().acceptance is AcceptanceState.WITHDRAWN
+    lifecycle.revise(latest.root, NAME, "more context", NEXT, parts=["design"])
     lifecycle.accept(latest.root, NAME, NEXT)
     accepted_lines = [line for line in log(latest).splitlines() if "(accepted)" in line]
     assert len(accepted_lines) == 2
@@ -91,6 +92,55 @@ def test_scenario_blocked_item(latest: Workspace) -> None:
         "\n- 2026-11-20 (blocked) 1.2 by planner for Sam Doe: the API key is missing\n"
     )
     assert "(blocked)" not in text.split("## Log")[0]
+
+
+def test_scenario_revision_recorded(latest: Workspace) -> None:
+    """Requirement "Revisions recorded": why an accepted change was edited, and what changed."""
+    accepted(latest)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "the count was 2, not 11", DAY, parts=["1.2"])
+    assert latest.read(TASKS_FILE).endswith(
+        "\n- 2026-11-20 (revised) 1.2 by planner for Sam Doe: the count was 2, not 11\n"
+    )
+
+
+def test_scenario_accepting_again_without_a_revision(latest: Workspace) -> None:
+    """Requirement "Revisions recorded": accepting again needs a revision first."""
+    accepted(latest)
+    latest.replace(f"changes/{NAME}/design.md", "## Context", "## Context\n\nMore context.")
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match="wm revise"):
+        lifecycle.accept(latest.root, NAME, NEXT)
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_scenario_accepting_again_after_a_revision(latest: Workspace) -> None:
+    """Requirement "Revisions recorded": once revised, the change can be accepted again."""
+    accepted(latest)
+    latest.replace(f"changes/{NAME}/design.md", "## Context", "## Context\n\nMore context.")
+    lifecycle.revise(latest.root, NAME, "more context", NEXT, parts=["design"])
+    lifecycle.accept(latest.root, NAME, NEXT)
+    kinds = [line.split(" ", 3)[2] for line in log(latest).splitlines() if line.startswith("- ")]
+    assert kinds[-2:] == ["(revised)", "(accepted)"]
+    assert latest.change_state().acceptance is AcceptanceState.VALID
+
+
+def test_scenario_unknown_part(latest: Workspace) -> None:
+    """Requirement "Revisions recorded": a part the change doesn't have is refused."""
+    accepted(latest)
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match=r"Item 3.1"):
+        lifecycle.revise(latest.root, NAME, "<why>", DAY, parts=["3.1"])
+    for part in ("specs/other", "tests"):
+        with pytest.raises(Refusal, match=part):
+            lifecycle.revise(latest.root, NAME, "<why>", DAY, parts=[part])
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_a_change_never_accepted_is_not_revised(latest: Workspace) -> None:
+    latest.change(tasks=TASKS)
+    with pytest.raises(Refusal, match="never been accepted"):
+        lifecycle.revise(latest.root, NAME, "<why>", DAY)
 
 
 def test_scenario_planners_note(latest: Workspace) -> None:

@@ -226,6 +226,12 @@ def _note(args: argparse.Namespace) -> int:
     return _report(done)
 
 
+def _revise(args: argparse.Namespace) -> int:
+    parts = [part.strip() for part in args.parts.split(",") if part.strip()]
+    done = lifecycle.revise(_here(), args.change, args.why, _today(), parts=parts, by=args.by)
+    return _report(done)
+
+
 def _review(args: argparse.Namespace) -> int:
     done = lifecycle.self_review(
         _here(),
@@ -559,6 +565,19 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     )
     note.add_argument("text", help="the note")
     _by(note)
+    summary = "Record why an accepted change was edited, before the human accepts it again."
+    revise = commands.add_parser("revise", help=summary, description=summary)
+    revise.add_argument("change", help="the change's name")
+    revise.add_argument("why", help="what the edit changed, and why")
+    revise.add_argument(
+        "--parts",
+        metavar="PARTS",
+        default="",
+        help='the parts it changed, separated by commas: item numbers, "proposal", "design" '
+        'or "specs/<area>"',
+    )
+    _by(revise)
+    revise.set_defaults(handler=_revise)
     finding_help = "a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable"
     summary = "Record a self-review of a change, once every item is ticked."
     review = commands.add_parser("review", help=summary, description=summary)

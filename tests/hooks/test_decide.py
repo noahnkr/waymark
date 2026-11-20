@@ -268,6 +268,12 @@ def test_implementer_may_run_wm_note_but_no_other_writing_command(accepted: Work
     assert not command(accepted, 'wm note add-limit 1.1 "x"', Role.REVIEWER).allow
 
 
+def test_agents_do_not_revise_a_change(accepted: Workspace) -> None:
+    for role in (Role.IMPLEMENTER, Role.REVIEWER):
+        assert not command(accepted, 'wm revise add-limit "x" --parts 1.1', role).allow
+    assert command(accepted, 'wm revise add-limit "x" --parts 1.1', Role.PLANNER).allow
+
+
 def test_scenario_implementers_note_without_by(accepted: Workspace) -> None:
     """Requirement "Who wrote a record": an implementer's own note names it, or is refused."""
     before = accepted.read(TASKS_FILE)

@@ -30,7 +30,7 @@
     - `wm archive` ends the change's Log with `(archived) by <who>` before it moves the change, in the same write
     - a refused archive writes nothing
   - **Verify:** tests named after the scenarios Archived change and Refused archive
-- [ ] 1.5 Record revisions, and require one before accepting again
+- [x] 1.5 Record revisions, and require one before accepting again
   - **Build:** planner
   - **Criteria:**
     - `wm revise <change> "<why>" [--parts <part>,...] [--by <who>]` writes `(revised)` into the Log, and refuses an unknown part and a change never accepted
@@ -62,3 +62,4 @@
 - 2026-11-20 (accepted) fingerprint d27e4d7c14b6a37d items 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by Noah Roberts
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.4 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.5 by planner for Noah Roberts

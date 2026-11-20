@@ -157,6 +157,7 @@ WRITES = frozenset(
         "block",
         "gap",
         "note",
+        "revise",
         "review",
         "verdict",
         "reopen",

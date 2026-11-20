@@ -128,6 +128,12 @@ def accept(start: Path, name: str, today: datetime.date, *, by: str | None = Non
         raise Refusal(f'The change "{name}" has a conflict to resolve first. {step.reason}')
     if state.acceptance is AcceptanceState.VALID:
         return Done(f'The change "{name}" is already accepted as it stands.')
+    if _unrevised(change):
+        raise Refusal(
+            f'The change "{name}" was accepted before, and nothing records what changed since. '
+            f'Record it first with "wm revise {name} "<why>" --parts <part>,...", naming the '
+            "parts the edit changed, then accept it again."
+        )
     if by is not None:
         who: str | None = _who(record, RecordKind.ACCEPTED, by)
     else:
@@ -240,6 +246,69 @@ def report_gap(
 ) -> Done:
     """Record that the record wasn't enough to build an item: a spec gap."""
     return _add_stopper(start, name, number, RecordKind.GAP, note, today=today, by=by)
+
+
+def revise(
+    start: Path,
+    name: str,
+    why: str,
+    today: datetime.date | None = None,
+    *,
+    parts: Sequence[str] = (),
+    by: str | None = None,
+) -> Done:
+    """Record why an accepted change was edited, and which parts the edit changed."""
+    record, change, _ = _open(start, name)
+    text = one_line(why, "why the change was revised")
+    if change.acceptance is None:
+        raise Refusal(
+            f'The change "{name}" has never been accepted, so there is no acceptance to revise. '
+            "Edit it, and the human accepts it once it is ready."
+        )
+    known = _revisable_parts(change)
+    unknown = [part for part in parts if part not in known]
+    if unknown:
+        raise Refusal(
+            f"{_part_names(unknown)} {'is' if len(unknown) == 1 else 'are'} not part of "
+            f'"{name}". Name its items by number, "proposal", "design", or "specs/<area>" for '
+            f"one of its deltas: {', '.join(sorted(known))}."
+        )
+    entry = records.Record(
+        RecordKind.REVISED,
+        _today(today),
+        who=_who(record, RecordKind.REVISED, by),
+        text=text,
+        parts=tuple(dict.fromkeys(parts)) or None,
+    )
+    paths = _write_tasks(record, change, append_log(_tasks(change), _render(entry)))
+    return Done(
+        f'Recorded the revision of "{name}". The human accepts it again with "wm accept {name}".',
+        paths,
+    )
+
+
+def _revisable_parts(change: Change) -> set[str]:
+    """The parts of a change a revision can name."""
+    parts = {"proposal", *(f"specs/{area}" for area in change.deltas)}
+    if change.design is not None:
+        parts.add("design")
+    if change.tasks is not None:
+        parts.update(item.number for item in change.tasks.items)
+    return parts
+
+
+def _part_names(parts: Sequence[str]) -> str:
+    """Parts as a message names them: an item by its number, anything else in quotes."""
+    return ", ".join(f"Item {part}" if part[:1].isdigit() else f'"{part}"' for part in parts)
+
+
+def _unrevised(change: Change) -> bool:
+    """Whether the change was accepted before and no revision follows its last acceptance."""
+    log = change.tasks.log if change.tasks else ()
+    accepted = [index for index, entry in enumerate(log) if entry.kind is RecordKind.ACCEPTED]
+    if not accepted:
+        return False
+    return not any(entry.kind is RecordKind.REVISED for entry in log[accepted[-1] + 1 :])
 
 
 def add_note(

@@ -401,6 +401,7 @@ def test_archive_rewrites_links_inside_the_moved_files(project: Workspace) -> No
         "Cut the list; see [export](../../specs/export.md), the [tasks](tasks.md), "
         "the [readme](../../../README.md) and [the web](https://example.com/a.md).",
     )
+    lifecycle.revise(project.root, NAME, "linked the export spec", DAY, parts=["design"])
     lifecycle.accept(project.root, NAME, DAY)
     lifecycle.archive(project.root, NAME, LATER, built="Done.")
     text = project.read(f"{ARCHIVED}/design.md")
@@ -494,6 +495,7 @@ def test_second_archive_of_overlapping_changes_is_blocked_until_accepted_again(
         lifecycle.archive(project.root, "cut-limit", LATER, built="Ten.")
     assert "twenty" in project.read("specs/search.md")
 
+    lifecycle.revise(project.root, "cut-limit", "rebased on the merged spec", LATER)
     lifecycle.accept(project.root, "cut-limit", LATER)
     lifecycle.archive(project.root, "cut-limit", LATER, built="Ten.")
     assert "at most ten results" in project.read("specs/search.md")
