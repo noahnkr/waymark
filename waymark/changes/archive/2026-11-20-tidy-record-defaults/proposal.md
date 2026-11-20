@@ -39,3 +39,8 @@ Some of what `wm new` writes into a new record file differs from file to file, a
   - New explorations have no comment under their Status line.
   - `wm check --fix` makes charter glossary entries bold.
 - **Code:** creating a change in `services/setup.py`, the proposal check in `record/artifacts/proposal.py` and `record/artifacts/changes.py`, the exploration template, the charter in `services/fix.py` and `record/writing/layout.py`, the propose guidance in `services/instructions.py`, the `wm-propose` skill, `docs/record.md` and the CHANGELOG.
+
+## Outcome
+
+- **Built:** Every new change gets a '- **Review:**' line with the project default (self on the short path when the default is independent), and an active change without one is reported as missing-review. wm check --fix makes charter glossary entries bold. New explorations have no comment under their Status line. The skill, docs and CHANGELOG match.
+- **Differs:** Changing default_review no longer withdraws an existing change's acceptance, and a test that relied on the old behavior was changed. Most test fixtures now write a Review line. Two self-review suggestions are left open: the default stands in for a missing line until it is written, and the line comes after Milestone, After and Path rather than straight under Owner.
