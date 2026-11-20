@@ -10,6 +10,17 @@ All notable changes to Waymark, one entry per release.
   A, B and closing offers 1 to 4, so an answer can't be mistaken for a choice.
   `wm-propose` writes its own bold step names with the colon inside the bold,
   as `wm check` expects of labels.
+- **Behavior change: every change has a Review line.** `wm new change` writes
+  `- **Review:** <level>` with the project's `default_review` (`self` on the
+  short path when the default is `independent`), and `wm check` reports an active
+  change without one as `missing-review`. The level is read from the line, so
+  changing `default_review` no longer changes the level of a change already
+  written.
+- **New explorations have no comment under their Status line.** The other
+  sections keep their comments and examples.
+- **`wm check --fix` makes charter glossary entries bold.** An entry written
+  `- <term>: <meaning>` or `- **<term>**: <meaning>` becomes
+  `- **<term>:** <meaning>`.
 
 ## [0.5.0] - 2026-11-19
 

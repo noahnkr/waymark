@@ -343,8 +343,8 @@ A change is reviewed once, as a whole, after every item is ticked. The review
 checks it against its deltas' scenarios, its design and each item's criteria: is
 it complete, correct and coherent?
 
-The change's level is the `- **Review:**` line in its proposal, or the project's
-`default_review` when the line is absent:
+The change's level is the `- **Review:**` line in its proposal. `wm new change`
+writes it with the project's `default_review`, and the planner sets it:
 
 | Level | For | What is recorded |
 |---|---|---|

@@ -22,7 +22,7 @@
 
 ## 2. Docs and skills
 
-- [ ] 2.1 Update the skill, docs and CHANGELOG
+- [x] 2.1 Update the skill, docs and CHANGELOG
   - **Build:** planner
   - **Criteria:**
     - `wm-propose` step 6 says the Review line is already written with the project default, and the planner sets its value
