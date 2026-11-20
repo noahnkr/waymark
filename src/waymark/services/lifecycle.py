@@ -40,8 +40,8 @@ from waymark.record.state import (
     led_to_done,
     milestone_state,
 )
-from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
-from waymark.record.writing.edits import append_log, edit_item, set_outcome
+from waymark.record.terms import BuildRole, ReviewLevel, ReviewSeverity, Verdict
+from waymark.record.writing.edits import append_log, set_outcome
 from waymark.record.writing.moves import rewrite_links, tick_roadmap_lines
 from waymark.record.writing.store import Transaction
 from waymark.services.common import (
@@ -153,8 +153,18 @@ def accept(start: Path, name: str, today: datetime.date, *, by: str | None = Non
     return Done(f'Accepted "{name}". Its items can now be applied.', commit(transaction))
 
 
-def tick(start: Path, name: str, number: str) -> Done:
-    """Tick an item: it has been applied."""
+def tick(
+    start: Path,
+    name: str,
+    number: str,
+    today: datetime.date | None = None,
+    *,
+    by: str | None = None,
+) -> Done:
+    """Tick an item: it has been applied. A ``(ticked)`` record says when, and who.
+
+    The tick of an item the human does names the human; any other names the planner.
+    """
     record, change, state = _open(start, name)
     _require_accepted(state)
     item = find_item(change, number)
@@ -172,7 +182,9 @@ def tick(start: Path, name: str, number: str) -> Done:
             f"A review asked for changes to item {number}. Reopen it first with "
             f'"wm reopen {name} {number}".'
         )
-    paths = _write_tasks(record, change, edit_item(_tasks(change), number, ticked=True))
+    who = _who(record, RecordKind.TICKED, by, human=item.build is BuildRole.HUMAN)
+    line = _render(records.Record(RecordKind.TICKED, _today(today), who=who, item=number))
+    paths = _write_tasks(record, change, append_log(_tasks(change), line, tick=number))
     return Done(f"Ticked item {number} of {name}.", paths)
 
 

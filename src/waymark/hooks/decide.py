@@ -412,7 +412,7 @@ def _record(project: Project, role: Role, message: str, today: datetime.date) ->
     (name, number), (word, note) = address[-1], outcome[-1]
     root = project.root
     if word == "done":
-        return lifecycle.tick(root, name, number)
+        return lifecycle.tick(root, name, number, today, by=IMPLEMENTER)
     if word == "blocked":
         return lifecycle.block(root, name, number, note, today, by=IMPLEMENTER)
     if word == "spec-gap":

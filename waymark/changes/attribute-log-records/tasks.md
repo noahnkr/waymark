@@ -17,7 +17,7 @@
     - an implementer's `wm note` without `--by implementer` is refused, naming the flag
     - records already written are read as they are
   - **Verify:** tests named after the scenarios Planner's note, Human's acceptance, Reviewer's verdict, Explicit author, Implementer's note without --by, Blocked item, Resolved item keeps its blocker, Blocker shown with its item, Note in the implementer's pack, Implementer partly done, Reviewer in the background, Item added after a pass, Planned roadmap line, Log of a plan's changes and Member change archived
-- [ ] 1.3 Record each tick
+- [x] 1.3 Record each tick
   - **Build:** planner
   - **Criteria:**
     - `wm tick` writes `(ticked) <item>` into the Log with the checkbox, in one write, naming the git user for a `human` item and `planner for <git user>` for any other, and takes `--by`
@@ -60,3 +60,4 @@
 ## Log
 
 - 2026-11-20 (accepted) fingerprint d27e4d7c14b6a37d items 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by Noah Roberts
+- 2026-11-20 (ticked) 1.3 by planner for Noah Roberts

@@ -208,7 +208,7 @@ def _accept(args: argparse.Namespace) -> int:
 
 
 def _tick(args: argparse.Namespace) -> int:
-    return _report(lifecycle.tick(_here(), args.change, args.item))
+    return _report(lifecycle.tick(_here(), args.change, args.item, _today(), by=args.by))
 
 
 def _block(args: argparse.Namespace) -> int:
@@ -412,11 +412,14 @@ def _item_command(
 
 
 def _by(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    """Add --by: who the record names as its writer (default: your git name)."""
+    """Add --by: who the record names as its writer, in place of who its kind names."""
     parser.add_argument(
         "--by",
         metavar="NAME",
-        help="who the record names as its writer (default: your git name)",
+        help=(
+            "who the record names as its writer (default: your git name for your own acts, "
+            '"planner for <your git name>" for what the planner writes)'
+        ),
     )
     return parser
 
@@ -538,7 +541,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     _by(accept)
     accept.set_defaults(handler=_accept)
 
-    _item_command(commands, "tick", _tick, "Tick an item: it has been applied.")
+    _by(_item_command(commands, "tick", _tick, "Tick an item: it has been applied."))
     block = _item_command(commands, "block", _block, "Record that an item is blocked.")
     block.add_argument("reason", help="why it is blocked")
     _by(block)

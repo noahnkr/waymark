@@ -168,9 +168,12 @@ def test_items_of_a_change_whose_acceptance_was_withdrawn_cannot_be_applied(
 def test_tick_marks_the_item_and_changes_no_other_line(project: Workspace) -> None:
     accepted(project)
     before = project.read(TASKS_FILE)
-    done = lifecycle.tick(project.root, NAME, "1.1")
+    done = lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert done.paths == (TASKS_FILE,)
-    assert project.read(TASKS_FILE) == before.replace("- [ ] 1.1", "- [x] 1.1")
+    assert project.read(TASKS_FILE) == (
+        before.replace("- [ ] 1.1", "- [x] 1.1")
+        + "- 2026-01-15 (ticked) 1.1 by planner for Sam Doe\n"
+    )
     state = project.change_state()
     assert state.acceptance is AcceptanceState.VALID
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.2")
@@ -192,7 +195,7 @@ def test_self_review_with_a_finding(project: Workspace) -> None:
     text = project.read(TASKS_FILE)
     assert text.startswith(TASKS.replace("- [ ]", "- [x]") + REVIEW + "- 2026-01-15 (accepted) ")
     assert text.endswith(
-        " by Sam Doe\n"
+        " by planner for Sam Doe\n"
         "- 2026-01-15 (self-review) covers 1.1, 1.2 by planner for Sam Doe: matches the criteria\n"
         "  - [warning] `src/a.py:12`: the name is vague\n"
     )
@@ -446,7 +449,8 @@ def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Wo
         + "- 2026-01-15 (accepted) "
     )
     assert text.endswith(
-        " by Sam Doe\n- 2026-01-15 (self-review) covers 1.1 by planner for Sam Doe: fine\n"
+        "(ticked) 1.1 by planner for Sam Doe\n"
+        "- 2026-01-15 (self-review) covers 1.1 by planner for Sam Doe: fine\n"
     )
 
 

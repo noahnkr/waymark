@@ -325,7 +325,7 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
     assert items["1.1"]["build"] == "planner"
     assert (items["1.4"]["title"], items["1.4"]["build"]) == ("Translate it", "implementer")
     assert all("delegate" not in item for item in payload["items"])
-    assert items["1.1"]["records"] == []
+    assert [record["kind"] for record in items["1.1"]["records"]] == ["ticked"]
     assert items["1.2"]["blocked"] == "waiting for the wording"
     assert items["1.3"]["spec_gap"] == "which channel?"
     assert items["1.3"]["needs_human"] == "the builder found a spec gap: which channel?"
@@ -335,7 +335,7 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
         "reopen": [],
         "needs_human": None,
     }
-    assert [record["kind"] for record in payload["log"]] == ["accepted", "blocked", "gap"]
+    assert [record["kind"] for record in payload["log"]] == ["accepted", "ticked", "blocked", "gap"]
     assert [record["kind"] for record in items["1.2"]["records"]] == ["blocked"]
     text = render.to_text(payload, PLAIN)
     for expected in ("Change: add-order", "Owner: Sam Doe", "Blocked: waiting for the wording"):
@@ -362,7 +362,7 @@ def test_show_change_gives_the_changes_review_and_its_findings(project: Workspac
         "reopen": [],
         "needs_human": None,
     }
-    accepted, review = payload["log"]
+    accepted, review = [record for record in payload["log"] if record["kind"] != "ticked"]
     assert (accepted["kind"], accepted["items"]) == ("accepted", ["1.1"])
     keys = ("kind", "date", "verdict", "text", "covers", "findings")
     assert {key: review[key] for key in keys} == {
@@ -618,7 +618,8 @@ def test_show_change_gives_what_a_review_of_added_items_covers(project: Workspac
     lifecycle.tick(project.root, "add-limit", "1.3")
     lifecycle.self_review(project.root, "add-limit", "named well", DAY)
     payload = valid(payloads.show(project.record(), "add-limit"))
-    assert [record["covers"] for record in payload["log"]] == [[], ["1.1", "1.2"], ["1.3"]]
+    reviews = [record for record in payload["log"] if record["kind"] != "ticked"]
+    assert [record["covers"] for record in reviews] == [[], ["1.1", "1.2"], ["1.3"]]
     text = render.to_text(payload, PLAIN)
     assert "2026-01-15 (self-review) covers 1.3 by planner for Sam Doe: named well" in text
 

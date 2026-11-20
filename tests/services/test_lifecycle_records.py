@@ -109,6 +109,37 @@ def test_scenario_humans_acceptance(latest: Workspace) -> None:
     assert line.endswith(" by Sam Doe")
 
 
+def test_scenario_planners_item_ticked(latest: Workspace) -> None:
+    """Requirement "Item records": a planner item's tick names the planner, and keeps acceptance."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    text = latest.read(TASKS_FILE)
+    assert "- [x] 1.1" in text
+    assert text.endswith("\n- 2026-11-20 (ticked) 1.1 by planner for Sam Doe\n")
+    assert latest.change_state().acceptance is AcceptanceState.VALID
+
+
+def test_scenario_humans_item_ticked(latest: Workspace) -> None:
+    """Requirement "Item records": the tick of an item the human did names the human."""
+    accepted(
+        latest,
+        TASKS.replace(
+            "  - **Build:** planner\n  - **Criteria:** the help",
+            "  - **Build:** human\n  - **Criteria:** the help",
+        ),
+    )
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    assert latest.read(TASKS_FILE).endswith("\n- 2026-11-20 (ticked) 1.2 by Sam Doe\n")
+
+
+def test_scenario_implementers_item_ticked(latest: Workspace) -> None:
+    """Requirement "Item records": an implementer's tick, recorded from its ending."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY, by="implementer")
+    assert latest.read(TASKS_FILE).endswith("\n- 2026-11-20 (ticked) 1.1 by implementer\n")
+
+
 def test_scenario_record_added(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.block(latest.root, NAME, "1.2", "the key", DAY)
@@ -283,7 +314,12 @@ def test_the_archived_change_reads_back_its_records(latest: Workspace) -> None:
     change = load_archived_change(record, record.archived_changes[0])
     assert change.problems == ()
     assert change.tasks is not None
-    assert [r.kind for r in change.tasks.log] == [RecordKind.ACCEPTED, RecordKind.SELF_REVIEW]
+    assert [r.kind for r in change.tasks.log] == [
+        RecordKind.ACCEPTED,
+        RecordKind.TICKED,
+        RecordKind.TICKED,
+        RecordKind.SELF_REVIEW,
+    ]
 
 
 SHOP = (("", PureWindowsPath("C:/work/shop")),)

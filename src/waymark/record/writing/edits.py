@@ -29,26 +29,26 @@ def _set_tick(tasks: Tasks, lines: list[str], number: str, ticked: bool) -> None
     lines[item.index] = _BOX.sub(f"- [{mark}]", lines[item.index], count=1)
 
 
-def edit_item(tasks: Tasks, number: str, *, ticked: bool) -> str:
-    """Tick an item, or take its tick off."""
-    lines = _lines(tasks.doc)
-    _set_tick(tasks, lines, number, ticked)
-    return "".join(lines)
-
-
 def append_log(
-    tasks: Tasks, record: str, findings: Sequence[str] = (), *, untick: str | None = None
+    tasks: Tasks,
+    record: str,
+    findings: Sequence[str] = (),
+    *,
+    untick: str | None = None,
+    tick: str | None = None,
 ) -> str:
     """Append a record, and the findings under it, to the change's Log section.
 
     The section is created at the end of the task list when it isn't there yet.
     ``untick`` names an item whose tick comes off in the same edit, as a reopening
-    or a resolution does. Records are never removed; a later record supersedes an
-    earlier one.
+    or a resolution does, and ``tick`` one whose tick goes on, as ``(ticked)`` does.
+    Records are never removed; a later record supersedes an earlier one.
     """
     lines = _lines(tasks.doc)
     if untick is not None:
         _set_tick(tasks, lines, untick, ticked=False)
+    if tick is not None:
+        _set_tick(tasks, lines, tick, ticked=True)
     return _append_to_section(tasks, lines, LOG_SECTION, record, findings)
 
 

@@ -706,22 +706,28 @@ def test_main_session_stopping_is_not_wm_business(accepted: Workspace) -> None:
     assert stop(accepted, Role.PLANNER, "nothing special") == Decision()
 
 
-def test_implementer_done_in_the_foreground_ticks_the_item(accepted: Workspace) -> None:
+def test_scenario_implementer_done_in_the_foreground(accepted: Workspace) -> None:
+    """Requirement "Ending recorded from a final message": done ticks it, by implementer."""
     decision = stop(
         accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: done: built", agent_id="a1"
     )
     assert decision.allow
-    assert "- [x] 1.1" in accepted.read(TASKS_FILE)
+    text = accepted.read(TASKS_FILE)
+    assert "- [x] 1.1" in text
+    assert text.endswith(f"- {DAY.isoformat()} (ticked) 1.1 by implementer\n")
     assert markers(accepted) == []
 
 
-def test_implementer_in_the_background_ticks_the_item(accepted: Workspace) -> None:
+def test_scenario_implementer_in_the_background(accepted: Workspace) -> None:
+    """Requirement "Ending recorded from a handed-back report": done ticks it, by implementer."""
     decision = handback(
         accepted, Role.IMPLEMENTER, "Built it.\n\nITEM: add-limit 1.1\nRESULT: done: built"
     )
     assert decision.allow
     assert decision.notice.startswith("Waymark: ")
-    assert "- [x] 1.1" in accepted.read(TASKS_FILE)
+    text = accepted.read(TASKS_FILE)
+    assert "- [x] 1.1" in text
+    assert text.endswith(f"- {DAY.isoformat()} (ticked) 1.1 by implementer\n")
     assert markers(accepted) == ["agent-1"]
 
 
