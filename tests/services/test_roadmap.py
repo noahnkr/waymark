@@ -98,7 +98,7 @@ def test_scenario_log_of_a_plans_changes(project: Workspace) -> None:
 def test_records_name_the_git_user_without_by(project: Workspace) -> None:
     project.write(FILE, milestone())
     roadmap.add(project.root, "faster-search", "add-cache", "cache", DAY)
-    assert log(project) == ["2026-11-20 (added) add-cache by Sam Doe: cache"]
+    assert log(project) == ["2026-11-20 (added) add-cache by planner for Sam Doe: cache"]
 
 
 def test_the_roadmap_keeps_its_line_endings(project: Workspace) -> None:

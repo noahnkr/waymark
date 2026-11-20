@@ -822,7 +822,7 @@ def test_scenario_planned_roadmap_line(project: Workspace) -> None:
     )
     assert project.read(MILESTONE_FILE).endswith(
         "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"
-        "- add-cache\n\n## Log\n\n- 2026-11-20 (proposed) add-limit by Sam Doe\n"
+        "- add-cache\n\n## Log\n\n- 2026-11-20 (proposed) add-limit by planner for Sam Doe\n"
     )
     found = check.check(project.root, datetime.datetime(2026, 3, 1, tzinfo=datetime.UTC))
     assert [f.code for f in found if "milestone" in f.code] == []

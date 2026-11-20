@@ -87,8 +87,26 @@ def test_scenario_blocked_item(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.block(latest.root, NAME, "1.2", "the API key is missing", DAY)
     text = latest.read(TASKS_FILE)
-    assert text.endswith("\n- 2026-11-20 (blocked) 1.2 by Sam Doe: the API key is missing\n")
+    assert text.endswith(
+        "\n- 2026-11-20 (blocked) 1.2 by planner for Sam Doe: the API key is missing\n"
+    )
     assert "(blocked)" not in text.split("## Log")[0]
+
+
+def test_scenario_planners_note(latest: Workspace) -> None:
+    """Requirement "Who wrote a record": the planner's note names the planner and the human."""
+    accepted(latest)
+    lifecycle.add_note(latest.root, NAME, "1.2", "the parser is done", DAY)
+    assert latest.read(TASKS_FILE).endswith(
+        "\n- 2026-11-20 (note) 1.2 by planner for Sam Doe: the parser is done\n"
+    )
+
+
+def test_scenario_humans_acceptance(latest: Workspace) -> None:
+    """Requirement "Who wrote a record": the human's acceptance names the git user alone."""
+    accepted(latest)
+    [line] = [line for line in latest.read(TASKS_FILE).splitlines() if "(accepted)" in line]
+    assert line.endswith(" by Sam Doe")
 
 
 def test_scenario_record_added(latest: Workspace) -> None:
@@ -119,7 +137,7 @@ def test_an_open_blocker_is_resolved_before_another(latest: Workspace) -> None:
 def test_a_gap_is_a_record_too(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.report_gap(latest.root, NAME, "1.2", "the maximum", DAY)
-    assert "- 2026-11-20 (gap) 1.2 by Sam Doe: the maximum\n" in latest.read(TASKS_FILE)
+    assert "- 2026-11-20 (gap) 1.2 by planner for Sam Doe: the maximum\n" in latest.read(TASKS_FILE)
     assert latest.record().changes[NAME].tasks.item("1.2").spec_gap == "the maximum"  # type: ignore[union-attr]
 
 
@@ -127,7 +145,7 @@ def test_scenario_note_on_an_unticked_item(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.add_note(latest.root, NAME, "1.2", "the parser is done; the CLI flag is not", DAY)
     assert (
-        "- 2026-11-20 (note) 1.2 by Sam Doe: the parser is done; the CLI flag is not\n"
+        "- 2026-11-20 (note) 1.2 by planner for Sam Doe: the parser is done; the CLI flag is not\n"
         in latest.read(TASKS_FILE)
     )
     assert latest.change_state().acceptance is AcceptanceState.VALID
@@ -169,7 +187,7 @@ def test_scenario_self_review_with_a_finding(latest: Workspace) -> None:
     )
     text = latest.read(TASKS_FILE)
     assert text.endswith(
-        "- 2026-11-20 (self-review) covers 1.1, 1.2 by Sam Doe: <summary>\n"
+        "- 2026-11-20 (self-review) covers 1.1, 1.2 by planner for Sam Doe: <summary>\n"
         "  - [warning] `src/a.py:12`: <text>\n"
     )
 
@@ -205,14 +223,14 @@ def test_a_changes_verdict_and_reopening_are_records(latest: Workspace) -> None:
         "the cap is off by one",
         DAY,
         items=["1.1"],
-        by="wm-reviewer",
+        by="reviewer",
     )
     assert (
-        "- 2026-11-20 (review) changes 1.1; covers 1.1, 1.2 by wm-reviewer: the cap is off by one\n"
+        "- 2026-11-20 (review) changes 1.1; covers 1.1, 1.2 by reviewer: the cap is off by one\n"
         in log(latest)
     )
     lifecycle.reopen(latest.root, NAME, "1.1", NEXT)
-    assert "- 2026-11-21 (reopened) 1.1 by Sam Doe\n" in latest.read(TASKS_FILE)
+    assert "- 2026-11-21 (reopened) 1.1 by planner for Sam Doe\n" in latest.read(TASKS_FILE)
     assert not latest.record().changes[NAME].tasks.item("1.1").ticked  # type: ignore[union-attr]
 
 
@@ -231,7 +249,7 @@ def test_sync_records_the_merge_and_keeps_the_acceptance(latest: Workspace) -> N
     assert latest.read(PROPOSAL_FILE) == before
     [synced] = [line for line in log(latest).splitlines() if "(synced)" in line]
     assert synced.startswith("- 2026-11-21 (synced) fingerprint ")
-    assert synced.endswith(" by Sam Doe")
+    assert synced.endswith(" by planner for Sam Doe")
     change = latest.record().changes[NAME]
     assert change.synced == NEXT
     assert latest.change_state().acceptance is AcceptanceState.VALID
@@ -325,7 +343,7 @@ def test_scenario_code_repo_of_an_atlas(
         "fine",
         DAY,
         findings=[f"warning: {api / 'src' / 'limit.py'}:12: the limit is not checked"],
-        by="wm-reviewer",
+        by="reviewer",
     )
     assert "  - [warning] `api/src/limit.py:12`: the limit is not checked\n" in log(latest)
 

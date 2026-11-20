@@ -170,7 +170,7 @@ def test_delegation_to_a_reviewer_needs_something_to_review(project: Workspace) 
 def passed_then_added(project: Workspace) -> Workspace:
     """Item 1.1 passed an independent review; then item 1.2 was added and ticked."""
     built_for_review(project)
-    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="wm-reviewer")
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="reviewer")
     project.replace(
         TASKS_FILE,
         "  - **Verify:** a test\n",
@@ -183,7 +183,7 @@ def passed_then_added(project: Workspace) -> Workspace:
 
 def test_reviewer_is_started_on_an_item_added_after_a_pass(project: Workspace) -> None:
     built_for_review(project)
-    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="wm-reviewer")
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="reviewer")
     assert "already has the review it needs" in delegate(project, assets.REVIEWER, NAME).reason
     project.replace(
         TASKS_FILE,
@@ -200,8 +200,8 @@ def test_reviewer_verdict_on_an_added_item_covers_just_it(project: Workspace) ->
     passed_then_added(project)
     assert stop(project, Role.REVIEWER, "CHANGE: add-limit\nVERDICT: pass: named well").allow
     text = project.read(TASKS_FILE)
-    assert "- 2026-01-15 (review) pass covers 1.1 by wm-reviewer: fine\n" in text
-    assert text.endswith("- 2026-01-15 (review) pass covers 1.2 by wm-reviewer: named well\n")
+    assert "- 2026-01-15 (review) pass covers 1.1 by reviewer: fine\n" in text
+    assert text.endswith("- 2026-01-15 (review) pass covers 1.2 by reviewer: named well\n")
     assert project.change_state().applied
 
 
@@ -246,7 +246,7 @@ def test_scenario_implementer_writes_a_note_by_hand(accepted: Workspace) -> None
         TASKS_FILE,
         "items 1.1, 1.2 by Sam Doe\n",
         "items 1.1, 1.2 by Sam Doe\n"
-        "- 2026-01-15 (note) 1.2 by wm-implementer: the cap sits after sorting\n",
+        "- 2026-01-15 (note) 1.2 by implementer: the cap sits after sorting\n",
         Role.IMPLEMENTER,
     )
     assert not decision.allow
@@ -262,12 +262,24 @@ def test_implementer_may_not_edit_any_record_file(accepted: Workspace) -> None:
 
 
 def test_implementer_may_run_wm_note_but_no_other_writing_command(accepted: Workspace) -> None:
-    note = command(
-        accepted, 'wm note add-limit 1.1 "half done" --by wm-implementer', Role.IMPLEMENTER
-    )
+    note = command(accepted, 'wm note add-limit 1.1 "half done" --by implementer', Role.IMPLEMENTER)
     assert note.allow
     assert not command(accepted, "wm tick add-limit 1.1", Role.IMPLEMENTER).allow
     assert not command(accepted, 'wm note add-limit 1.1 "x"', Role.REVIEWER).allow
+
+
+def test_scenario_implementers_note_without_by(accepted: Workspace) -> None:
+    """Requirement "Who wrote a record": an implementer's own note names it, or is refused."""
+    before = accepted.read(TASKS_FILE)
+    for line in (
+        'wm note add-limit 1.1 "the parser is done"',
+        'wm note add-limit 1.1 "x" --by Ada',
+    ):
+        decision = command(accepted, line, Role.IMPLEMENTER)
+        assert not decision.allow
+        assert "--by implementer" in decision.reason
+    assert accepted.read(TASKS_FILE) == before
+    assert command(accepted, 'wm note add-limit 1.1 "x" --by=implementer', Role.IMPLEMENTER).allow
 
 
 def test_specs_are_never_edited_by_an_agent(accepted: Workspace) -> None:
@@ -573,7 +585,7 @@ def test_implementer_blocked_writes_the_blocked_line(accepted: Workspace) -> Non
         accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: blocked - the index is down"
     )
     assert decision.allow
-    assert "- 2026-01-15 (blocked) 1.1 by wm-implementer: the index is down\n" in accepted.read(
+    assert "- 2026-01-15 (blocked) 1.1 by implementer: the index is down\n" in accepted.read(
         TASKS_FILE
     )
     assert "- [ ] 1.1" in accepted.read(TASKS_FILE)
@@ -581,16 +593,14 @@ def test_implementer_blocked_writes_the_blocked_line(accepted: Workspace) -> Non
 
 def test_implementer_spec_gap_writes_the_spec_gap_line(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: spec-gap: empty query?")
-    assert "- 2026-01-15 (gap) 1.1 by wm-implementer: empty query?\n" in accepted.read(TASKS_FILE)
+    assert "- 2026-01-15 (gap) 1.1 by implementer: empty query?\n" in accepted.read(TASKS_FILE)
     assert accepted.change_state().items[0].escalated is not None
 
 
-def test_implementer_partial_leaves_a_note_and_the_item_unticked(accepted: Workspace) -> None:
+def test_scenario_implementer_partly_done(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: partial: the test is missing")
     text = accepted.read(TASKS_FILE)
-    assert text.endswith(
-        "- 2026-01-15 (note) 1.1 by wm-implementer: partial: the test is missing\n"
-    )
+    assert text.endswith("- 2026-01-15 (note) 1.1 by implementer: partial: the test is missing\n")
     assert "- [ ] 1.1" in text
     assert accepted.change_state().next_step.item == "1.1"
 
@@ -605,7 +615,7 @@ def test_reviewer_verdict_is_written_from_its_own_words(project: Workspace) -> N
     )
     assert decision.allow
     assert project.read(TASKS_FILE).endswith(
-        "- 2026-01-15 (review) pass covers 1.1 by wm-reviewer: boundary covered at 50 and 51\n"
+        "- 2026-01-15 (review) pass covers 1.1 by reviewer: boundary covered at 50 and 51\n"
         "  - [suggestion] `docs/search.md`: say the limit\n"
     )
     assert project.change_state().applied
@@ -620,7 +630,7 @@ def test_reviewer_changes_verdict_names_the_items_to_rebuild(project: Workspace)
         "CHANGE: add-limit\nVERDICT: changes 1.1: off by one at 50",
     )
     text = project.read(TASKS_FILE)
-    assert "- 2026-01-15 (review) changes 1.1; covers 1.1 by wm-reviewer: off by one at 50" in text
+    assert "- 2026-01-15 (review) changes 1.1; covers 1.1 by reviewer: off by one at 50" in text
     assert "  - [critical] `src/search.py:12`: fifty-one come back" in text
     assert project.change_state().review.reopen == ("1.1",)
 
@@ -717,17 +727,17 @@ def test_implementer_in_the_background_ticks_the_item(accepted: Workspace) -> No
 
 def test_handback_records_every_result_as_a_final_message_would(accepted: Workspace) -> None:
     handback(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: blocked: no database")
-    assert " by wm-implementer: no database\n" in accepted.read(TASKS_FILE)
+    assert " by implementer: no database\n" in accepted.read(TASKS_FILE)
 
 
-def test_reviewer_in_the_background(project: Workspace) -> None:
+def test_scenario_reviewer_in_the_background(project: Workspace) -> None:
     built_for_review(project)
     decision = handback(
         project, Role.REVIEWER, "CHANGE: add-limit\nVERDICT: pass: boundary covered at 50"
     )
     assert decision.allow
     assert (
-        "- 2026-01-15 (review) pass covers 1.1 by wm-reviewer: boundary covered at 50"
+        "- 2026-01-15 (review) pass covers 1.1 by reviewer: boundary covered at 50"
         in project.read(TASKS_FILE)
     )
     assert project.change_state().applied

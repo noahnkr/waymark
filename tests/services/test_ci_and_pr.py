@@ -195,7 +195,7 @@ def test_pr_text_gives_the_changes_review_and_its_findings(project: Workspace) -
     body = describe(project.record(), NAME)["body"]
     assert (
         "## Review\n\nSelf-reviewed: fine\n\n"
-        "- 2026-01-15 (self-review) covers 1.1, 1.2 by Sam Doe: fine\n"
+        "- 2026-01-15 (self-review) covers 1.1, 1.2 by planner for Sam Doe: fine\n"
         "  - [warning] `src/a.py:3`: the name is vague\n"
     ) in body
 
@@ -208,10 +208,13 @@ def test_pr_text_lists_every_review_record(project: Workspace) -> None:
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fixed", DAY, by="wm-reviewer")
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fixed", DAY, by="reviewer")
     body = describe(project.record(), NAME)["body"]
-    assert "- 2026-01-15 (review) changes 1.1; covers 1.1, 1.2 by Sam Doe: off by one\n" in body
-    assert "- 2026-01-15 (review) pass covers 1.1, 1.2 by wm-reviewer: fixed\n" in body
+    assert (
+        "- 2026-01-15 (review) changes 1.1; covers 1.1, 1.2 by planner for Sam Doe: off by one\n"
+        in body
+    )
+    assert "- 2026-01-15 (review) pass covers 1.1, 1.2 by reviewer: fixed\n" in body
     assert "(accepted)" not in body
 
 

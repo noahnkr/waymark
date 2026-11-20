@@ -38,11 +38,11 @@ ONE_OF_EACH = [
     Record(RecordKind.SYNCED, DAY, who="Ada", fingerprint="0123456789abcdef"),
     Record(RecordKind.OVERRIDE, DAY, who="Ada", text="the reviewer is away"),
     Record(RecordKind.SELF_REVIEW, DAY, who="Ada and Grace", text="every scenario holds"),
-    Record(RecordKind.REVIEW, DAY, who="wm-reviewer", verdict=Verdict.PASS, text="fine"),
+    Record(RecordKind.REVIEW, DAY, who="reviewer", verdict=Verdict.PASS, text="fine"),
     Record(
         RecordKind.REVIEW,
         DAY,
-        who="wm-reviewer",
+        who="reviewer",
         verdict=Verdict.CHANGES,
         items=("1.2", "2.1"),
         text="the limit is not checked",
@@ -54,7 +54,7 @@ ONE_OF_EACH = [
     Record(
         RecordKind.REVIEW,
         DAY,
-        who="wm-reviewer",
+        who="reviewer",
         verdict=Verdict.PASS,
         text="the added item holds",
         covers=("1.3",),
@@ -72,7 +72,7 @@ ONE_OF_EACH = [
     Record(RecordKind.REOPENED, DAY),
     Record(RecordKind.BLOCKED, DAY, who="Ada", text="the API key is missing"),
     Record(RecordKind.GAP, DAY, text="the limit's maximum"),
-    Record(RecordKind.NOTE, DAY, who="wm-implementer", text="partial: the parser is done"),
+    Record(RecordKind.NOTE, DAY, who="implementer", text="partial: the parser is done"),
     Record(RecordKind.TICKED, DAY, who="planner for Ada", item="1.1"),
     Record(RecordKind.TICKED, DAY, who="Ada", item="1.2"),
     Record(RecordKind.REVISED, DAY, who="planner for Ada", text="the count was 2", parts=("2.2",)),
@@ -130,8 +130,8 @@ def test_one_record_shape_puts_the_arguments_before_who_wrote_it() -> None:
     rendered = {render(record) for record in ONE_OF_EACH}
     assert {
         "2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1, 1.2 by Ada Lovelace",
-        "2026-11-20 (review) changes 1.2, 2.1 by wm-reviewer: the limit is not checked",
-        "2026-11-20 (review) pass covers 1.3 by wm-reviewer: the added item holds",
+        "2026-11-20 (review) changes 1.2, 2.1 by reviewer: the limit is not checked",
+        "2026-11-20 (review) pass covers 1.3 by reviewer: the added item holds",
         "2026-11-20 (review) changes 1.3; covers 1.3: off by one",
         "2026-11-20 (self-review) covers 1.1, 1.2 by Ada: every scenario holds",
         "2026-11-20 (reopened) by Ada Lovelace",
@@ -213,21 +213,44 @@ def test_a_kind_with_text_needs_one() -> None:
 
 
 def test_who_wrote_a_record(tmp_path: Path) -> None:
-    """Requirement "Who wrote a record": --by, else the git user, else nobody."""
+    """Requirement "Who wrote a record": --by, else whoever the record's kind names."""
     named = tmp_path / "named"
     git_init(named, "Sam Doe")
     unnamed = tmp_path / "unnamed"
     git_init(unnamed, None)
-    assert who_for(named, None) == "Sam Doe"
-    assert who_for(named, "Ada and Grace") == "Ada and Grace"
-    assert who_for(unnamed, None) is None
+    for kind in (
+        RecordKind.ACCEPTED,
+        RecordKind.OVERRIDE,
+        RecordKind.RESOLVED,
+        RecordKind.ARCHIVED,
+    ):
+        assert who_for(named, kind, None) == "Sam Doe"
+        assert who_for(unnamed, kind, None) is None
+    for kind in (
+        RecordKind.NOTE,
+        RecordKind.BLOCKED,
+        RecordKind.GAP,
+        RecordKind.REOPENED,
+        RecordKind.SELF_REVIEW,
+        RecordKind.SYNCED,
+        RecordKind.REVISED,
+        RecordKind.ADDED,
+        RecordKind.DROPPED,
+        RecordKind.MOVED,
+        RecordKind.PROPOSED,
+    ):
+        assert who_for(named, kind, None) == "planner for Sam Doe"
+        assert who_for(unnamed, kind, None) == "planner"
+    assert who_for(named, RecordKind.TICKED, None) == "planner for Sam Doe"
+    assert who_for(named, RecordKind.TICKED, None, human=True) == "Sam Doe"
+    assert who_for(named, RecordKind.NOTE, "Ada and Grace") == "Ada and Grace"
 
 
 def test_who_wrote_a_record_refuses_a_name_with_a_colon(tmp_path: Path) -> None:
     git_init(tmp_path, "Sam Doe")
     for name in ("Ada: the planner", "Ada:", "   "):
         with pytest.raises(RecordError):
-            who_for(tmp_path, name)
+            who_for(tmp_path, RecordKind.NOTE, name)
 
 
 def test_scenario_explicit_author() -> None:
@@ -241,16 +264,16 @@ def test_scenario_reviewers_verdict() -> None:
     record = Record(
         RecordKind.REVIEW,
         DAY,
-        who="wm-reviewer",
+        who="reviewer",
         verdict=Verdict.PASS,
         text="<reasons>",
         covers=("1.1", "1.2"),
     )
-    assert render(record) == "2026-11-20 (review) pass covers 1.1, 1.2 by wm-reviewer: <reasons>"
+    assert render(record) == "2026-11-20 (review) pass covers 1.1, 1.2 by reviewer: <reasons>"
 
 
 def test_a_review_without_covers_reads_as_covering_every_item() -> None:
-    found = parse("2026-11-20 (review) pass by wm-reviewer: written before covers")
+    found = parse("2026-11-20 (review) pass by reviewer: written before covers")
     assert isinstance(found, Record)
     assert found.covers is None
 
@@ -338,7 +361,7 @@ def test_a_record_is_written_date_first_with_comma_separated_items() -> None:
     review = Record(
         RecordKind.REVIEW,
         datetime.date(2026, 11, 20),
-        who="wm-reviewer",
+        who="reviewer",
         text="off by one",
         verdict=Verdict.CHANGES,
         items=("1.2", "2.2"),
@@ -346,18 +369,18 @@ def test_a_record_is_written_date_first_with_comma_separated_items() -> None:
     )
     line = render(review)
     assert line == (
-        "2026-11-20 (review) changes 1.2, 2.2; covers 1.1, 1.2, 2.2 by wm-reviewer: off by one"
+        "2026-11-20 (review) changes 1.2, 2.2; covers 1.1, 1.2, 2.2 by reviewer: off by one"
     )
     assert parse(line) == review
     passed = Record(
         RecordKind.REVIEW,
         datetime.date(2026, 11, 20),
-        who="wm-reviewer",
+        who="reviewer",
         text="fine",
         verdict=Verdict.PASS,
         covers=("1.1", "1.2"),
     )
-    assert render(passed) == "2026-11-20 (review) pass covers 1.1, 1.2 by wm-reviewer: fine"
+    assert render(passed) == "2026-11-20 (review) pass covers 1.1, 1.2 by reviewer: fine"
     accepted = Record(
         RecordKind.ACCEPTED,
         datetime.date(2026, 11, 20),
@@ -399,8 +422,8 @@ def test_a_finding_is_written_with_its_severity_in_brackets() -> None:
 def test_scenario_item_list_without_commas() -> None:
     for line in (
         "2026-11-20 (accepted) fingerprint 0123456789abcdef items 1.1 1.2 by Ada",
-        "2026-11-20 (review) changes 1.2, 2.2 covers 1.1, 1.2 by wm-reviewer: off",
-        "2026-11-20 (review) changes 1.2; by wm-reviewer: off",
+        "2026-11-20 (review) changes 1.2, 2.2 covers 1.1, 1.2 by reviewer: off",
+        "2026-11-20 (review) changes 1.2; by reviewer: off",
         "2026-11-20 (self-review) covers 1.1,1.2 by Ada: fine",
     ):
         found = parse(line)

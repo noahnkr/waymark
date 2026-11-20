@@ -306,6 +306,15 @@ def _commit_messages(project: Project, event: Event) -> Decision:
     return ALLOW
 
 
+def _by_implementer(arguments: tuple[str, ...]) -> bool:
+    """Whether a command's arguments say ``--by implementer``, in either spelling."""
+    pairs = zip(arguments, (*arguments[1:], ""), strict=True)
+    return any(
+        (flag == "--by" and value == IMPLEMENTER) or flag == f"--by={IMPLEMENTER}"
+        for flag, value in pairs
+    )
+
+
 def _command(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one return per rule
     for call in commands.wm_calls(event.command):
         if call.subcommand == "accept":
@@ -329,6 +338,11 @@ def _command(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one
             f'"wm {writing.subcommand}" writes the record, and a delegated agent does not. '
             "wm records your result from your final lines. Reading commands such as "
             '"wm context" and "wm show" are fine.'
+        )
+    if writing is not None and not _by_implementer(writing.arguments):
+        return _refuse(
+            f'Your note names who wrote it: add "--by {IMPLEMENTER}" to "wm note", so the '
+            "record doesn't credit the human or the planner with it."
         )
     pushing = commands.commits_or_pushes(event.command)
     if pushing is not None:

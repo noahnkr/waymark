@@ -26,10 +26,12 @@ from waymark.record.machine import git
 from waymark.record.names import is_valid_name
 from waymark.record.terms import ReviewSeverity, Verdict
 
-IMPLEMENTER = "wm-implementer"
+IMPLEMENTER = "implementer"
 """Who wrote a record taken from an implementer's ending."""
-REVIEWER = "wm-reviewer"
+REVIEWER = "reviewer"
 """Who wrote a record taken from a reviewer's ending."""
+PLANNER = "planner"
+"""Who wrote a record the planner writes, before ``for <the human>``."""
 
 
 class RecordError(ValueError):
@@ -108,6 +110,11 @@ class KindSpec:
     level: Level
     shape: str
 
+
+HUMAN_KINDS = frozenset(
+    {RecordKind.ACCEPTED, RecordKind.OVERRIDE, RecordKind.RESOLVED, RecordKind.ARCHIVED}
+)
+"""The human's acts, which name the git user rather than the planner."""
 
 KINDS: dict[RecordKind, KindSpec] = {
     RecordKind.ACCEPTED: KindSpec(
@@ -686,10 +693,23 @@ def check_who(who: str) -> str:
     return name
 
 
-def who_for(root: Path, by: str | None) -> str | None:
-    """Who writes a record: ``--by`` when given, else the git user, else None."""
+def who_for(root: Path, kind: RecordKind, by: str | None, *, human: bool = False) -> str | None:
+    """Who a record names: ``--by`` when given, else by the record's kind.
+
+    The human's acts, and the tick of an item the human did (``human``), name the git user,
+    or nobody without one. Everything else the planner writes names ``planner for <git
+    user>``, or ``planner`` without one.
+    """
     if by is not None:
         return check_who(by)
+    name = _git_user(root)
+    if kind in HUMAN_KINDS or (kind is RecordKind.TICKED and human):
+        return name
+    return f"{PLANNER} for {name}" if name else PLANNER
+
+
+def _git_user(root: Path) -> str | None:
+    """The git user's name, fit for a record; None when unset or unfit."""
     name = git.user_name(root)
     if name is None:
         return None

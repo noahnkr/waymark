@@ -852,7 +852,7 @@ def test_reviewer_pack_holds_only_the_items_added_after_a_pass(project: Workspac
     accepted(project, proposal_text=INDEPENDENT)
     lifecycle.tick(project.root, NAME, "1.1")
     lifecycle.tick(project.root, NAME, "1.2")
-    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="wm-reviewer")
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="reviewer")
     assert "already has the review it needs" in refused(project, "review")
     project.replace(
         f"{FOLDER}/tasks.md",

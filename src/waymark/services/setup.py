@@ -226,7 +226,7 @@ def create_change(  # noqa: PLR0913 - the change's facts, and the day for its mi
         entry = records.Record(
             RecordKind.PROPOSED,
             today or datetime.date.today(),
-            who=records.who_for(record.project.root, None),
+            who=records.who_for(record.project.root, RecordKind.PROPOSED, None),
             change=name,
         )
         transaction.write(doc.path, append_milestone_log(linked, records.render(entry)))

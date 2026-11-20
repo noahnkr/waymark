@@ -202,7 +202,8 @@ def test_records_under_an_item_stay_after_its_lines(project: Workspace) -> None:
     lifecycle.accept(project.root, NAME, DAY)
     text = project.read(TASKS_FILE).replace(
         "  - **Verify:** read the help text\n",
-        "  - **Verify:** read the help text\n  - 2026-01-15 (note) by Sam Doe: half done\n",
+        "  - **Verify:** read the help text\n"
+        "  - 2026-01-15 (note) by planner for Sam Doe: half done\n",
     )
     moved = (
         text.replace(

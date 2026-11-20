@@ -630,7 +630,7 @@ def test_a_label_after_a_record_is_out_of_order(project: Workspace) -> None:
         for code, _, _ in item_problems(
             project,
             "- [ ] 1.2 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
-            "  - 2026-01-16 (note) by Sam Doe: halfway\n  - **Verify:** a test\n",
+            "  - 2026-01-16 (note) by planner for Sam Doe: halfway\n  - **Verify:** a test\n",
         )
     ]
     assert sorted(codes) == ["item-order", "misplaced-record"]

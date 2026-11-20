@@ -75,9 +75,9 @@ def _require_line(roadmap: Roadmap, milestone: str, change: str) -> int:
     return index
 
 
-def _who(record: Record, by: str | None) -> str | None:
+def _who(record: Record, kind: RecordKind, by: str | None) -> str | None:
     try:
-        return records.who_for(record.project.root, by)
+        return records.who_for(record.project.root, kind, by)
     except RecordError as error:
         raise Refusal(str(error)) from error
 
@@ -129,7 +129,9 @@ def add(
             lines.insert(at, "")
             at += 1
     lines.insert(at, f"- {change}: {text}")
-    entry = records.Record(RecordKind.ADDED, today, who=_who(record, by), text=text, change=change)
+    entry = records.Record(
+        RecordKind.ADDED, today, who=_who(record, RecordKind.ADDED, by), text=text, change=change
+    )
     paths = _write(record, lines, entry)
     return Done(f'Added "{change}" to the roadmap of "{milestone}".', paths)
 
@@ -159,7 +161,11 @@ def drop(
     lines = _Lines.of(roadmap.doc)
     lines.pop(index)
     entry = records.Record(
-        RecordKind.DROPPED, today, who=_who(record, by), text=text, change=change
+        RecordKind.DROPPED,
+        today,
+        who=_who(record, RecordKind.DROPPED, by),
+        text=text,
+        change=change,
     )
     paths = _write(record, lines, entry)
     return Done(f'Dropped "{change}" from the roadmap of "{milestone}".', paths)
@@ -187,7 +193,7 @@ def move(
     after_target = target + 1 if target is not None and target < index else target
     lines.insert(roadmap.entries[0].index if after_target is None else after_target, moved)
     entry = records.Record(
-        RecordKind.MOVED, today, who=_who(record, by), change=change, after=after
+        RecordKind.MOVED, today, who=_who(record, RecordKind.MOVED, by), change=change, after=after
     )
     paths = _write(record, lines, entry)
     where = f'after "{after}"' if after else "to the top"

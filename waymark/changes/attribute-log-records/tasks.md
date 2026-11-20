@@ -9,7 +9,7 @@
     - `(archived)` is read in a change's Log without a change name, and in a milestone's Log with one, and neither is reported as misplaced
     - `wm check` reports a malformed record of each new kind, naming its shape
   - **Verify:** tests named after the scenarios Record in its shape, Malformed record and Kind before the date, and round-trip tests for the three kinds
-- [ ] 1.2 Name who wrote each record by its kind
+- [x] 1.2 Name who wrote each record by its kind
   - **Build:** planner
   - **Criteria:**
     - the human's acts name the git user; the planner's records, the roadmap records included, name `planner for <git user>`, or `planner` without one; agents' endings name `implementer` or `reviewer`

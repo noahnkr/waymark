@@ -193,7 +193,7 @@ def test_self_review_with_a_finding(project: Workspace) -> None:
     assert text.startswith(TASKS.replace("- [ ]", "- [x]") + REVIEW + "- 2026-01-15 (accepted) ")
     assert text.endswith(
         " by Sam Doe\n"
-        "- 2026-01-15 (self-review) covers 1.1, 1.2 by Sam Doe: matches the criteria\n"
+        "- 2026-01-15 (self-review) covers 1.1, 1.2 by planner for Sam Doe: matches the criteria\n"
         "  - [warning] `src/a.py:12`: the name is vague\n"
     )
     assert project.record().problems == ()
@@ -262,7 +262,7 @@ def test_passing_verdict_counts_as_the_independent_review(project: Workspace) ->
     )
     text = project.read(TASKS_FILE)
     assert text.endswith(
-        "- 2026-01-15 (review) pass covers 1.1 by Sam Doe: boundary covered\n"
+        "- 2026-01-15 (review) pass covers 1.1 by planner for Sam Doe: boundary covered\n"
         "  - [suggestion] `docs/search.md`: say the limit\n"
     )
     state = project.change_state()
@@ -285,7 +285,7 @@ def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Wor
     assert "nothing to reopen" in refused(project, "reopen", "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     assert (
-        "- 2026-01-15 (review) changes 1.1; covers 1.1, 1.2 by Sam Doe: off by one"
+        "- 2026-01-15 (review) changes 1.1; covers 1.1, 1.2 by planner for Sam Doe: off by one"
         in project.read(TASKS_FILE)
     )
     assert "wm reopen add-limit 1.1" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
@@ -294,7 +294,7 @@ def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Wor
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     text = project.read(TASKS_FILE)
     assert "- [ ] 1.1 Cap the result count" in text
-    assert text.endswith("off by one\n- 2026-01-15 (reopened) 1.1 by Sam Doe\n")
+    assert text.endswith("off by one\n- 2026-01-15 (reopened) 1.1 by planner for Sam Doe\n")
     state = project.change_state()
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
 
@@ -354,7 +354,9 @@ def test_block_writes_a_blocked_record_and_stops_the_item(project: Workspace) ->
     accepted(project)
     lifecycle.block(project.root, NAME, "1.1", "waiting for the wording", DAY)
     text = project.read(TASKS_FILE)
-    assert text.endswith("\n- 2026-01-15 (blocked) 1.1 by Sam Doe: waiting for the wording\n")
+    assert text.endswith(
+        "\n- 2026-01-15 (blocked) 1.1 by planner for Sam Doe: waiting for the wording\n"
+    )
     assert "fifty-one matches\n- [ ] 1.2" in text
     state = project.change_state()
     assert state.items[0].blocked == "waiting for the wording"
@@ -373,7 +375,7 @@ def test_resolve_frees_a_blocked_item_and_keeps_the_blocker(project: Workspace) 
     text = project.read(TASKS_FILE)
     assert text == (
         before
-        + "- 2026-01-15 (blocked) 1.1 by Sam Doe: waiting for the wording\n"
+        + "- 2026-01-15 (blocked) 1.1 by planner for Sam Doe: waiting for the wording\n"
         + "- 2026-01-15 (resolved) 1.1 by Sam Doe: use the short wording\n"
     )
     state = project.change_state()
@@ -389,8 +391,8 @@ def test_spec_gap_from_an_implementer_goes_to_the_human(project: Workspace) -> N
         project.root, NAME, "1.1", "the limit for an empty query is not stated", DAY
     )
     assert (
-        "- 2026-01-15 (gap) 1.1 by Sam Doe: the limit for an empty query is not stated\n"
-        in project.read(TASKS_FILE)
+        "- 2026-01-15 (gap) 1.1 by planner for Sam Doe: "
+        "the limit for an empty query is not stated\n" in project.read(TASKS_FILE)
     )
     assert project.record().problems == ()
     state = project.change_state()
@@ -443,7 +445,9 @@ def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Wo
         + REVIEW
         + "- 2026-01-15 (accepted) "
     )
-    assert text.endswith(" by Sam Doe\n- 2026-01-15 (self-review) covers 1.1 by Sam Doe: fine\n")
+    assert text.endswith(
+        " by Sam Doe\n- 2026-01-15 (self-review) covers 1.1 by planner for Sam Doe: fine\n"
+    )
 
 
 def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
