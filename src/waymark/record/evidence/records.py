@@ -622,6 +622,53 @@ def render_finding(finding: Finding) -> str:
     return f"[{finding.severity.value}] `{finding.place}`: {finding.text}"
 
 
+DETAILED = frozenset(
+    {
+        RecordKind.NOTE,
+        RecordKind.BLOCKED,
+        RecordKind.GAP,
+        RecordKind.RESOLVED,
+        RecordKind.REVISED,
+        RecordKind.REVIEW,
+        RecordKind.SELF_REVIEW,
+    }
+)
+"""The kinds of record that may have details under them."""
+
+_BRACKETED_SEVERITY = re.compile(r"^\[(?:critical|warning|suggestion)\]")
+_BARE_SEVERITY = re.compile(r"^(?:critical|warning|suggestion)\b")
+
+
+def detailed_kinds() -> str:
+    """The kinds that take details, as a message lists them."""
+    return ", ".join(f"({kind.value})" for kind in RecordKind if kind in DETAILED)
+
+
+def looks_like_finding(text: str) -> bool:
+    """Whether a sub-line starts with a severity in brackets, as a finding does."""
+    return _BRACKETED_SEVERITY.match(text.strip()) is not None
+
+
+def starts_with_severity(text: str) -> bool:
+    """Whether a sub-line starts with a severity word without its brackets."""
+    return _BARE_SEVERITY.match(text.strip()) is not None
+
+
+def check_detail(text: str) -> str:
+    """A detail fit to go under a record; raises RecordError otherwise."""
+    detail = " ".join(text.split())
+    if not detail:
+        raise RecordError("A detail is empty. Give it a text, or leave it out.")
+    if "\n" in text.strip():
+        raise RecordError("A detail is one line. Give each point its own --detail.")
+    if looks_like_finding(detail):
+        raise RecordError(
+            "A detail doesn't start with a severity in brackets; that is a finding. "
+            "Pass it as --finding, or reword the detail."
+        )
+    return detail
+
+
 def parse_finding(text: str) -> Finding | None:
     """Read a finding as wm writes it under a review record; None when it isn't one."""
     match = _FINDING.match(text.strip())

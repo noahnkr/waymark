@@ -2,7 +2,7 @@
 
 ## 1. Details
 
-- [ ] 1.1 Read and write details under a record
+- [x] 1.1 Read and write details under a record
   - **Build:** planner
   - **Criteria:**
     - a sub-line under a `(note)`, `(blocked)`, `(gap)`, `(resolved)` or `(revised)` record is read as a detail; under a review, a bracketed severity is a finding, a bare severity word is still reported as a finding without brackets, and anything else is a detail
@@ -57,3 +57,4 @@
 ## Log
 
 - 2026-11-20 (accepted) fingerprint 921764255ebc4141 items 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by Noah Roberts
+- 2026-11-20 (ticked) 1.1 by planner for Noah Roberts

@@ -300,3 +300,75 @@ def test_an_item_without_a_build_line_hashes_as_before(workspace: Workspace) -> 
         record.changes["add-limit"], record.specs, record.default_review, ["1.1", "1.2"]
     )
     assert planned != before
+
+
+LOGGED = HEAD + ITEM + "\n## Log\n\n"
+
+
+def test_details_are_read_under_the_records_that_take_them() -> None:
+    """Requirement "Details under a record": sub-lines under a detailed record are details."""
+    tasks = parse(
+        LOGGED
+        + "- 2026-11-20 (note) 1.1 by planner for Ada: partly built\n"
+        + "  - the parser is done\n"
+        + "  - the CLI flag is not\n"
+        + "- 2026-11-20 (revised) 1.1 by planner for Ada: settled the cut\n"
+        + "  - cut after sorting\n"
+    )
+    assert tasks.problems == ()
+    note, revised = tasks.log
+    assert note.details == ("the parser is done", "the CLI flag is not")
+    assert revised.details == ("cut after sorting",)
+    assert tasks.items[0].notes == ("partly built",)
+
+
+def test_scenario_self_review_with_a_finding_and_details_is_read() -> None:
+    """Requirement "Review recorded in the task list": findings, then details."""
+    tasks = parse(
+        LOGGED
+        + "- 2026-11-20 (self-review) by Ada: every criterion holds\n"
+        + "  - [suggestion] `src/a.py`: name the constant\n"
+        + "  - pytest passes\n"
+        + "  - wm check is healthy\n"
+    )
+    assert tasks.problems == ()
+    [review] = tasks.log
+    assert [f.place for f in review.findings] == ["src/a.py"]
+    assert review.details == ("pytest passes", "wm check is healthy")
+
+
+def test_scenario_sub_bullet_under_a_record_without_details() -> None:
+    """Requirement "Details under a record": only some kinds have lines under them."""
+    tasks = parse(LOGGED + "- 2026-11-20 (ticked) 1.1 by Ada\n  - extra\n")
+    [problem] = tasks.problems
+    assert problem.code == "misplaced-detail"
+    assert "(note)" in problem.message
+    assert "(revised)" in problem.message
+
+
+def test_a_finding_under_a_note_is_misplaced() -> None:
+    tasks = parse(LOGGED + "- 2026-11-20 (note) 1.1 by Ada: text\n  - [warning] `a.py`: not here\n")
+    assert [p.code for p in tasks.problems] == ["misplaced-finding"]
+
+
+def test_a_bare_severity_under_a_review_is_still_a_finding_without_brackets() -> None:
+    tasks = parse(LOGGED + "- 2026-11-20 (self-review) by Ada: fine\n  - warning: `a.py`: x\n")
+    assert [p.code for p in tasks.problems] == ["malformed-finding"]
+
+
+def test_the_log_writer_puts_details_after_findings() -> None:
+    from waymark.record.writing.edits import append_log  # noqa: PLC0415
+
+    text = append_log(
+        parse(HEAD + ITEM + "\n## Log\n"),
+        "2026-11-20 (self-review) by Ada: fine",
+        ["[suggestion] `a.py`: name it"],
+        details=["pytest passes", "wm check is healthy"],
+    )
+    assert text.endswith(
+        "- 2026-11-20 (self-review) by Ada: fine\n"
+        "  - [suggestion] `a.py`: name it\n"
+        "  - pytest passes\n"
+        "  - wm check is healthy\n"
+    )
+    assert parse(text).log[0].details == ("pytest passes", "wm check is healthy")
