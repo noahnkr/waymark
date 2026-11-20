@@ -54,3 +54,7 @@
 
 - 2026-11-20 (accepted) fingerprint 758851e46b4f1ce8 items 1.1, 1.2, 1.3, 1.4, 2.1, 2.2 by Noah Roberts
 - 2026-11-20 (accepted) fingerprint ad57878a4af8a726 items 1.1, 1.2, 1.3, 1.4, 2.1, 2.2 by Noah Roberts
+- 2026-11-20 (review) changes 2.2; covers 1.1, 1.2, 1.3, 1.4, 2.1, 2.2 by wm-reviewer: items 1.1-1.4 and 2.1 hold, every scenario has a passing test and the checks pass, but README.md doesn't name the three build roles as 2.2's criterion requires; update the README passage on /wm-apply's agents to name planner, implementer and human
+  - [critical] `README.md`: the README doesn't name the build roles `planner`, `implementer` and `human` (the branch leaves it unchanged; around lines 123-126 it still says "a task you marked to hand off"), which breaks 2.2's criterion that docs/ and the README name the three roles
+  - [suggestion] `src/waymark/assets/skills/wm-onboard/SKILL.md`: step 6 still says the planner "hands a tagged item to a fresh implementer"; "an `implementer` item" would match the role wording in step 4
+- 2026-11-20 (reopened) 2.2 by Noah Roberts
