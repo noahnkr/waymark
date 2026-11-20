@@ -15,7 +15,7 @@
     - `wm check --fix` rewrites `- <term>: <meaning>` and `- **<term>**: <meaning>` in the charter's glossary into `- **<term>:** <meaning>`, and names the charter as fixed
     - lines outside the glossary, comments and fenced code in the charter are unchanged
   - **Verify:** a test for the scenario Glossary entry made bold, and the existing fix tests
-- [ ] 1.3 Drop the comment under the exploration template's Status line
+- [x] 1.3 Drop the comment under the exploration template's Status line
   - **Build:** planner
   - **Criteria:** `wm new exploration <name>` writes the Status line followed directly by `## Context`, and the other sections keep their comments and examples
   - **Verify:** a test that a new exploration has no comment between its Status line and `## Context`, and the Template examples tests

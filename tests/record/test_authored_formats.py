@@ -296,6 +296,15 @@ def test_scenario_new_exploration(workspace: Workspace) -> None:
     assert built["explorations"][0]["status"] == "open"
 
 
+def test_new_exploration_has_no_comment_under_its_status(workspace: Workspace) -> None:
+    """The Status line is followed by Context; the sections keep their comments and examples."""
+    setup.create_exploration(workspace.root, "result-paging")
+    text = workspace.read("explorations/result-paging.md")
+    assert "\n- **Status:** open\n\n## Context\n" in text
+    assert "<!-- What prompted this, and what is already known. -->" in text
+    assert 'Good, while open: "Waits for a second user' in text
+
+
 def test_scenario_parked_is_not_a_status() -> None:
     [problem] = parse_exploration("paging", document(explore("parked"), "e.md")).problems
     assert problem.code == "unknown-status"
