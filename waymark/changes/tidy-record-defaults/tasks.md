@@ -9,7 +9,7 @@
     - the review level is read only from the proposal's Review line, and `wm check` reports an active change without one as an error that shows `- **Review:** <level>`
     - the `review-level` warning and the propose step's guidance tell the planner to set the Review line's value, not to add the line
   - **Verify:** tests named after the scenarios Level from the proposal, Default written at creation, Default on the short path, Review line missing and New change; the full pytest run and `wm check`
-- [ ] 1.2 Make charter glossary entries bold with `wm check --fix`
+- [x] 1.2 Make charter glossary entries bold with `wm check --fix`
   - **Build:** planner
   - **Criteria:**
     - `wm check --fix` rewrites `- <term>: <meaning>` and `- **<term>**: <meaning>` in the charter's glossary into `- **<term>:** <meaning>`, and names the charter as fixed

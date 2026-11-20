@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waymark.record.artifacts.changes import Change
-from waymark.record.artifacts.charter import CHARTER_FILE
+from waymark.record.artifacts.charter import CHARTER_FILE, GLOSSARY
 from waymark.record.artifacts.deltas import parse_delta
 from waymark.record.artifacts.design import parse_design
 from waymark.record.artifacts.proposal import parse_proposal
@@ -49,7 +49,10 @@ def fix_layout(start: Path) -> tuple[FixedFile, ...]:
     staged: dict[str, str] = {}
     fixed: list[FixedFile] = []
     for doc in record.documents():
-        text, fixes = standard_layout(doc.text, bold_labels=doc.path != CHARTER_FILE)
+        charter = doc.path == CHARTER_FILE
+        text, fixes = standard_layout(
+            doc.text, bold_labels=not charter, glossary=GLOSSARY if charter else None
+        )
         if fixes:
             staged[doc.path] = text
             fixed.append(FixedFile(doc.path, fixes))

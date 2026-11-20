@@ -105,6 +105,33 @@ def test_scenario_plain_label_made_bold(project: Workspace) -> None:
     assert text == bold(proposal(owner="Ada"))
 
 
+def test_scenario_glossary_entry_made_bold(project: Workspace) -> None:
+    """Requirement "Fix the layout on request": charter glossary entries become bold."""
+    entries = "- Record: everything in waymark/\n- **Atlas**: a separate repository\n"
+    project.replace("charter.md", "- **Match:** a document that satisfies the query.\n", entries)
+    before = project.read("charter.md")
+    fixed = fix_layout(project.root)
+    assert fixed == (FixedFile("charter.md", (Fix.LABEL,)),)
+    expected = before.replace(
+        entries,
+        "- **Record:** everything in waymark/\n- **Atlas:** a separate repository\n",
+    )
+    assert project.read("charter.md") == expected
+
+
+def test_only_the_charters_glossary_entries_are_made_bold(project: Workspace) -> None:
+    """Lines outside the glossary, comments and fenced code in the charter keep their form."""
+    project.replace(
+        "charter.md",
+        "## Context\n",
+        "## Context\n\n- Layout: plain\n\n<!--\n- Term: in a comment\n-->\n\n"
+        "```\n- Term: in a fence\n```\n",
+    )
+    before = project.read("charter.md")
+    assert fix_layout(project.root) == ()
+    assert project.read("charter.md") == before
+
+
 def test_colon_outside_the_bold_and_bare_labels_are_fixed(project: Workspace) -> None:
     removed = (
         "# Search\n\nRepos: api\n\n## REMOVED Requirements\n\n"
