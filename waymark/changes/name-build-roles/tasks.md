@@ -22,7 +22,7 @@
     - each item in the implement and review packs carries its `build` role, and the packs' schema version is 3
     - the review pack and the review step's guidance name the `human` items and say their ticks are the human's confirmation, while what they left in the repo is still checked; with no `human` item, neither says anything about them
   - **Verify:** tests named after the scenarios Human item in the review pack and Self-review with a human item, and one for a change with no human item
-- [ ] 1.4 Show each item's role in `wm show`
+- [x] 1.4 Show each item's role in `wm show`
   - **Build:** planner
   - **Criteria:**
     - `wm show <change> --json` gives each item `build` (the role, or null) and no `delegate`, at `show.change` version 4, and the schema says so

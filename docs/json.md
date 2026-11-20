@@ -10,7 +10,7 @@ Every read command takes `--json`. Each payload starts with `schema` (its name) 
 | [`wm.inbox`](#wminbox) | 1 | `wm inbox` |
 | [`wm.ls`](#wmls) | 1 | `wm ls` |
 | [`wm.check`](#wmcheck) | 1 | `wm check` |
-| [`wm.show.change`](#wmshowchange) | 3 | `wm show` for a change |
+| [`wm.show.change`](#wmshowchange) | 4 | `wm show` for a change |
 | [`wm.show.spec`](#wmshowspec) | 1 | `wm show` for a spec |
 | [`wm.show.milestone`](#wmshowmilestone) | 1 | `wm show` for a milestone |
 | [`wm.show.exploration`](#wmshowexploration) | 2 | `wm show` for an exploration |
@@ -551,7 +551,7 @@ Printed by `wm show` for a change.
       "const": "wm.show.change"
     },
     "version": {
-      "const": 3
+      "const": 4
     },
     "name": {
       "type": "string"
@@ -888,8 +888,13 @@ Printed by `wm show` for a change.
           "ticked": {
             "type": "boolean"
           },
-          "delegate": {
-            "type": "boolean"
+          "build": {
+            "enum": [
+              "planner",
+              "implementer",
+              "human",
+              null
+            ]
           },
           "needs_human": {
             "type": [
@@ -1041,7 +1046,7 @@ Printed by `wm show` for a change.
           "number",
           "title",
           "ticked",
-          "delegate",
+          "build",
           "needs_human",
           "criteria",
           "verify",

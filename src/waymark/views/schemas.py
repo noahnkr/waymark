@@ -130,7 +130,7 @@ ITEM = _object(
         "number": STRING,
         "title": STRING,
         "ticked": BOOLEAN,
-        "delegate": BOOLEAN,
+        "build": _enum(BuildRole, nullable=True),
         "needs_human": TEXT_OR_NULL,
         "criteria": TEXT_OR_NULL,
         "verify": TEXT_OR_NULL,
