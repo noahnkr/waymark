@@ -58,3 +58,5 @@
   - [critical] `README.md`: the README doesn't name the build roles `planner`, `implementer` and `human` (the branch leaves it unchanged; around lines 123-126 it still says "a task you marked to hand off"), which breaks 2.2's criterion that docs/ and the README name the three roles
   - [suggestion] `src/waymark/assets/skills/wm-onboard/SKILL.md`: step 6 still says the planner "hands a tagged item to a fresh implementer"; "an `implementer` item" would match the role wording in step 4
 - 2026-11-20 (reopened) 2.2 by Noah Roberts
+- 2026-11-20 (review) pass covers 1.1, 1.2, 1.3, 1.4, 2.1, 2.2 by wm-reviewer: the earlier review's README finding is fixed (README names planner, implementer and human), the onboard suggestion was taken, 2.2's archived task lists and CHANGELOG hold, and pytest (1471 passed), mypy, ruff, codespell, tools.docs --check and wm check all pass
+  - [suggestion] `README.md:127`: "`/wm-apply` starts the implementer, and a reviewer that checks a risky change" reads a little oddly, as it joins two objects that aren't parallel; "starts the implementer, and a reviewer for a risky change" would be clearer
