@@ -151,15 +151,23 @@ the order it was written. An item holds only its definition and its tick.
 
 | About | Kinds | Example |
 |---|---|---|
-| One item, named after the kind | `(blocked)`, `(gap)`, `(note)`, `(reopened)`, `(resolved)` | `2026-11-20 (blocked) 1.2 by Ada: the API key is missing` |
-| The whole change | `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)`, `(override)` | `2026-11-20 (resolved) by Ada: keep the cap` |
+| One item, named after the kind | `(ticked)`, `(blocked)`, `(gap)`, `(note)`, `(reopened)`, `(resolved)` | `2026-11-20 (blocked) 1.2 by planner for Ada: the API key is missing` |
+| The whole change | `(accepted)`, `(revised)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)`, `(override)`, `(archived)` | `2026-11-20 (resolved) by Ada: keep the cap` |
 
 `wm show` and the implement context pack gather each item's records from the
 Log and show them with the item. `wm check` reports a record written under an
 item as `misplaced-record`.
 
-- **Who:** your git name, `wm-implementer` or `wm-reviewer` for an agent's
-  result, or the `--by` value that every writing command takes.
+- **Who:** a record names who wrote it, by its kind. Your acts (accepting,
+  overriding, resolving, archiving, and confirming a `human` item) name you, as
+  `by Ada`. What the planner writes names the planner and you, as
+  `by planner for Ada`. An agent's result names `implementer` or `reviewer`. The
+  `--by` value that every writing command takes overrides it.
+- **Ticks:** `wm tick` writes a `(ticked)` record, so the Log shows who finished
+  each item and when.
+- **Revisions:** after editing an accepted change, the planner records why with
+  `wm revise <change> "<why>" --parts <part>,...`. `wm accept` won't accept a
+  change a second time until it has.
 - **Never edited:** a later record supersedes an earlier one. `wm resolve` adds
   a `(resolved)` record and the blocker stays.
 - **Notes:** `wm note <change> <item> "<text>"` writes one about an unticked
@@ -218,8 +226,9 @@ the end of the task list:
 ## Log
 
 - 2026-01-15 (accepted) fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
-- 2026-01-15 (note) 1.1 by Sam Doe: the cap sits after sorting
-- 2026-01-16 (review) pass covers 1.1 by wm-reviewer: the boundary is covered
+- 2026-01-15 (note) 1.1 by planner for Sam Doe: the cap sits after sorting
+- 2026-01-16 (ticked) 1.1 by planner for Sam Doe
+- 2026-01-16 (review) pass covers 1.1 by reviewer: the boundary is covered
   - [suggestion] `docs/search.md`: name the limit in the help text
 ```
 
@@ -367,13 +376,13 @@ writes it with the project's `default_review`, and the planner sets it:
   ``- [<severity>] `<place>`: <text>``. A place that holds `: ` is given in
   backticks. A `pass` or a self-review with a critical finding is refused.
 - **Changes:** a `changes` verdict names the items to rebuild, such as
-  `2026-01-15 (review) changes 1.2, 2.1; covers 1.1, 1.2, 2.1 by wm-reviewer: <reasons>`. Those
+  `2026-01-15 (review) changes 1.2, 2.1; covers 1.1, 1.2, 2.1 by reviewer: <reasons>`. Those
   items are reopened and built again, and the change then needs an independent review.
 - **Added items:** an item added after a passing review is reviewed on its own.
   Once it is ticked, the next step is a review of the items no passing review
   covers, at the change's level. The reviewer's pack holds only those items, and
   the record covers just them, such as
-  `2026-01-20 (review) pass covers 1.3 by wm-reviewer: <reasons>`. The items the
+  `2026-01-20 (review) pass covers 1.3 by reviewer: <reasons>`. The items the
   earlier review passed aren't reviewed again.
 - **To you:** a second `changes` verdict, or a `spec-gap`, goes to you. You
   record your decision with `wm resolve <change> review "<what was decided>"`.

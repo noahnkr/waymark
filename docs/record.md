@@ -44,7 +44,7 @@ removes one, and `wm check` doesn't read them.
   plain or with the colon outside, and `wm check --fix` makes it bold.
 - **What `wm` writes** is a dated record of one shape,
   `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, such as
-  `2026-01-16 (blocked) by wm-implementer: the index service is down`. Only `wm`
+  `2026-01-16 (blocked) 1.2 by implementer: the index service is down`. Only `wm`
   writes records, and none is ever edited or removed. See [Records](#records).
 
 Every template carries a short good and bad example in a comment. Comments are
@@ -244,10 +244,11 @@ syncs and reviews.
   record under an item as `misplaced-record`.
 - **`## Log`**, always last, written by `wm`, holds every record of the change
   in the order it was written. A record about one item names the item after
-  the kind: `(blocked)`, `(gap)`, `(note)`, `(reopened)`, and `(resolved)` with
-  an item, as in `2026-11-20 (note) 1.2 by Ada: <text>`. The records about the
-  whole change are `(accepted)`, `(synced)`, `(self-review)`, `(review)`,
-  `(resolved)` without an item, and `(override)`. A review's findings sit under
+  the kind: `(ticked)`, `(blocked)`, `(gap)`, `(note)`, `(reopened)`, and
+  `(resolved)` with an item, as in `2026-11-20 (note) 1.2 by planner for Ada: <text>`.
+  The records about the whole change are `(accepted)`, `(revised)`, `(synced)`,
+  `(self-review)`, `(review)`, `(resolved)` without an item, `(override)` and
+  `(archived)`. A review's findings sit under
   it as ``- [<severity>] `<place>`: <text>``.
 
 A finding's place is a path relative to the project's top folder, such as
@@ -275,8 +276,9 @@ The acceptance names the items it covers: **adding** an item keeps it, while
 ## Log
 
 - 2026-01-15 (accepted) fingerprint 6cec39a287bf99f2 items 1.1 by Sam Doe
-- 2026-01-15 (note) 1.1 by Sam Doe: the cap sits after sorting
-- 2026-01-16 (self-review) covers 1.1 by Sam Doe: every criterion holds
+- 2026-01-15 (note) 1.1 by planner for Sam Doe: the cap sits after sorting
+- 2026-01-16 (ticked) 1.1 by planner for Sam Doe
+- 2026-01-16 (self-review) covers 1.1 by planner for Sam Doe: every criterion holds
   - [suggestion] `docs/search.md`: name the limit in the help text
 ```
 
@@ -434,18 +436,30 @@ All six sections are always there; one that doesn't apply holds `None.`.
 
 ## Records
 
-Every line `wm` writes is a dated record. It names who it is by: your git name,
-`wm-implementer` or `wm-reviewer` for an agent's ending, or the name given with
-`--by`. A later record supersedes an earlier one; `wm resolve` adds a
-`(resolved)` record and the blocker stays.
+Every line `wm` writes is a dated record. It names who wrote it, by its kind:
+
+- **Your acts** name your git name, such as `by Ada`: `(accepted)`,
+  `(override)`, `(resolved)`, `(archived)`, and the `(ticked)` record of a
+  `human` item.
+- **What the planner writes** names the planner and you, such as
+  `by planner for Ada`: every other record, the roadmap's included.
+- **An agent's ending** names `implementer` or `reviewer`.
+
+The name given with `--by` takes the place of any of these. Records written
+before this rule keep the names they were written with. A later record
+supersedes an earlier one; `wm resolve` adds a `(resolved)` record and the
+blocker stays.
 
 | Record | Where | Written by |
 |---|---|---|
 | `(accepted)` | Log | `wm accept`: the fingerprint and the items it covers |
+| `(revised)` | Log | `wm revise`: the parts an edit after acceptance changed, and why; `wm accept` refuses to accept a change again without one |
 | `(synced)` | Log | `wm sync`: the deltas merged before the archive |
 | `(self-review)` | Log | `wm review --self`, with `covers <items>` and findings |
 | `(review)` | Log | `wm verdict`, or the reviewer's ending: `pass`, `changes <items>` or `spec-gap`, then `covers <items>` |
 | `(override)` | Log | `wm archive --override`: your reason for archiving past a missing review |
+| `(archived)` | Log | `wm archive`: who archived the change |
+| `(ticked)` | item | `wm tick`, or an implementer's `done` |
 | `(blocked)` | item | `wm block`, or an implementer's `blocked` |
 | `(gap)` | item | `wm gap`, or an implementer's `spec-gap` |
 | `(note)` | item | `wm note`, or an implementer's `partial` |

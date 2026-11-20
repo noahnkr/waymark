@@ -287,7 +287,7 @@ RESULT: <done | partial | spec-gap | blocked>: <a short note>
 
 | Reads | Writes |
 |---|---|
-| the implement pack: the item and its criteria, the proposal, deltas, design, the requirements touched as they stand, the resources that serve their specs, Context, the project's rules, the stopping rules | code in its item's repo; `wm note --by wm-implementer`, the one writing command it may run; its ending, which `wm` records as a tick, `(blocked)`, `(gap)` or `(note)` |
+| the implement pack: the item and its criteria, the proposal, deltas, design, the requirements touched as they stand, the resources that serve their specs, Context, the project's rules, the stopping rules | code in its item's repo; `wm note --by implementer`, the one writing command it may run; its ending, which `wm` records as a tick, `(blocked)`, `(gap)` or `(note)` |
 
 ## `wm-reviewer`
 

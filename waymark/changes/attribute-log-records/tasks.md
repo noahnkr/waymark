@@ -47,7 +47,7 @@
     - `wm-apply` and the implementer's definition say how records name who wrote them, and the implementer passes `--by implementer` to its own `wm note`
     - the skills show records with the new authors
   - **Verify:** `tests/test_skills.py`, the adapter snapshots and the full pytest run
-- [ ] 2.2 Update the docs and CHANGELOG
+- [x] 2.2 Update the docs and CHANGELOG
   - **Build:** planner
   - **Criteria:**
     - `docs/record.md` and `docs/concepts.md` describe who records name, and the `(ticked)`, `(archived)` and `(revised)` records
@@ -64,3 +64,4 @@
 - 2026-11-20 (ticked) 1.4 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.5 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.2 by planner for Noah Roberts
