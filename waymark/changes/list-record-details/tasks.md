@@ -15,7 +15,7 @@
     - `wm note`, `wm block`, `wm gap`, `wm resolve`, `wm review --self`, `wm verdict` and `wm revise` take a repeatable `--detail` and write each one under the record
     - a detail that is empty, runs over a line, or starts with a severity in brackets is refused, and nothing is written
   - **Verify:** tests named after the scenarios Note with details, Self-review with a finding and details and Detail that looks like a finding, and one per command
-- [ ] 1.3 Read DETAIL lines from an agent's ending
+- [x] 1.3 Read DETAIL lines from an agent's ending
   - **Build:** planner
   - **Criteria:**
     - `DETAIL:` lines before the ending become details, in order, under the `(note)`, `(blocked)` or `(gap)` of an implementer and the `(review)` of a reviewer, after its findings
@@ -59,3 +59,4 @@
 - 2026-11-20 (accepted) fingerprint 921764255ebc4141 items 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by Noah Roberts
 - 2026-11-20 (ticked) 1.1 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.2 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.3 by planner for Noah Roberts

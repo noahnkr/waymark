@@ -964,3 +964,41 @@ def test_scenario_resource_updated_as_tiny_work(project: Workspace) -> None:
     assert record.changes == {}
     assert record.problems == ()
     assert record.resources["nightly-sync"].sections["Configuration"].endswith("06:00.")
+
+
+def test_scenario_reviewers_details(project: Workspace) -> None:
+    """Requirement "Details from an agent's ending": DETAIL lines go under the review."""
+    built_for_review(project)
+    decision = stop(
+        project,
+        Role.REVIEWER,
+        "FINDING: suggestion: docs/search.md: say the limit\n"
+        "DETAIL: pytest passes\nDETAIL: wm check is healthy\n"
+        "CHANGE: add-limit\nVERDICT: pass: every criterion holds",
+    )
+    assert decision.allow
+    assert project.read(TASKS_FILE).endswith(
+        " by reviewer: every criterion holds\n"
+        "  - [suggestion] `docs/search.md`: say the limit\n"
+        "  - pytest passes\n"
+        "  - wm check is healthy\n"
+    )
+
+
+def test_scenario_implementers_details(accepted: Workspace) -> None:
+    """Requirement "Details from an agent's ending": DETAIL lines go under the note."""
+    stop(
+        accepted,
+        Role.IMPLEMENTER,
+        "DETAIL: the parser is done\nITEM: add-limit 1.1\nRESULT: partial: half built",
+    )
+    assert accepted.read(TASKS_FILE).endswith(
+        "(note) 1.1 by implementer: partial: half built\n  - the parser is done\n"
+    )
+
+
+def test_a_done_ending_ticks_without_details(accepted: Workspace) -> None:
+    stop(accepted, Role.IMPLEMENTER, "DETAIL: extra\nITEM: add-limit 1.1\nRESULT: done: built")
+    text = accepted.read(TASKS_FILE)
+    assert text.endswith("(ticked) 1.1 by implementer\n")
+    assert "  - extra" not in text
