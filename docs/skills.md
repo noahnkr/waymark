@@ -145,7 +145,8 @@ anything you want built or changed, from a typo to a new feature.
    after each step.
 6. **Proposal**, then **deltas**, then the **design** (decisions with their
    status and who made them), then the **tasks**.
-7. Suggests the **review level** and which items to **delegate**.
+7. Suggests the **review level** and each item's **role**: `planner`,
+   `implementer` or `human`.
 8. **Consistency check:** `- **Specs:**` matches the deltas, every scenario is
    covered by an item, the design covers every requirement and adds none, the
    tasks touch what `- **Code:**` names, and each choice is what the approach does.
@@ -158,7 +159,7 @@ anything you want built or changed, from a typo to a new feature.
 **Shows you** what the work involves first. For tiny work, the `Tiny:` line, then the
 pull request's title, description and target. For a change, each draft in a few
 lines; before acceptance: what it does, the deltas per spec, each decision with
-who made it, the review level, and the items with which to delegate. **Stops**
+who made it, the review level, and the items with their roles. **Stops**
 when you say no to tiny work, once its pull request is open (it never merges),
 when an answer changes the scope, when a decision only you can make comes up,
 and at accept, which only you do.
@@ -193,8 +194,8 @@ decision only you can make comes up, when the revision grows into new behavior
 
 ## `/wm-apply`
 
-Builds an accepted change item by item, itself or through an implementer for a
-delegated item, commits each one, then reviews the whole change once at its level
+Builds an accepted change item by item, itself, through an implementer for an
+`implementer` item, or by handing a `human` item to you, commits each one, then reviews the whole change once at its level
 and handles the verdict. **Use it** when a change is accepted and ready to build.
 
 **How it works**
@@ -203,8 +204,9 @@ and handles the verdict. **Use it** when a change is accepted and ready to build
 2. **Apply:** for an item it builds itself, reads the item's context pack
    (`wm context <change> <item> --for implement`), builds exactly that item, runs
    its verification, then records `wm tick`, `wm block` or `wm gap`.
-3. A delegated item goes to `wm-implementer` with exactly `<change> <item>`; its
-   ending is recorded by `wm`.
+3. An `implementer` item goes to `wm-implementer` with exactly `<change> <item>`;
+   its ending is recorded by `wm`. A `human` item is handed to you with its
+   steps, and ticked once you say it is done.
 4. **Commits** each ticked item with a conventional message.
 5. **Review:** a self-review against every scenario, the design and every
    criterion, with findings graded by the severity rubric, recorded with
@@ -268,7 +270,7 @@ gives you the link.
 
 ## `wm-implementer`
 
-A fresh agent that builds one item marked `- **Build:** delegate`, from the record
+A fresh agent that builds one item marked `- **Build:** implementer`, from the record
 alone. `/wm-apply` starts it with exactly `<change> <item>` for a large item,
 parallel work, or a cold check that the record is enough to build from.
 

@@ -51,7 +51,7 @@
     - tests in `tests/services/test_archive.py` for Its only change archived, One of two changes archived and Change in a milestone the exploration led to
     - tests in `tests/services/test_milestones.py` for Its milestone closed and the same-day clash
     - `uv run --no-sync pytest tests/services`
-  - **Build:** delegate
+  - **Build:** implementer
 - [x] 2.3 Add `wm exploration drop <exploration> --reason "<why>"`
   - **Criteria:**
     - an open exploration gets `- Status: dropped`, the reason as its Conclusion's last paragraph after any text already there, and moves to `explorations/archive/<date>-<name>.md`, in one transaction

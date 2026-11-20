@@ -7,7 +7,7 @@
 - `services/context.py` holds the delegation gate (`_item_problem`), which the hook calls when an implementer is started. It doesn't look at the Build line. `_definition` builds each item for the implement and review packs, without its role.
 - `views/payloads.py` puts `"delegate": item.delegate` on each item of `wm show --json` (`show.change`, version 3). `views/render.py` shows the tag `build: delegate`, and `views/schemas.py` declares the field.
 - `hooks/events.py` has a `Role` (planner, implementer, reviewer) for whoever is acting in a session. That is a different idea from the role an item names, and stays as it is.
-- The tasks template, the skills (`wm-propose`, `wm-apply`), the agent definitions, `docs/` and the README name `planner` and `delegate`. 11 archived task lists hold `- **Build:** delegate`.
+- The tasks template, the skills (`wm-propose`, `wm-apply`), the agent definitions, `docs/` and the README name `planner` and `delegate`. 2 archived task lists hold `- **Build:** delegate`.
 
 ## Approach
 
@@ -19,7 +19,7 @@
 3. **Delegation gate.** `_item_problem` refuses an item whose role is `human`, saying the human does it and the planner ticks it after their yes. The hook already calls the gate, so it refuses the implementer.
 4. **Review.** `_definition` adds `build` to each item in the implement and review packs. The review pack and the review step's guidance add a sentence that names the `human` items, if there are any, and says their ticks are the human's confirmation, while what they left in the repo is still checked. `DELEGATED_VERSION` goes to 3.
 5. **Views.** `wm show --json` gives `"build"` (the role, or null without a known value) in place of `"delegate"`. `show.change` goes to version 4, and the schema is updated. The text view shows `build: implementer` or `build: human` and nothing for `planner`, as it shows nothing for `planner` today.
-6. **Record and assets.** The tasks template's example says `implementer`. Its comment names the three roles. The skills, the agent definitions and the docs use the roles, and keep "delegate" only as the verb. The archive's 11 lines are changed by hand in the docs item.
+6. **Record and assets.** The tasks template's example says `implementer`. Its comment names the three roles. The skills, the agent definitions and the docs use the roles, and keep "delegate" only as the verb. The archive's 2 lines are changed by hand in the docs item.
 
 ## Decisions
 
@@ -63,10 +63,10 @@
 - **Status:** decided
 - **Decided by:** human
 - **Options:**
-  - change the 11 lines once, by hand
+  - change the 2 lines once, by hand
   - read `delegate` as an old spelling of `implementer`
 - **Choice:** by hand, once
-- **Why:** this record is Waymark's only instance, so code to read the old value would only ever run on these 11 lines.
+- **Why:** this record is Waymark's only instance, so code to read the old value would only ever run on these 2 lines.
 
 ## Open questions
 

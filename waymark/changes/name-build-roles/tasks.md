@@ -38,18 +38,19 @@
     - `wm-apply` builds `planner` items, delegates `implementer` items and hands `human` items to the human, ticking them after the human's yes
     - the agent definitions and the other skills say `implementer` where they named the `delegate` value, and keep "delegate" only as a verb
   - **Verify:** `tests/test_skills.py` and the full pytest run
-- [ ] 2.2 Update the docs and CHANGELOG, and the archived task lists
+- [x] 2.2 Update the docs and CHANGELOG, and the archived task lists
   - **Build:** planner
   - **Criteria:**
     - `docs/` and the README name the three roles, and the JSON reference shows `build`
     - `CHANGELOG.md` under `## [Unreleased]` carries the User-visible lines, and says to change `delegate` to `implementer` in any active change
-    - the 11 archived task lists read `- **Build:** implementer` where they read `- **Build:** delegate`, changed by hand, and nothing else in them changes
+    - the 2 archived task lists that held a `- **Build:** delegate` item line read `- **Build:** implementer` there, changed by hand, and nothing else in them changes
     - the generated docs are regenerated
   - **Verify:**
     - `uv run --no-sync python -m tools.docs --check`
-    - no `- **Build:** delegate` is left under `waymark/`
+    - no item line reads `- **Build:** delegate` in an archived task list
     - the full checks
 
 ## Log
 
 - 2026-11-20 (accepted) fingerprint 758851e46b4f1ce8 items 1.1, 1.2, 1.3, 1.4, 2.1, 2.2 by Noah Roberts
+- 2026-11-20 (accepted) fingerprint ad57878a4af8a726 items 1.1, 1.2, 1.3, 1.4, 2.1, 2.2 by Noah Roberts

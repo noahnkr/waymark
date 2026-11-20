@@ -235,7 +235,7 @@ syncs and reviews.
 
   | Line | Meaning |
   |---|---|
-  | `- **Build:** planner` or `- **Build:** delegate` | Who builds it: the planner, or a fresh implementer agent. Required. |
+  | `- **Build:** planner`, `implementer` or `human` | Who builds it: the planner, a fresh implementer agent, or you. Required. |
   | `- **Repo:** <name>` | In an atlas, the code repo it works in. Required there. |
   | `- **Criteria:**` | What must be true. Several go as a nested list, one per bullet. Required. |
   | `- **Verify:**` | How to check it. May be a nested list too. Required. |
