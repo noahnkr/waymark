@@ -669,6 +669,11 @@ def check_detail(text: str) -> str:
             "A detail doesn't start with a severity in brackets; that is a finding. "
             "Pass it as --finding, or reword the detail."
         )
+    if starts_with_severity(detail):
+        raise RecordError(
+            "This detail has a finding's shape: a severity word, then a colon or a place in "
+            "backticks. Pass it as --finding, or reword the detail."
+        )
     return detail
 
 

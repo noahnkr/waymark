@@ -92,3 +92,4 @@
   - a detail with a finding's shape, bracketed or not, is refused
   - the review delta and the design name the narrowed rule
   - a bracketed severity under a note is misplaced-finding, as the code does
+- 2026-11-20 (accepted) fingerprint 1d3889e35976a2ca items 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3 by Noah Roberts

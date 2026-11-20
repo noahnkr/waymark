@@ -587,3 +587,38 @@ def test_a_detail_starting_with_a_severity_word_reads_back_as_a_detail(latest: W
     assert change.tasks is not None
     [review] = [r for r in change.tasks.log if r.kind is RecordKind.SELF_REVIEW]
     assert review.details == ("warning signs remain", "critical path covered")
+
+
+def test_scenario_detail_with_a_findings_shape_but_no_brackets(latest: Workspace) -> None:
+    """Requirement "Details under a record": a finding's shape is refused, bracketed or not."""
+    built(latest)
+    before = latest.read(TASKS_FILE)
+    for detail in ("warning: the retry is slow", "critical `path` covered"):
+        with pytest.raises(Refusal, match="finding's shape"):
+            lifecycle.self_review(latest.root, NAME, "<summary>", DAY, details=[detail])
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_scenario_detail_that_starts_with_a_severity_word(latest: Workspace) -> None:
+    """Requirement "Details under a record": other text starting with a severity word is fine."""
+    built(latest)
+    lifecycle.self_review(latest.root, NAME, "<summary>", DAY, details=["warning signs remain"])
+    assert latest.read(TASKS_FILE).endswith(": <summary>\n  - warning signs remain\n")
+    assert latest.record().changes[NAME].problems == ()
+
+
+def test_a_reviewers_detail_with_a_findings_shape_is_refused(latest: Workspace) -> None:
+    from waymark.hooks.decide import decide  # noqa: PLC0415
+    from waymark.hooks.events import Event, EventKind, Role  # noqa: PLC0415
+
+    latest.change(tasks=TASKS, proposal_text=proposal(review="independent"))
+    lifecycle.accept(latest.root, NAME, DAY)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(latest.root, NAME, number, DAY)
+    before = latest.read(TASKS_FILE)
+    message = "DETAIL: warning: the retry is slow\nCHANGE: add-limit\nVERDICT: pass: fine"
+    event = Event(EventKind.AGENT_STOP, latest.root, role=Role.REVIEWER, message=message)
+    decision = decide(event, DAY)
+    assert not decision.allow
+    assert "finding's shape" in decision.reason
+    assert latest.read(TASKS_FILE) == before
