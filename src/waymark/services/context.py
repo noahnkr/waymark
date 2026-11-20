@@ -38,11 +38,11 @@ from waymark.record.state import (
 )
 from waymark.record.terms import BuildRole, Layout, ReviewLevel
 from waymark.services.common import Refusal, find_change, find_item, repo_locations, state_of
-from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
+from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES, human_items_note
 from waymark.services.references import reference_record
 
 CONTEXT_VERSION = 2
-DELEGATED_VERSION = 2
+DELEGATED_VERSION = 3
 """The version of the implementer's and reviewer's packs; 2 reviews the whole change."""
 EXPLORE = "explore"
 IMPLEMENT = "implement"
@@ -209,6 +209,7 @@ def _definition(item: Item, location: Location | None) -> dict[str, Any]:
     return {
         "number": item.number,
         "title": item.title,
+        "build": item.build.value if item.build else None,
         "criteria": item.criteria,
         "verify": item.verify,
         "repo": item.repo,
@@ -304,17 +305,19 @@ def _review_pack(record: Record, change_name: str) -> dict[str, Any]:
     tasks = change.tasks
     records = tasks.review_records if tasks else ()
     numbers = tuple(item.number for item in tasks.items) if tasks else ()
+    reviewed = [
+        item for item in (tasks.items if tasks else ()) if item.number in state.review.to_review
+    ]
+    human = tuple(item.number for item in reviewed if item.build is BuildRole.HUMAN)
     return {
         "schema": f"wm.context.{REVIEW}",
         "version": DELEGATED_VERSION,
         "for": REVIEW,
         "change": change.name,
         "review_level": state.review.level.value,
-        "items": [
-            _definition(item, item_location(record, item))
-            for item in (tasks.items if tasks else ())
-            if item.number in state.review.to_review
-        ],
+        "items": [_definition(item, item_location(record, item)) for item in reviewed],
+        "human_items": list(human),
+        "human_note": human_items_note(human),
         "uncovered_only": bool(state.review.uncovered),
         "reviews": [_review(r, numbers) for r in records if r.kind is RecordKind.REVIEW],
         "resolutions": [r.text for r in records if r.kind is RecordKind.RESOLVED],

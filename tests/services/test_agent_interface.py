@@ -886,6 +886,41 @@ def test_reviewer_pack_holds_every_item_for_a_first_review(project: Workspace) -
     assert "Review the whole change at level independent" in render.to_text(built, PLAIN)
 
 
+def test_scenario_human_item_in_the_review_pack(project: Workspace) -> None:
+    """Requirement "Human items in a review": the pack names the human's item and its tick."""
+    accepted(project, HUMAN_ITEMS, proposal_text=INDEPENDENT)
+    for item in ("1.1", "1.2", "1.3"):
+        lifecycle.tick(project.root, NAME, item)
+    built = pack(project, "review")
+    assert [item["build"] for item in built["items"]] == ["planner", "human", "planner"]
+    assert built["human_items"] == ["1.2"]
+    text = render.to_text(built, PLAIN)
+    assert "## Done by the human" in text
+    assert "Item 1.2 was done by the human: its tick is the human's confirmation" in text
+    assert "Still check anything they left in the repo" in text
+
+
+def test_scenario_self_review_with_a_human_item(project: Workspace) -> None:
+    """Requirement "Human items in a review": the self-review guidance names the human's item."""
+    accepted(project, HUMAN_ITEMS)
+    for item in ("1.1", "1.2", "1.3"):
+        lifecycle.tick(project.root, NAME, item)
+    step = at(project)
+    assert step["step"] == "review"
+    guidance = " ".join(step["guidance"])
+    assert "Item 1.2 was done by the human: its tick is the human's confirmation" in guidance
+
+
+def test_review_without_human_items_says_nothing_about_them(project: Workspace) -> None:
+    accepted(project, proposal_text=INDEPENDENT)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.2")
+    built = pack(project, "review")
+    assert (built["human_items"], built["human_note"]) == ([], None)
+    assert "Done by the human" not in render.to_text(built, PLAIN)
+    assert "by the human" not in " ".join(at(project)["guidance"])
+
+
 def member_of_faster_search(project: Workspace) -> None:
     """An independently reviewed change that belongs to the milestone faster-search."""
     project.change(

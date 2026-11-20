@@ -16,7 +16,7 @@
     - for a `human` item, `wm instructions` tells the planner to give the human the item's Criteria and Verify as the steps, to tick it with `wm tick` only after their yes, and to `wm block` it with what it waits on when they can't do it now; its commands are `wm tick` and `wm block`, and it doesn't mention building the item or starting an implementer
     - starting an implementer on a `human` item is refused, with a reason that says the human does it and the planner ticks it after their yes
   - **Verify:** tests named after the scenarios Item for the human, Human item waits and Implementer on a human item
-- [ ] 1.3 Tell a review which items the human did
+- [x] 1.3 Tell a review which items the human did
   - **Build:** planner
   - **Criteria:**
     - each item in the implement and review packs carries its `build` role, and the packs' schema version is 3

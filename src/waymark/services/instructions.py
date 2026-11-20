@@ -26,7 +26,7 @@ from waymark.record.state import AcceptanceState, ChangeState, StepKind
 from waymark.record.terms import BuildRole, Layout, ReviewLevel
 from waymark.record.writing import templates
 from waymark.services.common import Refusal, find_change, state_of
-from waymark.services.guidance import SEVERITY_RUBRIC
+from waymark.services.guidance import SEVERITY_RUBRIC, human_items_note
 
 INSTRUCTIONS_VERSION = 1
 EXPLORE = "explore"
@@ -354,6 +354,13 @@ def _working(  # noqa: PLR0911 - one return per step
             if uncovered
             else []
         )
+        human = tuple(
+            item.number
+            for item in (change.tasks.items if change.tasks else ())
+            if item.build is BuildRole.HUMAN and item.number in state.review.to_review
+        )
+        if (note := human_items_note(human)) is not None:
+            scope.append(note)
         if state.review.level is ReviewLevel.INDEPENDENT:
             guidance = [
                 *scope,

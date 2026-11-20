@@ -14,7 +14,7 @@ from waymark.record.state import (
     RoadmapStatus,
     StepKind,
 )
-from waymark.record.terms import Layout, Phase, ReviewLevel, ReviewSeverity, Verdict
+from waymark.record.terms import BuildRole, Layout, Phase, ReviewLevel, ReviewSeverity, Verdict
 from waymark.views.payloads import KINDS, VERSIONS
 
 Schema = dict[str, Any]
@@ -317,6 +317,7 @@ _STEPS = [*(kind.value for kind in StepKind), "explore"]
 _DEFINITION = {
     "number": STRING,
     "title": STRING,
+    "build": _enum(BuildRole, nullable=True),
     "criteria": TEXT_OR_NULL,
     "verify": TEXT_OR_NULL,
     "repo": TEXT_OR_NULL,
@@ -387,6 +388,8 @@ def _review_pack() -> Schema:
             "review_level": _enum(ReviewLevel),
             "uncovered_only": BOOLEAN,
             "items": _array(_object(_DEFINITION)),
+            "human_items": NAMES,
+            "human_note": TEXT_OR_NULL,
             "reviews": _array(_PACK_REVIEW),
             "resolutions": NAMES,
             "context": STRING,

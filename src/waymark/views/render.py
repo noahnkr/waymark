@@ -521,6 +521,8 @@ def _review_head(payload: Payload) -> list[str]:
     lines.append("## Its items")
     for item in payload["items"]:
         lines += ["", *_definition_lines(item)]
+    if payload["human_note"]:
+        lines += ["", "## Done by the human", "", payload["human_note"]]
     if payload["reviews"] or payload["resolutions"]:
         lines += ["", "## Earlier reviews", ""]
         for review in payload["reviews"]:
