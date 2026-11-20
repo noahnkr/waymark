@@ -2,11 +2,6 @@
 
 - **Status:** open
 
-<!-- "open" while it waits to be decided or built. Only wm changes this line:
-     "wm new change <name> --from <exploration>" or "wm new milestone <name> --from
-     <exploration>" writes "led-to <link>", and "wm exploration drop <exploration>
-     --reason "<why>"" writes "dropped". Both end in explorations/archive/. -->
-
 ## Context
 
 <!-- What prompted this, and what is already known. -->

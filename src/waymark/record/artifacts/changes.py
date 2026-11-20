@@ -89,7 +89,12 @@ class Change:
         return self.proposal is not None and self.proposal.short_path
 
     def review_level(self, default: ReviewLevel) -> ReviewLevel:
-        """The change's review level: its proposal's Review line, or the project default."""
+        """The change's review level: its proposal's Review line.
+
+        An active change without the line is reported as ``missing-review``; until it is
+        written, and for archived changes from before the line was required, the project
+        default stands in.
+        """
         if self.proposal is not None and self.proposal.review is not None:
             return self.proposal.review
         return default
@@ -304,6 +309,21 @@ def _check_labels(change: Change, problems: list[Problem]) -> None:
         problems.extend(labels.plain_label_problems(doc))
 
 
+def _check_review_line(proposal: Proposal, problems: list[Problem]) -> None:
+    """Every active change names its review level in its proposal."""
+    if proposal.review_written:
+        return
+    problems.append(
+        Problem(
+            proposal.doc.path,
+            1,
+            "missing-review",
+            f'Every change names its review level. Add a "{label_line(REVIEW, "<level>")}" '
+            "line under the Owner line: self, independent or none.",
+        )
+    )
+
+
 def _check_against_config(change: Change, config: Config | None, problems: list[Problem]) -> None:
     """Rules that span files: the short path's limits, and repos in an atlas."""
     proposal, tasks = change.proposal, change.tasks
@@ -311,6 +331,7 @@ def _check_against_config(change: Change, config: Config | None, problems: list[
     _check_labels(change, problems)
     if proposal is not None:
         _check_impact(change, proposal, problems)
+        _check_review_line(proposal, problems)
     if tasks is not None:
         _check_items(tasks, problems)
     if change.design is not None:

@@ -31,9 +31,7 @@ CHANGED = requirement(statement="A search SHALL return at most twenty results.")
 
 
 def reviewed_at(level: str) -> str:
-    return proposal().replace(
-        "**Owner:** Sam Doe\n", f"**Owner:** Sam Doe\n- **Review:** {level}\n"
-    )
+    return proposal().replace("- **Review:** self\n", f"- **Review:** {level}\n")
 
 
 def findings(project: Workspace) -> list[tuple[str, str, str]]:

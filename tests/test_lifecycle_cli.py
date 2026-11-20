@@ -50,9 +50,9 @@ class Session:
         """Draft the proposal the way an agent would: by editing the skeleton."""
         text = self.read(f"changes/{name}/proposal.md")
         if review is not None:
-            owner = text.index("Owner:")
-            end = text.index("\n", owner) + 1
-            text = text[:end] + f"- **Review:** {review}\n" + text[end:]
+            start = text.index("- **Review:** ")
+            end = text.index("\n", start) + 1
+            text = text[:start] + f"- **Review:** {review}\n" + text[end:]
         for hint, body in (
             ("<!-- The problem or opportunity, and why now. -->", "Long lists are slow."),
             ("<!-- What will be different once this change is archived. -->", "A capped list."),

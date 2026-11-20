@@ -104,8 +104,8 @@ def _review_level_findings(record: Record, name: str) -> list[Finding]:
         return []
     message = (
         f'The change "{name}" modifies or removes a requirement, and its review level is '
-        f"{level}. A change like this should be reviewed independently: add a "
-        f'"{label_line(labels.REVIEW, "independent")}" line to its proposal.'
+        f"{level}. A change like this should be reviewed independently: set its proposal's "
+        f'Review line to "{label_line(labels.REVIEW, "independent")}".'
     )
     return [
         Finding(Severity.WARNING, change.proposal.doc.path, WHOLE_FILE, "review-level", message)

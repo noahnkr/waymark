@@ -10,7 +10,7 @@ from waymark.record.artifacts.charter import CHARTER_FILE
 from waymark.record.artifacts.config import CONFIG_FILE, RECORD_FORMAT
 from waymark.record.artifacts.explorations import Exploration, with_led_to
 from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log, link_change
-from waymark.record.artifacts.proposal import AFTER, MILESTONE, OWNER, PATH, SHORT
+from waymark.record.artifacts.proposal import AFTER, MILESTONE, OWNER, PATH, REVIEW, SHORT
 from waymark.record.artifacts.resources import KINDS as RESOURCE_KINDS
 from waymark.record.evidence import records
 from waymark.record.evidence.records import RecordKind
@@ -22,6 +22,7 @@ from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.text import Document
 from waymark.record.names import NAME_RULE, is_valid_name
 from waymark.record.record import CHANGES, EXPLORATIONS, MILESTONES, RESOURCES, Record
+from waymark.record.terms import ReviewLevel
 from waymark.record.writing import templates
 from waymark.record.writing.store import Transaction
 from waymark.services import ci as workflow
@@ -209,6 +210,10 @@ def create_change(  # noqa: PLR0913 - the change's facts, and the day for its mi
         for key, value in ((OWNER, who), (MILESTONE, milestone), (AFTER, after))
         if value
     ) + (f"{label_line(PATH, SHORT)}\n" if short else "")
+    level = record.default_review
+    if short and level is ReviewLevel.INDEPENDENT:
+        level = ReviewLevel.SELF
+    facts += f"{label_line(REVIEW, level.value)}\n"
     text = templates.render(templates.PROPOSAL, title=templates.title_from_name(name), facts=facts)
     transaction = Transaction(record.files)
     transaction.write(f"{folder}/{PROPOSAL_FILE}", text)

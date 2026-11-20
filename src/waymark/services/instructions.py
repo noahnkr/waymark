@@ -233,9 +233,9 @@ def _drafting(
             f'"{label_line(labels.USER_VISIBLE)}" line; and a "{label_line(labels.CODE)}" line.',
             "Don't write records such as (accepted), a Log section or the Outcome section; wm "
             "writes the records in the task list's Log, and the outcome comes at archive.",
-            f"The change is reviewed once, as a whole, at the project's default level ({default}) "
-            f'unless a "{label_line(labels.REVIEW, "self|independent|none")}" line under the Owner '
-            "line says otherwise. "
+            "The change is reviewed once, as a whole, at the level its "
+            f'"{label_line(labels.REVIEW)}" line names. wm new change wrote the project\'s '
+            f"default ({default}); set it to self, independent or none. "
             "Suggest independent when " + "; or ".join(_RISK_SIGNALS) + ".",
         ]
         if change.short_path:

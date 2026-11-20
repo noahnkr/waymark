@@ -24,9 +24,7 @@ ADDED = (
 
 
 def at(level: str) -> str:
-    return proposal().replace(
-        "**Owner:** Sam Doe\n", f"**Owner:** Sam Doe\n- **Review:** {level}\n"
-    )
+    return proposal().replace("- **Review:** self\n", f"- **Review:** {level}\n")
 
 
 def passed_then_added(project: Workspace, level: str = "independent") -> None:

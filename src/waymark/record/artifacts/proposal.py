@@ -89,6 +89,8 @@ class Proposal:
     """The change this one comes after, from the ``- After:`` line; None without one."""
     after_line: int | None = None
     """The 1-based line of the ``- After:`` line, for messages."""
+    review_written: bool = False
+    """Whether the proposal has a ``- Review:`` line, whatever its value."""
 
     @property
     def no_spec_changes(self) -> bool:
@@ -164,8 +166,7 @@ def parse_proposal(doc: Document) -> Proposal:
                     doc.path,
                     facts[REVIEW].index + 1,
                     "invalid-review-level",
-                    f'"{label_line(REVIEW)}" is one of {levels}. Fix the value, or remove the '
-                    "line for the project's default.",
+                    f'"{label_line(REVIEW)}" is one of {levels}. Fix the value.',
                 )
             )
 
@@ -197,6 +198,7 @@ def parse_proposal(doc: Document) -> Proposal:
         milestone_line=milestone.index + 1 if milestone else None,
         after=(after.value or None) if after else None,
         after_line=after.index + 1 if after else None,
+        review_written=REVIEW in facts,
     )
 
 

@@ -7,7 +7,7 @@ The layout never touches wording. Outside fenced code and comments it:
 - takes trailing spaces off every line;
 - re-renders each record and finding wm owns into its standard shape;
 - writes each known label in bold, ``- **<Label>:**``, when it was written plain or
-  with the colon outside the bold;
+  with the colon outside the bold, and each glossary entry of the charter the same way;
 - puts a task item's label lines in the order Build, Repo, Criteria, Verify, each
   with the lines nested under it;
 
@@ -31,6 +31,10 @@ _RECORD_LINE = re.compile(r"^(\s*- )(\d{4}-\d{2}-\d{2} \(.*)$")
 _FINDING_LINE = re.compile(r"^(\s+- )(\[(?:critical|warning|suggestion)\] .*)$")
 _ITEM = re.compile(r"^- \[[ xX]\] \d+\.\d+(?:\s|$)")
 _ITEM_CHILD = "  - "
+_PLAIN_TERM = re.compile(r"^- (?:\*\*([^*:]+?)\*\*|([^*:\s][^*:]*?)): (\S.*)$")
+"""A glossary entry, ``- <term>: <meaning>`` or ``- **<term>**: <meaning>``."""
+_SECTION_LEVEL = 2
+"""The level of a ``##`` heading, such as the charter's Glossary."""
 _COMMENT_OPEN = "<!--"
 _COMMENT_CLOSE = "-->"
 
@@ -203,11 +207,23 @@ def _order_items(lines: list[_Line], fixes: set[Fix]) -> list[_Line]:
     return out
 
 
-def standard_layout(text: str, *, bold_labels: bool = True) -> tuple[str, tuple[Fix, ...]]:
+def _bold_term(text: str) -> str | None:
+    """A glossary entry written plain or with the colon outside the bold, made bold."""
+    entry = _PLAIN_TERM.match(text)
+    if entry is None:
+        return None
+    term = entry.group(1) or entry.group(2)
+    return f"- **{term}:** {entry.group(3)}"
+
+
+def standard_layout(
+    text: str, *, bold_labels: bool = True, glossary: str | None = None
+) -> tuple[str, tuple[Fix, ...]]:
     """The text in its standard layout, and the kinds of fix that took.
 
     ``bold_labels`` false leaves labels as written, for a file that holds none,
-    such as the charter.
+    such as the charter. ``glossary`` names the ``##`` section whose top-level list
+    lines are glossary entries, ``- **<term>:** <meaning>``, made bold whatever their term.
     """
     if not text:
         return text, ()
@@ -215,11 +231,21 @@ def standard_layout(text: str, *, bold_labels: bool = True) -> tuple[str, tuple[
     newline = doc.newline
     in_comment = _comment_flags(doc)
     heading_rows = {heading.index for heading in doc.headings}
+    sections = {
+        heading.index: heading.title for heading in doc.headings if heading.level == _SECTION_LEVEL
+    }
     fixes: set[Fix] = set()
     lines: list[_Line] = []
+    section = None
     for index, line in enumerate(doc.lines):
         protected = line.in_fence or in_comment[index]
+        section = sections.get(index, section)
         fixed = line.text if protected else _fix_line(line.text, fixes, bold_labels=bold_labels)
+        if not protected and glossary is not None and section == glossary:
+            term = _bold_term(fixed)
+            if term is not None:
+                fixes.add(Fix.LABEL)
+                fixed = term
         heading = index in heading_rows and not protected
         lines.append(_Line(fixed, line.ending, protected, heading))
 

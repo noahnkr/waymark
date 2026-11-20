@@ -24,9 +24,7 @@ ONE_ITEM = (
     + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty at most\n"
     + "  - **Verify:** a test\n"
 )
-INDEPENDENT = proposal().replace(
-    "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
-)
+INDEPENDENT = proposal().replace("- **Review:** self\n", "- **Review:** independent\n")
 
 
 def built_for_review(project: Workspace) -> Workspace:

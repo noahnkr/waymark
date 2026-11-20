@@ -223,14 +223,13 @@ def test_exploration_missing_section_is_a_problem() -> None:
 
 
 def test_proposal_review_line_sets_the_change_review_level() -> None:
-    assert parse(proposal()).review is None
-    reviewed = proposal().replace(
-        "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
-    )
+    assert parse(proposal(review=None)).review is None
+    assert parse(proposal()).review is ReviewLevel.SELF
+    reviewed = proposal().replace("- **Review:** self\n", "- **Review:** independent\n")
     assert parse(reviewed).review is ReviewLevel.INDEPENDENT
-    assert proposal_codes(
-        proposal().replace("**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** strict\n")
-    ) == ["invalid-review-level"]
+    assert proposal_codes(proposal().replace("- **Review:** self\n", "- **Review:** strict\n")) == [
+        "invalid-review-level"
+    ]
 
 
 LOGGED = (

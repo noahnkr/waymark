@@ -60,7 +60,7 @@ values and keep the keys.
 |---|---|
 | `wm_version` | The exact wm version the project uses. Any version can read the record; only this one may write it. |
 | `record_format` | The record's format, now `1`. Never edit it by hand. A record in another format is refused, with the reason to install the `wm` version that wrote it. |
-| `default_review` | `self`, `independent` or `none`: a change's review level when its proposal has no `- **Review:**` line. |
+| `default_review` | `self`, `independent` or `none`: the level `wm new change` writes in a new proposal's `- **Review:**` line (`self` on the short path when it is `independent`). |
 | `agent_tools` | Which agent tools get skills, agents and hooks, such as `["claude-code"]`. |
 | `commit_scopes` | Optional. The scopes a conventional commit may use; the commit hook refuses any other. |
 | `[atlas.repos.<name>]` | In an atlas, one table per code repo, with a relative `path` hint. |
@@ -87,7 +87,8 @@ An indented line under a numbered item continues it. **Written by**
 `/wm-kickoff` with you; it isn't changed through a change.
 **Checks:** `missing-section`, `numbered-list-format`, `glossary-format`,
 `old-layout` (a `Term: meaning` glossary line), `duplicate-section`. A heading or a
-bullet under Rules is a `numbered-list-format` error.
+bullet under Rules is a `numbered-list-format` error. `wm check --fix` makes a
+glossary entry written `- <term>: <meaning>` or `- **<term>**: <meaning>` bold.
 
 ```markdown
 ## Goals
@@ -141,7 +142,7 @@ except the Outcome.
 
 | Part | What it holds |
 |---|---|
-| Facts under the title | `- **Owner:** <name>` (from git), and optionally `- **Milestone:** <name>`, `- **After:** <change>`, `- **Review:** self\|independent\|none` and `- **Path:** short`. |
+| Facts under the title | `- **Owner:** <name>` (from git) and `- **Review:** self\|independent\|none` (the project's `default_review` to start with), and optionally `- **Milestone:** <name>`, `- **After:** <change>` and `- **Path:** short`. |
 | `## Why` | The problem and why now, not the solution. |
 | `## What changes` | What will be different once the change is archived. |
 | `## Non-goals` | What a reader might expect and won't get. |
@@ -155,11 +156,12 @@ except the Outcome.
 - **`- **User-visible:**`** lists the commands, output, files and formats users will
   see change, for the changelog.
 - **`- **Code:**`** names the parts of the code it touches, and in an atlas the repos.
-- **`- **Review:** independent`** is for a change that modifies or removes an existing
+- **`- **Review:**`** is the change's review level, and every active change has the
+  line. `independent` is for a change that modifies or removes an existing
   requirement, or touches security, data integrity or money; `wm check` warns
   when such a change is reviewed below independent.
 
-**Checks:** `missing-owner`, `invalid-path`, `invalid-review-level`,
+**Checks:** `missing-owner`, `missing-review`, `invalid-path`, `invalid-review-level`,
 `impact-format`, `impact-mismatch`, `old-layout`, `short-path-review`, `empty-section`.
 For an `- **After:**` line in an active change: `unknown-after` (no active or archived
 change has that name), `after-self`, `after-cycle` (the lines lead back to the
