@@ -609,7 +609,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     _by(sync)
     sync.set_defaults(handler=_sync)
 
-    summary = "Archive an applied change. For the human to run."
+    summary = "Archive an applied change, once the human says yes."
     archive = commands.add_parser("archive", help=summary, description=summary)
     archive.add_argument("change", help="the change's name")
     archive.add_argument("--built", metavar="TEXT", help="what was built, for the outcome")

@@ -235,8 +235,8 @@ is reviewed.
 
 **How it works:** checks the step is archive and the work is committed, and asks
 you; drafts the outcome with you (what was built, and how it differs from the
-proposal); runs, or asks you to run,
-`wm archive <change> --built "…" --differs "…"`; runs `wm check` and `wm status`;
+proposal); runs `wm archive <change> --built "…" --differs "…"` once you say
+yes; runs `wm check` and `wm status`;
 asks whether the milestone's roadmap still fits, changing it with `wm roadmap`,
 and whether the milestone is ready to close; commits the record on the branch;
 offers `/wm-pr`.

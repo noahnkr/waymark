@@ -575,7 +575,9 @@ def test_implementer_spec_gap_writes_the_spec_gap_line(accepted: Workspace) -> N
 def test_implementer_partial_leaves_a_note_and_the_item_unticked(accepted: Workspace) -> None:
     stop(accepted, Role.IMPLEMENTER, "ITEM: add-limit 1.1\nRESULT: partial: the test is missing")
     text = accepted.read(TASKS_FILE)
-    assert "- 2026-01-15 (note) 1.1 by wm-implementer: partial: the test is missing\n" in text
+    assert text.endswith(
+        "- 2026-01-15 (note) 1.1 by wm-implementer: partial: the test is missing\n"
+    )
     assert "- [ ] 1.1" in text
     assert accepted.change_state().next_step.item == "1.1"
 

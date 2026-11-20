@@ -477,9 +477,12 @@ def test_bold_lines_in_a_resource() -> None:
 
 
 def test_glossary_with_the_colon_inside_the_bold() -> None:
-    text = CHARTER.replace("- **Match:** a document", "- **Match:** a document")
-    assert parse_charter(document(text, "charter.md")).problems == ()
+    """The colon inside the bold is read; the same entry with it outside is reported."""
+    assert "- **Match:** a document" in CHARTER
     assert parse_charter(document(CHARTER, "charter.md")).problems == ()
+    outside = CHARTER.replace("- **Match:** a document", "- **Match**: a document")
+    [problem] = parse_charter(document(outside, "charter.md")).problems
+    assert problem.code == "glossary-format"
 
 
 def test_bold_labels_report_nothing_new(workspace: Workspace) -> None:
