@@ -17,14 +17,13 @@ from waymark.record.artifacts.changes import (
     Change,
 )
 from waymark.record.artifacts.charter import CHARTER_FILE
-from waymark.record.artifacts.tasks import DELEGATE, PLANNER
 from waymark.record.machine.branches import Branches
 from waymark.record.machine.project import RECORD_DIR
 from waymark.record.markdown import labels
 from waymark.record.markdown.labels import label_line
 from waymark.record.record import SPECS, Record
 from waymark.record.state import AcceptanceState, ChangeState, StepKind
-from waymark.record.terms import Layout, ReviewLevel
+from waymark.record.terms import BuildRole, Layout, ReviewLevel
 from waymark.record.writing import templates
 from waymark.services.common import Refusal, find_change, state_of
 from waymark.services.guidance import SEVERITY_RUBRIC
@@ -280,9 +279,10 @@ def _drafting(
         f"or '{label_line(labels.VERIFY)}', "
         "one criterion or one verification step per bullet.",
         f"Give every item a '{label_line(labels.BUILD)}' line, first among its lines: "
-        f"'{PLANNER}' when the planner builds it, or '{DELEGATE}' when a fresh implementer should "
-        "build it: a large item, one built in parallel, or one worth a cold check that the record "
-        "is enough.",
+        f"'{BuildRole.PLANNER}' when the planner builds it; '{BuildRole.IMPLEMENTER}' when a "
+        "fresh implementer should build it: a large item, one built in parallel, or one worth a "
+        f"cold check that the record is enough; or '{BuildRole.HUMAN}' for work only the human "
+        "can do, such as filling in a form, a manual test or setting up a platform.",
         "Don't tick items or write records; wm writes those.",
         *SIZING_RULES,
     ]
@@ -305,7 +305,7 @@ def _working(  # noqa: PLR0911 - one return per step
     number = item or "<item>"
     if step is StepKind.APPLY:
         built = change.tasks.item(item) if change.tasks and item else None
-        if built is not None and built.build == DELEGATE:
+        if built is not None and built.build is BuildRole.IMPLEMENTER:
             guidance = [
                 f"Start an implementer for item {number} with the change and item and nothing "
                 "else.",

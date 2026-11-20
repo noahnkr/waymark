@@ -335,7 +335,7 @@ def test_instruction_templates_follow_the_formats_wm_parses(project: Workspace) 
     assert parsed.items[0].criteria is not None
     for item in parsed.items:
         first = tasks.split("\n")[item.index + 1]
-        assert first in ("  - **Build:** planner", "  - **Build:** delegate")
+        assert first in ("  - **Build:** planner", "  - **Build:** implementer")
     assert "- **Options:**\n  - <one option considered>\n  - <another>\n" in design
     assert "- **Decided by:** <human or planner>" in design
     specs = at(project, "specs")["outputs"][0]["template"]
@@ -353,7 +353,7 @@ def test_task_instructions_in_an_atlas_ask_for_a_repo_on_every_item(atlas: Works
     step = valid(instructions(atlas.record(), "tasks", NAME))
     template = step["outputs"][0]["template"]
     assert template.count("  - **Build:** planner\n  - **Repo:** <api | web>\n") == 1
-    assert template.count("  - **Build:** delegate\n  - **Repo:** <api | web>\n") == 1
+    assert template.count("  - **Build:** implementer\n  - **Repo:** <api | web>\n") == 1
     assert any("Repo line" in line for line in step["guidance"])
 
 
@@ -402,7 +402,7 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     accepted(
         project,
         HEAD
-        + "- [ ] 1.1 Cap it\n  - **Build:** delegate\n  - **Criteria:** fifty\n"
+        + "- [ ] 1.1 Cap it\n  - **Build:** implementer\n  - **Criteria:** fifty\n"
         + "  - **Verify:** a test\n",
     )
     step = at(project)
@@ -413,7 +413,7 @@ def test_apply_instructions_delegate_a_tagged_item(project: Workspace) -> None:
     )
 
 
-@pytest.mark.parametrize("tag", ["planner", "delegate"])
+@pytest.mark.parametrize("tag", ["planner", "implementer"])
 def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     project: Workspace, tag: str
 ) -> None:
@@ -429,7 +429,7 @@ def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"][0] == f"wm reopen {NAME} 1.1"
     assert step["commands"][1] == f"wm context {NAME} 1.1 --for implement"
-    assert mentions_an_implementer(step) == (tag == "delegate")
+    assert mentions_an_implementer(step) == (tag == "implementer")
 
 
 def test_instructions_for_items_waiting_on_the_human_point_to_resolve(project: Workspace) -> None:

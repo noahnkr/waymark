@@ -2,6 +2,7 @@
 
 from tests.support import TASKS, document
 from waymark.record.artifacts.tasks import Tasks, parse_tasks
+from waymark.record.terms import BuildRole
 
 HEAD = "# Tasks\n\n## 1. Limit\n\n"
 
@@ -40,37 +41,40 @@ def test_item_carries_its_criteria_verification_and_repo() -> None:
     assert not item.ticked
 
 
-def test_build_tag_marks_an_item_for_delegation() -> None:
+def test_build_line_names_the_role() -> None:
     tasks = parse(
         HEAD
-        + "- [ ] 1.1 Sort it\n  - **Build:** delegate\n- [ ] 1.2 Tidy up\n  - **Build:** planner\n"
+        + "- [ ] 1.1 Sort it\n  - **Build:** implementer\n"
+        + "- [ ] 1.2 Tidy up\n  - **Build:** planner\n"
     )
     assert tasks.problems == ()
     tagged, plain = tasks.items
     assert [item.title for item in tasks.items] == ["Sort it", "Tidy up"]
-    assert (tagged.delegate, plain.delegate) == (True, False)
+    assert (tagged.build, plain.build) == (BuildRole.IMPLEMENTER, BuildRole.PLANNER)
 
 
-def test_unknown_build_tag_is_a_problem_that_names_both_values() -> None:
+def test_unknown_build_tag_is_a_problem_that_names_the_roles() -> None:
     tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - **Build:** someone\n")
     (problem,) = tasks.problems
     assert problem.code == "unknown-build-tag"
     assert '"someone"' in problem.message
-    assert "The values are: planner and delegate." in problem.message
+    assert "The roles are planner, implementer and human." in problem.message
     (item,) = tasks.items
     assert item.title == "Cap it"
-    assert not item.delegate
+    assert item.build is None
 
 
 def test_a_trailing_build_tag_stays_part_of_the_title() -> None:
     tasks = parse(HEAD + "- [ ] 1.1 Cap it   `build: delegate`\n  - **Build:** planner\n")
     assert tasks.problems == ()
     assert tasks.items[0].title == "Cap it   `build: delegate`"
-    assert not tasks.items[0].delegate
+    assert tasks.items[0].build is BuildRole.PLANNER
 
 
 def test_the_build_line_given_twice_is_a_problem() -> None:
-    tasks = parse(HEAD + "- [ ] 1.1 Cap it\n  - **Build:** delegate\n  - **Build:** delegate\n")
+    tasks = parse(
+        HEAD + "- [ ] 1.1 Cap it\n  - **Build:** implementer\n  - **Build:** implementer\n"
+    )
     assert [problem.code for problem in tasks.problems] == ["duplicate-field"]
 
 

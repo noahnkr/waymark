@@ -21,12 +21,11 @@ from waymark.record.markdown import labels
 from waymark.record.markdown.labels import label_line
 from waymark.record.markdown.problems import Problem
 from waymark.record.markdown.text import Document, Section
-from waymark.record.terms import ReviewSeverity, Verdict
+from waymark.record.terms import BuildRole, ReviewSeverity, Verdict
 
 LOG_SECTION = "Log"
-DELEGATE = "delegate"
-PLANNER = "planner"
-BUILD_VALUES = (PLANNER, DELEGATE)
+BUILD_ROLES = f"{BuildRole.PLANNER}, {BuildRole.IMPLEMENTER} and {BuildRole.HUMAN}"
+"""The roles a Build line names, as a message lists them."""
 RECORD = "record"
 """How a record stands in an item's line order."""
 
@@ -103,7 +102,6 @@ class Item:
     section: int
     title: str
     ticked: bool
-    delegate: bool
     criteria: str | None
     verify: str | None
     repo: str | None
@@ -113,9 +111,8 @@ class Item:
     records: tuple[ReviewRecord, ...]
     index: int
     end: int
-    build: str | None = None
-    """Who builds the item, from its Build line: planner or delegate; None without a known
-    value."""
+    build: BuildRole | None = None
+    """Who builds the item, from its Build line; None without a known role."""
     has_build_line: bool = False
     """Whether the item has a Build line, whatever its value."""
     line_order: tuple[str, ...] = ()
@@ -218,7 +215,6 @@ class _Draft:
     section: int
     title: str
     ticked: bool
-    delegate: bool
     index: int
     end: int
     fields: dict[str, list[str]] = field(default_factory=dict)
@@ -234,8 +230,7 @@ class _Draft:
             section=self.section,
             title=self.title,
             ticked=self.ticked,
-            delegate=self.delegate,
-            build=build if (build := single(BUILD)) in BUILD_VALUES else None,
+            build=BuildRole(build) if (build := single(BUILD)) in set(BuildRole) else None,
             has_build_line=BUILD in self.fields,
             line_order=tuple(self.order),
             criteria=single("Criteria"),
@@ -306,19 +301,11 @@ class _Parser:
             )
             return
         if label == BUILD:
-            if draft.delegate:
-                self.problem(
-                    index,
-                    "repeated-tag",
-                    f'The item says "build" twice. Keep the "{label_line(BUILD)}" line.',
-                )
-            elif value == DELEGATE:
-                draft.delegate = True
-            elif value not in BUILD_VALUES:
+            if value not in set(BuildRole):
                 self.problem(
                     index,
                     "unknown-build-tag",
-                    f'"{value}" is not a build value. The values are: {PLANNER} and {DELEGATE}.',
+                    f'"{value}" is not a build role. The roles are {BUILD_ROLES}.',
                 )
             draft.fields[label] = [value]
             return
@@ -370,7 +357,6 @@ class _Parser:
             section=int(match.group(2)),
             title=title,
             ticked=match.group(1) != " ",
-            delegate=False,
             index=index,
             end=index + 1,
         )

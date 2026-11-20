@@ -206,8 +206,7 @@ def test_unknown_build_tag_is_an_error(project: Workspace) -> None:
     )
     assert findings(project) == [("error", "changes/add-limit/tasks.md", "unknown-build-tag")]
     [problem] = project.record().changes["add-limit"].problems
-    assert "planner" in problem.message
-    assert "delegate" in problem.message
+    assert all(role in problem.message for role in ("planner", "implementer", "human"))
 
 
 def test_scenario_item_built_by_the_planner(project: Workspace) -> None:
@@ -226,13 +225,13 @@ def test_scenario_item_built_by_the_planner(project: Workspace) -> None:
     assert "wm tick add-limit 1.1" in guide["commands"]
 
 
-def test_scenario_tagged_item_with_a_bold_build_line(project: Workspace) -> None:
+def test_scenario_implementer_item_with_a_bold_build_line(project: Workspace) -> None:
     """Requirement "Build line": a delegate item is handed to an implementer, and nothing else."""
     project.change(
         tasks=HEAD
         + "- [x] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
         + "  - **Verify:** a test\n"
-        + "- [ ] 1.2 Rebuild\n  - **Build:** delegate\n  - **Criteria:** done\n"
+        + "- [ ] 1.2 Rebuild\n  - **Build:** implementer\n  - **Criteria:** done\n"
         + "  - **Verify:** a test\n"
     )
     project.accept()
@@ -247,8 +246,7 @@ def test_tasks_guidance_asks_for_a_build_line_on_every_item(project: Workspace) 
     project.change(tasks=None)
     guidance = " ".join(instructions(project.record(), "tasks", "add-limit")["guidance"])
     assert "Give every item a '- **Build:**' line" in guidance
-    assert "'planner'" in guidance
-    assert "'delegate'" in guidance
+    assert all(f"'{role}'" in guidance for role in ("planner", "implementer", "human"))
 
 
 def test_delta_that_does_not_match_its_spec_is_an_error(project: Workspace) -> None:
@@ -604,15 +602,14 @@ def test_scenario_item_without_a_build_line(project: Workspace) -> None:
     )
     assert (code, offset) == ("item-incomplete", 0)
     assert '"- **Build:**"' in message
-    assert "planner" in message
-    assert "delegate" in message
+    assert all(role in message for role in ("planner", "implementer", "human"))
 
 
 def test_scenario_build_line_last(project: Workspace) -> None:
     [(code, offset, message)] = item_problems(
         project,
         "- [ ] 1.2 Name it\n  - **Criteria:** named\n  - **Verify:** a test\n"
-        "  - **Build:** delegate\n",
+        "  - **Build:** implementer\n",
     )
     assert (code, offset) == ("item-order", 0)
     assert "Build, Repo, Criteria, Verify" in message

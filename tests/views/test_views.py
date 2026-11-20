@@ -60,7 +60,7 @@ def busy(project: Workspace) -> Workspace:
         + "  - **Verify:** a test\n"
         + (
             "- [ ] 1.4 Translate it\n"
-            "  - **Build:** delegate\n"
+            "  - **Build:** implementer\n"
             "  - **Criteria:** two languages\n"
             "  - **Verify:** a test\n"
         ),

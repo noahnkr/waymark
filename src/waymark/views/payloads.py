@@ -46,7 +46,7 @@ from waymark.record.state import (
     milestone_state,
     overlaps,
 )
-from waymark.record.terms import Layout, Verdict
+from waymark.record.terms import BuildRole, Layout, Verdict
 from waymark.services.check import Finding, Severity, check_record
 from waymark.services.common import Refusal, repo_locations
 from waymark.services.context import CONTEXT_VERSION, DELEGATED_VERSION
@@ -441,7 +441,7 @@ def _item(item: Item, state: ChangeState | None) -> Payload:
         "number": item.number,
         "title": item.title,
         "ticked": item.ticked,
-        "delegate": item.delegate,
+        "delegate": item.build is BuildRole.IMPLEMENTER,
         "needs_human": item_state.escalated if item_state else None,
         "criteria": item.criteria,
         "verify": item.verify,

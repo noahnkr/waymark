@@ -24,6 +24,7 @@ from waymark.record.artifacts.resources import parse_resource
 from waymark.record.artifacts.specs import parse_spec
 from waymark.record.artifacts.tasks import parse_tasks
 from waymark.record.state import AcceptanceState, ExplorationStatus, derive_state
+from waymark.record.terms import BuildRole
 from waymark.services import setup
 from waymark.services.context import context_pack
 from waymark.services.instructions import instructions
@@ -343,7 +344,7 @@ BUILT = (
     "    - sorted by score\n"
     "  - **Verify:** a test\n"
     "- [ ] 1.2 Rebuild the index\n"
-    "  - **Build:** delegate\n"
+    "  - **Build:** implementer\n"
     "  - **Criteria:** rebuilt\n"
     "  - **Verify:** the index answers\n"
 )
@@ -367,7 +368,7 @@ def test_scenario_nested_verification(workspace: Workspace) -> None:
     assert item["verify"] == "- a test for the limit\n- wm check here"
 
 
-def test_scenario_tagged_item(workspace: Workspace) -> None:
+def test_scenario_implementer_item(workspace: Workspace) -> None:
     workspace.change(tasks=BUILT)
     workspace.accept()
     workspace.replace("changes/add-limit/tasks.md", "- [ ] 1.1", "- [x] 1.1")
@@ -378,22 +379,22 @@ def test_scenario_tagged_item(workspace: Workspace) -> None:
 
 def test_scenario_unknown_build_value() -> None:
     tasks = parse_tasks(
-        document(BUILT.replace("**Build:** delegate", "**Build:** someone"), "t.md")
+        document(BUILT.replace("**Build:** implementer", "**Build:** delegate"), "t.md")
     )
     [problem] = tasks.problems
     assert problem.code == "unknown-build-tag"
-    assert "delegate" in problem.message
-    assert not tasks.items[1].delegate
+    assert all(role in problem.message for role in ("planner", "implementer", "human"))
+    assert tasks.items[1].build is None
 
 
 def test_scenario_tag_added_after_acceptance(workspace: Workspace) -> None:
-    workspace.change(tasks=BUILT.replace("  - **Build:** delegate\n", ""))
+    workspace.change(tasks=BUILT.replace("  - **Build:** implementer\n", ""))
     workspace.accept()
     assert workspace.change_state().acceptance is AcceptanceState.VALID
     workspace.replace(
         "changes/add-limit/tasks.md",
         "  - **Criteria:** rebuilt\n",
-        "  - **Criteria:** rebuilt\n  - **Build:** delegate\n",
+        "  - **Criteria:** rebuilt\n  - **Build:** implementer\n",
     )
     assert workspace.change_state().acceptance is AcceptanceState.WITHDRAWN
 
@@ -462,7 +463,7 @@ def test_bold_labels_in_a_task_list() -> None:
         "a test",
         "api",
     )
-    assert second.delegate
+    assert second.build is BuildRole.IMPLEMENTER
 
 
 def test_bold_labels_in_a_design() -> None:

@@ -18,6 +18,14 @@ class ReviewLevel(StrEnum):
     NONE = "none"
 
 
+class BuildRole(StrEnum):
+    """Who builds a task item, from its Build line."""
+
+    PLANNER = "planner"
+    IMPLEMENTER = "implementer"
+    HUMAN = "human"
+
+
 class Verdict(StrEnum):
     """What a reviewer concluded about a task item."""
 

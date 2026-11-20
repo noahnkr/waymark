@@ -22,7 +22,7 @@ from waymark.record.machine.project import find_project
 from waymark.record.markdown.text import Document
 from waymark.record.record import load_record
 from waymark.record.state import ExplorationStatus, StepKind, derive_state
-from waymark.record.terms import Layout, Phase
+from waymark.record.terms import BuildRole, Layout, Phase
 from waymark.record.writing import ignore, templates
 from waymark.record.writing.layout import _comment_flags
 from waymark.services import check, ci, integration, lifecycle, setup
@@ -787,7 +787,7 @@ def test_every_template_is_written_in_the_current_layouts(tmp_path: Path) -> Non
     assert {p.code for p in record.problems} & LAYOUT_CODES == set()
     tasks = record.changes["add-limit"].tasks
     assert tasks is not None
-    assert tasks.items[1].delegate
+    assert tasks.items[1].build is BuildRole.IMPLEMENTER
     criteria = tasks.items[1].criteria or ""
     bullets = [line for line in criteria.splitlines() if line.startswith("- ")]
     assert len(bullets) == 2

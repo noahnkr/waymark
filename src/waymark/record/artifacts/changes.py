@@ -28,7 +28,7 @@ from waymark.record.artifacts.proposal import (
     Proposal,
     parse_proposal,
 )
-from waymark.record.artifacts.tasks import DELEGATE, PLANNER, Tasks, parse_tasks
+from waymark.record.artifacts.tasks import BUILD_ROLES, Tasks, parse_tasks
 from waymark.record.evidence.records import RecordKind
 from waymark.record.machine.files import RecordFiles
 from waymark.record.markdown import labels
@@ -151,8 +151,8 @@ def _check_items(tasks: Tasks, problems: list[Problem]) -> None:
             )
             if labels.BUILD in missing:
                 message += (
-                    f' The Build line is "{label_line(labels.BUILD, PLANNER)}" or '
-                    f'"{label_line(labels.BUILD, DELEGATE)}".'
+                    f' The Build line names who builds it, "{label_line(labels.BUILD, "<role>")}", '
+                    f"one of {BUILD_ROLES}."
                 )
             problems.append(Problem(tasks.doc.path, item.index + 1, "item-incomplete", message))
         if not _in_order(item.line_order):

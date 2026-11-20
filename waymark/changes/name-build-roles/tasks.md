@@ -2,7 +2,7 @@
 
 ## 1. Roles
 
-- [ ] 1.1 Read the Build line as one of three roles
+- [x] 1.1 Read the Build line as one of three roles
   - **Build:** planner
   - **Criteria:**
     - `BuildRole` in `record/terms.py` holds `planner`, `implementer` and `human`, and `Item.build` is a `BuildRole` or None, with no `delegate` field left
