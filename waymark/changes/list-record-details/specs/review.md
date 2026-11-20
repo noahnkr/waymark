@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Review recorded in the task list
-`wm` SHALL write the review of a change as a `(review)` or `(self-review)` record in the `## Log` section at the end of the change's task list, creating the section if needed. It SHALL write each finding under its record as a sub-line with a severity in brackets (`[critical]`, `[warning]` or `[suggestion]`), its place in backticks, and a text, and then each detail as a sub-line without a severity. A sub-line under a review that starts with a severity in brackets SHALL be read as a finding, one that starts with a severity without brackets SHALL be reported as a finding written without them, and any other SHALL be read as a detail. It SHALL refuse a `pass` verdict, or a self-review, that comes with a critical finding.
+`wm` SHALL write the review of a change as a `(review)` or `(self-review)` record in the `## Log` section at the end of the change's task list, creating the section if needed. It SHALL write each finding under its record as a sub-line with a severity in brackets (`[critical]`, `[warning]` or `[suggestion]`), its place in backticks, and a text, and then each detail as a sub-line without a severity. A sub-line under a review that starts with a severity in brackets SHALL be read as a finding, one that starts with a severity word followed by `:` or by a place in backticks SHALL be reported as a finding written without its brackets, and any other SHALL be read as a detail. It SHALL refuse a `pass` verdict, or a self-review, that comes with a critical finding.
 
 #### Scenario: Self-review with a finding
 - GIVEN an accepted change at review level `self` with every item ticked

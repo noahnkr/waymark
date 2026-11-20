@@ -11,11 +11,11 @@
 ## Approach
 
 1. **Details in the model.** `ReviewRecord` gains `details: tuple[str, ...]`. The Log parser reads an indented sub-line under a record:
-   - under a review, a line with a severity in brackets is a finding; a line that starts with a bare severity word, `critical`, `warning` or `suggestion`, is still reported as a finding without its brackets, as the `records` requirement "Findings name their place in backticks" asks; any other line is a detail;
-   - under `(note)`, `(blocked)`, `(gap)`, `(resolved)` and `(revised)`, every line is a detail, and one with a severity in brackets is `malformed-detail`;
+   - under a review, a line with a severity in brackets is a finding; a line with a finding's shape but no brackets, a severity word followed by `:` or by a place in backticks, is still reported as a finding without its brackets, as the `records` requirement "Findings name their place in backticks" asks; any other line is a detail;
+   - under `(note)`, `(blocked)`, `(gap)`, `(resolved)` and `(revised)`, every line is a detail, and one with a severity in brackets is `misplaced-finding`, since a finding goes under a review;
    - under any other kind, the line is `misplaced-detail`, naming the kinds that take details.
 
-   `records.py` keeps the set of kinds that take details, `DETAILED`, and `check_detail(text)` refuses an empty detail, one over a line, or one that starts with a severity in brackets.
+   `records.py` keeps the set of kinds that take details, `DETAILED`, and `check_detail(text)` refuses an empty detail, one over a line, or one with a finding's shape, bracketed or not, so that what `wm` writes always reads back as a detail.
 2. **Writing.** `append_log` takes `details` after `findings` and writes them as `  - <detail>` sub-lines after the findings. Every lifecycle writer of a `DETAILED` kind takes `details: Sequence[str] = ()`, checks each one, and passes them on. `cli.py` adds a repeatable `--detail` to those seven commands.
 3. **Agents.** `hooks/decide.py` gains `_DETAIL` for `DETAIL:` lines, read like `_FINDING`. `_record` passes them to `block`, `report_gap` and `add_note`, and `_record_verdict` passes them to `verdict`. A `done` ending ignores them.
 4. **Outcome.** `wm archive`'s `--built` and `--differs` become `action="append"`. `_outcome` writes one value inline, and several as `- **Built:**` followed by `  - <value>` lines. The proposal's outcome reader already takes nested bullets under a label, as the Impact's does.
@@ -76,5 +76,5 @@ None.
 
 ## Risks and trade-offs
 
-- Under a review, a sub-line meant as a finding but written with neither brackets nor a severity word is now read as a detail instead of being reported. One that starts with a severity word is still reported.
+- Under a review, a sub-line meant as a finding but written without a finding's shape is now read as a detail instead of being reported. One with a finding's shape but no brackets is still reported.
 - The show and pack schemas change version again, so any script reading them has to follow.

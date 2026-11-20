@@ -58,7 +58,8 @@
   - **Criteria:**
     - under a review, a sub-line is reported as a finding without its brackets only when it has a finding's shape: a severity word followed by `:` or by a place in backticks
     - a detail written by `wm`, such as `warning signs remain`, is read back as a detail under a review, and `wm check` reports nothing about it
-  - **Verify:** the existing "Severity without brackets" test, and a test that `wm review --self "<summary>" --detail "warning signs remain"` checks clean
+    - `--detail` and `DETAIL:` lines refuse a detail with a finding's shape, bracketed or not, such as `warning: the retry is slow`, and nothing is written
+  - **Verify:** the existing "Severity without brackets" test, and tests named after the scenarios Detail with a finding's shape but no brackets and Detail that starts with a severity word
 
 ## Log
 
@@ -82,3 +83,12 @@
   - wm wrote such a detail, then wm check reported it under a review
   - added 2.3 to read it as a detail unless it has a finding's shape
 - 2026-11-20 (ticked) 2.3 by planner for Noah Roberts
+- 2026-11-20 (review) changes 2.3; covers 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3 by reviewer: check_detail still accepts details like "warning: <text>" that the Log parser reports as malformed-finding under a review, so 2.3's criterion that wm-written details read back clean doesn't hold; refuse them in check_detail and revise the review delta and design to the narrowed rule; the earlier review's fence and DETAIL-docs fixes are made, and all checks pass
+  - [critical] `src/waymark/record/evidence/records.py:660`: check_detail accepts a detail with a finding's shape but no brackets ("warning: the retry is slow", "critical `path` covered"), which review_sub_line (tasks.py:527) reports as malformed-finding, so wm still writes a review detail that wm check reports as an error (item 2.3, second criterion); refuse what starts_with_severity matches too, and test it
+  - [warning] `waymark/changes/list-record-details/specs/review.md:6`: the review delta still says any sub-line starting with a severity without brackets SHALL be reported as a finding, and design.md step 1 and its Risks say the same, while item 2.3 narrowed this to a severity word followed by ":" or a place in backticks; the delta and design disagree with the code and would archive the old rule
+  - [suggestion] `src/waymark/record/artifacts/tasks.py:514`: a bracketed severity under a detailed non-review record is still reported as misplaced-finding rather than the malformed-detail the design names
+- 2026-11-20 (resolved) by Noah Roberts: refuse a detail with a finding's shape in --detail and DETAIL lines, reword the review and records deltas and the design to the narrowed rule, rebuild 2.3 and review again
+- 2026-11-20 (revised) specs/records, specs/review, design, 2.3 by planner for Noah Roberts: one rule for a finding's shape, as the human decided on the second review
+  - a detail with a finding's shape, bracketed or not, is refused
+  - the review delta and the design name the narrowed rule
+  - a bracketed severity under a note is misplaced-finding, as the code does
