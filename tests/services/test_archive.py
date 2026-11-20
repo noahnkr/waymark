@@ -67,6 +67,22 @@ def refused(project: Workspace, **options: str) -> str:
     return str(refusal.value)
 
 
+def test_scenario_archived_change(project: Workspace) -> None:
+    """Requirement "Archive recorded in the Log": the archive names the human who did it."""
+    applied(project)
+    lifecycle.archive(project.root, NAME, LATER, built="Capped at fifty.")
+    assert project.read(f"{ARCHIVED}/tasks.md").endswith("\n- 2026-02-01 (archived) by Sam Doe\n")
+
+
+def test_scenario_refused_archive(project: Workspace) -> None:
+    """Requirement "Archive recorded in the Log": a refused archive writes nothing."""
+    project.change(tasks=ONE_ITEM)
+    lifecycle.accept(project.root, NAME, DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    assert "review" in refused(project, built="Capped.")
+    assert "(archived)" not in project.read(f"changes/{NAME}/tasks.md")
+
+
 def test_archive_merges_the_deltas_and_moves_the_change_to_the_dated_archive(
     project: Workspace,
 ) -> None:
@@ -157,6 +173,7 @@ def test_archive_override_passes_missing_reviews_and_records_the_reason(
     )
     assert project.read(f"{ARCHIVED}/tasks.md").endswith(
         "- 2026-02-01 (override) by Sam Doe: reviewed in the pull request\n"
+        "- 2026-02-01 (archived) by Sam Doe\n"
     )
     assert project.record().changes == {}
 

@@ -319,6 +319,7 @@ def test_the_archived_change_reads_back_its_records(latest: Workspace) -> None:
         RecordKind.TICKED,
         RecordKind.TICKED,
         RecordKind.SELF_REVIEW,
+        RecordKind.ARCHIVED,
     ]
 
 

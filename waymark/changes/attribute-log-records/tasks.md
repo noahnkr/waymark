@@ -24,7 +24,7 @@
     - an implementer's `done` ending writes `(ticked) <item> by implementer`
     - a tick keeps the acceptance
   - **Verify:** tests named after the scenarios Planner's item ticked, Human's item ticked, Implementer's item ticked, Implementer done in the foreground and Implementer in the background
-- [ ] 1.4 Record the archive in the change's Log
+- [x] 1.4 Record the archive in the change's Log
   - **Build:** planner
   - **Criteria:**
     - `wm archive` ends the change's Log with `(archived) by <who>` before it moves the change, in the same write
@@ -61,3 +61,4 @@
 
 - 2026-11-20 (accepted) fingerprint d27e4d7c14b6a37d items 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by Noah Roberts
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.4 by planner for Noah Roberts

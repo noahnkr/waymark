@@ -21,7 +21,7 @@ from waymark.record.artifacts.explorations import (
 from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log
 from waymark.record.artifacts.proposal import BUILT, DIFFERS, NONE, Proposal
 from waymark.record.artifacts.specs import Spec, parse_spec
-from waymark.record.artifacts.tasks import Tasks
+from waymark.record.artifacts.tasks import Tasks, parse_tasks
 from waymark.record.evidence import records
 from waymark.record.evidence.fingerprint import change_fingerprint
 from waymark.record.evidence.records import RecordError, RecordKind
@@ -753,18 +753,19 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
 
     home = record.milestones.get(change.proposal.milestone or "")
     home_file = f"{home.path}/{MILESTONE_FILE}" if home is not None else None
-    archived_line = _render(
-        records.Record(
-            RecordKind.ARCHIVED, today, who=_who(record, RecordKind.ARCHIVED, by), change=name
-        )
-    )
+    archiver = _who(record, RecordKind.ARCHIVED, by)
+    archived_line = _render(records.Record(RecordKind.ARCHIVED, today, who=archiver, change=name))
+    closing = _render(records.Record(RecordKind.ARCHIVED, today, who=archiver))
 
     transaction = Transaction(record.files)
     if change.synced is None:
         _merge_specs(record, change, transaction)
     transaction.write(change.proposal.doc.path, set_outcome(change.proposal, final))
+    tasks = _tasks(change)
     if override_line is not None:
-        transaction.write(_tasks(change).doc.path, append_log(_tasks(change), override_line))
+        text = append_log(tasks, override_line)
+        tasks = parse_tasks(Document.parse(tasks.doc.path, text))
+    transaction.write(tasks.doc.path, append_log(tasks, closing))
     for doc in record.documents():
         staged = transaction.staged(doc.path)
         current = Document.parse(doc.path, staged) if staged is not None else doc

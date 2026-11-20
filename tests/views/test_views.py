@@ -593,8 +593,9 @@ def test_scenario_older_review_records_shown_as_covering_every_item(project: Wor
     )
     lifecycle.archive(project.root, "add-limit", DAY, built="Shipped.")
     payload = valid(payloads.show(project.record(), "add-limit"))
-    review = payload["log"][-1]
+    review = payload["log"][-2]
     assert (review["kind"], review["covers"]) == ("self-review", ["1.1", "1.2"])
+    assert payload["log"][-1]["kind"] == "archived"
     assert payload["problems"] == []
     text = render.to_text(payload, PLAIN)
     assert "2026-01-15 (self-review) by planner for Sam Doe: before covers\n" in text
