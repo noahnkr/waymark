@@ -33,6 +33,8 @@ _ITEM = re.compile(r"^- \[[ xX]\] \d+\.\d+(?:\s|$)")
 _ITEM_CHILD = "  - "
 _PLAIN_TERM = re.compile(r"^- (?:\*\*([^*:]+?)\*\*|([^*:\s][^*:]*?)): (\S.*)$")
 """A glossary entry, ``- <term>: <meaning>`` or ``- **<term>**: <meaning>``."""
+_SECTION_LEVEL = 2
+"""The level of a ``##`` heading, such as the charter's Glossary."""
 _COMMENT_OPEN = "<!--"
 _COMMENT_CLOSE = "-->"
 
@@ -229,7 +231,9 @@ def standard_layout(
     newline = doc.newline
     in_comment = _comment_flags(doc)
     heading_rows = {heading.index for heading in doc.headings}
-    sections = {heading.index: heading.title for heading in doc.headings if heading.level == 2}
+    sections = {
+        heading.index: heading.title for heading in doc.headings if heading.level == _SECTION_LEVEL
+    }
     fixes: set[Fix] = set()
     lines: list[_Line] = []
     section = None
