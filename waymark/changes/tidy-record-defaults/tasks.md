@@ -36,3 +36,6 @@
 ## Log
 
 - 2026-11-20 (accepted) fingerprint 6bb71a691ee08d67 items 1.1, 1.2, 1.3, 2.1 by Noah Roberts
+- 2026-11-20 (self-review) covers 1.1, 1.2, 1.3, 2.1 by Noah Roberts: Every criterion of 1.1 to 2.1 holds and each delta scenario has a passing test: wm new change writes the default Review line (self on the short path), a missing line is missing-review, wm check --fix bolds charter glossary entries only inside the Glossary, and new explorations have no Status comment. The full checks (pytest 1463, ruff, mypy, codespell, tools.docs --check) and wm check pass; the one wm check warning is this change's own self level on the short path.
+  - [suggestion] `src/waymark/record/artifacts/changes.py`: review_level still falls back to default_review when the line is missing; an active change is reported for it, so the level only stands in until the line is written
+  - [suggestion] `src/waymark/services/setup.py`: the Review line is written after Milestone, After and Path rather than straight under Owner; it is under the Owner line, as the requirement says, but not next to it
