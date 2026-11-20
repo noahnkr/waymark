@@ -378,6 +378,42 @@ def mentions_an_implementer(step: dict[str, Any]) -> bool:
     return "implementer" in text.lower()
 
 
+HUMAN_ITEMS = (
+    HEAD
+    + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
+    + "  - **Verify:** a test\n"
+    + "- [ ] 1.2 Add the DNS record\n  - **Build:** human\n"
+    + "  - **Criteria:** the record points at the server\n  - **Verify:** dig answers\n"
+    + "- [ ] 1.3 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+    + "  - **Verify:** a test\n"
+)
+
+
+def test_scenario_item_for_the_human(project: Workspace) -> None:
+    """Requirement "Human does their items": the planner hands the item to the human."""
+    accepted(project, HUMAN_ITEMS)
+    lifecycle.tick(project.root, NAME, "1.1")
+    step = at(project)
+    assert (step["step"], step["item"]) == ("apply", "1.2")
+    assert step["commands"] == [
+        f"wm tick {NAME} 1.2",
+        f'wm block {NAME} 1.2 "waiting for <what>"',
+    ]
+    guidance = " ".join(step["guidance"])
+    assert "give them its criteria and verification as the steps" in guidance
+    assert "only after the human says it is done" in guidance
+    assert "Build item" not in guidance
+    assert not mentions_an_implementer(step)
+
+
+def test_scenario_human_item_waits(project: Workspace) -> None:
+    """Requirement "Human does their items": a blocked human item lets the change go on."""
+    accepted(project, HUMAN_ITEMS)
+    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.block(project.root, NAME, "1.2", "waiting for the DNS record")
+    assert at(project)["item"] == "1.3"
+
+
 def test_apply_instructions_have_the_planner_build_an_untagged_item(project: Workspace) -> None:
     accepted(
         project,

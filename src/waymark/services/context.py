@@ -36,7 +36,7 @@ from waymark.record.state import (
     ItemState,
     derive_state,
 )
-from waymark.record.terms import Layout, ReviewLevel
+from waymark.record.terms import BuildRole, Layout, ReviewLevel
 from waymark.services.common import Refusal, find_change, find_item, repo_locations, state_of
 from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES
 from waymark.services.references import reference_record
@@ -124,6 +124,11 @@ def _item_problem(name: str, item: Item, item_state: ItemState) -> str | None:
         )
     if item.ticked:
         return f"Item {number} is already ticked. Pick an item that is still to apply."
+    if item.build is BuildRole.HUMAN:
+        return (
+            f"The human does item {number}, so no implementer builds it. Give the human its "
+            f'steps, and tick it with "wm tick {name} {number}" after their yes.'
+        )
     return None
 
 

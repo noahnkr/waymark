@@ -10,7 +10,7 @@
     - `wm instructions` sends an `implementer` item to an implementer as it sent a `delegate` one, and the tasks step's guidance names the three roles
     - the tasks template's example and comment use the three roles
   - **Verify:** tests named after the scenarios Implementer item, Unknown build value, Item without a Build line, Build line last, Item lines put in order and Build changed after acceptance; the full pytest run and `wm check`
-- [ ] 1.2 Hand a human item to the human, and keep implementers off it
+- [x] 1.2 Hand a human item to the human, and keep implementers off it
   - **Build:** planner
   - **Criteria:**
     - for a `human` item, `wm instructions` tells the planner to give the human the item's Criteria and Verify as the steps, to tick it with `wm tick` only after their yes, and to `wm block` it with what it waits on when they can't do it now; its commands are `wm tick` and `wm block`, and it doesn't mention building the item or starting an implementer

@@ -135,6 +135,21 @@ def test_delegation_of_an_item_without_criteria_is_refused(accepted: Workspace) 
     assert 'acceptance of "add-limit" was withdrawn' in decision.reason
 
 
+def test_scenario_implementer_on_a_human_item(project: Workspace) -> None:
+    """Requirement "No implementer for a human item": the human does it, so it is refused."""
+    human = TASKS.replace(
+        "  - **Build:** planner\n  - **Criteria:** the help text",
+        "  - **Build:** human\n  - **Criteria:** the help text",
+    )
+    project.change(tasks=human)
+    lifecycle.accept(project.root, NAME, DAY)
+    lifecycle.tick(project.root, NAME, "1.1")
+    decision = delegate(project, assets.IMPLEMENTER, "add-limit 1.2")
+    assert not decision.allow
+    assert "The human does item 1.2" in decision.reason
+    assert "after their yes" in decision.reason
+
+
 def test_delegation_is_refused_when_the_record_has_problems(project: Workspace) -> None:
     project.change(design=DESIGN.replace("after sorting.", "after [sorting](sort.md)."))
     lifecycle.accept(project.root, NAME, DAY)

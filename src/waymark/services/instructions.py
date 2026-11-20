@@ -296,6 +296,39 @@ def _drafting(
     return outputs, read, guidance
 
 
+def _apply(name: str, number: str, role: BuildRole | None) -> tuple[list[str], list[str]]:
+    """The guidance and commands for applying an item, by the role that builds it."""
+    if role is BuildRole.IMPLEMENTER:
+        return [
+            f"Start an implementer for item {number} with the change and item and nothing else.",
+            "The implementer begins from its context pack and ends with a RESULT line.",
+            "If the tool has no isolated agents, build the item yourself from the same pack.",
+        ], [f"wm context {name} {number} --for implement"]
+    if role is BuildRole.HUMAN:
+        return [
+            f"Item {number} is the human's to do: give them its criteria and verification as "
+            "the steps to take.",
+            f"Tick it with wm tick only after the human says it is done. Don't do item {number} "
+            "yourself.",
+            "If they can't do it now, block it with what it waits on, and go on with the "
+            "change's other items.",
+        ], [
+            f"wm tick {name} {number}",
+            f'wm block {name} {number} "waiting for <what>"',
+        ]
+    return [
+        f"Build item {number} yourself, from its context pack.",
+        "Run the checks the item touches.",
+        "Then record the result: tick the item when its criteria hold, or record "
+        "what blocks it, or the spec gap if the record isn't enough to build it.",
+    ], [
+        f"wm context {name} {number} --for implement",
+        f"wm tick {name} {number}",
+        f'wm block {name} {number} "<reason>"',
+        f'wm gap {name} {number} "<what is missing>"',
+    ]
+
+
 def _working(  # noqa: PLR0911 - one return per step
     change: Change, state: ChangeState, step: StepKind
 ) -> tuple[list[str], list[str]]:
@@ -305,27 +338,7 @@ def _working(  # noqa: PLR0911 - one return per step
     number = item or "<item>"
     if step is StepKind.APPLY:
         built = change.tasks.item(item) if change.tasks and item else None
-        if built is not None and built.build is BuildRole.IMPLEMENTER:
-            guidance = [
-                f"Start an implementer for item {number} with the change and item and nothing "
-                "else.",
-                "The implementer begins from its context pack and ends with a RESULT line.",
-                "If the tool has no isolated agents, build the item yourself from the same pack.",
-            ]
-            commands = [f"wm context {name} {number} --for implement"]
-        else:
-            guidance = [
-                f"Build item {number} yourself, from its context pack.",
-                "Run the checks the item touches.",
-                "Then record the result: tick the item when its criteria hold, or record "
-                "what blocks it, or the spec gap if the record isn't enough to build it.",
-            ]
-            commands = [
-                f"wm context {name} {number} --for implement",
-                f"wm tick {name} {number}",
-                f'wm block {name} {number} "<reason>"',
-                f'wm gap {name} {number} "<what is missing>"',
-            ]
+        guidance, commands = _apply(name, number, built.build if built else None)
         if state.next_step.reason:
             commands.insert(0, f"wm reopen {name} {number}")
         return guidance, commands
