@@ -44,7 +44,7 @@
     - `wm-archive` says `--built` and `--differs` may be given more than once
     - the implementer and reviewer definitions describe `DETAIL:` lines before the ending
   - **Verify:** `tests/test_skills.py`, the adapter snapshots and the full pytest run
-- [ ] 2.2 Update the docs and CHANGELOG
+- [x] 2.2 Update the docs and CHANGELOG
   - **Build:** planner
   - **Criteria:**
     - `docs/record.md` and `docs/concepts.md` describe details under records, `DETAIL:` lines and an Outcome as a list
@@ -63,3 +63,4 @@
 - 2026-11-20 (ticked) 1.4 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.5 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.2 by planner for Noah Roberts

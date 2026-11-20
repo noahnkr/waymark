@@ -172,6 +172,9 @@ item as `misplaced-record`.
   a `(resolved)` record and the blocker stays.
 - **Notes:** `wm note <change> <item> "<text>"` writes one about an unticked
   item in the Log.
+- **Details:** a record with several points keeps a short summary as its text
+  and lists the points under it as sub-bullets, from `--detail "<text>"` given
+  once per point. Agents give them as `DETAIL:` lines before their ending.
 - **Covers:** a `(review)` or `(self-review)` record names the items it covers,
   as `covers <item>...` before `by`. A record without `covers`, written before
   Waymark had it, covers every item.
