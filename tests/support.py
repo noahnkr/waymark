@@ -190,8 +190,14 @@ def proposal(
     short: bool = False,
     impact: str = IMPACT,
     outcome: str | None = None,
+    review: str | None = "self",
 ) -> str:
-    facts = f"- **Owner:** {owner}\n" + ("- **Path:** short\n" if short else "")
+    """A proposal; ``review=None`` leaves out the Review line every new change has."""
+    facts = (
+        f"- **Owner:** {owner}\n"
+        + ("- **Path:** short\n" if short else "")
+        + (f"- **Review:** {review}\n" if review is not None else "")
+    )
     text = (
         f"# Limit the results\n\n{facts}\n"
         "## Why\n\nLong result lists are slow.\n\n"

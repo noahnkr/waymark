@@ -816,7 +816,10 @@ def test_scenario_planned_roadmap_line(project: Workspace) -> None:
     )
     assert 'linked from the roadmap of "faster-search"' in done.message
     proposal_text = project.read("changes/add-limit/proposal.md")
-    assert "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n\n" in proposal_text
+    assert (
+        "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n- **Review:** self\n\n"
+        in proposal_text
+    )
     assert project.read(MILESTONE_FILE).endswith(
         "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"
         "- add-cache\n\n## Log\n\n- 2026-11-20 (proposed) add-limit by Sam Doe\n"
@@ -890,8 +893,8 @@ def test_scenario_change_written_after_another(project: Workspace) -> None:
     project.write(MILESTONE_FILE, faster_search(""))
     setup.create_change(project.root, "add-paging", milestone="faster-search", after="add-limit")
     assert (
-        "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n- **After:** add-limit\n\n"
-        in project.read("changes/add-paging/proposal.md")
+        "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n- **After:** add-limit\n"
+        "- **Review:** self\n\n" in project.read("changes/add-paging/proposal.md")
     )
     with pytest.raises(Refusal, match="not a valid change name"):
         setup.create_change(project.root, "add-sort", after="Add_Limit")

@@ -50,9 +50,7 @@ def codes(text: str) -> list[str]:
 
 def test_proposal_facts_as_a_list() -> None:
     """Requirement "Proposal facts as a list": bulleted facts are read."""
-    text = proposal().replace(
-        "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
-    )
+    text = proposal().replace("- **Review:** self\n", "- **Review:** independent\n")
     parsed = parse_proposal(document(text, "changes/add-limit/proposal.md"))
     assert parsed.problems == ()
     assert parsed.owner == "Sam Doe"
@@ -85,12 +83,48 @@ def test_structured_impact() -> None:
 def test_scenario_new_change(project: Workspace) -> None:
     setup.create_change(project.root, "add-limit", short=True)
     text = project.read("changes/add-limit/proposal.md")
-    assert "\n- **Owner:** Sam Doe\n- **Path:** short\n" in text
+    assert "\n- **Owner:** Sam Doe\n- **Path:** short\n- **Review:** self\n" in text
     change = project.record().changes["add-limit"]
     assert change.short_path
     assert change.proposal is not None
     assert change.proposal.owner == "Sam Doe"
     assert {p.code for p in change.problems} == {"empty-section"}
+
+
+def test_scenario_level_from_the_proposal(project: Workspace) -> None:
+    """Requirement "Review level per change": the level is the proposal's Review line."""
+    setup.create_change(project.root, "add-limit")
+    project.replace(
+        "changes/add-limit/proposal.md", "- **Review:** self\n", "- **Review:** independent\n"
+    )
+    record = project.record()
+    assert record.default_review.value == "self"
+    assert record.changes["add-limit"].review_level(record.default_review).value == "independent"
+
+
+def test_scenario_default_written_at_creation(project: Workspace) -> None:
+    """Requirement "Review level per change": wm new change writes the project default."""
+    project.replace("config.toml", 'default_review = "self"', 'default_review = "independent"')
+    setup.create_change(project.root, "add-limit")
+    text = project.read("changes/add-limit/proposal.md")
+    assert "\n- **Owner:** Sam Doe\n- **Review:** independent\n" in text
+
+
+def test_scenario_default_on_the_short_path(project: Workspace) -> None:
+    """Requirement "Review level per change": an independent default is self on the short path."""
+    project.replace("config.toml", 'default_review = "self"', 'default_review = "independent"')
+    setup.create_change(project.root, "add-limit", short=True)
+    assert "\n- **Review:** self\n" in project.read("changes/add-limit/proposal.md")
+
+
+def test_scenario_review_line_missing(workspace: Workspace) -> None:
+    """Requirement "Review level per change": an active change without the line is an error."""
+    workspace.change(proposal_text=proposal(review=None))
+    [problem] = [
+        p for p in workspace.record().changes["add-limit"].problems if p.code == "missing-review"
+    ]
+    assert problem.path == "changes/add-limit/proposal.md"
+    assert '"- **Review:** <level>"' in problem.message
 
 
 def test_glossary_as_a_list() -> None:
@@ -384,7 +418,7 @@ def test_bold_labels_in_a_proposal() -> None:
     """Facts, Impact and Outcome are read with bold labels."""
     text = bold(
         proposal(outcome="- **Built:** the cap\n- **Differs:** none").replace(
-            "- **Owner:** Sam Doe\n",
+            "- **Owner:** Sam Doe\n- **Review:** self\n",
             "- **Owner:** Sam Doe\n- **Milestone:** faster-search\n- **After:** add-index\n"
             "- **Path:** short\n- **Review:** self\n",
         )

@@ -189,6 +189,7 @@ waymark/
 # Add dark mode
 
 - **Owner:** Alex Example
+- **Review:** self
 
 ## Why
 
@@ -310,7 +311,7 @@ setting until the person picks one.
 
 ## Log
 
-- 2026-01-15 (accepted) fingerprint c6a1ef9b1c432c26 items 1.1, 1.2, 1.3 by Alex Example
+- 2026-01-15 (accepted) fingerprint f80bacd71e28d538 items 1.1, 1.2, 1.3 by Alex Example
 - 2026-01-15 (self-review) covers 1.1, 1.2, 1.3 by Alex Example: every criterion holds, and both scenarios have a test
 ```
 

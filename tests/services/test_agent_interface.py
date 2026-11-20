@@ -87,9 +87,7 @@ def accepted(project: Workspace, tasks: str = TASKS, **options: Any) -> Workspac
     return project
 
 
-INDEPENDENT = proposal().replace(
-    "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
-)
+INDEPENDENT = proposal().replace("- **Review:** self\n", "- **Review:** independent\n")
 
 
 def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace) -> None:
@@ -237,9 +235,7 @@ ONE_ITEM = (
 def reviewable(project: Workspace, level: str = "independent") -> None:
     """A change with every item ticked, at the given review level."""
     project.change(
-        proposal_text=proposal().replace(
-            "**Owner:** Sam Doe\n", f"**Owner:** Sam Doe\n- **Review:** {level}\n"
-        ),
+        proposal_text=proposal().replace("- **Review:** self\n", f"- **Review:** {level}\n"),
         tasks=ONE_ITEM,
     )
     lifecycle.accept(project.root, NAME, DAY)
@@ -363,9 +359,7 @@ def test_task_instructions_in_an_atlas_ask_for_a_repo_on_every_item(atlas: Works
 
 def test_review_instructions_follow_the_changes_review_level(project: Workspace) -> None:
     project.change(
-        proposal_text=proposal().replace(
-            "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
-        ),
+        proposal_text=proposal().replace("- **Review:** self\n", "- **Review:** independent\n"),
         tasks=HEAD
         + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
         + "  - **Verify:** a test\n",
@@ -789,7 +783,8 @@ def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
 def test_proposal_instructions_explain_the_review_line(project: Workspace) -> None:
     project.write(f"{FOLDER}/proposal.md", "# Limit\n\nOwner: Sam Doe\n")
     guidance = " ".join(at(project)["guidance"])
-    assert '"- **Review:** self|independent|none"' in guidance
+    assert 'the level its "- **Review:**" line names' in guidance
+    assert "set it to self, independent or none" in guidance
     assert "modifies or removes an existing requirement" in guidance
 
 
@@ -948,9 +943,7 @@ def billing_change(project: Workspace, *, independent: bool = False) -> Workspac
     impact = "- **Specs:** `billing`\n- **User-visible:** refunds\n- **Code:** billing\n"
     text = proposal(impact=impact)
     if independent:
-        text = text.replace(
-            "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Review:** independent\n"
-        )
+        text = text.replace("- **Review:** self\n", "- **Review:** independent\n")
     return accepted(
         project,
         proposal_text=text,
@@ -1019,9 +1012,7 @@ def test_scenario_background_from_the_delta(project: Workspace) -> None:
         with_background(spec(title="Billing", purpose="How billing."), "Invoices go out monthly."),
     )
     impact = "- **Specs:** `billing`\n- **User-visible:** refunds\n- **Code:** billing\n"
-    text = proposal(impact=impact).replace(
-        "- **Owner:** Sam Doe\n", "- **Owner:** Sam Doe\n- **Review:** independent\n"
-    )
+    text = proposal(impact=impact).replace("- **Review:** self\n", "- **Review:** independent\n")
     added = delta(title="Billing", added=(requirement("Refunds"),))
     added = added.replace("## ADDED", "## Background\n\nInvoices go out weekly.\n\n## ADDED")
     accepted(project, proposal_text=text, deltas={"billing": added})

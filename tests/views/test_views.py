@@ -71,9 +71,7 @@ def busy(project: Workspace) -> Workspace:
     lifecycle.report_gap(project.root, "add-order", "1.3", "which channel?")
     project.change(
         "fix-limit",
-        proposal_text=proposal().replace(
-            "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
-        ),
+        proposal_text=proposal().replace("- **Review:** self\n", "- **Review:** independent\n"),
         deltas={"search": delta(modified=(requirement(scenario="Edge"),))},
         tasks=HEAD
         + "- [ ] 1.1 Fix it\n  - **Build:** planner\n  - **Criteria:** done\n"

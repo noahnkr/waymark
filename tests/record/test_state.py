@@ -33,8 +33,7 @@ SELF_REVIEW = REVIEW + "- 2026-01-16 (self-review): matches the criteria\n"
 
 def reviewed_at(level: str, *, short: bool = False) -> str:
     """A proposal with a Review line."""
-    facts = "**Owner:** Sam Doe\n" + ("**Path:** short\n" if short else "")
-    return proposal(short=short).replace(facts, facts + f"- **Review:** {level}\n")
+    return proposal(short=short, review=level)
 
 
 def step(state: ChangeState) -> tuple[Phase, StepKind, str | None, bool]:
@@ -132,9 +131,7 @@ def test_design_on_the_short_path(workspace: Workspace) -> None:
 
 
 def test_short_path_allows_no_independent_review(workspace: Workspace) -> None:
-    text = proposal(short=True).replace(
-        "**Path:** short\n", "**Path:** short\n- **Review:** independent\n"
-    )
+    text = proposal(short=True).replace("- **Review:** self\n", "- **Review:** independent\n")
     workspace.change(proposal_text=text, design=None)
     assert code_list(workspace) == [(f"{FOLDER}/proposal.md", "short-path-review")]
 
@@ -143,19 +140,21 @@ def test_short_path_takes_an_independent_project_default_as_a_problem(
     workspace: Workspace,
 ) -> None:
     workspace.replace("config.toml", 'default_review = "self"', 'default_review = "independent"')
-    workspace.change(proposal_text=proposal(short=True), design=None)
-    assert code_list(workspace) == [(f"{FOLDER}/proposal.md", "short-path-review")]
+    workspace.change(proposal_text=proposal(short=True, review=None), design=None)
+    assert code_list(workspace) == [
+        (f"{FOLDER}/proposal.md", "short-path-review"),
+        (f"{FOLDER}/proposal.md", "missing-review"),
+    ]
 
 
 def test_review_level_comes_from_the_proposal_or_the_project_default(
     workspace: Workspace,
 ) -> None:
-    workspace.change()
+    """The default stands in only while the line is missing, which is reported."""
+    workspace.change(proposal_text=proposal(review=None))
     change = workspace.record().changes["add-limit"]
     assert change.review_level(ReviewLevel.NONE) is ReviewLevel.NONE
-    text = proposal().replace(
-        "**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"
-    )
+    text = proposal().replace("- **Review:** self\n", "- **Review:** independent\n")
     workspace.change(proposal_text=text)
     change = workspace.record().changes["add-limit"]
     assert change.review_level(ReviewLevel.NONE) is ReviewLevel.INDEPENDENT

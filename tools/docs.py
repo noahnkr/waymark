@@ -198,6 +198,7 @@ def json_reference() -> str:
 PROPOSAL = """# Add dark mode
 
 - **Owner:** {owner}
+- **Review:** self
 
 ## Why
 

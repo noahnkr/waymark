@@ -117,11 +117,11 @@ def test_fingerprint_of_a_plain_change_is_stable(workspace: Workspace) -> None:
 @pytest.mark.parametrize(
     ("old", "new"),
     [
-        ("**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** independent\n"),
-        ("**Owner:** Sam Doe\n", "**Owner:** Sam Doe\n- **Review:** self\n"),
+        ("- **Review:** self\n", "- **Review:** independent\n"),
+        ("- **Review:** self\n", "- **Review:** none\n"),
     ],
 )
-def test_adding_a_review_line_withdraws_acceptance(
+def test_changing_the_review_line_withdraws_acceptance(
     workspace: Workspace, old: str, new: str
 ) -> None:
     accepted(workspace).replace("changes/add-limit/proposal.md", old, new)
@@ -166,9 +166,10 @@ def test_listing_every_item_fingerprints_like_no_list_but_for_order(workspace: W
     assert listed != change_fingerprint(change, record.specs, record.default_review, ["1.1"])
 
 
-def test_changing_the_default_review_level_withdraws_acceptance(workspace: Workspace) -> None:
+def test_changing_the_default_review_level_keeps_acceptance(workspace: Workspace) -> None:
+    """The level is written in the proposal, so the project default no longer decides it."""
     accepted(workspace).replace("config.toml", 'default_review = "self"', 'default_review = "none"')
-    assert acceptance(workspace) is AcceptanceState.WITHDRAWN
+    assert acceptance(workspace) is AcceptanceState.VALID
 
 
 def test_ticks_blockers_review_records_and_notes_keep_acceptance(workspace: Workspace) -> None:
