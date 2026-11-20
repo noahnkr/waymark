@@ -574,3 +574,16 @@ def test_the_review_pack_shows_the_details_of_earlier_reviews(latest: Workspace)
     lifecycle.tick(latest.root, NAME, "1.1", DAY)
     built = context_pack(latest.record(), "review", NAME, None)
     assert [review["details"] for review in built["reviews"]] == [["fifty-one come back"]]
+
+
+def test_a_detail_starting_with_a_severity_word_reads_back_as_a_detail(latest: Workspace) -> None:
+    """Item 2.3: only a line with a finding's shape is reported as a finding."""
+    built(latest)
+    lifecycle.self_review(
+        latest.root, NAME, "fine", DAY, details=["warning signs remain", "critical path covered"]
+    )
+    change = latest.record().changes[NAME]
+    assert change.problems == ()
+    assert change.tasks is not None
+    [review] = [r for r in change.tasks.log if r.kind is RecordKind.SELF_REVIEW]
+    assert review.details == ("warning signs remain", "critical path covered")

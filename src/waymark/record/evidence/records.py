@@ -636,7 +636,10 @@ DETAILED = frozenset(
 """The kinds of record that may have details under them."""
 
 _BRACKETED_SEVERITY = re.compile(r"^\[(?:critical|warning|suggestion)\]")
-_BARE_SEVERITY = re.compile(r"^(?:critical|warning|suggestion)\b")
+_BARE_SEVERITY = re.compile(r"^(?:critical|warning|suggestion)(?::|\s+`)")
+"""A finding written without its brackets: a severity word, then a colon or a place in
+backticks. Other text that starts with a severity word, such as "warning signs remain", is
+not one."""
 
 
 def detailed_kinds() -> str:
@@ -650,7 +653,7 @@ def looks_like_finding(text: str) -> bool:
 
 
 def starts_with_severity(text: str) -> bool:
-    """Whether a sub-line starts with a severity word without its brackets."""
+    """Whether a sub-line has a finding's shape but no brackets around its severity."""
     return _BARE_SEVERITY.match(text.strip()) is not None
 
 

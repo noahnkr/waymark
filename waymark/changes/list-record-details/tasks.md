@@ -53,6 +53,12 @@
   - **Verify:**
     - `uv run --no-sync python -m tools.docs --check`
     - the full checks
+- [x] 2.3 Keep a detail that starts with a severity word from reading as a finding
+  - **Build:** planner
+  - **Criteria:**
+    - under a review, a sub-line is reported as a finding without its brackets only when it has a finding's shape: a severity word followed by `:` or by a place in backticks
+    - a detail written by `wm`, such as `warning signs remain`, is read back as a detail under a review, and `wm check` reports nothing about it
+  - **Verify:** the existing "Severity without brackets" test, and a test that `wm review --self "<summary>" --detail "warning signs remain"` checks clean
 
 ## Log
 
@@ -72,3 +78,7 @@
   - [suggestion] `src/waymark/record/artifacts/tasks.py:367`: a bracketed severity under a detailed non-review record is reported as misplaced-finding, not the malformed-detail the design names; it still meets the criterion, but code and design disagree
 - 2026-11-20 (reopened) 2.2 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.2 by planner for Noah Roberts
+- 2026-11-20 (revised) 2.3 by planner for Noah Roberts: the review found a detail starting with a severity word reads as a finding
+  - wm wrote such a detail, then wm check reported it under a review
+  - added 2.3 to read it as a detail unless it has a finding's shape
+- 2026-11-20 (ticked) 2.3 by planner for Noah Roberts
