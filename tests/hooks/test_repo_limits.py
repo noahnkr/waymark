@@ -67,7 +67,7 @@ def test_implementer_edit_outside_every_repo_is_refused_in_an_atlas(
 
 
 def test_the_allowed_repo_moves_on_with_the_next_item(suite: Workspace, tmp_path: Path) -> None:
-    lifecycle.tick(suite.root, NAME, "1.1")
+    lifecycle.tick(suite.root, NAME, "1.1", DAY)
     assert editable_repos(suite.record()) == {"web": [f"{NAME} 1.2"]}
     assert edit(suite, tmp_path / "web" / "page.html", Role.IMPLEMENTER).allow
     assert not edit(suite, tmp_path / "suite-api" / "app.py", Role.IMPLEMENTER).allow

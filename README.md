@@ -315,9 +315,9 @@ setting until the person picks one.
 ## Log
 
 - 2026-01-15 (accepted) fingerprint f80bacd71e28d538 items 1.1, 1.2, 1.3 by Alex Example
-- 2026-11-20 (ticked) 1.1 by planner for Alex Example
-- 2026-11-20 (ticked) 1.2 by planner for Alex Example
-- 2026-11-20 (ticked) 1.3 by planner for Alex Example
+- 2026-01-15 (ticked) 1.1 by planner for Alex Example
+- 2026-01-15 (ticked) 1.2 by planner for Alex Example
+- 2026-01-15 (ticked) 1.3 by planner for Alex Example
 - 2026-01-15 (self-review) covers 1.1, 1.2, 1.3 by planner for Alex Example: every criterion holds, and both scenarios have a test
 - 2026-01-15 (archived) by Alex Example
 ```

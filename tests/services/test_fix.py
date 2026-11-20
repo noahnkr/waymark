@@ -81,7 +81,7 @@ def test_a_fix_that_would_change_evidence_is_refused(
 ) -> None:
     project.change(proposal_text=bold(proposal()), design=bold(DESIGN) + "  \n", tasks=bold(TASKS))
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     before = {path: project.read(path) for path in (DESIGN_FILE, TASKS_FILE)}
 
     def unticks(text: str, **_: bool) -> tuple[str, tuple[Fix, ...]]:

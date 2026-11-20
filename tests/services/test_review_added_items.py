@@ -31,15 +31,15 @@ def passed_then_added(project: Workspace, level: str = "independent") -> None:
     """Items 1.1 and 1.2 pass a review covering them; then item 1.3 is added and ticked."""
     project.change(proposal_text=at(level))
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     if level == "self":
         lifecycle.self_review(project.root, NAME, "fine", DAY)
     else:
         lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="reviewer")
     assert project.change_state().review.reviewed
     project.replace(TASKS_FILE, "  - **Verify:** read the help text\n", ADDED)
-    lifecycle.tick(project.root, NAME, "1.3")
+    lifecycle.tick(project.root, NAME, "1.3", DAY)
 
 
 def test_scenario_item_added_after_a_pass(project: Workspace) -> None:
@@ -87,7 +87,7 @@ def test_a_changes_verdict_on_added_items_rebuilds_them_and_reviews_them_again(
         in project.read(TASKS_FILE)
     )
     lifecycle.reopen(project.root, NAME, "1.3", LATER)
-    lifecycle.tick(project.root, NAME, "1.3")
+    lifecycle.tick(project.root, NAME, "1.3", DAY)
     assert project.change_state().review.to_review == ("1.3",)
 
 
@@ -107,8 +107,8 @@ def test_scenario_archive_before_the_added_item_is_reviewed(project: Workspace) 
 def test_scenario_older_review_records(project: Workspace) -> None:
     project.change(tasks=TASKS)
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     project.write(
         TASKS_FILE,
         project.read(TASKS_FILE)

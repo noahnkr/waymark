@@ -37,7 +37,7 @@ def accepted(project: Workspace, tasks: str = TASKS) -> Workspace:
 def built(project: Workspace) -> Workspace:
     accepted(project)
     for number in ("1.1", "1.2"):
-        lifecycle.tick(project.root, NAME, number)
+        lifecycle.tick(project.root, NAME, number, DAY)
     return project
 
 
@@ -198,7 +198,7 @@ def test_scenario_record_added(latest: Workspace) -> None:
 
 def test_scenario_resolved_item_keeps_its_blocker(latest: Workspace) -> None:
     accepted(latest)
-    lifecycle.tick(latest.root, NAME, "1.1")
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
     lifecycle.block(latest.root, NAME, "1.2", "the API key is missing", DAY, by="Ada")
     lifecycle.resolve(latest.root, NAME, "1.2", "use the test key", NEXT)
     text = latest.read(TASKS_FILE)
@@ -234,7 +234,7 @@ def test_scenario_note_on_an_unticked_item(latest: Workspace) -> None:
 
 def test_scenario_note_on_a_ticked_item(latest: Workspace) -> None:
     accepted(latest)
-    lifecycle.tick(latest.root, NAME, "1.1")
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
     before = latest.read(TASKS_FILE)
     with pytest.raises(Refusal, match="already ticked"):
         lifecycle.add_note(latest.root, NAME, "1.1", "late", DAY)

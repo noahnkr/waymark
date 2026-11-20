@@ -31,7 +31,7 @@ def built_for_review(project: Workspace) -> Workspace:
     """An independently reviewed change with its one item ticked."""
     project.change(proposal_text=INDEPENDENT, tasks=ONE_ITEM)
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     return project
 
 
@@ -143,7 +143,7 @@ def test_scenario_implementer_on_a_human_item(project: Workspace) -> None:
     )
     project.change(tasks=human)
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     decision = delegate(project, assets.IMPLEMENTER, "add-limit 1.2")
     assert not decision.allow
     assert "The human does item 1.2" in decision.reason
@@ -161,9 +161,9 @@ def test_delegation_is_refused_when_the_record_has_problems(project: Workspace) 
 def test_delegation_to_a_reviewer_needs_something_to_review(project: Workspace) -> None:
     project.change(proposal_text=INDEPENDENT)
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert "items still to build (1.2)" in delegate(project, assets.REVIEWER, "add-limit").reason
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     assert delegate(project, assets.REVIEWER, "add-limit").allow
 
 
@@ -177,7 +177,7 @@ def passed_then_added(project: Workspace) -> Workspace:
         "  - **Verify:** a test\n- [ ] 1.2 Name it\n  - **Build:** planner\n"
         "  - **Criteria:** named\n  - **Verify:** a test\n",
     )
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     return project
 
 
@@ -192,7 +192,7 @@ def test_reviewer_is_started_on_an_item_added_after_a_pass(project: Workspace) -
         "  - **Criteria:** named\n  - **Verify:** a test\n",
     )
     assert "items still to build (1.2)" in delegate(project, assets.REVIEWER, NAME).reason
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     assert delegate(project, assets.REVIEWER, NAME).allow
 
 
@@ -213,8 +213,8 @@ def test_reviewer_is_started_with_the_change_alone(project: Workspace) -> None:
 
 
 def test_reviewer_is_not_started_below_independent(accepted: Workspace) -> None:
-    lifecycle.tick(accepted.root, NAME, "1.1")
-    lifecycle.tick(accepted.root, NAME, "1.2")
+    lifecycle.tick(accepted.root, NAME, "1.1", DAY)
+    lifecycle.tick(accepted.root, NAME, "1.2", DAY)
     assert "no reviewer is started" in delegate(accepted, assets.REVIEWER, "add-limit").reason
 
 
@@ -404,8 +404,8 @@ def test_agent_edit_that_adds_evidence_is_refused(
 
 
 def test_agent_edit_that_removes_or_changes_evidence_is_refused(accepted: Workspace) -> None:
-    lifecycle.tick(accepted.root, NAME, "1.1")
-    lifecycle.tick(accepted.root, NAME, "1.2")
+    lifecycle.tick(accepted.root, NAME, "1.1", DAY)
+    lifecycle.tick(accepted.root, NAME, "1.2", DAY)
     lifecycle.self_review(accepted.root, NAME, "fine", DAY)
     assert (
         "removes the tick on item 1.1"
@@ -426,7 +426,7 @@ def test_agent_may_not_write_the_acceptance_record(project: Workspace) -> None:
 
 
 def test_edit_that_keeps_existing_evidence_is_allowed(accepted: Workspace) -> None:
-    lifecycle.tick(accepted.root, NAME, "1.1")
+    lifecycle.tick(accepted.root, NAME, "1.1", DAY)
     assert replace(
         accepted,
         TASKS_FILE,

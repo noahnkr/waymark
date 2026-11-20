@@ -105,7 +105,7 @@ def test_pr_text_is_drawn_from_the_change(project: Workspace) -> None:
     project.change()
     remote(project.root, "git@github.com:someone/shop.git")
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     payload = describe(project.record(), NAME)
     assert errors(payload, SCHEMAS["pr"]) == []
     assert (payload["title"], payload["branch"], payload["repo"]) == (
@@ -187,8 +187,8 @@ def test_pr_refuses_a_repo_the_change_doesnt_touch(suite: Workspace, project: Wo
 def test_pr_text_gives_the_changes_review_and_its_findings(project: Workspace) -> None:
     project.change()
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     lifecycle.self_review(
         project.root, NAME, "fine", DAY, findings=["warning: src/a.py:3: the name is vague"]
     )
@@ -203,11 +203,11 @@ def test_pr_text_gives_the_changes_review_and_its_findings(project: Workspace) -
 def test_pr_text_lists_every_review_record(project: Workspace) -> None:
     project.change()
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.PASS, "fixed", DAY, by="reviewer")
     body = describe(project.record(), NAME)["body"]
     assert (
@@ -222,7 +222,7 @@ def archived(project: Workspace, outcome: str, day: datetime.date = DAY) -> None
     """Take the default change from accept to archive, as on its branch."""
     lifecycle.accept(project.root, NAME, day)
     for number in ("1.1", "1.2"):
-        lifecycle.tick(project.root, NAME, number)
+        lifecycle.tick(project.root, NAME, number, DAY)
     lifecycle.self_review(project.root, NAME, "fine", day)
     lifecycle.archive(project.root, NAME, day, built=outcome)
 

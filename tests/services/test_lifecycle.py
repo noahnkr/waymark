@@ -38,7 +38,7 @@ def built(project: Workspace, tasks: str = TASKS, level: str | None = None) -> W
     """An accepted change with every item ticked, waiting for its review."""
     accepted(project, tasks, level)
     for item in project.record().changes[NAME].tasks.items:  # type: ignore[union-attr]
-        lifecycle.tick(project.root, NAME, item.number)
+        lifecycle.tick(project.root, NAME, item.number, DAY)
     return project
 
 
@@ -146,13 +146,13 @@ def test_accept_keeps_windows_line_endings(project: Workspace) -> None:
 def test_unknown_change_or_item_is_refused_with_the_known_ones(project: Workspace) -> None:
     accepted(project)
     with pytest.raises(Refusal, match="Active changes: add-limit"):
-        lifecycle.tick(project.root, "add-order", "1.1")
-    assert "Its items: 1.1, 1.2" in refused(project, "tick", "7.7")
+        lifecycle.tick(project.root, "add-order", "1.1", DAY)
+    assert "Its items: 1.1, 1.2" in refused(project, "tick", "7.7", DAY)
 
 
 def test_items_of_an_unaccepted_change_cannot_be_applied(project: Workspace) -> None:
     project.change()
-    assert "is not accepted" in refused(project, "tick", "1.1")
+    assert "is not accepted" in refused(project, "tick", "1.1", DAY)
     assert "is not accepted" in refused(project, "block", "1.1", "waiting")
     assert "is not accepted" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
     assert "is not accepted" in refused(project, "self_review", "fine", DAY)
@@ -163,7 +163,7 @@ def test_items_of_a_change_whose_acceptance_was_withdrawn_cannot_be_applied(
 ) -> None:
     accepted(project)
     project.replace(PROPOSAL_FILE, "Paging.", "Paging and sorting.")
-    assert "was withdrawn" in refused(project, "tick", "1.1")
+    assert "was withdrawn" in refused(project, "tick", "1.1", DAY)
 
 
 def test_tick_marks_the_item_and_changes_no_other_line(project: Workspace) -> None:
@@ -178,14 +178,14 @@ def test_tick_marks_the_item_and_changes_no_other_line(project: Workspace) -> No
     state = project.change_state()
     assert state.acceptance is AcceptanceState.VALID
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.2")
-    assert "already ticked" in refused(project, "tick", "1.1")
+    assert "already ticked" in refused(project, "tick", "1.1", DAY)
 
 
 def test_self_review_with_a_finding(project: Workspace) -> None:
     accepted(project)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert "item 1.2 is not ticked" in refused(project, "self_review", "fine", DAY)
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     lifecycle.self_review(
         project.root,
         NAME,
@@ -255,7 +255,7 @@ def test_pass_with_a_critical_finding(project: Workspace) -> None:
 def test_passing_verdict_counts_as_the_independent_review(project: Workspace) -> None:
     accepted(project, ONE_ITEM, "independent")
     assert "item 1.1 is not ticked" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(
         project.root,
         NAME,
@@ -302,7 +302,7 @@ def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Wor
     state = project.change_state()
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
 
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     state = project.change_state()
     assert state.review.level is ReviewLevel.INDEPENDENT
     assert (state.next_step.kind, state.next_step.item) == (StepKind.REVIEW, None)
@@ -316,7 +316,7 @@ def test_second_changes_verdict_waits_for_the_human_until_resolved(project: Work
     built(project, ONE_ITEM, "independent")
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "still off", DAY, items=["1.1"])
     state = project.change_state()
     assert (state.next_step.kind, state.next_step.human) == (StepKind.RESOLVE_ITEMS, True)
@@ -366,7 +366,7 @@ def test_block_writes_a_blocked_record_and_stops_the_item(project: Workspace) ->
     assert state.items[0].blocked == "waiting for the wording"
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.2")
     assert state.acceptance is AcceptanceState.VALID
-    assert "waits on the human" in refused(project, "tick", "1.1")
+    assert "waits on the human" in refused(project, "tick", "1.1", DAY)
     assert 'already has an open "(blocked)" record' in refused(project, "block", "1.1", "again")
 
 
@@ -385,7 +385,7 @@ def test_resolve_frees_a_blocked_item_and_keeps_the_blocker(project: Workspace) 
     state = project.change_state()
     assert state.items[0].blocked is None
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert project.change_state().items[0].ticked
 
 
@@ -404,7 +404,7 @@ def test_spec_gap_from_an_implementer_goes_to_the_human(project: Workspace) -> N
         "the builder found a spec gap: the limit for an empty query is not stated"
     )
     assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.2")
-    assert "waits on the human" in refused(project, "tick", "1.1")
+    assert "waits on the human" in refused(project, "tick", "1.1", DAY)
 
     lifecycle.resolve(project.root, NAME, "1.1", "an empty query is refused", DAY)
     assert project.change_state().items[0].escalated is None
@@ -413,7 +413,7 @@ def test_spec_gap_from_an_implementer_goes_to_the_human(project: Workspace) -> N
 
 def test_ticked_item_cannot_be_blocked(project: Workspace) -> None:
     accepted(project)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert "already ticked" in refused(project, "block", "1.1", "too late")
     assert "already ticked" in refused(project, "report_gap", "1.1", "too late")
 
@@ -421,10 +421,10 @@ def test_ticked_item_cannot_be_blocked(project: Workspace) -> None:
 def test_evidence_commands_keep_windows_line_endings(project: Workspace) -> None:
     accepted(project)
     project.write(TASKS_FILE, project.read(TASKS_FILE).replace("\n", "\r\n"))
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.block(project.root, NAME, "1.2", "waiting")
     lifecycle.resolve(project.root, NAME, "1.2", "go ahead", DAY)
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     text = project.read(TASKS_FILE)
     assert "\n" not in text.replace("\r\n", "")
@@ -439,7 +439,7 @@ def test_evidence_is_appended_to_a_task_list_without_a_final_newline(project: Wo
         + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** done\n"
         + "  - **Verify:** a test",
     )
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     text = project.read(TASKS_FILE)
     assert text.startswith(
@@ -466,7 +466,7 @@ def test_short_path_change_runs_with_two_approvals(project: Workspace) -> None:
         + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert project.change_state().applied
     lifecycle.archive(project.root, NAME, DAY, built="Typo fixed.")
     assert project.record().changes == {}

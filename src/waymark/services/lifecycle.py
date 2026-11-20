@@ -163,7 +163,7 @@ def tick(
     start: Path,
     name: str,
     number: str,
-    today: datetime.date | None = None,
+    today: datetime.date,
     *,
     by: str | None = None,
 ) -> Done:
@@ -189,7 +189,7 @@ def tick(
             f'"wm reopen {name} {number}".'
         )
     who = _who(record, RecordKind.TICKED, by, human=item.build is BuildRole.HUMAN)
-    line = _render(records.Record(RecordKind.TICKED, _today(today), who=who, item=number))
+    line = _render(records.Record(RecordKind.TICKED, today, who=who, item=number))
     paths = _write_tasks(record, change, append_log(_tasks(change), line, tick=number))
     return Done(f"Ticked item {number} of {name}.", paths)
 

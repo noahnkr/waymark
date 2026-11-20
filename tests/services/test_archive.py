@@ -44,7 +44,7 @@ def applied(project: Workspace, name: str = NAME, **options: object) -> Workspac
     """A change that is accepted, built and reviewed."""
     project.change(name, tasks=ONE_ITEM, **options)  # type: ignore[arg-type]
     lifecycle.accept(project.root, name, DAY)
-    lifecycle.tick(project.root, name, "1.1")
+    lifecycle.tick(project.root, name, "1.1", DAY)
     lifecycle.self_review(project.root, name, "matches the criteria", DAY)
     assert project.change_state(name).applied
     return project
@@ -78,7 +78,7 @@ def test_scenario_refused_archive(project: Workspace) -> None:
     """Requirement "Archive recorded in the Log": a refused archive writes nothing."""
     project.change(tasks=ONE_ITEM)
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert "review" in refused(project, built="Capped.")
     assert "(archived)" not in project.read(f"changes/{NAME}/tasks.md")
 
@@ -145,7 +145,7 @@ def test_archive_is_refused_while_items_are_unticked_even_with_an_override(
 ) -> None:
     project.change()
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert "item 1.2 is not ticked" in refused(project, built="Done.")
     assert "can't be overridden" in refused(project, built="Done.", override="no time")
 
@@ -153,7 +153,7 @@ def test_archive_is_refused_while_items_are_unticked_even_with_an_override(
 def test_not_reviewed(project: Workspace) -> None:
     project.change(tasks=ONE_ITEM)
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     message = refused(project, built="Done.")
     assert "missing the self review of the change" in message
     assert "--override" in message
@@ -164,7 +164,7 @@ def test_archive_override_passes_missing_reviews_and_records_the_reason(
 ) -> None:
     project.change(tasks=ONE_ITEM)
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.archive(
         project.root, NAME, LATER, built="Shipped.", override="reviewed in the pull request"
     )
@@ -181,7 +181,7 @@ def test_archive_override_passes_missing_reviews_and_records_the_reason(
 def test_archive_override_also_passes_a_failed_review(project: Workspace) -> None:
     project.change(tasks=ONE_ITEM)
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "naming", DAY, items=["1.1"])
     assert "missing the independent review" in refused(project, built="Shipped.")
     lifecycle.archive(project.root, NAME, LATER, built="Shipped.", override="naming is fine")
@@ -265,7 +265,7 @@ def test_archived_name_can_be_reused(project: Workspace) -> None:
     lifecycle.archive(project.root, NAME, DAY, built="First.")
     project.change(tasks=ONE_ITEM, deltas={"search": delta(modified=(CHANGED,))})
     lifecycle.accept(project.root, NAME, LATER)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.self_review(project.root, NAME, "fine", LATER)
     lifecycle.archive(project.root, NAME, LATER, built="Second.")
     record = project.record()
@@ -507,7 +507,7 @@ def test_sync_is_refused_unless_the_change_is_applied(project: Workspace) -> Non
     lifecycle.accept(project.root, NAME, DAY)
     with pytest.raises(Refusal, match="Only an applied change can be synced"):
         lifecycle.sync(project.root, NAME, LATER)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     with pytest.raises(Refusal, match="Only an applied change can be synced"):
         lifecycle.sync(project.root, NAME, LATER)
     assert not project.path("specs/search.md").exists()
@@ -568,7 +568,7 @@ def test_default_tasks_change_runs_from_accept_to_archive(project: Workspace) ->
     project.change(tasks=TASKS)
     lifecycle.accept(project.root, NAME, DAY)
     for number in ("1.1", "1.2"):
-        lifecycle.tick(project.root, NAME, number)
+        lifecycle.tick(project.root, NAME, number, DAY)
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     lifecycle.archive(project.root, NAME, LATER, built="Done.")
     assert project.record().problems == ()
@@ -585,7 +585,7 @@ def test_sync_keeps_the_items_the_acceptance_names(project: Workspace) -> None:
         "  - **Verify:** a test\n\n## Log\n",
     )
     for number in ("1.1", "1.2", "1.3"):
-        lifecycle.tick(project.root, NAME, number)
+        lifecycle.tick(project.root, NAME, number, DAY)
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     lifecycle.sync(project.root, NAME, DAY)
     text = project.read(tasks)

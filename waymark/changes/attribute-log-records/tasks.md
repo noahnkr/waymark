@@ -74,3 +74,5 @@
   - [warning] `tests/record/evidence/test_records.py`: no test reads records signed with the old names (by wm-implementer, by wm-reviewer), so "records already written are read as they are" holds only by accident
 - 2026-11-20 (reopened) 1.2 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.2 by planner for Noah Roberts
+- 2026-11-20 (reopened) 1.3 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.3 by planner for Noah Roberts

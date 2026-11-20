@@ -652,7 +652,7 @@ def test_writes_are_refused_when_the_pinned_version_differs(project: Workspace) 
         lambda: setup.create_change(project.root, "add-order"),
         lambda: setup.create_exploration(project.root, "paging"),
         lambda: lifecycle.accept(project.root, "add-limit", TODAY),
-        lambda: lifecycle.tick(project.root, "add-limit", "1.1"),
+        lambda: lifecycle.tick(project.root, "add-limit", "1.1", datetime.date(2026, 1, 15)),
         lambda: lifecycle.archive(project.root, "add-limit", TODAY, built="Done."),
     )
     for attempt in attempts:

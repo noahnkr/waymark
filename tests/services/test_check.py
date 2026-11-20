@@ -283,7 +283,7 @@ def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> Non
     )
     lifecycle.accept(project.root, "add-limit", DAY)
     assert findings(project) == []
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     assert findings(project) == [("warning", "changes/add-limit", "not-archived")]
 
 
@@ -388,7 +388,7 @@ def test_not_archived_warning_says_to_archive_before_the_pull_request(project: W
         + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, "add-limit", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     (finding,) = check(project.root, NOW)
     assert finding.code == "not-archived"
     assert "on its branch" in finding.message
@@ -499,7 +499,7 @@ def test_archived_changes_are_not_checked_against_roadmaps(project: Workspace) -
         ),
     )
     lifecycle.accept(project.root, "add-limit", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     lifecycle.self_review(project.root, "add-limit", "fine", DAY)
     lifecycle.archive(project.root, "add-limit", DAY, built="Shipped.")
     assert milestone_findings(project) == []
