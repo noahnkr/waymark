@@ -2,7 +2,7 @@
 
 ## 1. Records
 
-- [ ] 1.1 Read the new record kinds in a change's Log
+- [x] 1.1 Read the new record kinds in a change's Log
   - **Build:** planner
   - **Criteria:**
     - `(ticked) <item>` and `(revised) [<part>, <part>...]: <why>` are record kinds with their shapes, and render and parse back the same

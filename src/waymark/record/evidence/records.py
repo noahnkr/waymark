@@ -18,7 +18,7 @@ import ntpath
 import posixpath
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum, StrEnum
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 
@@ -49,6 +49,8 @@ class RecordKind(StrEnum):
     BLOCKED = "blocked"
     GAP = "gap"
     NOTE = "note"
+    TICKED = "ticked"
+    REVISED = "revised"
     ADDED = "added"
     DROPPED = "dropped"
     MOVED = "moved"
@@ -64,6 +66,8 @@ class Level(Enum):
     CHANGE = "change"
     BOTH = "both"
     MILESTONE = "milestone"
+    CHANGE_OR_MILESTONE = "change-or-milestone"
+    """In a change's Log about the whole change, or in a milestone's Log naming the change."""
 
 
 class Grammar(Enum):
@@ -88,6 +92,11 @@ class Grammar(Enum):
     """A change's name: the roadmap line a milestone record is about."""
     MOVE = "move"
     """A change's name, then ``after <change>`` or ``first``: where its roadmap line went."""
+    OPTIONAL_CHANGE_NAME = "optional-change-name"
+    """A change's name in a milestone's Log, and nothing in the change's own Log."""
+    PARTS = "parts"
+    """Optionally the parts a revision changed, separated by ``, ``: item numbers,
+    ``proposal``, ``design`` or ``specs/<area>``."""
 
 
 @dataclass(frozen=True)
@@ -164,6 +173,18 @@ KINDS: dict[RecordKind, KindSpec] = {
         level=Level.ITEM,
         shape="YYYY-MM-DD (note) <item> [by <who>]: <text>",
     ),
+    RecordKind.TICKED: KindSpec(
+        Grammar.ITEM,
+        has_text=False,
+        level=Level.ITEM,
+        shape="YYYY-MM-DD (ticked) <item> [by <who>]",
+    ),
+    RecordKind.REVISED: KindSpec(
+        Grammar.PARTS,
+        has_text=True,
+        level=Level.CHANGE,
+        shape="YYYY-MM-DD (revised) [<part>, <part>...] [by <who>]: <why>",
+    ),
     RecordKind.ADDED: KindSpec(
         Grammar.CHANGE_NAME,
         has_text=True,
@@ -189,10 +210,10 @@ KINDS: dict[RecordKind, KindSpec] = {
         shape="YYYY-MM-DD (proposed) <change> [by <who>]",
     ),
     RecordKind.ARCHIVED: KindSpec(
-        Grammar.CHANGE_NAME,
+        Grammar.OPTIONAL_CHANGE_NAME,
         has_text=False,
-        level=Level.MILESTONE,
-        shape="YYYY-MM-DD (archived) <change> [by <who>]",
+        level=Level.CHANGE_OR_MILESTONE,
+        shape="YYYY-MM-DD (archived) [<change>] [by <who>]",
     ),
 }
 
@@ -224,6 +245,8 @@ class Record:
     """For ``(moved)``, the change the line went after; None when it went first."""
     item: str | None = None
     """The item a record about one item names; None when it names none."""
+    parts: tuple[str, ...] | None = None
+    """The parts a ``(revised)`` record names; None when it names none."""
 
 
 @dataclass(frozen=True)
@@ -272,6 +295,10 @@ def _arguments(record: Record) -> list[str]:  # noqa: PLR0911 - one return per g
     if grammar is Grammar.CHANGE_NAME:
         assert record.change is not None
         return [record.change]
+    if grammar is Grammar.OPTIONAL_CHANGE_NAME:
+        return [record.change] if record.change else []
+    if grammar is Grammar.PARTS:
+        return [", ".join(record.parts)] if record.parts else []
     if grammar is Grammar.MOVE:
         assert record.change is not None
         return [record.change, *(["after", record.after] if record.after else ["first"])]
@@ -363,26 +390,30 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
     if who == "":
         return _fail(kind, 'The name after "by" is missing.')
     text_value = line_text.strip() if spec.has_text else None
-    if spec.grammar in (Grammar.CHANGE_NAME, Grammar.MOVE, Grammar.ITEM):
-        named = _named_arguments(kind, spec.grammar, words)
+    return _built(Record(kind, date, who=who, text=text_value), spec.grammar, words)
+
+
+_NAMED = (Grammar.CHANGE_NAME, Grammar.OPTIONAL_CHANGE_NAME, Grammar.MOVE, Grammar.ITEM)
+"""The grammars whose arguments name an item or a change."""
+
+
+def _built(head: Record, grammar: Grammar, words: list[str]) -> Record | ParseError:
+    """The record with the arguments its grammar reads from the words before ``by``."""
+    kind = head.kind
+    if grammar is Grammar.PARTS:
+        parts = _parts_arguments(kind, words)
+        return parts if isinstance(parts, ParseError) else replace(head, parts=parts)
+    if grammar in _NAMED:
+        named = _named_arguments(kind, grammar, words)
         if isinstance(named, ParseError):
             return named
         change, after, item = named
-        return Record(kind, date, who=who, text=text_value, change=change, after=after, item=item)
-    found = _read_arguments(kind, spec.grammar, words)
+        return replace(head, change=change, after=after, item=item)
+    found = _read_arguments(kind, grammar, words)
     if isinstance(found, ParseError):
         return found
     verdict, items, fingerprint, covers = found
-    return Record(
-        kind,
-        date,
-        who=who,
-        text=line_text.strip() if spec.has_text else None,
-        verdict=verdict,
-        items=items,
-        fingerprint=fingerprint,
-        covers=covers,
-    )
+    return replace(head, verdict=verdict, items=items, fingerprint=fingerprint, covers=covers)
 
 
 def _named_arguments(
@@ -394,10 +425,37 @@ def _named_arguments(
         if len(words) > 1 or (words and not _ITEM_NUMBER.match(words[0])):
             return _fail(kind, "Only one item number such as 1.2 may follow the kind.")
         return None, None, words[0] if words else None
+    if grammar is Grammar.OPTIONAL_CHANGE_NAME:
+        if not words:
+            return None, None, None
+        grammar = Grammar.CHANGE_NAME
     place = _change_arguments(kind, grammar, words)
     if isinstance(place, ParseError):
         return place
     return place[0], place[1], None
+
+
+PART = re.compile(r"^(?:\d+\.\d+|proposal|design|specs/[a-z0-9][a-z0-9-]*)$")
+"""A part of a change a revision names: an item number, ``proposal``, ``design`` or
+``specs/<area>``."""
+
+
+def _parts_arguments(kind: RecordKind, words: list[str]) -> tuple[str, ...] | ParseError | None:
+    """The parts a ``(revised)`` record names, separated by ``, ``; None when it names none."""
+    if not words:
+        return None
+    parts: list[str] = []
+    for at, word in enumerate(words):
+        last = at == len(words) - 1
+        name = word if last else word.removesuffix(",")
+        if (not last and not word.endswith(",")) or not PART.match(name):
+            return _fail(
+                kind,
+                'Name the parts as item numbers, "proposal", "design" or "specs/<area>", '
+                'separated by ", ".',
+            )
+        parts.append(name)
+    return tuple(parts)
 
 
 def _split_who(body: str) -> tuple[list[str], str | None]:

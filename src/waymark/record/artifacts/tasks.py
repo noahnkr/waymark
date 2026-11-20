@@ -71,6 +71,8 @@ class ReviewRecord:
     covers: tuple[str, ...] = ()
     item: str | None = None
     """The item a record about one item is about; None for a record about the change."""
+    parts: tuple[str, ...] = ()
+    """The parts a ``(revised)`` record names."""
 
     @property
     def line(self) -> str:
@@ -87,6 +89,7 @@ class ReviewRecord:
                 fingerprint=self.fingerprint,
                 covers=None if is_acceptance else (self.covers or None),
                 item=self.item,
+                parts=self.parts or None,
             )
         )
 
@@ -183,6 +186,15 @@ def _with_records(item: Item, found: Sequence[ReviewRecord]) -> Item:
     )
 
 
+def _milestone_only(found: records.Record) -> bool:
+    """Whether a record belongs only in a milestone's Log: a milestone kind, or an
+    ``(archived)`` record that names a change."""
+    level = records.KINDS[found.kind].level
+    return level is records.Level.MILESTONE or (
+        level is records.Level.CHANGE_OR_MILESTONE and found.change is not None
+    )
+
+
 def _milestone_record(kind: RecordKind) -> str:
     return (
         f'A "({kind.value})" record is about a milestone\'s roadmap, so it goes in the '
@@ -204,6 +216,7 @@ def _from_record(record: records.Record, index: int) -> ReviewRecord:
         fingerprint=record.fingerprint,
         covers=(record.items or ()) if is_acceptance else (record.covers or ()),
         item=record.item,
+        parts=record.parts or (),
     )
 
 
@@ -273,7 +286,7 @@ class _Parser:
             self.problem(index, "malformed-record", found.message)
             return
         assert found is not None
-        if records.KINDS[found.kind].level is records.Level.MILESTONE:
+        if _milestone_only(found):
             self.problem(index, "misplaced-record", _milestone_record(found.kind))
             return
         about = (
@@ -459,7 +472,7 @@ class _Parser:
             message = found.message if found is not None else "This is not a record."
             self.problem(index, "malformed-record", message)
             return
-        if records.KINDS[found.kind].level is records.Level.MILESTONE:
+        if _milestone_only(found):
             self.problem(index, "misplaced-record", _milestone_record(found.kind))
             return
         if records.KINDS[found.kind].level is records.Level.ITEM and found.item is None:

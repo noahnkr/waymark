@@ -73,7 +73,51 @@ ONE_OF_EACH = [
     Record(RecordKind.BLOCKED, DAY, who="Ada", text="the API key is missing"),
     Record(RecordKind.GAP, DAY, text="the limit's maximum"),
     Record(RecordKind.NOTE, DAY, who="wm-implementer", text="partial: the parser is done"),
+    Record(RecordKind.TICKED, DAY, who="planner for Ada", item="1.1"),
+    Record(RecordKind.TICKED, DAY, who="Ada", item="1.2"),
+    Record(RecordKind.REVISED, DAY, who="planner for Ada", text="the count was 2", parts=("2.2",)),
+    Record(
+        RecordKind.REVISED,
+        DAY,
+        who="planner for Ada",
+        text="settled the cut",
+        parts=("proposal", "design", "specs/search", "1.3"),
+    ),
+    Record(RecordKind.REVISED, DAY, text="reworded the why"),
+    Record(RecordKind.ARCHIVED, DAY, who="Ada"),
+    Record(RecordKind.ARCHIVED, DAY, who="Ada", change="add-limit"),
 ]
+
+
+def test_new_kinds_have_their_shapes() -> None:
+    rendered = {render(record) for record in ONE_OF_EACH}
+    assert {
+        "2026-11-20 (ticked) 1.1 by planner for Ada",
+        "2026-11-20 (revised) 2.2 by planner for Ada: the count was 2",
+        "2026-11-20 (revised) proposal, design, specs/search, 1.3 by planner for Ada: "
+        "settled the cut",
+        "2026-11-20 (revised): reworded the why",
+        "2026-11-20 (archived) by Ada",
+        "2026-11-20 (archived) add-limit by Ada",
+    } <= rendered
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "2026-11-20 (ticked) by Ada: done",
+        "2026-11-20 (ticked) 1.1 1.2 by Ada",
+        "2026-11-20 (revised) 2.2 3.1 by Ada: two parts without a comma",
+        "2026-11-20 (revised) tests by Ada: not a part",
+        "2026-11-20 (revised) by Ada",
+        "2026-11-20 (archived) add-limit extra by Ada",
+    ],
+)
+def test_a_malformed_new_record_names_its_shape(text: str) -> None:
+    found = parse(text)
+    assert isinstance(found, ParseError)
+    assert found.kind is not None
+    assert shape(found.kind) in found.message
 
 
 @pytest.mark.parametrize("record", ONE_OF_EACH, ids=render)
@@ -96,13 +140,18 @@ def test_one_record_shape_puts_the_arguments_before_who_wrote_it() -> None:
     } <= rendered
 
 
-def test_scenario_blocked_item() -> None:
-    record = Record(RecordKind.BLOCKED, DAY, who="Ada", text="the API key is missing")
-    assert render(record) == "2026-11-20 (blocked) by Ada: the API key is missing"
+def test_scenario_record_in_its_shape() -> None:
+    """Requirement "One record shape": the kind, its item, who wrote it, then the text."""
+    record = Record(
+        RecordKind.BLOCKED, DAY, who="planner for Ada", text="the API key is missing", item="1.2"
+    )
+    line = render(record)
+    assert line == "2026-11-20 (blocked) 1.2 by planner for Ada: the API key is missing"
+    assert parse(line) == record
 
 
 def test_scenario_malformed_record() -> None:
-    found = parse("(blocked) the API key is missing")
+    found = parse("(blocked) 1.2 the API key is missing")
     assert isinstance(found, ParseError)
     assert found.kind is RecordKind.BLOCKED
     assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in found.message
@@ -323,7 +372,7 @@ def test_a_record_is_written_date_first_with_comma_separated_items() -> None:
 
 def test_scenario_kind_before_the_date() -> None:
     """The older shape starts like a record, so it is reported, never read."""
-    found = parse("(blocked) 2026-11-20 by Ada: the API key is missing")
+    found = parse("(blocked) 2026-11-20 1.2 by Ada: the API key is missing")
     assert isinstance(found, ParseError)
     assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in found.message
     assert looks_like_record("(note) 2026-11-20: text")
