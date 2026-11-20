@@ -291,7 +291,7 @@ def test_scenario_role_in_the_json(project: Workspace) -> None:
     """Requirement "Build line": wm show --json gives each item's role as build."""
     project.change(tasks=ROLES)
     payload = valid(payloads.show(project.record(), "add-limit"))
-    assert payload["version"] == VERSIONS["show.change"] == 4
+    assert payload["version"] == VERSIONS["show.change"] == 5
     builds = [(item["number"], item["build"]) for item in payload["items"]]
     assert builds == [("1.1", "planner"), ("1.2", "human"), ("1.3", "implementer")]
     assert all("delegate" not in item for item in payload["items"])

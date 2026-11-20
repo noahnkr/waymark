@@ -27,7 +27,7 @@
     - a value given once is written inline on its label's line, as before
     - several values are written as nested bullets under a bare label, in the order given, and `wm pr` shows them
   - **Verify:** tests named after the scenarios Archived with an outcome, Nothing differs and Outcome as a list
-- [ ] 1.5 Show details in the views, packs and pull request
+- [x] 1.5 Show details in the views, packs and pull request
   - **Build:** planner
   - **Criteria:**
     - `wm show --json` gives each record `details`, at `show.change` version 5, and the schema says so; the text view draws them under their record, after findings
@@ -61,3 +61,4 @@
 - 2026-11-20 (ticked) 1.2 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.4 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.5 by planner for Noah Roberts

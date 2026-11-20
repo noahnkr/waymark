@@ -42,7 +42,7 @@ from waymark.services.guidance import SEVERITY_RUBRIC, STOPPING_RULES, human_ite
 from waymark.services.references import reference_record
 
 CONTEXT_VERSION = 2
-DELEGATED_VERSION = 3
+DELEGATED_VERSION = 4
 """The version of the implementer's and reviewer's packs; 2 reviews the whole change."""
 EXPLORE = "explore"
 IMPLEMENT = "implement"
@@ -201,6 +201,7 @@ def _review(record: ReviewRecord, numbers: tuple[str, ...]) -> dict[str, Any]:
             {"severity": f.severity.value, "place": f.place, "text": f.text}
             for f in record.findings
         ],
+        "details": list(record.details),
     }
 
 
@@ -224,7 +225,11 @@ def _item(record: Record, change: Change, item: Item) -> dict[str, Any]:
     numbers = tuple(i.number for i in change.tasks.items) if change.tasks else ()
     return {
         **_definition(item, item_location(record, item)),
-        "notes": list(item.notes),
+        "notes": [
+            {"text": note.text, "details": list(note.details)}
+            for note in item.records
+            if note.kind is RecordKind.NOTE
+        ],
         "reviews": [_review(r, numbers) for r in records if item.number in r.items],
         "resolutions": [r.text for r in item.records if r.kind is RecordKind.RESOLVED],
     }

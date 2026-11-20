@@ -10,15 +10,15 @@ Every read command takes `--json`. Each payload starts with `schema` (its name) 
 | [`wm.inbox`](#wminbox) | 1 | `wm inbox` |
 | [`wm.ls`](#wmls) | 1 | `wm ls` |
 | [`wm.check`](#wmcheck) | 1 | `wm check` |
-| [`wm.show.change`](#wmshowchange) | 4 | `wm show` for a change |
+| [`wm.show.change`](#wmshowchange) | 5 | `wm show` for a change |
 | [`wm.show.spec`](#wmshowspec) | 1 | `wm show` for a spec |
 | [`wm.show.milestone`](#wmshowmilestone) | 1 | `wm show` for a milestone |
 | [`wm.show.exploration`](#wmshowexploration) | 2 | `wm show` for an exploration |
 | [`wm.show.resource`](#wmshowresource) | 1 | `wm show` for a resource |
 | [`wm.instructions`](#wminstructions) | 1 | `wm instructions` |
 | [`wm.context.explore`](#wmcontextexplore) | 2 | `wm context --for explore` |
-| [`wm.context.implement`](#wmcontextimplement) | 3 | `wm context <change> <item> --for implement` |
-| [`wm.context.review`](#wmcontextreview) | 3 | `wm context <change> --for review` |
+| [`wm.context.implement`](#wmcontextimplement) | 4 | `wm context <change> <item> --for implement` |
+| [`wm.context.review`](#wmcontextreview) | 4 | `wm context <change> --for review` |
 | [`wm.pr`](#wmpr) | 1 | `wm pr` |
 | [`wm.doctor`](#wmdoctor) | 1 | `wm doctor`, `wm atlas doctor` |
 
@@ -551,7 +551,7 @@ Printed by `wm show` for a change.
       "const": "wm.show.change"
     },
     "version": {
-      "const": 4
+      "const": 5
     },
     "name": {
       "type": "string"
@@ -1026,6 +1026,12 @@ Printed by `wm show` for a change.
                     ],
                     "additionalProperties": false
                   }
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "required": [
@@ -1038,7 +1044,8 @@ Printed by `wm show` for a change.
                 "item",
                 "items",
                 "covers",
-                "findings"
+                "findings",
+                "details"
               ],
               "additionalProperties": false
             }
@@ -1191,6 +1198,12 @@ Printed by `wm show` for a change.
               ],
               "additionalProperties": false
             }
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -1203,7 +1216,8 @@ Printed by `wm show` for a change.
           "item",
           "items",
           "covers",
-          "findings"
+          "findings",
+          "details"
         ],
         "additionalProperties": false
       }
@@ -2088,7 +2102,7 @@ Printed by `wm context <change> <item> --for implement`.
       "const": "wm.context.implement"
     },
     "version": {
-      "const": 3
+      "const": 4
     },
     "for": {
       "const": "implement"
@@ -2140,7 +2154,23 @@ Printed by `wm context <change> <item> --for implement`.
         "notes": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "text",
+              "details"
+            ],
+            "additionalProperties": false
           }
         },
         "reviews": {
@@ -2201,6 +2231,12 @@ Printed by `wm context <change> <item> --for implement`.
                   ],
                   "additionalProperties": false
                 }
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [
@@ -2209,7 +2245,8 @@ Printed by `wm context <change> <item> --for implement`.
               "text",
               "items",
               "covers",
-              "findings"
+              "findings",
+              "details"
             ],
             "additionalProperties": false
           }
@@ -2448,7 +2485,7 @@ Printed by `wm context <change> --for review`.
       "const": "wm.context.review"
     },
     "version": {
-      "const": 3
+      "const": 4
     },
     "for": {
       "const": "review"
@@ -2592,6 +2629,12 @@ Printed by `wm context <change> --for review`.
               ],
               "additionalProperties": false
             }
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -2600,7 +2643,8 @@ Printed by `wm context <change> --for review`.
           "text",
           "items",
           "covers",
-          "findings"
+          "findings",
+          "details"
         ],
         "additionalProperties": false
       }

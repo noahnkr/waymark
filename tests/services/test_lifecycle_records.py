@@ -528,3 +528,49 @@ def test_verdict_takes_details(latest: Workspace) -> None:
         lifecycle.tick(latest.root, NAME, number, DAY)
     lifecycle.verdict(latest.root, NAME, Verdict.PASS, "fine", DAY, by="reviewer", details=TWO)
     assert log(latest).endswith(" by reviewer: fine\n" + UNDER)
+
+
+def test_scenario_details_in_the_views(latest: Workspace) -> None:
+    """Requirement "Details under a record": wm show, both packs and wm pr show details."""
+    from waymark.services.context import context_pack  # noqa: PLC0415
+    from waymark.views import payloads, render  # noqa: PLC0415
+    from waymark.views.style import Style  # noqa: PLC0415
+
+    accepted(latest)
+    lifecycle.add_note(latest.root, NAME, "1.2", "partly built", DAY, details=TWO)
+    shown = payloads.show(latest.record(), NAME)
+    [note] = next(item for item in shown["items"] if item["number"] == "1.2")["records"]
+    assert note["details"] == list(TWO)
+    assert "  - the CLI flag is not" in render.to_text(shown, Style(width=100))
+
+    implement = context_pack(latest.record(), "implement", NAME, "1.2")
+    assert implement["item"]["notes"] == [{"text": "partly built", "details": list(TWO)}]
+    assert "  - the parser is done" in render.to_text(implement, Style())
+
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    lifecycle.self_review(latest.root, NAME, "fine", DAY, details=["pytest passes"])
+    assert "  - pytest passes" in describe(latest.record(), NAME)["body"]
+
+
+def test_the_review_pack_shows_the_details_of_earlier_reviews(latest: Workspace) -> None:
+    from waymark.services.context import context_pack  # noqa: PLC0415
+
+    latest.change(tasks=TASKS, proposal_text=proposal(review="independent"))
+    lifecycle.accept(latest.root, NAME, DAY)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(latest.root, NAME, number, DAY)
+    lifecycle.verdict(
+        latest.root,
+        NAME,
+        Verdict.CHANGES,
+        "off by one",
+        DAY,
+        items=["1.1"],
+        by="reviewer",
+        details=["fifty-one come back"],
+    )
+    lifecycle.reopen(latest.root, NAME, "1.1", DAY)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    built = context_pack(latest.record(), "review", NAME, None)
+    assert [review["details"] for review in built["reviews"]] == [["fifty-one come back"]]

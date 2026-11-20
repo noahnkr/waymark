@@ -277,6 +277,8 @@ def _record_lines(record: Payload, indent: str, style: Style) -> list[str]:
     for finding in record["findings"]:
         color = DANGER if finding["severity"] == "critical" else ATTENTION
         lines += _painted(style.wrap(_finding_line(finding), indent + "  "), style, color)
+    for detail in record["details"]:
+        lines += _painted(style.wrap(f"- {detail}", indent + "  "), style, MUTED)
     return lines
 
 
@@ -497,6 +499,7 @@ def _review_lines(review: Payload) -> list[str]:
     head = f"({review['date']}, {review['verdict']}{named}{covers})"
     lines = [f"- Earlier review {head}: {review['text']}"]
     lines += [f"  - {_finding_line(finding)}" for finding in review["findings"]]
+    lines += [f"  - {detail}" for detail in review["details"]]
     return lines
 
 
@@ -505,7 +508,9 @@ def _pack_item(item: Payload) -> list[str]:
     lines += [f"- Decided by the human: {text}" for text in item["resolutions"]]
     for review in item["reviews"]:
         lines += _review_lines(review)
-    lines += [f"- Note from earlier work: {note}" for note in item["notes"]]
+    for note in item["notes"]:
+        lines.append(f"- Note from earlier work: {note['text']}")
+        lines += [f"  - {detail}" for detail in note["details"]]
     return lines
 
 

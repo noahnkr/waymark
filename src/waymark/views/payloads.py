@@ -63,7 +63,7 @@ VERSIONS = {
     "inbox": 1,
     "ls": 1,
     "check": 1,
-    "show.change": 4,
+    "show.change": 5,
     "show.spec": 1,
     "show.milestone": 1,
     "show.exploration": 2,
@@ -421,6 +421,7 @@ def _record(record: ReviewRecord, numbers: tuple[str, ...] = ()) -> Payload:
             {"severity": f.severity.value, "place": f.place, "text": f.text}
             for f in record.findings
         ],
+        "details": list(record.details),
     }
 
 
