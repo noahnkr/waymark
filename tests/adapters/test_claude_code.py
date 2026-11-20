@@ -364,20 +364,20 @@ def test_implementers_result_ticks_its_item(hooks: Hooks) -> None:
 def test_implementers_blocked_result_writes_the_blocked_line(hooks: Hooks) -> None:
     hooks.stop("wm-implementer", "ITEM: add-limit 1.1\nRESULT: blocked: no access to the index")
     text = hooks.project.read(TASKS_FILE)
-    assert " by wm-implementer: no access to the index\n" in text
+    assert " by implementer: no access to the index\n" in text
 
 
 def test_reviewers_verdict_is_written_as_the_review_record(hooks: Hooks) -> None:
     today = datetime.date.today().isoformat()
-    lifecycle.tick(hooks.project.root, CHANGE, "1.1")
-    lifecycle.tick(hooks.project.root, CHANGE, "1.2")
+    lifecycle.tick(hooks.project.root, CHANGE, "1.1", DAY)
+    lifecycle.tick(hooks.project.root, CHANGE, "1.2", DAY)
     reply = hooks.stop(
         "wm-reviewer", "CHANGE: add-limit\nVERDICT: changes 1.1: off by one at fifty"
     )
     assert "Recorded the verdict changes" in reply["systemMessage"]
     text = hooks.project.read(TASKS_FILE)
     assert (
-        f"- {today} (review) changes 1.1; covers 1.1, 1.2 by wm-reviewer: off by one at fifty\n"
+        f"- {today} (review) changes 1.1; covers 1.1, 1.2 by reviewer: off by one at fifty\n"
         in text
     )
 
@@ -397,12 +397,12 @@ def test_implementers_handed_back_report_ticks_its_item(hooks: Hooks) -> None:
 
 def test_reviewers_handed_back_verdict_is_written_as_the_review_record(hooks: Hooks) -> None:
     today = datetime.date.today().isoformat()
-    lifecycle.tick(hooks.project.root, CHANGE, "1.1")
-    lifecycle.tick(hooks.project.root, CHANGE, "1.2")
+    lifecycle.tick(hooks.project.root, CHANGE, "1.1", DAY)
+    lifecycle.tick(hooks.project.root, CHANGE, "1.2", DAY)
     reply = hooks.handback("wm-reviewer", "CHANGE: add-limit\nVERDICT: pass: caps at fifty")
     assert "Recorded the verdict pass" in reply["systemMessage"]
     text = hooks.project.read(TASKS_FILE)
-    assert f"- {today} (review) pass covers 1.1, 1.2 by wm-reviewer: caps at fifty\n" in text
+    assert f"- {today} (review) pass covers 1.1, 1.2 by reviewer: caps at fifty\n" in text
 
 
 def test_handed_back_report_without_its_ending_is_denied(hooks: Hooks) -> None:

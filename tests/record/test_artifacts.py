@@ -274,6 +274,17 @@ def test_records_are_appended_to_a_milestone_log() -> None:
     )
 
 
+def test_an_archived_record_in_a_milestone_log_names_the_change() -> None:
+    text = (
+        milestone("- add-cache: cache hot queries\n")
+        + "\n## Log\n\n- 2026-11-21 (archived) by Ada\n"
+    )
+    goal, _ = parse_milestone(document(text, "milestones/m/milestone.md"))
+    [problem] = goal.problems
+    assert problem.code == "malformed-record"
+    assert "names the change" in problem.message
+
+
 def test_a_milestone_log_keeps_the_file_line_endings() -> None:
     text = milestone("- add-cache: cache hot queries\n").replace("\n", "\r\n")
     appended = append_milestone_log(document(text), "2026-11-20 (proposed) add-cache")

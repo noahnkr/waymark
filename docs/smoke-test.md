@@ -100,7 +100,7 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       `<change> <item>` first: **the hook refuses it**.
 - [ ] The reviewer reads `wm context <change> --for review`. Its verdict is
       written in the `## Log` section at the end of `tasks.md` as a
-      `<date> (review) <verdict> by wm-reviewer` record in the reviewer's own
+      `<date> (review) <verdict> by reviewer` record in the reviewer's own
       words, with any `FINDING:` lines under it. The reviewer can't edit files (ask it to fix something; it is
       refused).
 - [ ] **A request for changes.** If the reviewer asked for changes, the items

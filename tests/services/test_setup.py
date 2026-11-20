@@ -652,7 +652,7 @@ def test_writes_are_refused_when_the_pinned_version_differs(project: Workspace) 
         lambda: setup.create_change(project.root, "add-order"),
         lambda: setup.create_exploration(project.root, "paging"),
         lambda: lifecycle.accept(project.root, "add-limit", TODAY),
-        lambda: lifecycle.tick(project.root, "add-limit", "1.1"),
+        lambda: lifecycle.tick(project.root, "add-limit", "1.1", datetime.date(2026, 1, 15)),
         lambda: lifecycle.archive(project.root, "add-limit", TODAY, built="Done."),
     )
     for attempt in attempts:
@@ -822,10 +822,23 @@ def test_scenario_planned_roadmap_line(project: Workspace) -> None:
     )
     assert project.read(MILESTONE_FILE).endswith(
         "## Roadmap\n\n- [add-limit](../../changes/add-limit/proposal.md): cap the results\n"
-        "- add-cache\n\n## Log\n\n- 2026-11-20 (proposed) add-limit by Sam Doe\n"
+        "- add-cache\n\n## Log\n\n- 2026-11-20 (proposed) add-limit by planner for Sam Doe\n"
     )
     found = check.check(project.root, datetime.datetime(2026, 3, 1, tzinfo=datetime.UTC))
     assert [f.code for f in found if "milestone" in f.code] == []
+
+
+def test_new_change_in_a_milestone_takes_by(project: Workspace) -> None:
+    """Requirement "Who wrote a record": wm new change writes (proposed), so it takes --by."""
+    project.write(MILESTONE_FILE, faster_search("- add-limit: cap the results\n"))
+    setup.create_change(
+        project.root,
+        "add-limit",
+        milestone="faster-search",
+        today=datetime.date(2026, 11, 20),
+        by="Ada",
+    )
+    assert project.read(MILESTONE_FILE).endswith("- 2026-11-20 (proposed) add-limit by Ada\n")
 
 
 def test_a_planned_line_with_only_the_name_becomes_a_link(project: Workspace) -> None:

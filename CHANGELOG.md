@@ -4,6 +4,19 @@ All notable changes to Waymark, one entry per release.
 
 ## [Unreleased]
 
+- **Behavior change: records name who wrote them by their kind.** Your acts
+  (`(accepted)`, `(override)`, `(resolved)`, `(archived)` and the tick of a `human`
+  item) name your git name. What the planner writes names `planner for <your
+  name>`, and an agent's ending names `implementer` or `reviewer` (they were
+  `wm-implementer` and `wm-reviewer`). `--by` still overrides it, and records
+  already written keep their names. An implementer's own `wm note` must say
+  `--by implementer`.
+- **New records.** `wm tick` writes `(ticked) <item>` and takes `--by`.
+  `wm archive` ends the change's own Log with `(archived)`.
+- **New command: `wm revise`.** `wm revise <change> "<why>" --parts <part>,...`
+  records why an accepted change was edited. **Behavior change:** `wm accept`
+  refuses to accept a change a second time until a `(revised)` record follows its
+  last acceptance.
 - **Behavior change: an item's Build line names a role.** The roles are
   `planner`, `implementer` and `human`. `implementer` replaces `delegate`, which
   `wm check` now reports as unknown: change `- **Build:** delegate` to

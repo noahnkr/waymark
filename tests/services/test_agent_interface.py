@@ -129,10 +129,10 @@ def test_instructions_give_the_right_next_step_at_every_stop(project: Workspace)
     assert (step["step"], step["item"]) == ("apply", "1.1")
     assert step["commands"][0] == f"wm context {NAME} 1.1 --for implement"
 
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert (at(project)["step"], at(project)["item"]) == ("apply", "1.2")
 
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     step = at(project)
     assert (step["step"], step["item"]) == ("review", None)
     assert step["commands"] == [
@@ -239,7 +239,7 @@ def reviewable(project: Workspace, level: str = "independent") -> None:
         tasks=ONE_ITEM,
     )
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
 
 
 def test_scenario_review_pack(project: Workspace) -> None:
@@ -365,7 +365,7 @@ def test_review_instructions_follow_the_changes_review_level(project: Workspace)
         + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     step = at(project)
     assert (step["step"], step["item"]) == ("review", None)
     assert step["commands"][0] == f"wm context {NAME} --for review"
@@ -392,7 +392,7 @@ HUMAN_ITEMS = (
 def test_scenario_item_for_the_human(project: Workspace) -> None:
     """Requirement "Human does their items": the planner hands the item to the human."""
     accepted(project, HUMAN_ITEMS)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.2")
     assert step["commands"] == [
@@ -409,7 +409,7 @@ def test_scenario_item_for_the_human(project: Workspace) -> None:
 def test_scenario_human_item_waits(project: Workspace) -> None:
     """Requirement "Human does their items": a blocked human item lets the change go on."""
     accepted(project, HUMAN_ITEMS)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.block(project.root, NAME, "1.2", "waiting for the DNS record")
     assert at(project)["item"] == "1.3"
 
@@ -459,7 +459,7 @@ def test_apply_instructions_reopen_an_item_after_a_changes_verdict(
         + f"- [ ] 1.1 Cap it\n  - **Build:** {tag}\n  - **Criteria:** fifty\n"
         + "  - **Verify:** a test\n",
     )
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     step = at(project)
     assert (step["step"], step["item"]) == ("apply", "1.1")
@@ -521,9 +521,9 @@ def test_reviewer_pack_holds_the_whole_change_but_not_how_it_was_built(
     project: Workspace,
 ) -> None:
     accepted(project, proposal_text=INDEPENDENT)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.add_note(project.root, NAME, "1.2", "took a shortcut through the cache", DAY)
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     built = pack(project, "review")
     assert built["change"] == NAME
     assert built["review_level"] == "independent"
@@ -550,7 +550,7 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
         + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
         + "  - **Verify:** a test\n",
     )
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(
         project.root,
         NAME,
@@ -561,7 +561,7 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
         findings=["critical: src/search.py:12: fifty-one come back"],
     )
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     built = pack(project, "review")
     assert built["review_level"] == "independent"
     assert built["reviews"] == [
@@ -601,7 +601,7 @@ def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
     lifecycle.add_note(project.root, NAME, "1.1", "half done", DAY)
     lifecycle.block(project.root, NAME, "1.1", "which bound?")
     lifecycle.resolve(project.root, NAME, "1.1", "use an inclusive bound", DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     item = pack(project, "implement")["item"]
@@ -684,27 +684,27 @@ def test_implementer_pack_is_refused_for_an_item_that_is_done_or_waiting(
     )
     lifecycle.block(project.root, NAME, "1.1", "waiting for wording")
     assert "waits on the human" in refused(project, "implement")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     assert "already ticked" in refused(project, "implement", "1.2")
     lifecycle.resolve(project.root, NAME, "1.1", "go ahead", DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "no", DAY, items=["1.2"])
     assert "Reopen it first" in refused(project, "implement", "1.2")
 
 
 def test_reviewer_pack_is_refused_when_there_is_nothing_to_review(project: Workspace) -> None:
     accepted(project, proposal_text=INDEPENDENT)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     assert "items still to build (1.2)" in refused(project, "review")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY)
     assert "already has the review it needs" in refused(project, "review")
 
 
 def test_reviewer_pack_is_refused_below_independent(project: Workspace) -> None:
     accepted(project)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     assert "no reviewer is started" in refused(project, "review")
 
 
@@ -809,7 +809,7 @@ def test_instructions_for_a_review_waiting_on_the_human_point_to_resolve(
         + "- [ ] 1.1 Cap it\n  - **Build:** planner\n  - **Criteria:** fifty\n"
         + "  - **Verify:** a test\n",
     )
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.SPEC_GAP, "no scenario for zero", DAY)
     step = at(project)
     assert (step["step"], step["item"]) == ("resolve-items", None)
@@ -827,7 +827,7 @@ def test_proposal_instructions_explain_the_review_line(project: Workspace) -> No
 def test_built_and_reviewed(project: Workspace) -> None:
     accepted(project)
     for number in ("1.1", "1.2"):
-        lifecycle.tick(project.root, NAME, number)
+        lifecycle.tick(project.root, NAME, number, DAY)
     lifecycle.self_review(project.root, NAME, "fine", DAY)
     step = at(project)
     assert step["step"] == "archive"
@@ -850,9 +850,9 @@ def test_specs_instructions_ask_for_functional_requirements(project: Workspace) 
 
 def test_reviewer_pack_holds_only_the_items_added_after_a_pass(project: Workspace) -> None:
     accepted(project, proposal_text=INDEPENDENT)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
-    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="wm-reviewer")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
+    lifecycle.verdict(project.root, NAME, Verdict.PASS, "fine", DAY, by="reviewer")
     assert "already has the review it needs" in refused(project, "review")
     project.replace(
         f"{FOLDER}/tasks.md",
@@ -861,7 +861,7 @@ def test_reviewer_pack_holds_only_the_items_added_after_a_pass(project: Workspac
         "- [ ] 1.3 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
         "  - **Verify:** a test\n",
     )
-    lifecycle.tick(project.root, NAME, "1.3")
+    lifecycle.tick(project.root, NAME, "1.3", DAY)
     built = pack(project, "review")
     assert built["uncovered_only"] is True
     assert [item["number"] for item in built["items"]] == ["1.3"]
@@ -878,8 +878,8 @@ def test_reviewer_pack_holds_only_the_items_added_after_a_pass(project: Workspac
 
 def test_reviewer_pack_holds_every_item_for_a_first_review(project: Workspace) -> None:
     accepted(project, proposal_text=INDEPENDENT)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     built = pack(project, "review")
     assert built["uncovered_only"] is False
     assert [item["number"] for item in built["items"]] == ["1.1", "1.2"]
@@ -890,7 +890,7 @@ def test_scenario_human_item_in_the_review_pack(project: Workspace) -> None:
     """Requirement "Human items in a review": the pack names the human's item and its tick."""
     accepted(project, HUMAN_ITEMS, proposal_text=INDEPENDENT)
     for item in ("1.1", "1.2", "1.3"):
-        lifecycle.tick(project.root, NAME, item)
+        lifecycle.tick(project.root, NAME, item, DAY)
     built = pack(project, "review")
     assert [item["build"] for item in built["items"]] == ["planner", "human", "planner"]
     assert built["human_items"] == ["1.2"]
@@ -904,7 +904,7 @@ def test_scenario_self_review_with_a_human_item(project: Workspace) -> None:
     """Requirement "Human items in a review": the self-review guidance names the human's item."""
     accepted(project, HUMAN_ITEMS)
     for item in ("1.1", "1.2", "1.3"):
-        lifecycle.tick(project.root, NAME, item)
+        lifecycle.tick(project.root, NAME, item, DAY)
     step = at(project)
     assert step["step"] == "review"
     guidance = " ".join(step["guidance"])
@@ -913,8 +913,8 @@ def test_scenario_self_review_with_a_human_item(project: Workspace) -> None:
 
 def test_review_without_human_items_says_nothing_about_them(project: Workspace) -> None:
     accepted(project, proposal_text=INDEPENDENT)
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     built = pack(project, "review")
     assert (built["human_items"], built["human_note"]) == ([], None)
     assert "Done by the human" not in render.to_text(built, PLAIN)
@@ -941,8 +941,8 @@ def test_scenario_member_changes_packs(project: Workspace) -> None:
     expected = {"name": "faster-search", "goal": "Answers in a blink.", "non_goals": "Ranking."}
     built = pack(project, "implement")
     assert built["milestone"] == expected
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     reviewed = pack(project, "review")
     assert reviewed["milestone"] == expected
     for payload in (built, reviewed):
@@ -1052,8 +1052,8 @@ def test_scenario_resource_for_another_spec(project: Workspace) -> None:
 def test_scenario_retired_resource(project: Workspace) -> None:
     billing_change(project, independent=True)
     project.write("resources/heroku.md", a_resource("Heroku", "billing", "retired"))
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     built = pack(project, "review")
     assert built["resources"] == []
     assert "heroku" not in render.to_text(built, PLAIN).casefold()
@@ -1089,8 +1089,8 @@ def test_scenario_background_from_the_delta(project: Workspace) -> None:
     accepted(project, proposal_text=text, deltas={"billing": added})
     weekly = [{"spec": "billing", "text": "Invoices go out weekly."}]
     assert pack(project, "implement")["backgrounds"] == weekly
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     built = pack(project, "review")
     assert built["backgrounds"] == weekly
     text = render.to_text(built, PLAIN)
@@ -1161,8 +1161,8 @@ def test_scenario_reviewer_gets_every_rule(project: Workspace) -> None:
     hand_edit = "1. Never hand-edit generated docs."
     billing_change(project, independent=True)
     project.write("charter.md", CHARTER.replace(CHARTER_RULES, hand_edit))
-    lifecycle.tick(project.root, NAME, "1.1")
-    lifecycle.tick(project.root, NAME, "1.2")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
+    lifecycle.tick(project.root, NAME, "1.2", DAY)
     built = pack(project, "review")
     assert built["rules"] == hand_edit
     text = render.to_text(built, PLAIN)

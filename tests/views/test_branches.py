@@ -74,7 +74,7 @@ def test_branch_mismatch_warns_only_while_the_accepted_change_is_being_applied(
     switch(suite.root, NAME)
     switch(tmp_path / "suite-api", NAME)
     assert not any(r["warn"] for r in repos(suite))
-    lifecycle.tick(suite.root, NAME, "1.1")
+    lifecycle.tick(suite.root, NAME, "1.1", DAY)
     lifecycle.self_review(suite.root, NAME, "fine", DAY)
     switch(tmp_path / "suite-api", "next")
     assert not any(r["warn"] for r in repos(suite))

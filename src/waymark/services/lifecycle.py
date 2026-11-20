@@ -21,7 +21,7 @@ from waymark.record.artifacts.explorations import (
 from waymark.record.artifacts.milestones import MILESTONE_FILE, append_milestone_log
 from waymark.record.artifacts.proposal import BUILT, DIFFERS, NONE, Proposal
 from waymark.record.artifacts.specs import Spec, parse_spec
-from waymark.record.artifacts.tasks import Tasks
+from waymark.record.artifacts.tasks import Tasks, parse_tasks
 from waymark.record.evidence import records
 from waymark.record.evidence.fingerprint import change_fingerprint
 from waymark.record.evidence.records import RecordError, RecordKind
@@ -40,8 +40,8 @@ from waymark.record.state import (
     led_to_done,
     milestone_state,
 )
-from waymark.record.terms import ReviewLevel, ReviewSeverity, Verdict
-from waymark.record.writing.edits import append_log, edit_item, set_outcome
+from waymark.record.terms import BuildRole, ReviewLevel, ReviewSeverity, Verdict
+from waymark.record.writing.edits import append_log, set_outcome
 from waymark.record.writing.moves import rewrite_links, tick_roadmap_lines
 from waymark.record.writing.store import Transaction
 from waymark.services.common import (
@@ -96,10 +96,10 @@ def _write_tasks(record: Record, change: Change, text: str) -> tuple[str, ...]:
     return commit(transaction)
 
 
-def _who(record: Record, by: str | None) -> str | None:
-    """Who writes a record: --by, else the git user, else nobody named."""
+def _who(record: Record, kind: RecordKind, by: str | None, *, human: bool = False) -> str | None:
+    """Who a record names: --by, else whoever its kind names."""
     try:
-        return records.who_for(record.project.root, by)
+        return records.who_for(record.project.root, kind, by, human=human)
     except RecordError as error:
         raise Refusal(str(error)) from error
 
@@ -128,8 +128,14 @@ def accept(start: Path, name: str, today: datetime.date, *, by: str | None = Non
         raise Refusal(f'The change "{name}" has a conflict to resolve first. {step.reason}')
     if state.acceptance is AcceptanceState.VALID:
         return Done(f'The change "{name}" is already accepted as it stands.')
+    if _unrevised(change):
+        raise Refusal(
+            f'The change "{name}" was accepted before, and nothing records what changed since. '
+            f'Record it first with "wm revise {name} "<why>" --parts <part>,...", naming the '
+            "parts the edit changed, then accept it again."
+        )
     if by is not None:
-        who: str | None = _who(record, by)
+        who: str | None = _who(record, RecordKind.ACCEPTED, by)
     else:
         who = git.user_name(record.project.root)
         if who:
@@ -153,8 +159,18 @@ def accept(start: Path, name: str, today: datetime.date, *, by: str | None = Non
     return Done(f'Accepted "{name}". Its items can now be applied.', commit(transaction))
 
 
-def tick(start: Path, name: str, number: str) -> Done:
-    """Tick an item: it has been applied."""
+def tick(
+    start: Path,
+    name: str,
+    number: str,
+    today: datetime.date,
+    *,
+    by: str | None = None,
+) -> Done:
+    """Tick an item: it has been applied. A ``(ticked)`` record says when, and who.
+
+    The tick of an item the human does names the human; any other names the planner.
+    """
     record, change, state = _open(start, name)
     _require_accepted(state)
     item = find_item(change, number)
@@ -172,7 +188,9 @@ def tick(start: Path, name: str, number: str) -> Done:
             f"A review asked for changes to item {number}. Reopen it first with "
             f'"wm reopen {name} {number}".'
         )
-    paths = _write_tasks(record, change, edit_item(_tasks(change), number, ticked=True))
+    who = _who(record, RecordKind.TICKED, by, human=item.build is BuildRole.HUMAN)
+    line = _render(records.Record(RecordKind.TICKED, today, who=who, item=number))
+    paths = _write_tasks(record, change, append_log(_tasks(change), line, tick=number))
     return Done(f"Ticked item {number} of {name}.", paths)
 
 
@@ -198,7 +216,7 @@ def _add_stopper(  # noqa: PLR0913 - the item, the stopper and who recorded it w
             f'Item {number} already has an open "({kind.value})" record. Resolve it first '
             f'with "wm resolve {name} {number} "<what was decided>"".'
         )
-    entry = records.Record(kind, _today(today), who=_who(record, by), text=note, item=number)
+    entry = records.Record(kind, _today(today), who=_who(record, kind, by), text=note, item=number)
     line = _render(entry)
     paths = _write_tasks(record, change, append_log(_tasks(change), line))
     return Done(f'Wrote "{line}" to the Log of {name}.', paths)
@@ -230,6 +248,69 @@ def report_gap(
     return _add_stopper(start, name, number, RecordKind.GAP, note, today=today, by=by)
 
 
+def revise(
+    start: Path,
+    name: str,
+    why: str,
+    today: datetime.date | None = None,
+    *,
+    parts: Sequence[str] = (),
+    by: str | None = None,
+) -> Done:
+    """Record why an accepted change was edited, and which parts the edit changed."""
+    record, change, _ = _open(start, name)
+    text = one_line(why, "why the change was revised")
+    if change.acceptance is None:
+        raise Refusal(
+            f'The change "{name}" has never been accepted, so there is no acceptance to revise. '
+            "Edit it, and the human accepts it once it is ready."
+        )
+    known = _revisable_parts(change)
+    unknown = [part for part in parts if part not in known]
+    if unknown:
+        raise Refusal(
+            f"{_part_names(unknown)} {'is' if len(unknown) == 1 else 'are'} not part of "
+            f'"{name}". Name its items by number, "proposal", "design", or "specs/<area>" for '
+            f"one of its deltas: {', '.join(sorted(known))}."
+        )
+    entry = records.Record(
+        RecordKind.REVISED,
+        _today(today),
+        who=_who(record, RecordKind.REVISED, by),
+        text=text,
+        parts=tuple(dict.fromkeys(parts)) or None,
+    )
+    paths = _write_tasks(record, change, append_log(_tasks(change), _render(entry)))
+    return Done(
+        f'Recorded the revision of "{name}". The human accepts it again with "wm accept {name}".',
+        paths,
+    )
+
+
+def _revisable_parts(change: Change) -> set[str]:
+    """The parts of a change a revision can name."""
+    parts = {"proposal", *(f"specs/{area}" for area in change.deltas)}
+    if change.design is not None:
+        parts.add("design")
+    if change.tasks is not None:
+        parts.update(item.number for item in change.tasks.items)
+    return parts
+
+
+def _part_names(parts: Sequence[str]) -> str:
+    """Parts as a message names them: an item by its number, anything else in quotes."""
+    return ", ".join(f"Item {part}" if part[:1].isdigit() else f'"{part}"' for part in parts)
+
+
+def _unrevised(change: Change) -> bool:
+    """Whether the change was accepted before and no revision follows its last acceptance."""
+    log = change.tasks.log if change.tasks else ()
+    accepted = [index for index, entry in enumerate(log) if entry.kind is RecordKind.ACCEPTED]
+    if not accepted:
+        return False
+    return not any(entry.kind is RecordKind.REVISED for entry in log[accepted[-1] + 1 :])
+
+
 def add_note(
     start: Path,
     name: str,
@@ -248,7 +329,11 @@ def add_note(
     if item.ticked:
         raise Refusal(f"Item {number} is already ticked, so there is nothing left to note.")
     entry = records.Record(
-        RecordKind.NOTE, _today(today), who=_who(record, by), text=text, item=number
+        RecordKind.NOTE,
+        _today(today),
+        who=_who(record, RecordKind.NOTE, by),
+        text=text,
+        item=number,
     )
     line = _render(entry)
     paths = _write_tasks(record, change, append_log(_tasks(change), line))
@@ -351,7 +436,7 @@ def self_review(
     entry = records.Record(
         RecordKind.SELF_REVIEW,
         today,
-        who=_who(record, by),
+        who=_who(record, RecordKind.SELF_REVIEW, by),
         text=text,
         covers=state.review.to_review,
     )
@@ -394,7 +479,7 @@ def verdict(  # noqa: PLR0913 - the verdict, and the items and findings it names
     entry = records.Record(
         RecordKind.REVIEW,
         today,
-        who=_who(record, by),
+        who=_who(record, RecordKind.REVIEW, by),
         verdict=result,
         items=tuple(dict.fromkeys(items)) or None,
         text=text,
@@ -417,7 +502,11 @@ def reopen(
             f"No open review of {name} names item {number} to rebuild, so there is nothing "
             "to reopen."
         )
-    line = _render(records.Record(RecordKind.REOPENED, today, who=_who(record, by), item=number))
+    line = _render(
+        records.Record(
+            RecordKind.REOPENED, today, who=_who(record, RecordKind.REOPENED, by), item=number
+        )
+    )
     text = append_log(_tasks(change), line, untick=number)
     paths = _write_tasks(record, change, text)
     return Done(
@@ -442,7 +531,9 @@ def resolve(
     """
     record, change, state = _open(start, name)
     text = one_line(decision, "what was decided")
-    entry = records.Record(RecordKind.RESOLVED, today, who=_who(record, by), text=text)
+    entry = records.Record(
+        RecordKind.RESOLVED, today, who=_who(record, RecordKind.RESOLVED, by), text=text
+    )
     line = _render(entry)
     item_line = _render(dataclasses.replace(entry, item=target))
     if target == REVIEW_TARGET:
@@ -502,7 +593,9 @@ def sync(start: Path, name: str, today: datetime.date, *, by: str | None = None)
     specs = _merge_specs(record, change, transaction)
     accepted = change.acceptance
     fingerprint = change_fingerprint(change, specs, record.default_review, accepted.items)
-    entry = records.Record(RecordKind.SYNCED, today, who=_who(record, by), fingerprint=fingerprint)
+    entry = records.Record(
+        RecordKind.SYNCED, today, who=_who(record, RecordKind.SYNCED, by), fingerprint=fingerprint
+    )
     transaction.write(_tasks(change).doc.path, append_log(_tasks(change), _render(entry)))
     domains = ", ".join(sorted(change.deltas))
     return Done(
@@ -714,7 +807,9 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
     final = _outcome(name, change.proposal, built, differs)
     override_line: str | None = None
     if reason is not None:
-        entry = records.Record(RecordKind.OVERRIDE, today, who=_who(record, by), text=reason)
+        entry = records.Record(
+            RecordKind.OVERRIDE, today, who=_who(record, RecordKind.OVERRIDE, by), text=reason
+        )
         override_line = _render(entry)
 
     source = change.path
@@ -727,16 +822,19 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
 
     home = record.milestones.get(change.proposal.milestone or "")
     home_file = f"{home.path}/{MILESTONE_FILE}" if home is not None else None
-    archived_line = _render(
-        records.Record(RecordKind.ARCHIVED, today, who=_who(record, by), change=name)
-    )
+    archiver = _who(record, RecordKind.ARCHIVED, by)
+    archived_line = _render(records.Record(RecordKind.ARCHIVED, today, who=archiver, change=name))
+    closing = _render(records.Record(RecordKind.ARCHIVED, today, who=archiver))
 
     transaction = Transaction(record.files)
     if change.synced is None:
         _merge_specs(record, change, transaction)
     transaction.write(change.proposal.doc.path, set_outcome(change.proposal, final))
+    tasks = _tasks(change)
     if override_line is not None:
-        transaction.write(_tasks(change).doc.path, append_log(_tasks(change), override_line))
+        text = append_log(tasks, override_line)
+        tasks = parse_tasks(Document.parse(tasks.doc.path, text))
+    transaction.write(tasks.doc.path, append_log(tasks, closing))
     for doc in record.documents():
         staged = transaction.staged(doc.path)
         current = Document.parse(doc.path, staged) if staged is not None else doc

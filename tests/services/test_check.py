@@ -283,7 +283,7 @@ def test_change_applied_but_not_archived_is_a_warning(project: Workspace) -> Non
     )
     lifecycle.accept(project.root, "add-limit", DAY)
     assert findings(project) == []
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     assert findings(project) == [("warning", "changes/add-limit", "not-archived")]
 
 
@@ -388,7 +388,7 @@ def test_not_archived_warning_says_to_archive_before_the_pull_request(project: W
         + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, "add-limit", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     (finding,) = check(project.root, NOW)
     assert finding.code == "not-archived"
     assert "on its branch" in finding.message
@@ -499,7 +499,7 @@ def test_archived_changes_are_not_checked_against_roadmaps(project: Workspace) -
         ),
     )
     lifecycle.accept(project.root, "add-limit", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     lifecycle.self_review(project.root, "add-limit", "fine", DAY)
     lifecycle.archive(project.root, "add-limit", DAY, built="Shipped.")
     assert milestone_findings(project) == []
@@ -630,24 +630,32 @@ def test_a_label_after_a_record_is_out_of_order(project: Workspace) -> None:
         for code, _, _ in item_problems(
             project,
             "- [ ] 1.2 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
-            "  - 2026-01-16 (note) by Sam Doe: halfway\n  - **Verify:** a test\n",
+            "  - 2026-01-16 (note) by planner for Sam Doe: halfway\n  - **Verify:** a test\n",
         )
     ]
     assert sorted(codes) == ["item-order", "misplaced-record"]
 
 
 def test_scenario_malformed_record_and_kind_before_the_date(project: Workspace) -> None:
+    """Requirement "One record shape": a malformed line in the Log names the shape."""
     for record in (
-        "(blocked) the API key is missing",
-        "(blocked) 2026-11-20 by Ada: the API key is missing",
+        "(blocked) 1.2 the API key is missing",
+        "(blocked) 2026-11-20 1.2 by Ada: the API key is missing",
     ):
-        [(code, offset, message)] = item_problems(
-            project,
-            "- [ ] 1.2 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
-            f"  - **Verify:** a test\n  - {record}\n",
-        )
-        assert (code, offset) == ("malformed-record", 4)
-        assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in message
+        tasks = HEAD + ITEM_1_1 + f"\n## Log\n\n- {record}\n"
+        project.change(tasks=tasks)
+        [problem] = project.record().changes["add-limit"].problems
+        assert problem.code == "malformed-record"
+        assert problem.line == tasks.split("\n").index(f"- {record}") + 1
+        assert "YYYY-MM-DD (blocked) <item> [by <who>]: <reason>" in problem.message
+
+
+def test_archived_record_naming_a_change_is_misplaced_in_a_task_list(project: Workspace) -> None:
+    project.change(tasks=HEAD + ITEM_1_1 + "\n## Log\n\n- 2026-11-20 (archived) add-limit by Ada\n")
+    [problem] = project.record().changes["add-limit"].problems
+    assert problem.code == "misplaced-record"
+    project.change(tasks=HEAD + ITEM_1_1 + "\n## Log\n\n- 2026-11-20 (archived) by Ada\n")
+    assert project.record().changes["add-limit"].problems == ()
 
 
 def test_scenario_item_list_without_commas(project: Workspace) -> None:

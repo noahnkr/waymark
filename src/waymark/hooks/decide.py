@@ -306,6 +306,19 @@ def _commit_messages(project: Project, event: Event) -> Decision:
     return ALLOW
 
 
+def _by_implementer(arguments: tuple[str, ...]) -> bool:
+    """Whether a command's arguments name the implementer with ``--by``, and nobody else.
+
+    Every ``--by`` must say ``implementer``, in either spelling, since the last one given
+    is the one that counts.
+    """
+    pairs = list(zip(arguments, (*arguments[1:], ""), strict=True))
+    named = [value for flag, value in pairs if flag == "--by"] + [
+        flag.removeprefix("--by=") for flag, _ in pairs if flag.startswith("--by=")
+    ]
+    return bool(named) and all(value == IMPLEMENTER for value in named)
+
+
 def _command(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one return per rule
     for call in commands.wm_calls(event.command):
         if call.subcommand == "accept":
@@ -329,6 +342,11 @@ def _command(project: Project, event: Event) -> Decision:  # noqa: PLR0911 - one
             f'"wm {writing.subcommand}" writes the record, and a delegated agent does not. '
             "wm records your result from your final lines. Reading commands such as "
             '"wm context" and "wm show" are fine.'
+        )
+    if writing is not None and not _by_implementer(writing.arguments):
+        return _refuse(
+            f'Your note names who wrote it: add "--by {IMPLEMENTER}" to "wm note", so the '
+            "record doesn't credit the human or the planner with it."
         )
     pushing = commands.commits_or_pushes(event.command)
     if pushing is not None:
@@ -398,7 +416,7 @@ def _record(project: Project, role: Role, message: str, today: datetime.date) ->
     (name, number), (word, note) = address[-1], outcome[-1]
     root = project.root
     if word == "done":
-        return lifecycle.tick(root, name, number)
+        return lifecycle.tick(root, name, number, today, by=IMPLEMENTER)
     if word == "blocked":
         return lifecycle.block(root, name, number, note, today, by=IMPLEMENTER)
     if word == "spec-gap":

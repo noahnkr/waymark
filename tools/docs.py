@@ -389,7 +389,7 @@ def evidence() -> str:
         drafted = _status(root)
         accepted = lifecycle.accept(root, CHANGE, DAY).message
         for item in ("1.1", "1.2", "1.3"):
-            lifecycle.tick(root, CHANGE, item)
+            lifecycle.tick(root, CHANGE, item, DAY)
         lifecycle.self_review(root, CHANGE, REVIEW, DAY)
         built = _status(root)
         lifecycle.archive(root, CHANGE, DAY, built=BUILT)

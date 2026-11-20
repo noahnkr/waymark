@@ -79,7 +79,7 @@ An item added after a passing review is reviewed on its own. Once it is ticked, 
   - `pass`: the change is reviewed;
   - `changes`: the items it names are reopened and built again, then the change is reviewed again, independently;
   - a second `changes`, or `spec-gap`: it goes to the human.
-  If your tool recorded nothing, run `wm verdict <name> <verdict> "<the reviewer's reasons>" --by wm-reviewer` with the reviewer's own words, its `--items` and its `--finding` lines.
+  If your tool recorded nothing, run `wm verdict <name> <verdict> "<the reviewer's reasons>" --by reviewer` with the reviewer's own words, its `--items` and its `--finding` lines.
 - **Level `none`.** No review is needed; the step is skipped.
 
 Commit the review record once it is written.
@@ -90,10 +90,11 @@ Only what waits on the human is left. Run `wm inbox` and bring each one to them:
 
 ### What `wm` writes
 
-Every line `wm` writes is a dated record, `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, with lists of items separated by `, `. Every record of a change goes in the `## Log` at the end of the task list, in the order it was written. A record about one item names the item straight after the kind, such as `2026-11-20 (blocked) 1.2 by Ada: <reason>`: `(blocked)`, `(gap)`, `(note)`, `(reopened)`, and `(resolved)` with an item. The records about the whole change are `(accepted)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)` without an item, and `(override)`. An item holds only its definition and its tick; `wm show` gathers each item's records from the Log and shows them with it. Records are never edited or removed; a later one supersedes an earlier one, so `wm resolve` adds a `(resolved)` record and the blocker stays.
+Every line `wm` writes is a dated record, `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, with lists of items separated by `, `. Every record of a change goes in the `## Log` at the end of the task list, in the order it was written. A record about one item names the item straight after the kind, such as `2026-11-20 (blocked) 1.2 by planner for Ada: <reason>`: `(ticked)`, `(blocked)`, `(gap)`, `(note)`, `(reopened)`, and `(resolved)` with an item. `wm tick` writes the `(ticked)` record. The records about the whole change are `(accepted)`, `(revised)`, `(synced)`, `(self-review)`, `(review)`, `(resolved)` without an item, `(override)` and `(archived)`. An item holds only its definition and its tick; `wm show` gathers each item's records from the Log and shows them with it. Records are never edited or removed; a later one supersedes an earlier one, so `wm resolve` adds a `(resolved)` record and the blocker stays.
 
 - Leave a note on an unfinished item with `wm note <name> <item> "<text>"`.
-- `by` is your git name. Pass `--by "<name>"` to any writing command when someone else did the work, such as `--by wm-reviewer` when you record a reviewer's verdict for it.
+- A record names who wrote it, by its kind. The human's acts, `(accepted)`, `(override)`, `(resolved)`, `(archived)`, and the tick of a `human` item, name the human's git name, such as `by Ada`. What you write names you and the human you work with, such as `by planner for Ada`. An agent's ending names `implementer` or `reviewer`.
+- Pass `--by "<name>"` to a writing command when the record's kind would name the wrong writer, such as `--by reviewer` when you record a reviewer's verdict for it.
 - `wm check --fix` puts the record in its standard layout when the human asks; it never changes wording.
 
 ## Quality bar

@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from waymark.record.evidence import records
-from waymark.record.evidence.records import Record
+from waymark.record.evidence.records import Record, RecordKind
 from waymark.record.markdown.outline import collect_sections, content, require_title
 from waymark.record.markdown.problems import WHOLE_FILE, Problem
 from waymark.record.markdown.text import BOM, Document
@@ -117,7 +117,21 @@ def parse_milestone(doc: Document) -> tuple[Goal, Roadmap]:
         for index in range(section.body_start, section.end):
             listed = _LOG_LINE.match(doc.lines[index].text)
             parsed = records.parse(listed.group(1)) if listed else None
-            if isinstance(parsed, Record):
+            if (
+                isinstance(parsed, Record)
+                and parsed.kind is RecordKind.ARCHIVED
+                and not parsed.change
+            ):
+                problems.append(
+                    Problem(
+                        doc.path,
+                        index + 1,
+                        "malformed-record",
+                        'An "(archived)" record in a milestone\'s Log names the change: '
+                        '"YYYY-MM-DD (archived) <change> [by <who>]".',
+                    )
+                )
+            elif isinstance(parsed, Record):
                 log.append(parsed)
             elif isinstance(parsed, records.ParseError):
                 problems.append(Problem(doc.path, index + 1, "malformed-record", parsed.message))

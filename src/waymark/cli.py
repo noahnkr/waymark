@@ -190,10 +190,11 @@ def _new(args: argparse.Namespace) -> int:
                 after=args.after,
                 today=_today(),
                 source=args.source,
+                by=args.by,
             )
         )
-    if args.short or args.owner or args.milestone or args.after:
-        raise Refusal("--short, --owner, --milestone and --after apply to a change only.")
+    if args.short or args.owner or args.milestone or args.after or args.by:
+        raise Refusal("--short, --owner, --milestone, --after and --by apply to a change only.")
     if args.kind == "milestone":
         return _report(setup.create_milestone(_here(), args.name, args.source))
     if args.source:
@@ -208,7 +209,7 @@ def _accept(args: argparse.Namespace) -> int:
 
 
 def _tick(args: argparse.Namespace) -> int:
-    return _report(lifecycle.tick(_here(), args.change, args.item))
+    return _report(lifecycle.tick(_here(), args.change, args.item, _today(), by=args.by))
 
 
 def _block(args: argparse.Namespace) -> int:
@@ -223,6 +224,12 @@ def _gap(args: argparse.Namespace) -> int:
 
 def _note(args: argparse.Namespace) -> int:
     done = lifecycle.add_note(_here(), args.change, args.item, args.text, _today(), by=args.by)
+    return _report(done)
+
+
+def _revise(args: argparse.Namespace) -> int:
+    parts = [part.strip() for part in args.parts.split(",") if part.strip()]
+    done = lifecycle.revise(_here(), args.change, args.why, _today(), parts=parts, by=args.by)
     return _report(done)
 
 
@@ -412,11 +419,14 @@ def _item_command(
 
 
 def _by(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    """Add --by: who the record names as its writer (default: your git name)."""
+    """Add --by: who the record names as its writer, in place of who its kind names."""
     parser.add_argument(
         "--by",
         metavar="NAME",
-        help="who the record names as its writer (default: your git name)",
+        help=(
+            "who the record names as its writer (default: your git name for your own acts, "
+            '"planner for <your git name>" for what the planner writes)'
+        ),
     )
     return parser
 
@@ -530,6 +540,14 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         metavar="EXPLORATION",
         help="the exploration a change or milestone comes from; its status then leads to it",
     )
+    new.add_argument(
+        "--by",
+        metavar="NAME",
+        help=(
+            "who the (proposed) record in a change's milestone names as its writer "
+            '(default: "planner for <your git name>")'
+        ),
+    )
     new.set_defaults(handler=_new)
 
     summary = "Accept a change, so its items can be applied. For the human to run."
@@ -538,7 +556,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     _by(accept)
     accept.set_defaults(handler=_accept)
 
-    _item_command(commands, "tick", _tick, "Tick an item: it has been applied.")
+    _by(_item_command(commands, "tick", _tick, "Tick an item: it has been applied."))
     block = _item_command(commands, "block", _block, "Record that an item is blocked.")
     block.add_argument("reason", help="why it is blocked")
     _by(block)
@@ -556,6 +574,19 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     )
     note.add_argument("text", help="the note")
     _by(note)
+    summary = "Record why an accepted change was edited, before the human accepts it again."
+    revise = commands.add_parser("revise", help=summary, description=summary)
+    revise.add_argument("change", help="the change's name")
+    revise.add_argument("why", help="what the edit changed, and why")
+    revise.add_argument(
+        "--parts",
+        metavar="PARTS",
+        default="",
+        help='the parts it changed, separated by commas: item numbers, "proposal", "design" '
+        'or "specs/<area>"',
+    )
+    _by(revise)
+    revise.set_defaults(handler=_revise)
     finding_help = "a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable"
     summary = "Record a self-review of a change, once every item is ticked."
     review = commands.add_parser("review", help=summary, description=summary)

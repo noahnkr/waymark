@@ -95,7 +95,7 @@ Every `(review)` and `(self-review)` record SHALL name the items it covers, as `
 #### Scenario: Item added after a pass
 - GIVEN an accepted change at review level `independent` whose items 1.1 and 1.2 passed a review covering them
 - WHEN item 1.3 is added, built and ticked
-- THEN the next step is a review of item 1.3 only, the reviewer can be started with the change's name, and its passing verdict is written as `<date> (review) pass covers 1.3 by wm-reviewer: <reasons>`
+- THEN the next step is a review of item 1.3 only, the reviewer can be started with the change's name, and its passing verdict is written as `<date> (review) pass covers 1.3 by reviewer: <reasons>`
 
 #### Scenario: Archive before the added item is reviewed
 - GIVEN the same change with item 1.3 ticked and no review covering it

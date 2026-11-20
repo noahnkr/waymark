@@ -66,7 +66,7 @@ def busy(project: Workspace) -> Workspace:
         ),
     )
     lifecycle.accept(project.root, "add-order", DAY)
-    lifecycle.tick(project.root, "add-order", "1.1")
+    lifecycle.tick(project.root, "add-order", "1.1", DAY)
     lifecycle.block(project.root, "add-order", "1.2", "waiting for the wording")
     lifecycle.report_gap(project.root, "add-order", "1.3", "which channel?")
     project.change(
@@ -78,7 +78,7 @@ def busy(project: Workspace) -> Workspace:
         + "  - **Verify:** a test\n",
     )
     lifecycle.accept(project.root, "fix-limit", DAY)
-    lifecycle.tick(project.root, "fix-limit", "1.1")
+    lifecycle.tick(project.root, "fix-limit", "1.1", DAY)
     lifecycle.verdict(
         project.root,
         "fix-limit",
@@ -237,11 +237,11 @@ def test_inbox_lists_a_verdict_that_came_back_to_the_human(project: Workspace) -
         + "  - **Verify:** a test\n"
     )
     lifecycle.accept(project.root, "add-limit", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     lifecycle.verdict(project.root, "add-limit", Verdict.CHANGES, "one", DAY, items=["1.1"])
     assert payloads.inbox(project.record())["entries"] == []
     lifecycle.reopen(project.root, "add-limit", "1.1", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     lifecycle.verdict(project.root, "add-limit", Verdict.CHANGES, "two", DAY, items=["1.1"])
     (entry,) = valid(payloads.inbox(project.record()))["entries"]
     assert (entry["kind"], entry["change"], entry["item"]) == ("verdict", "add-limit", None)
@@ -256,7 +256,7 @@ def test_inbox_lists_a_reviewers_spec_gap(project: Workspace) -> None:
         + "  - **Verify:** a test\n"
     )
     lifecycle.accept(project.root, "add-limit", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
     lifecycle.verdict(project.root, "add-limit", Verdict.SPEC_GAP, "ties?", DAY)
     (entry,) = valid(payloads.inbox(project.record()))["entries"]
     assert (entry["kind"], entry["change"], entry["item"]) == ("spec-gap", "add-limit", None)
@@ -325,7 +325,7 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
     assert items["1.1"]["build"] == "planner"
     assert (items["1.4"]["title"], items["1.4"]["build"]) == ("Translate it", "implementer")
     assert all("delegate" not in item for item in payload["items"])
-    assert items["1.1"]["records"] == []
+    assert [record["kind"] for record in items["1.1"]["records"]] == ["ticked"]
     assert items["1.2"]["blocked"] == "waiting for the wording"
     assert items["1.3"]["spec_gap"] == "which channel?"
     assert items["1.3"]["needs_human"] == "the builder found a spec gap: which channel?"
@@ -335,7 +335,7 @@ def test_show_change_holds_everything_about_it(project: Workspace) -> None:
         "reopen": [],
         "needs_human": None,
     }
-    assert [record["kind"] for record in payload["log"]] == ["accepted", "blocked", "gap"]
+    assert [record["kind"] for record in payload["log"]] == ["accepted", "ticked", "blocked", "gap"]
     assert [record["kind"] for record in items["1.2"]["records"]] == ["blocked"]
     text = render.to_text(payload, PLAIN)
     for expected in ("Change: add-order", "Owner: Sam Doe", "Blocked: waiting for the wording"):
@@ -362,7 +362,7 @@ def test_show_change_gives_the_changes_review_and_its_findings(project: Workspac
         "reopen": [],
         "needs_human": None,
     }
-    accepted, review = payload["log"]
+    accepted, review = [record for record in payload["log"] if record["kind"] != "ticked"]
     assert (accepted["kind"], accepted["items"]) == ("accepted", ["1.1"])
     keys = ("kind", "date", "verdict", "text", "covers", "findings")
     assert {key: review[key] for key in keys} == {
@@ -585,18 +585,20 @@ def test_scenario_older_review_records_shown_as_covering_every_item(project: Wor
     tasks = "changes/add-limit/tasks.md"
     project.change()
     lifecycle.accept(project.root, "add-limit", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
-    lifecycle.tick(project.root, "add-limit", "1.2")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.2", DAY)
     project.write(
-        tasks, project.read(tasks) + "- 2026-01-15 (self-review) by Sam Doe: before covers\n"
+        tasks,
+        project.read(tasks) + "- 2026-01-15 (self-review) by planner for Sam Doe: before covers\n",
     )
     lifecycle.archive(project.root, "add-limit", DAY, built="Shipped.")
     payload = valid(payloads.show(project.record(), "add-limit"))
-    review = payload["log"][-1]
+    review = payload["log"][-2]
     assert (review["kind"], review["covers"]) == ("self-review", ["1.1", "1.2"])
+    assert payload["log"][-1]["kind"] == "archived"
     assert payload["problems"] == []
     text = render.to_text(payload, PLAIN)
-    assert "2026-01-15 (self-review) by Sam Doe: before covers\n" in text
+    assert "2026-01-15 (self-review) by planner for Sam Doe: before covers\n" in text
     assert "    covers every item: 1.1, 1.2" in text
 
 
@@ -604,8 +606,8 @@ def test_show_change_gives_what_a_review_of_added_items_covers(project: Workspac
     tasks = "changes/add-limit/tasks.md"
     project.change()
     lifecycle.accept(project.root, "add-limit", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
-    lifecycle.tick(project.root, "add-limit", "1.2")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.2", DAY)
     lifecycle.self_review(project.root, "add-limit", "fine", DAY)
     project.replace(
         tasks,
@@ -614,12 +616,13 @@ def test_show_change_gives_what_a_review_of_added_items_covers(project: Workspac
         "- [ ] 1.3 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
         "  - **Verify:** a test\n",
     )
-    lifecycle.tick(project.root, "add-limit", "1.3")
+    lifecycle.tick(project.root, "add-limit", "1.3", DAY)
     lifecycle.self_review(project.root, "add-limit", "named well", DAY)
     payload = valid(payloads.show(project.record(), "add-limit"))
-    assert [record["covers"] for record in payload["log"]] == [[], ["1.1", "1.2"], ["1.3"]]
+    reviews = [record for record in payload["log"] if record["kind"] != "ticked"]
+    assert [record["covers"] for record in reviews] == [[], ["1.1", "1.2"], ["1.3"]]
     text = render.to_text(payload, PLAIN)
-    assert "2026-01-15 (self-review) covers 1.3 by Sam Doe: named well" in text
+    assert "2026-01-15 (self-review) covers 1.3 by planner for Sam Doe: named well" in text
 
 
 def test_implement_pack_of_a_member_change_validates_and_shows_its_milestone(
@@ -682,7 +685,7 @@ def test_scenario_blocker_shown_with_its_item(project: Workspace) -> None:
     ]
     text = render.to_text(payload, PLAIN)
     assert "Blocked: the API key is missing" in text
-    assert "2026-11-20 (blocked) 1.2 by Sam Doe: the API key is missing" in text
+    assert "2026-11-20 (blocked) 1.2 by planner for Sam Doe: the API key is missing" in text
 
 
 def test_show_gives_the_log_as_written(project: Workspace) -> None:
@@ -691,8 +694,8 @@ def test_show_gives_the_log_as_written(project: Workspace) -> None:
     lifecycle.accept(project.root, "add-limit", DAY)
     lifecycle.block(project.root, "add-limit", "1.2", "the API key is missing", DAY)
     lifecycle.resolve(project.root, "add-limit", "1.2", "use the test key", DAY)
-    lifecycle.tick(project.root, "add-limit", "1.1")
-    lifecycle.tick(project.root, "add-limit", "1.2")
+    lifecycle.tick(project.root, "add-limit", "1.1", DAY)
+    lifecycle.tick(project.root, "add-limit", "1.2", DAY)
     lifecycle.self_review(project.root, "add-limit", "fine", DAY)
     lines = project.read(tasks).split("\n")
     written = [line[2:] for line in lines[lines.index("## Log") + 1 :] if line.startswith("- ")]

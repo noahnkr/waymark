@@ -37,7 +37,7 @@ def accepted(project: Workspace, tasks: str = TASKS) -> Workspace:
 def built(project: Workspace) -> Workspace:
     accepted(project)
     for number in ("1.1", "1.2"):
-        lifecycle.tick(project.root, NAME, number)
+        lifecycle.tick(project.root, NAME, number, DAY)
     return project
 
 
@@ -75,6 +75,7 @@ def test_scenario_accepted_again(latest: Workspace) -> None:
     )
     latest.replace(f"changes/{NAME}/design.md", "## Context", "## Context\n\nMore context.")
     assert latest.change_state().acceptance is AcceptanceState.WITHDRAWN
+    lifecycle.revise(latest.root, NAME, "more context", NEXT, parts=["design"])
     lifecycle.accept(latest.root, NAME, NEXT)
     accepted_lines = [line for line in log(latest).splitlines() if "(accepted)" in line]
     assert len(accepted_lines) == 2
@@ -87,8 +88,106 @@ def test_scenario_blocked_item(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.block(latest.root, NAME, "1.2", "the API key is missing", DAY)
     text = latest.read(TASKS_FILE)
-    assert text.endswith("\n- 2026-11-20 (blocked) 1.2 by Sam Doe: the API key is missing\n")
+    assert text.endswith(
+        "\n- 2026-11-20 (blocked) 1.2 by planner for Sam Doe: the API key is missing\n"
+    )
     assert "(blocked)" not in text.split("## Log")[0]
+
+
+def test_scenario_revision_recorded(latest: Workspace) -> None:
+    """Requirement "Revisions recorded": why an accepted change was edited, and what changed."""
+    accepted(latest)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "the count was 2, not 11", DAY, parts=["1.2"])
+    assert latest.read(TASKS_FILE).endswith(
+        "\n- 2026-11-20 (revised) 1.2 by planner for Sam Doe: the count was 2, not 11\n"
+    )
+
+
+def test_scenario_accepting_again_without_a_revision(latest: Workspace) -> None:
+    """Requirement "Revisions recorded": accepting again needs a revision first."""
+    accepted(latest)
+    latest.replace(f"changes/{NAME}/design.md", "## Context", "## Context\n\nMore context.")
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match="wm revise"):
+        lifecycle.accept(latest.root, NAME, NEXT)
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_scenario_accepting_again_after_a_revision(latest: Workspace) -> None:
+    """Requirement "Revisions recorded": once revised, the change can be accepted again."""
+    accepted(latest)
+    latest.replace(f"changes/{NAME}/design.md", "## Context", "## Context\n\nMore context.")
+    lifecycle.revise(latest.root, NAME, "more context", NEXT, parts=["design"])
+    lifecycle.accept(latest.root, NAME, NEXT)
+    kinds = [line.split(" ", 3)[2] for line in log(latest).splitlines() if line.startswith("- ")]
+    assert kinds[-2:] == ["(revised)", "(accepted)"]
+    assert latest.change_state().acceptance is AcceptanceState.VALID
+
+
+def test_scenario_unknown_part(latest: Workspace) -> None:
+    """Requirement "Revisions recorded": a part the change doesn't have is refused."""
+    accepted(latest)
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match=r"Item 3.1"):
+        lifecycle.revise(latest.root, NAME, "<why>", DAY, parts=["3.1"])
+    for part in ("specs/other", "tests"):
+        with pytest.raises(Refusal, match=part):
+            lifecycle.revise(latest.root, NAME, "<why>", DAY, parts=[part])
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_a_change_never_accepted_is_not_revised(latest: Workspace) -> None:
+    latest.change(tasks=TASKS)
+    with pytest.raises(Refusal, match="never been accepted"):
+        lifecycle.revise(latest.root, NAME, "<why>", DAY)
+
+
+def test_scenario_planners_note(latest: Workspace) -> None:
+    """Requirement "Who wrote a record": the planner's note names the planner and the human."""
+    accepted(latest)
+    lifecycle.add_note(latest.root, NAME, "1.2", "the parser is done", DAY)
+    assert latest.read(TASKS_FILE).endswith(
+        "\n- 2026-11-20 (note) 1.2 by planner for Sam Doe: the parser is done\n"
+    )
+
+
+def test_scenario_humans_acceptance(latest: Workspace) -> None:
+    """Requirement "Who wrote a record": the human's acceptance names the git user alone."""
+    accepted(latest)
+    [line] = [line for line in latest.read(TASKS_FILE).splitlines() if "(accepted)" in line]
+    assert line.endswith(" by Sam Doe")
+
+
+def test_scenario_planners_item_ticked(latest: Workspace) -> None:
+    """Requirement "Item records": a planner item's tick names the planner, and keeps acceptance."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    text = latest.read(TASKS_FILE)
+    assert "- [x] 1.1" in text
+    assert text.endswith("\n- 2026-11-20 (ticked) 1.1 by planner for Sam Doe\n")
+    assert latest.change_state().acceptance is AcceptanceState.VALID
+
+
+def test_scenario_humans_item_ticked(latest: Workspace) -> None:
+    """Requirement "Item records": the tick of an item the human did names the human."""
+    accepted(
+        latest,
+        TASKS.replace(
+            "  - **Build:** planner\n  - **Criteria:** the help",
+            "  - **Build:** human\n  - **Criteria:** the help",
+        ),
+    )
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    assert latest.read(TASKS_FILE).endswith("\n- 2026-11-20 (ticked) 1.2 by Sam Doe\n")
+
+
+def test_scenario_implementers_item_ticked(latest: Workspace) -> None:
+    """Requirement "Item records": an implementer's tick, recorded from its ending."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY, by="implementer")
+    assert latest.read(TASKS_FILE).endswith("\n- 2026-11-20 (ticked) 1.1 by implementer\n")
 
 
 def test_scenario_record_added(latest: Workspace) -> None:
@@ -99,7 +198,7 @@ def test_scenario_record_added(latest: Workspace) -> None:
 
 def test_scenario_resolved_item_keeps_its_blocker(latest: Workspace) -> None:
     accepted(latest)
-    lifecycle.tick(latest.root, NAME, "1.1")
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
     lifecycle.block(latest.root, NAME, "1.2", "the API key is missing", DAY, by="Ada")
     lifecycle.resolve(latest.root, NAME, "1.2", "use the test key", NEXT)
     text = latest.read(TASKS_FILE)
@@ -119,7 +218,7 @@ def test_an_open_blocker_is_resolved_before_another(latest: Workspace) -> None:
 def test_a_gap_is_a_record_too(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.report_gap(latest.root, NAME, "1.2", "the maximum", DAY)
-    assert "- 2026-11-20 (gap) 1.2 by Sam Doe: the maximum\n" in latest.read(TASKS_FILE)
+    assert "- 2026-11-20 (gap) 1.2 by planner for Sam Doe: the maximum\n" in latest.read(TASKS_FILE)
     assert latest.record().changes[NAME].tasks.item("1.2").spec_gap == "the maximum"  # type: ignore[union-attr]
 
 
@@ -127,7 +226,7 @@ def test_scenario_note_on_an_unticked_item(latest: Workspace) -> None:
     accepted(latest)
     lifecycle.add_note(latest.root, NAME, "1.2", "the parser is done; the CLI flag is not", DAY)
     assert (
-        "- 2026-11-20 (note) 1.2 by Sam Doe: the parser is done; the CLI flag is not\n"
+        "- 2026-11-20 (note) 1.2 by planner for Sam Doe: the parser is done; the CLI flag is not\n"
         in latest.read(TASKS_FILE)
     )
     assert latest.change_state().acceptance is AcceptanceState.VALID
@@ -135,7 +234,7 @@ def test_scenario_note_on_an_unticked_item(latest: Workspace) -> None:
 
 def test_scenario_note_on_a_ticked_item(latest: Workspace) -> None:
     accepted(latest)
-    lifecycle.tick(latest.root, NAME, "1.1")
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
     before = latest.read(TASKS_FILE)
     with pytest.raises(Refusal, match="already ticked"):
         lifecycle.add_note(latest.root, NAME, "1.1", "late", DAY)
@@ -169,7 +268,7 @@ def test_scenario_self_review_with_a_finding(latest: Workspace) -> None:
     )
     text = latest.read(TASKS_FILE)
     assert text.endswith(
-        "- 2026-11-20 (self-review) covers 1.1, 1.2 by Sam Doe: <summary>\n"
+        "- 2026-11-20 (self-review) covers 1.1, 1.2 by planner for Sam Doe: <summary>\n"
         "  - [warning] `src/a.py:12`: <text>\n"
     )
 
@@ -205,14 +304,14 @@ def test_a_changes_verdict_and_reopening_are_records(latest: Workspace) -> None:
         "the cap is off by one",
         DAY,
         items=["1.1"],
-        by="wm-reviewer",
+        by="reviewer",
     )
     assert (
-        "- 2026-11-20 (review) changes 1.1; covers 1.1, 1.2 by wm-reviewer: the cap is off by one\n"
+        "- 2026-11-20 (review) changes 1.1; covers 1.1, 1.2 by reviewer: the cap is off by one\n"
         in log(latest)
     )
     lifecycle.reopen(latest.root, NAME, "1.1", NEXT)
-    assert "- 2026-11-21 (reopened) 1.1 by Sam Doe\n" in latest.read(TASKS_FILE)
+    assert "- 2026-11-21 (reopened) 1.1 by planner for Sam Doe\n" in latest.read(TASKS_FILE)
     assert not latest.record().changes[NAME].tasks.item("1.1").ticked  # type: ignore[union-attr]
 
 
@@ -231,7 +330,7 @@ def test_sync_records_the_merge_and_keeps_the_acceptance(latest: Workspace) -> N
     assert latest.read(PROPOSAL_FILE) == before
     [synced] = [line for line in log(latest).splitlines() if "(synced)" in line]
     assert synced.startswith("- 2026-11-21 (synced) fingerprint ")
-    assert synced.endswith(" by Sam Doe")
+    assert synced.endswith(" by planner for Sam Doe")
     change = latest.record().changes[NAME]
     assert change.synced == NEXT
     assert latest.change_state().acceptance is AcceptanceState.VALID
@@ -265,7 +364,13 @@ def test_the_archived_change_reads_back_its_records(latest: Workspace) -> None:
     change = load_archived_change(record, record.archived_changes[0])
     assert change.problems == ()
     assert change.tasks is not None
-    assert [r.kind for r in change.tasks.log] == [RecordKind.ACCEPTED, RecordKind.SELF_REVIEW]
+    assert [r.kind for r in change.tasks.log] == [
+        RecordKind.ACCEPTED,
+        RecordKind.TICKED,
+        RecordKind.TICKED,
+        RecordKind.SELF_REVIEW,
+        RecordKind.ARCHIVED,
+    ]
 
 
 SHOP = (("", PureWindowsPath("C:/work/shop")),)
@@ -325,7 +430,7 @@ def test_scenario_code_repo_of_an_atlas(
         "fine",
         DAY,
         findings=[f"warning: {api / 'src' / 'limit.py'}:12: the limit is not checked"],
-        by="wm-reviewer",
+        by="reviewer",
     )
     assert "  - [warning] `api/src/limit.py:12`: the limit is not checked\n" in log(latest)
 

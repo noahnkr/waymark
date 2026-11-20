@@ -81,7 +81,7 @@ def test_a_fix_that_would_change_evidence_is_refused(
 ) -> None:
     project.change(proposal_text=bold(proposal()), design=bold(DESIGN) + "  \n", tasks=bold(TASKS))
     lifecycle.accept(project.root, NAME, DAY)
-    lifecycle.tick(project.root, NAME, "1.1")
+    lifecycle.tick(project.root, NAME, "1.1", DAY)
     before = {path: project.read(path) for path in (DESIGN_FILE, TASKS_FILE)}
 
     def unticks(text: str, **_: bool) -> tuple[str, tuple[Fix, ...]]:
@@ -202,7 +202,8 @@ def test_records_under_an_item_stay_after_its_lines(project: Workspace) -> None:
     lifecycle.accept(project.root, NAME, DAY)
     text = project.read(TASKS_FILE).replace(
         "  - **Verify:** read the help text\n",
-        "  - **Verify:** read the help text\n  - 2026-01-15 (note) by Sam Doe: half done\n",
+        "  - **Verify:** read the help text\n"
+        "  - 2026-01-15 (note) by planner for Sam Doe: half done\n",
     )
     moved = (
         text.replace(

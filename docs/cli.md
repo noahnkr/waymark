@@ -121,7 +121,7 @@ wm hook <tool> <event>
 Create a change, milestone, exploration or resource from the built-in template.
 
 ```
-wm new <change|milestone|exploration|resource> <name> [resource-kind] [--short] [--owner NAME] [--milestone MILESTONE] [--after CHANGE] [--from EXPLORATION]
+wm new <change|milestone|exploration|resource> <name> [resource-kind] [--short] [--owner NAME] [--milestone MILESTONE] [--after CHANGE] [--from EXPLORATION] [--by NAME]
 ```
 
 - `kind`: one of `change`, `milestone`, `exploration`, `resource`
@@ -132,6 +132,7 @@ wm new <change|milestone|exploration|resource> <name> [resource-kind] [--short] 
 - `--milestone`: the milestone a change belongs to; links it from the milestone's roadmap
 - `--after`: the change this one comes after; its unmerged branch is this one's base
 - `--from`: the exploration a change or milestone comes from; its status then leads to it
+- `--by`: who the (proposed) record in a change's milestone names as its writer (default: "planner for <your git name>")
 
 ## wm accept
 
@@ -142,18 +143,19 @@ wm accept <change> [--by NAME]
 ```
 
 - `change`: the change's name
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm tick
 
 Tick an item: it has been applied.
 
 ```
-wm tick <change> <item>
+wm tick <change> <item> [--by NAME]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm block
 
@@ -166,7 +168,7 @@ wm block <change> <item> <reason> [--by NAME]
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
 - `reason`: why it is blocked
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm gap
 
@@ -179,7 +181,7 @@ wm gap <change> <item> <note> [--by NAME]
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
 - `note`: what is missing from the record
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm note
 
@@ -192,7 +194,20 @@ wm note <change> <item> <text> [--by NAME]
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
 - `text`: the note
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+
+## wm revise
+
+Record why an accepted change was edited, before the human accepts it again.
+
+```
+wm revise <change> <why> [--parts PARTS] [--by NAME]
+```
+
+- `change`: the change's name
+- `why`: what the edit changed, and why
+- `--parts`: the parts it changed, separated by commas: item numbers, "proposal", "design" or "specs/<area>"
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm review
 
@@ -205,7 +220,7 @@ wm review <change> --self SUMMARY [--finding FINDING] [--by NAME]
 - `change`: the change's name
 - `--self`: what the review checked and found (required)
 - `--finding`: a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm verdict
 
@@ -220,7 +235,7 @@ wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding 
 - `reasons`: the reviewer's reasons
 - `--items`: the items to rebuild; a "changes" verdict names at least one
 - `--finding`: a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm reopen
 
@@ -232,7 +247,7 @@ wm reopen <change> <item> [--by NAME]
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm resolve
 
@@ -245,7 +260,7 @@ wm resolve <change> <item> <decision> [--by NAME]
 - `change`: the change's name
 - `item`: the item's number, or "review" for the change's review
 - `decision`: what was decided
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm sync
 
@@ -256,7 +271,7 @@ wm sync <change> [--by NAME]
 ```
 
 - `change`: the change's name
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm archive
 
@@ -270,7 +285,7 @@ wm archive <change> [--built TEXT] [--differs TEXT] [--override REASON] [--by NA
 - `--built`: what was built, for the outcome
 - `--differs`: how it differs from the proposal; none when left out
 - `--override`: archive although review records are missing; the reason is recorded
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm close
 
@@ -301,7 +316,7 @@ wm roadmap add <milestone> <change> <description> [--by NAME]
 - `milestone`: the milestone's name
 - `change`: the change's name, for example add-search-limit
 - `description`: what the change delivers toward the goal
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm roadmap drop
 
@@ -314,7 +329,7 @@ wm roadmap drop <milestone> <change> --reason REASON [--by NAME]
 - `milestone`: the milestone's name
 - `change`: the change's name
 - `--reason`: why the change is dropped (required)
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm roadmap move
 
@@ -328,7 +343,7 @@ wm roadmap move <milestone> <change> [--after CHANGE] [--first] [--by NAME]
 - `change`: the change's name
 - `--after`: put it right after this change's line
 - `--first`: put it at the top of the roadmap
-- `--by`: who the record names as its writer (default: your git name)
+- `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm exploration
 

@@ -60,7 +60,7 @@ def test_the_log_holds_the_change_records_and_their_findings() -> None:
         + "- [x] 1.1 Cap it\n  - **Build:** planner\n\n## Log\n\n"
         + "- 2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1 by Ada\n"
         + "- 2026-11-21 (synced) by Ada\n"
-        + "- 2026-11-22 (review) changes 1.1 by wm-reviewer: the cap is off by one\n"
+        + "- 2026-11-22 (review) changes 1.1 by reviewer: the cap is off by one\n"
         + "  - [critical] `src/a.py:12`: fifty-one come back\n"
     )
     assert tasks.problems == ()
@@ -126,7 +126,7 @@ def test_item_records_are_gathered_from_the_log_in_order() -> None:
         + LOG
         + "- 2026-11-20 (accepted) fingerprint 81577cca8ff3ca11 items 1.1 by Ada\n"
         + "- 2026-11-20 (blocked) 1.1 by Ada: the API key is missing\n"
-        + "- 2026-11-21 (note) 1.1 by wm-implementer: partial: the parser is done\n"
+        + "- 2026-11-21 (note) 1.1 by implementer: partial: the parser is done\n"
         + "- 2026-11-22 (reopened) 1.1 by Ada\n"
     )
     assert tasks.problems == ()
@@ -183,7 +183,7 @@ def test_a_resolved_item_record_does_not_resolve_the_review() -> None:
         HEAD
         + ITEM
         + LOG
-        + "- 2026-11-20 (review) spec-gap by wm-reviewer: the cap is unclear\n"
+        + "- 2026-11-20 (review) spec-gap by reviewer: the cap is unclear\n"
         + "- 2026-11-21 (resolved) 1.1 by Sam: fifty\n"
     )
     assert tasks.problems == ()
