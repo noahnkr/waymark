@@ -22,7 +22,7 @@ If the command is refused, don't work around it: end with a `RESULT: blocked` li
 - Follow the project's context and rules from the pack.
 - Stay inside your item. If you see other work that is needed, say so in your note; don't do it.
 - If your item names a repo, the pack gives that repo's folder. Edit only inside that folder; work in other repos belongs to other items.
-- To leave a note for whoever comes next, run `wm note <change> <item> "<text>" --by wm-implementer` for your own item. It is the one `wm` command you may run that writes. Your `partial` result is written as a note too.
+- To leave a note for whoever comes next, run `wm note <change> <item> "<text>" --by implementer` for your own item. It is the one `wm` command you may run that writes, and it is refused without `--by implementer`. Your `partial` result is written as a note too.
 
 ## When to stop
 
@@ -30,7 +30,7 @@ Follow the stopping rules in your context pack, under "When to stop". Each one n
 
 ## What you must not do
 
-- Don't edit any file in the record: not the task list, the proposal, the deltas, the design, the specs or the charter. Every line `wm` writes there is a dated record in the change's Log, naming its item, such as `2026-11-20 (blocked) 1.2 by wm-implementer: <reason>`, and `wm` writes it from your result. Your context pack shows your item's earlier notes and resolutions.
+- Don't edit any file in the record: not the task list, the proposal, the deltas, the design, the specs or the charter. Every line `wm` writes there is a dated record in the change's Log, naming its item, such as `2026-11-20 (blocked) 1.2 by implementer: <reason>`, and `wm` writes it from your result. A `done` result ticks your item and writes `<date> (ticked) <item> by implementer`. Your context pack shows your item's earlier notes and resolutions.
 - Don't run `wm` commands that write, apart from `wm note`. Reading commands such as `wm show` and `wm context` are fine.
 - Don't commit and don't push.
 - Don't guess. If the record doesn't say enough to build the item, that is a spec gap: stop and report it.

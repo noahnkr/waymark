@@ -40,7 +40,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Teach the skills and agents the new records
+- [x] 2.1 Teach the skills and agents the new records
   - **Build:** planner
   - **Criteria:**
     - `wm-update` runs `wm revise` after each confirmed edit to an accepted change, and when it adds an item, before asking for `wm accept`
@@ -63,3 +63,4 @@
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.4 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.5 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.1 by planner for Noah Roberts

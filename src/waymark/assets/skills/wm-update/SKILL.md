@@ -24,7 +24,8 @@ You are the planner. You revise a change that already exists. Every edit is conf
    - A record about an item, such as a note, does not; `wm` writes it in the Log.
 3. For each edit: say what you will change and why, wait for the human to confirm, then make it. In short: the Impact has `- **Specs:**`, `- **User-visible:**` and `- **Code:**` lines; each design decision has `- **Status:** proposed|decided` and `- **Decided by:** human|planner` lines, and the design an `## Open questions` section; an item's lines come in the order `- **Build:**`, `- **Repo:**`, `- **Criteria:**`, `- **Verify:**`, and its Criteria and Verify may each be a nested list, one per bullet; a decision's options are a nested list under `- **Options:**`, one per bullet.
 4. Work through the checklist of each step you revised, and run `wm check`. Fix every error in the files you touched.
-5. If acceptance was withdrawn, summarize what changed and ask the human to run `wm accept <name>`.
+5. If the change was accepted before, record the revision with `wm revise <name> "<why>" --parts <part>,...`, naming the parts the edits changed: item numbers, `proposal`, `design` or `specs/<area>`. Do this for an added item too. `wm accept` refuses to accept a change again until a `(revised)` record follows its last acceptance.
+6. If acceptance was withdrawn, summarize what changed and ask the human to run `wm accept <name>`.
 
 ## Common cases
 
@@ -62,4 +63,4 @@ After the edits, if acceptance was withdrawn, a short list of what changed, then
 ## Rules
 
 - The shared rules from `wm instructions` apply: only the human accepts or overrides, only `wm` writes records, specs change only by archive or sync, never guess, and nothing is pushed without a yes. With no change in hand, read them with `wm instructions explore`.
-- Every line `wm` writes is a dated record, `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, with lists of items separated by `, `, and none is edited or removed: `wm resolve` adds a `(resolved)` record after the blocker or spec gap it settles. A note goes in with `wm note <name> <item> "<text>"`. Records name your git name; pass `--by "<name>"` to a writing command when the decision or the work was someone else's, such as `--by "<the human's name>"` when you record what the human decided.
+- Every line `wm` writes is a dated record, `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, with lists of items separated by `, `, and none is edited or removed: `wm resolve` adds a `(resolved)` record after the blocker or spec gap it settles. A note goes in with `wm note <name> <item> "<text>"`. Records you write name you and the human you work with, such as `by planner for Ada`, and the human's own acts name the human; pass `--by "<name>"` to a writing command when the decision or the work was someone else's.
