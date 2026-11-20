@@ -9,7 +9,7 @@
     - `wm check` reports a sub-line under any other kind of record as an error naming the kinds that take details, and a detail under a detailed kind that starts with a bracketed severity
     - the Log writer writes details as `  - <detail>` after the record's findings, in the order given
   - **Verify:** tests named after the scenarios Sub-bullet under a record without details and Self-review with a finding and details, the existing "Severity without brackets" test, and parse and write tests for details
-- [ ] 1.2 Take --detail on the seven writing commands
+- [x] 1.2 Take --detail on the seven writing commands
   - **Build:** planner
   - **Criteria:**
     - `wm note`, `wm block`, `wm gap`, `wm resolve`, `wm review --self`, `wm verdict` and `wm revise` take a repeatable `--detail` and write each one under the record
@@ -58,3 +58,4 @@
 
 - 2026-11-20 (accepted) fingerprint 921764255ebc4141 items 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2 by Noah Roberts
 - 2026-11-20 (ticked) 1.1 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.2 by planner for Noah Roberts

@@ -5,7 +5,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
 
-from tests.support import TASKS, Workspace
+from tests.support import TASKS, Workspace, proposal
 from waymark.record.evidence import records
 from waymark.record.evidence.records import RecordKind
 from waymark.record.machine.atlas import Found, Location
@@ -462,3 +462,69 @@ def test_an_absolute_path_through_dot_dot_is_resolved() -> None:
     assert records.relative_place(r"C:\work\shop\..\shop\src\a.py", SHOP) == "src/a.py"
     assert records.relative_place(r"C:\work\shop\..\other\a.py", SHOP) is None
     assert records.relative_place("/home/sam/api/../api/b.py", ATLAS) == "api/b.py"
+
+
+TWO = ("the parser is done", "the CLI flag is not")
+UNDER = "  - the parser is done\n  - the CLI flag is not\n"
+
+
+def test_scenario_note_with_details(latest: Workspace) -> None:
+    """Requirement "Details under a record": each detail is a sub-bullet, in order."""
+    accepted(latest)
+    lifecycle.add_note(latest.root, NAME, "1.2", "partly built", DAY, details=TWO)
+    assert latest.read(TASKS_FILE).endswith(
+        "\n- 2026-11-20 (note) 1.2 by planner for Sam Doe: partly built\n" + UNDER
+    )
+
+
+def test_scenario_self_review_with_a_finding_and_details(latest: Workspace) -> None:
+    """Requirement "Review recorded in the task list": findings come first, then details."""
+    built(latest)
+    lifecycle.self_review(
+        latest.root,
+        NAME,
+        "every criterion holds",
+        DAY,
+        findings=["suggestion: src/a.py: name the constant"],
+        details=["pytest passes", "wm check is healthy"],
+    )
+    assert latest.read(TASKS_FILE).endswith(
+        ": every criterion holds\n"
+        "  - [suggestion] `src/a.py`: name the constant\n"
+        "  - pytest passes\n"
+        "  - wm check is healthy\n"
+    )
+
+
+def test_scenario_detail_that_looks_like_a_finding(latest: Workspace) -> None:
+    """Requirement "Details under a record": a detail with a bracketed severity is refused."""
+    accepted(latest)
+    before = latest.read(TASKS_FILE)
+    for detail in ("[warning] not a finding", "", "two\nlines"):
+        with pytest.raises(Refusal):
+            lifecycle.add_note(latest.root, NAME, "1.2", "<text>", DAY, details=[detail])
+    assert latest.read(TASKS_FILE) == before
+    with pytest.raises(Refusal, match="severity in brackets"):
+        lifecycle.add_note(latest.root, NAME, "1.2", "<text>", DAY, details=["[warning] x"])
+
+
+def test_block_gap_resolve_verdict_and_revise_take_details(latest: Workspace) -> None:
+    accepted(latest)
+    lifecycle.block(latest.root, NAME, "1.1", "stuck", DAY, details=TWO)
+    assert log(latest).endswith(": stuck\n" + UNDER)
+    lifecycle.resolve(latest.root, NAME, "1.1", "go on", DAY, details=TWO)
+    assert log(latest).endswith(": go on\n" + UNDER)
+    lifecycle.report_gap(latest.root, NAME, "1.2", "unclear", DAY, details=TWO)
+    assert log(latest).endswith(": unclear\n" + UNDER)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"], details=TWO)
+    assert log(latest).endswith(": reworded\n" + UNDER)
+
+
+def test_verdict_takes_details(latest: Workspace) -> None:
+    latest.change(tasks=TASKS, proposal_text=proposal(review="independent"))
+    lifecycle.accept(latest.root, NAME, DAY)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(latest.root, NAME, number, DAY)
+    lifecycle.verdict(latest.root, NAME, Verdict.PASS, "fine", DAY, by="reviewer", details=TWO)
+    assert log(latest).endswith(" by reviewer: fine\n" + UNDER)

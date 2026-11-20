@@ -162,72 +162,77 @@ wm tick <change> <item> [--by NAME]
 Record that an item is blocked.
 
 ```
-wm block <change> <item> <reason> [--by NAME]
+wm block <change> <item> <reason> [--by NAME] [--detail TEXT]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
 - `reason`: why it is blocked
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+- `--detail`: a point written as a sub-bullet under the record, in the order given; repeatable
 
 ## wm gap
 
 Record a spec gap: the record wasn't enough to build an item.
 
 ```
-wm gap <change> <item> <note> [--by NAME]
+wm gap <change> <item> <note> [--by NAME] [--detail TEXT]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
 - `note`: what is missing from the record
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+- `--detail`: a point written as a sub-bullet under the record, in the order given; repeatable
 
 ## wm note
 
 Write a note about an item still to be finished, such as a partial result, in the change's Log.
 
 ```
-wm note <change> <item> <text> [--by NAME]
+wm note <change> <item> <text> [--by NAME] [--detail TEXT]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
 - `text`: the note
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+- `--detail`: a point written as a sub-bullet under the record, in the order given; repeatable
 
 ## wm revise
 
 Record why an accepted change was edited, before the human accepts it again.
 
 ```
-wm revise <change> <why> [--parts PARTS] [--by NAME]
+wm revise <change> <why> [--parts PARTS] [--by NAME] [--detail TEXT]
 ```
 
 - `change`: the change's name
 - `why`: what the edit changed, and why
 - `--parts`: the parts it changed, separated by commas: item numbers, "proposal", "design" or "specs/<area>"
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+- `--detail`: a point written as a sub-bullet under the record, in the order given; repeatable
 
 ## wm review
 
 Record a self-review of a change, once every item is ticked.
 
 ```
-wm review <change> --self SUMMARY [--finding FINDING] [--by NAME]
+wm review <change> --self SUMMARY [--finding FINDING] [--by NAME] [--detail TEXT]
 ```
 
 - `change`: the change's name
 - `--self`: what the review checked and found (required)
 - `--finding`: a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+- `--detail`: a point written as a sub-bullet under the record, in the order given; repeatable
 
 ## wm verdict
 
 Record a reviewer's verdict on a change.
 
 ```
-wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding FINDING] [--by NAME]
+wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding FINDING] [--by NAME] [--detail TEXT]
 ```
 
 - `change`: the change's name
@@ -236,6 +241,7 @@ wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding 
 - `--items`: the items to rebuild; a "changes" verdict names at least one
 - `--finding`: a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+- `--detail`: a point written as a sub-bullet under the record, in the order given; repeatable
 
 ## wm reopen
 
@@ -254,13 +260,14 @@ wm reopen <change> <item> [--by NAME]
 Record what was decided about an item or a change's review that went to the human, and free it.
 
 ```
-wm resolve <change> <item> <decision> [--by NAME]
+wm resolve <change> <item> <decision> [--by NAME] [--detail TEXT]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, or "review" for the change's review
 - `decision`: what was decided
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
+- `--detail`: a point written as a sub-bullet under the record, in the order given; repeatable
 
 ## wm sync
 

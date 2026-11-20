@@ -208,28 +208,41 @@ def _accept(args: argparse.Namespace) -> int:
     return _report(lifecycle.accept(_here(), args.change, _today(), by=args.by))
 
 
+def _listed(args: argparse.Namespace) -> tuple[str, ...]:
+    """The --detail values given, in order."""
+    return tuple(args.detail or ())
+
+
 def _tick(args: argparse.Namespace) -> int:
     return _report(lifecycle.tick(_here(), args.change, args.item, _today(), by=args.by))
 
 
 def _block(args: argparse.Namespace) -> int:
-    done = lifecycle.block(_here(), args.change, args.item, args.reason, _today(), by=args.by)
+    done = lifecycle.block(
+        _here(), args.change, args.item, args.reason, _today(), by=args.by, details=_listed(args)
+    )
     return _report(done)
 
 
 def _gap(args: argparse.Namespace) -> int:
-    done = lifecycle.report_gap(_here(), args.change, args.item, args.note, _today(), by=args.by)
+    done = lifecycle.report_gap(
+        _here(), args.change, args.item, args.note, _today(), by=args.by, details=_listed(args)
+    )
     return _report(done)
 
 
 def _note(args: argparse.Namespace) -> int:
-    done = lifecycle.add_note(_here(), args.change, args.item, args.text, _today(), by=args.by)
+    done = lifecycle.add_note(
+        _here(), args.change, args.item, args.text, _today(), by=args.by, details=_listed(args)
+    )
     return _report(done)
 
 
 def _revise(args: argparse.Namespace) -> int:
     parts = [part.strip() for part in args.parts.split(",") if part.strip()]
-    done = lifecycle.revise(_here(), args.change, args.why, _today(), parts=parts, by=args.by)
+    done = lifecycle.revise(
+        _here(), args.change, args.why, _today(), parts=parts, by=args.by, details=_listed(args)
+    )
     return _report(done)
 
 
@@ -241,6 +254,7 @@ def _review(args: argparse.Namespace) -> int:
         _today(),
         findings=args.finding or (),
         by=args.by,
+        details=_listed(args),
     )
     return _report(done)
 
@@ -256,6 +270,7 @@ def _verdict(args: argparse.Namespace) -> int:
         items=args.items or (),
         findings=args.finding or (),
         by=args.by,
+        details=_listed(args),
     )
     return _report(done)
 
@@ -265,7 +280,9 @@ def _reopen(args: argparse.Namespace) -> int:
 
 
 def _resolve(args: argparse.Namespace) -> int:
-    done = lifecycle.resolve(_here(), args.change, args.item, args.decision, _today(), by=args.by)
+    done = lifecycle.resolve(
+        _here(), args.change, args.item, args.decision, _today(), by=args.by, details=_listed(args)
+    )
     return _report(done)
 
 
@@ -418,6 +435,17 @@ def _item_command(
     return parser
 
 
+def _detail(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    """Add --detail: a point written as a sub-bullet under the record; repeatable."""
+    parser.add_argument(
+        "--detail",
+        action="append",
+        metavar="TEXT",
+        help="a point written as a sub-bullet under the record, in the order given; repeatable",
+    )
+    return parser
+
+
 def _by(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """Add --by: who the record names as its writer, in place of who its kind names."""
     parser.add_argument(
@@ -560,11 +588,13 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     block = _item_command(commands, "block", _block, "Record that an item is blocked.")
     block.add_argument("reason", help="why it is blocked")
     _by(block)
+    _detail(block)
     gap = _item_command(
         commands, "gap", _gap, "Record a spec gap: the record wasn't enough to build an item."
     )
     gap.add_argument("note", help="what is missing from the record")
     _by(gap)
+    _detail(gap)
     note = _item_command(
         commands,
         "note",
@@ -574,6 +604,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     )
     note.add_argument("text", help="the note")
     _by(note)
+    _detail(note)
     summary = "Record why an accepted change was edited, before the human accepts it again."
     revise = commands.add_parser("revise", help=summary, description=summary)
     revise.add_argument("change", help="the change's name")
@@ -586,6 +617,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
         'or "specs/<area>"',
     )
     _by(revise)
+    _detail(revise)
     revise.set_defaults(handler=_revise)
     finding_help = "a finding, written <critical|warning|suggestion>: <place>: <text>; repeatable"
     summary = "Record a self-review of a change, once every item is ticked."
@@ -600,6 +632,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     )
     review.add_argument("--finding", action="append", metavar="FINDING", help=finding_help)
     _by(review)
+    _detail(review)
     review.set_defaults(handler=_review)
     summary = "Record a reviewer's verdict on a change."
     verdict = commands.add_parser("verdict", help=summary, description=summary)
@@ -614,6 +647,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     )
     verdict.add_argument("--finding", action="append", metavar="FINDING", help=finding_help)
     _by(verdict)
+    _detail(verdict)
     verdict.set_defaults(handler=_verdict)
     _by(
         _item_command(
@@ -632,6 +666,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     resolve.add_argument("item", help="the item's number, or \"review\" for the change's review")
     resolve.add_argument("decision", help="what was decided")
     _by(resolve)
+    _detail(resolve)
     resolve.set_defaults(handler=_resolve)
 
     summary = "Merge an applied change's deltas into the specs without archiving it."
