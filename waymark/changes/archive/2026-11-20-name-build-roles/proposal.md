@@ -40,3 +40,8 @@ Some work in a change can only be done by the human: filling in a form, a manual
   - `wm show --json` has `build` in place of `delegate` on each item, at a new schema version.
   - The skills, the agent definitions and the docs name the three roles.
 - **Code:** the task list parser in `record/artifacts/tasks.py` and its check in `record/artifacts/changes.py`, the apply and review guidance in `services/instructions.py`, the delegation gate in `services/context.py`, the views in `views/payloads.py`, `views/render.py` and `views/schemas.py`, the tasks template, the skills and agents in `assets/`, the docs and CHANGELOG, and the archived task lists.
+
+## Outcome
+
+- **Built:** An item's Build line names a role, planner, implementer or human, and delegate is reported as unknown. A human item is handed to the human with its steps, ticked after their yes, and blocked while it waits, and an implementer started on one is refused. The review pack and review guidance name the human's items. wm show --json gives each item build (show.change version 4), and the packs carry it (version 3). The skills, agent definitions, docs, README, CHANGELOG and the 2 archived task lists use the roles.
+- **Differs:** The first independent review asked for changes to 2.2 because the README didn't name the roles; that was fixed with the reviewer's wm-onboard wording, and the second review passed. Item 2.2 was corrected during the build from 11 archived task lists to 2, since the count had included archived proposals and deltas that keep the old wording as history, and the change was accepted again. One review suggestion on the README's wording is left open.
