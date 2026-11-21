@@ -172,8 +172,10 @@ item as `misplaced-record`.
   `wm reopen <change> <item> --reason "<why>"`, when its criteria change or your
   decision on an escalated review rebuilds it. A review that named it needs no
   reason. Once ticked again after a passing review, the item is reviewed again on
-  its own. `wm check` warns as `revised-ticked-item` when a revision names a
-  ticked item that nothing reopened since.
+  its own. When a revision names a ticked item that nothing reopened since,
+  `wm instructions` makes its reopen the next step, before any review or archive,
+  `wm archive` refuses the change, even with `--override`, and `wm check` warns
+  as `revised-ticked-item`.
 - **Never edited:** a later record supersedes an earlier one. `wm resolve` adds
   a `(resolved)` record and the blocker stays.
 - **Notes:** `wm note <change> <item> "<text>"` writes one about an unticked

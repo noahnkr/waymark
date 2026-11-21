@@ -39,7 +39,7 @@
     - `wm-update` says a revised ticked item goes back to apply once the human accepts again, in its steps, Show the human and When to stop, and that `wm instructions` will ask for the reopen
     - `wm-apply` follows the reopen command `wm instructions` gives, and its `resolve-items` step reopens the items the human's decision on an escalated review names, after recording the decision
   - **Verify:** `tests/test_skills.py` and the full pytest run
-- [ ] 2.2 Update the docs and CHANGELOG
+- [x] 2.2 Update the docs and CHANGELOG
   - **Build:** planner
   - **Criteria:**
     - `docs/record.md` and `docs/concepts.md` describe `wm reopen --reason`, a reopened item's review, the `revised-ticked-item` warning, and that `wm instructions` asks for the reopen and `wm archive` refuses until it is done
@@ -79,3 +79,4 @@
 - 2026-11-20 (reopened) 2.1 by planner for Noah Roberts: the revision made the skills follow wm instructions' reopen step
 - 2026-11-20 (reopened) 2.2 by planner for Noah Roberts: the revision added that wm instructions asks for the reopen and wm archive refuses
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.2 by planner for Noah Roberts
