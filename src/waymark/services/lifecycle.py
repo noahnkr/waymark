@@ -275,7 +275,7 @@ def revise(  # noqa: PLR0913 - the reason, the parts it changed, its details and
     details: Sequence[str] = (),
 ) -> Done:
     """Record why an accepted change was edited, and which parts the edit changed."""
-    record, change, _ = _open(start, name)
+    record, change, state = _open(start, name)
     text = one_line(why, "why the change was revised")
     listed = _details(details)
     if change.acceptance is None:
@@ -299,10 +299,11 @@ def revise(  # noqa: PLR0913 - the reason, the parts it changed, its details and
         parts=tuple(dict.fromkeys(parts)) or None,
     )
     paths = _write_tasks(record, change, append_log(_tasks(change), _render(entry), details=listed))
-    return Done(
-        f'Recorded the revision of "{name}". The human accepts it again with "wm accept {name}".',
-        paths,
-    )
+    if state.acceptance is AcceptanceState.VALID:
+        then = "The acceptance still holds, so the change goes on as it is."
+    else:
+        then = f'The human accepts it again with "wm accept {name}".'
+    return Done(f'Recorded the revision of "{name}". {then}', paths)
 
 
 def _revisable_parts(change: Change) -> set[str]:

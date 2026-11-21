@@ -16,8 +16,11 @@ All notable changes to Waymark, one entry per release.
   `wm review --self`, `wm verdict` and `wm revise` take a repeatable
   `--detail "<text>"`, written as a sub-bullet under the record, after any
   findings. Implementers and reviewers give details as `DETAIL:` lines before
-  their ending. `wm check` reports a sub-line under a record that takes no
-  details as `misplaced-detail`.
+  their ending. A detail with a finding's shape, such as `warning: <text>`, is
+  refused. `wm check` reports a sub-line under a record that takes no details as
+  `misplaced-detail`.
+- **`wm revise` says what comes next.** It asks for `wm accept` only when the
+  acceptance was withdrawn, and says it still holds after an added item.
 - **Outcome as a list.** `wm archive` takes `--built` and `--differs` more than
   once; several values are written as nested bullets under the label.
 - **JSON:** each record in `wm show --json` has `details`, at `show.change`

@@ -104,6 +104,24 @@ def test_scenario_revision_recorded(latest: Workspace) -> None:
     )
 
 
+def test_revise_says_whether_the_change_needs_accepting_again(latest: Workspace) -> None:
+    """An edit that withdrew the acceptance needs it again; an added item keeps it."""
+    accepted(latest)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    withdrawn = lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    assert "accepts it again" in withdrawn.message
+    lifecycle.accept(latest.root, NAME, DAY)
+    latest.replace(
+        TASKS_FILE,
+        "\n## Log\n",
+        "- [ ] 1.3 Name it\n  - **Build:** planner\n  - **Criteria:** named\n"
+        "  - **Verify:** a test\n\n## Log\n",
+    )
+    kept = lifecycle.revise(latest.root, NAME, "added 1.3", DAY, parts=["1.3"])
+    assert "acceptance still holds" in kept.message
+    assert "accepts it again" not in kept.message
+
+
 def test_scenario_accepting_again_without_a_revision(latest: Workspace) -> None:
     """Requirement "Revisions recorded": accepting again needs a revision first."""
     accepted(latest)

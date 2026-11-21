@@ -253,6 +253,8 @@ syncs and reviews.
   `(resolved)`, `(revised)`, `(self-review)` or `(review)` record may have
   details under it, `- <text>`, one point each, after any findings. They come
   from `--detail`, given once per point, or from an agent's `DETAIL:` lines.
+  A detail with a finding's shape, a severity in brackets or a severity word
+  followed by `:` or a place in backticks, is refused: give it as `--finding`.
   `wm check` reports a line under any other record as `misplaced-detail`.
 
 A finding's place is a path relative to the project's top folder, such as
