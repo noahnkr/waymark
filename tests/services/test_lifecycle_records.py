@@ -758,3 +758,59 @@ def test_scenario_archive_refused_for_a_revised_item(latest: Workspace) -> None:
         lifecycle.archive(latest.root, NAME, DAY, built="Done.", override="looks fine")
     assert "wm reopen" in str(refusal.value)
     assert latest.read(TASKS_FILE) == before
+
+
+def test_a_revised_item_since_removed_is_left_out(latest: Workspace) -> None:
+    """A revised ticked item that the change no longer has asks for nothing, and nothing breaks."""
+    revised_after_a_pass(latest)
+    latest.replace(
+        TASKS_FILE,
+        "- [x] 1.2 Document the limit\n"
+        "  - **Build:** planner\n"
+        "  - **Criteria:** the help names the limit\n"
+        "  - **Verify:** read the help text\n",
+        "",
+    )
+    from waymark.services.instructions import instructions  # noqa: PLC0415
+    from waymark.views import payloads  # noqa: PLC0415
+
+    lifecycle.revise(latest.root, NAME, "dropped 1.2", DAY)
+    state = latest.change_state()
+    assert state.revised == ()
+    assert revised_codes(latest) == []
+    assert instructions(latest.record(), None, NAME)["item"] != "1.2"
+    assert payloads.show(latest.record(), NAME)["name"] == NAME
+
+
+def test_an_item_resolution_settles_a_revised_item(latest: Workspace) -> None:
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    lifecycle.accept(latest.root, NAME, DAY)
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="reworded")
+    lifecycle.block(latest.root, NAME, "1.2", "waiting for the wording", DAY)
+    lifecycle.resolve(latest.root, NAME, "1.2", "use the old wording", DAY)
+    assert latest.change_state().revised == ()
+    assert revised_codes(latest) == []
+
+
+def test_an_escalated_review_comes_before_the_revised_item(latest: Workspace) -> None:
+    """Requirement "Revised item reopened before review": only a review sent to the human first."""
+    latest.change(tasks=TASKS, proposal_text=proposal(review="independent"))
+    lifecycle.accept(latest.root, NAME, DAY)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(latest.root, NAME, number, DAY)
+    for _ in range(2):
+        lifecycle.verdict(
+            latest.root, NAME, Verdict.CHANGES, "off", DAY, items=["1.1"], by="reviewer"
+        )
+        if latest.change_state().next_step.kind is StepKind.APPLY:
+            lifecycle.reopen(latest.root, NAME, "1.1", DAY)
+            lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    lifecycle.accept(latest.root, NAME, DAY)
+    state = latest.change_state()
+    assert state.revised == ("1.2",)
+    assert state.next_step.kind is StepKind.RESOLVE_ITEMS

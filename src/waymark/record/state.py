@@ -417,7 +417,7 @@ def _named(numbers: tuple[str, ...]) -> str:
 def revised_ticked(tasks: Tasks | None) -> dict[str, int]:
     """Items a revision changed while the Log shows them ticked, which no later
     ``(ticked)``, ``(reopened)`` or item ``(resolved)`` record settles, with the line index
-    of the revision."""
+    of the revision. An item the change no longer has is left out, in the task list's order."""
     if tasks is None:
         return {}
     ticked: dict[str, bool] = {}
@@ -434,7 +434,7 @@ def revised_ticked(tasks: Tasks | None) -> dict[str, int]:
             for part in entry.parts:
                 if ticked.get(part):
                     pending[part] = entry.index
-    return pending
+    return {item.number: pending[item.number] for item in tasks.items if item.number in pending}
 
 
 REVISED_REASON = "Reopen the item: it was revised after it was ticked."
@@ -481,8 +481,7 @@ def change_state(
         item_state(item, review_records) for item in (change.tasks.items if change.tasks else ())
     )
     review = review_state(change, record.default_review)
-    order = [item.number for item in items]
-    revised = tuple(sorted(revised_ticked(change.tasks), key=order.index))
+    revised = tuple(revised_ticked(change.tasks))
     blocking = mismatches(record, change)
     conflicts = (*blocking, *(c for c in record_overlaps if change.name in c.changes))
     acceptance = acceptance_state(record, change)

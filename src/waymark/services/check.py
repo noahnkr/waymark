@@ -117,7 +117,7 @@ def _revised_ticked_findings(record: Record, name: str) -> list[Finding]:
             f'Reopen it with "wm reopen {name} {number} --reason "<why>"", or tick it again '
             "once its new criteria hold.",
         )
-        for number, index in sorted(pending.items())
+        for number, index in pending.items()
     ]
 
 
