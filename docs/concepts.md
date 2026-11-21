@@ -1,6 +1,6 @@
 # Concepts and glossary
 
-Waymark rests on one idea: **agents only know what is written down.** Everything
+**Agents only know what is written down.** Waymark rests on that. Everything
 an agent needs to do its job is in the record, in plain markdown in your
 repository, and everything it does is written back there. That is what lets you
 stop any session anywhere, and lets the next one, or the next person, pick up from
@@ -33,14 +33,14 @@ Agents draft every artifact; you approve at the two gates, **accept** and
 **archive**. The archive goes on the change's branch before its pull request, so the
 code, the merged specs and the archived change are reviewed and merged together.
 If the pull request needs more work, the archive commit is reverted and the
-change archived again. Specs come before design: first agree on what the system does, then
-on how.
+change archived again. Specs come before design: first agree on what the system
+does, then on how.
 
 ## Paths
 
 | Path | For | What it takes |
 |---|---|---|
-| **Tiny** | work that adds, changes or removes no requirement: a typo, a docs fix, a bug where the code disagrees with a spec, a refactor, a dependency bump | no change folder: `/wm-propose` says in one line what it will change and the requirement it keeps to, builds after your yes, then commits and offers a pull request. Nothing is written to the record; your merge is the second approval |
+| **Tiny** | work that adds, changes or removes no requirement: a typo, a docs fix, a bug where the code disagrees with a spec, a refactor, a dependency bump | no change folder: `/wm-propose` says in one line what it will change and the requirement it keeps to, builds after your yes, then commits and offers a pull request. Nothing is written to the record but the resources it edits; your merge is the second approval |
 | **Short** | a small change | a change with a proposal, deltas and a task list, but no design (a `- **Path:** short` line); review level `self` or `none` |
 | **Full** | anything bigger | a change with a design, and an independent review when it is risky |
 
@@ -52,7 +52,8 @@ turns out to change a requirement, it stops and becomes a change. Specs can't
 be edited by hand on any path.
 
 **Changing what was accepted withdraws the acceptance.** That covers the
-proposal (its `- **Review:**` line included), the deltas, the design and the
+proposal (its `- **Review:**` line included), the deltas, the living text of
+the requirements they modify or remove, the design and the
 definition of each item the acceptance names (its number, title, criteria,
 verification, repo and `- **Build:**` line), including removing the item. It needs
 accepting again. Ticks and records, such as blockers, notes and reviews,
@@ -161,8 +162,10 @@ item as `misplaced-record`.
 - **Who:** a record names who wrote it, by its kind. Your acts (accepting,
   overriding, resolving, archiving, and confirming a `human` item) name you, as
   `by Ada`. What the planner writes names the planner and you, as
-  `by planner for Ada`. An agent's result names `implementer` or `reviewer`. The
-  `--by` value that every writing command takes overrides it.
+  `by planner for Ada`. An agent's result names `implementer` or `reviewer`.
+  Every command that writes a record takes `--by`, which overrides it. With no
+  git user, the planner's records name `planner`, and your acts are written
+  without `by`, except that `wm accept` refuses.
 - **Ticks:** `wm tick` writes a `(ticked)` record, so the Log shows who finished
   each item and when.
 - **Revisions:** after editing an accepted change, the planner records why with
@@ -172,17 +175,22 @@ item as `misplaced-record`.
   `wm reopen <change> <item> --reason "<why>"`, when its criteria change or your
   decision on an escalated review rebuilds it. A review that named it needs no
   reason. Once ticked again after a passing review, the item is reviewed again on
-  its own. When a revision names a ticked item that nothing reopened since,
-  `wm instructions` makes its reopen the next step, before any review or archive,
+  its own. When a revision names a ticked item that no later tick, reopen or
+  resolve of the item follows, `wm instructions` makes its reopen the next step,
+  before any review or archive, though a review waiting on you comes first;
   `wm archive` refuses the change, even with `--override`, and `wm check` warns
   as `revised-ticked-item`.
 - **Never edited:** a later record supersedes an earlier one. `wm resolve` adds
   a `(resolved)` record and the blocker stays.
 - **Notes:** `wm note <change> <item> "<text>"` writes one about an unticked
-  item in the Log.
+  item in the Log. An implementer's own note must say `--by implementer`.
 - **Details:** a record with several points keeps a short summary as its text
   and lists the points under it as sub-bullets, from `--detail "<text>"` given
-  once per point. Agents give them as `DETAIL:` lines before their ending.
+  once per point, on `wm note`, `wm block`, `wm gap`, `wm resolve`,
+  `wm review --self`, `wm verdict` and `wm revise`. Agents give them as
+  `DETAIL:` lines before their ending. A detail is one line, and one with a
+  finding's shape is refused: give it as `--finding`. See
+  [the task list](record.md#task-list).
 - **Covers:** a `(review)` or `(self-review)` record names the items it covers,
   as `covers <item>...` before `by`. A record without `covers`, written before
   Waymark had it, covers every item.
@@ -220,9 +228,9 @@ that spec. See [Spec](record.md#spec-specsareamd).
 
 ## Task items
 
-A task item carries what an agent needs to build it, and the records `wm`
-writes about it. The records about the whole change sit in a `## Log` section at
-the end of the task list:
+A task item holds what an agent needs to build it, and its tick. Every record
+about it or about the change goes in the `## Log` section at the end of the
+task list:
 
 ```markdown
 - [x] 1.1 Cap the result count
@@ -314,9 +322,9 @@ covers its sections and checks.
 
 | | Planner | Implementer | Reviewer |
 |---|---|---|---|
-| Is | the main agent session, working with you | a fresh agent, started for an item with a `- **Build:** implementer` line, with `<change> <item>` and nothing else | a fresh agent, started for a change at review level `independent` with `<change>` and nothing else |
+| Is | the main agent session, working with you | a fresh agent, started for an item with a `- **Build:** implementer` line, with `<change> <item>` and nothing else | a fresh agent, started with `<change>` and nothing else for a change that needs an independent review: level `independent`, or after a `changes` verdict |
 | Sees | the charter, `wm status`, whatever you bring in | its item, the proposal, deltas, design, the requirements they touch and their specs' Background, the resources that serve those specs, the project's context and rules, its milestone's Goal and Non-goals, and when to stop | the criteria of the items to review, the deltas and their scenarios, their specs' Background and resources, the design, earlier reviews and what each covers, its milestone's Goal and Non-goals, the severity rubric, the code; **not** how it was built |
-| May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code (in an atlas, only in its item's repo) and leave notes on its item with `wm note` | read code and the record; run tests and other read-only commands |
+| May | explore, draft and edit artifacts, build items and make tiny fixes (in an atlas, in any code repo), delegate, record results and self-reviews, archive | edit code and resources (in an atlas, code only in its item's repo) and leave notes on its item with `wm note ... --by implementer` | read code and the record; run tests and other read-only commands |
 | Ends with | | any `DETAIL:` lines, then `ITEM: <change> <item>` then `RESULT: done / partial / spec-gap / blocked` | `FINDING:` and `DETAIL:` lines, then `CHANGE: <change>` then `VERDICT: pass / changes <items> / spec-gap` |
 
 [Skills and agents](skills.md) covers each skill and agent in detail.
@@ -364,8 +372,8 @@ confirmation, and still checks anything the item left in the repo.
 - **Accepted with the item:** adding, removing or changing the line withdraws
   acceptance.
 - **Mostly guidance:** the line decides what `wm instructions` and the skills
-  say. The one gate is that the hooks refuse an implementer started on a `human`
-  item.
+  say, and who its `(ticked)` record names. The one gate is that the hooks
+  refuse an implementer started on a `human` item.
 
 ## Review
 
@@ -374,7 +382,8 @@ checks it against its deltas' scenarios, its design and each item's criteria: is
 it complete, correct and coherent?
 
 The change's level is the `- **Review:**` line in its proposal. `wm new change`
-writes it with the project's `default_review`, and the planner sets it:
+writes it with the project's `default_review` (`self` on the short path when the
+default is `independent`), and the planner sets it:
 
 | Level | For | What is recorded |
 |---|---|---|
@@ -407,7 +416,7 @@ writes it with the project's `default_review`, and the planner sets it:
 |---|---|---|
 | **Accept** | applying any item of a change that isn't accepted, or whose acceptance was withdrawn | only you, with `wm accept` |
 | **Delegation** | starting an implementer unless the prompt names exactly one item that has criteria; starting a reviewer unless the prompt names one change whose items are all ticked and which needs an independent review it lacks; either while the record around it isn't sound | no one; fix the record |
-| **Archive** | archiving a change that isn't accepted, has unbuilt items, isn't reviewed, has an item no passing review covers, or has a delta that no longer applies | only a missing review can be overridden, by you, with a reason that is recorded |
+| **Archive** | archiving a change that isn't accepted, has unbuilt items, isn't reviewed, has an item no passing review covers, has a ticked item a revision changed and nothing reopened, or has a delta that no longer applies | only a missing review can be overridden, by you, with a reason that is recorded |
 
 **Evidence is written only by `wm`**: ticks and records, and in a milestone its
 roadmap lines and its Log, which change only through `wm roadmap`,
@@ -415,8 +424,8 @@ roadmap lines and its Log, which change only through `wm roadmap`,
 its own results with `wm tick`, `wm block`, `wm gap`, `wm note` and
 `wm review`. Implementers and reviewers report theirs in their last lines, and
 `wm`'s hooks write the records from them. An implementer edits nothing in the
-record; the one writing command it may run is `wm note`. Agents that try to write evidence by hand are
-refused, and `wm check` flags evidence that doesn't follow the format. These are
+record except resources; the one writing command it may run is `wm note`, with
+`--by implementer`. Agents that try to write evidence by hand are refused, and `wm check` flags evidence that doesn't follow the format. These are
 guard rails against mistakes and shortcuts, not security against someone set on
 getting around them. In Claude Code the agent-side rules are enforced by its
 hooks; in a tool without hooks they rely on the agents following the skills.
@@ -462,7 +471,7 @@ files.
 | **Proposal** | Why a change is wanted, what it changes, its non-goals and impact. Its outcome is added at archive. |
 | **Delta** | A change's edits to one spec: requirements added, modified, removed or renamed. Deltas merge into the specs at archive. |
 | **Design** | How a change will be built, including its decisions: the options, the choice and why. |
-| **Task item** | One checkbox in a change's task list, with its criteria, how to verify it, its `- **Build:**` line, and the records of building it. |
+| **Task item** | One checkbox in a change's task list, with its `- **Build:**` line, its criteria, how to verify it, and its tick; the records of building it are in the Log. |
 | **Acceptance** | Your explicit approval of a change before any of it is built. Only you can give it. |
 | **Tiny path** | The route for work that adds, changes or removes no requirement: no change, just your yes, a conventional commit and a pull request. |
 | **Short path** | The light route for a small change: no design, and review level `self` or `none`. Marked by a `- **Path:** short` line in the proposal. |
@@ -477,7 +486,7 @@ files.
 | **Implementer** | A fresh agent that builds one task item with a `- **Build:** implementer` line, from the record alone. |
 | **Reviewer** | A fresh, read-only agent that checks one whole change against its scenarios, design and criteria, without seeing how it was built. |
 | **Review level** | How a change is checked: `self`, `independent` or `none`. Set by the `- **Review:**` line in its proposal. |
-| **Log** | The last section of a change's task list, where `wm` keeps the dated records about the whole change: its acceptances, sync, reviews and any override. |
+| **Log** | The last section of a change's task list, where `wm` keeps every dated record of the change, about the change and about each item, in the order written. |
 | **Finding** | One thing a review found, with a severity (`critical`, `warning` or `suggestion`), a place and a text. |
 | **Context pack** | The excerpts of the record that `wm` assembles for one job: exploring, implementing or reviewing. |
 | **Spec gap** | What an agent reports when the record isn't enough to do its job, instead of guessing. It goes to you. |

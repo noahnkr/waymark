@@ -1,8 +1,8 @@
 # The record
 
 Everything Waymark keeps lives in plain markdown in `waymark/`, committed with
-your code. This page covers each kind of note: what it's for, its sections, the
-lines it can hold, who writes and updates it, and what `wm check` holds it to.
+your code. For each kind of note: what it's for, its sections, the lines it can
+hold, who writes and updates it, and what `wm check` holds it to.
 For how the notes fit into the workflow, read [Concepts](concepts.md).
 
 - [Two kinds of line](#two-kinds-of-line)
@@ -41,13 +41,14 @@ removes one, and `wm check` doesn't read them.
 - **What people and agents write** is sections of prose and label lines, the
   label in bold with the colon inside, such as `- **Owner:** Sam Doe` or
   `- **Criteria:** at most fifty results`. `wm check` reports a label written
-  plain or with the colon outside, and `wm check --fix` makes it bold.
+  plain or with the colon outside as `plain-label`, and `wm check --fix` makes it
+  bold.
 - **What `wm` writes** is a dated record of one shape,
   `YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>`, such as
   `2026-01-16 (blocked) 1.2 by implementer: the index service is down`. Only `wm`
   writes records, and none is ever edited or removed. See [Records](#records).
 
-Every template carries a short good and bad example in a comment. Comments are
+Every markdown template carries a short good and bad example in a comment. Comments are
 left out of what `wm check` reads and out of the acceptance fingerprint, so you
 can delete them without consequence.
 
@@ -63,10 +64,13 @@ values and keep the keys.
 | `default_review` | `self`, `independent` or `none`: the level `wm new change` writes in a new proposal's `- **Review:**` line (`self` on the short path when it is `independent`). |
 | `agent_tools` | Which agent tools get skills, agents and hooks, such as `["claude-code"]`. |
 | `commit_scopes` | Optional. The scopes a conventional commit may use; the commit hook refuses any other. |
+| `[atlas]` `name` | In an atlas, the atlas's name. |
 | `[atlas.repos.<name>]` | In an atlas, one table per code repo, with a relative `path` hint. |
 | `[references.<atlas>]` | Another atlas whose specs this project reads, read only, with `wm show <spec> --from <atlas>`. |
 
-**Written by** `wm init`, then you or `/wm-kickoff`. **Checks:** `invalid-setting`, `unknown-setting`.
+**Written by** `wm init`, then you or `/wm-kickoff`. **Checks:** `invalid-toml`,
+`invalid-setting`, `unknown-setting`, and the warnings `version-pin` and
+`record-format`.
 
 ## Charter: `charter.md`
 
@@ -85,8 +89,8 @@ and its Rules go into every context pack and every step's instructions.
 
 An indented line under a numbered item continues it. **Written by**
 `/wm-kickoff` with you; it isn't changed through a change.
-**Checks:** `missing-section`, `numbered-list-format`, `glossary-format`,
-`old-layout` (a `Term: meaning` glossary line), `duplicate-section`. A heading or a
+**Checks:** `missing-section`, `numbered-list-format`, `glossary-format` (a
+glossary line in another form, such as `Term: meaning`), `duplicate-section`. A heading or a
 bullet under Rules is a `numbered-list-format` error. `wm check --fix` makes a
 glossary entry written `- <term>: <meaning>` or `- **<term>**: <meaning>` bold.
 
@@ -142,7 +146,7 @@ except the Outcome.
 
 | Part | What it holds |
 |---|---|
-| Facts under the title | `- **Owner:** <name>` (from git) and `- **Review:** self\|independent\|none` (the project's `default_review` to start with), and optionally `- **Milestone:** <name>`, `- **After:** <change>` and `- **Path:** short`. |
+| Facts under the title | `- **Owner:** <name>` (your git name, or `--owner`) and `- **Review:** self\|independent\|none` (the project's `default_review` to start with), and optionally `- **Milestone:** <name>`, `- **After:** <change>` and `- **Path:** short`. |
 | `## Why` | The problem and why now, not the solution. |
 | `## What changes` | What will be different once the change is archived. |
 | `## Non-goals` | What a reader might expect and won't get. |
@@ -158,11 +162,12 @@ except the Outcome.
 - **`- **Code:**`** names the parts of the code it touches, and in an atlas the repos.
 - **`- **Review:**`** is the change's review level, and every active change has the
   line. `independent` is for a change that modifies or removes an existing
-  requirement, or touches security, data integrity or money; `wm check` warns
-  when such a change is reviewed below independent.
+  requirement, or touches security, data integrity or money. `wm check` warns
+  (`review-level`) when a change that modifies or removes a requirement is
+  reviewed below independent.
 
 **Checks:** `missing-owner`, `missing-review`, `invalid-path`, `invalid-review-level`,
-`impact-format`, `impact-mismatch`, `old-layout`, `short-path-review`, `empty-section`.
+`impact-format`, `impact-mismatch`, `short-path-review`, `empty-section`.
 For an `- **After:**` line in an active change: `unknown-after` (no active or archived
 change has that name), `after-self`, `after-cycle` (the lines lead back to the
 change), all errors, and the warning `after-merged` (the change it comes after is
@@ -190,8 +195,11 @@ A delta that no longer applies, because another change was archived first, is a
 fingerprint covers the living text of every requirement a delta touches, so
 another change archiving into the same requirement withdraws this one's acceptance.
 
+**Written by** `/wm-propose`, revised with `/wm-update`; merged into its spec
+by `wm archive` or `wm sync`.
+
 **Checks:** `empty-delta`, `delta-without-purpose`, `removal-without-reason`,
-`malformed-rename`, `delta-requirement-missing`, `delta-requirement-exists`, `old-layout`,
+`malformed-rename`, `delta-requirement-missing`, `delta-requirement-exists`,
 `empty-section` (an empty Purpose or Background).
 
 ## Design
@@ -218,6 +226,8 @@ Each decision holds these lines:
 | `- **Options:**` | At least two, one option per bullet under it; text on the line itself is reported. |
 | `- **Choice:**` | The one taken. |
 | `- **Why:**` | The reason. |
+
+**Written by** `/wm-propose` on the full path, revised with `/wm-update`.
 
 **Checks:** `decision-incomplete`, `decision-format`, `decision-options`,
 `missing-section`, `open-questions-format`, `short-path-design`.
@@ -255,7 +265,8 @@ syncs and reviews.
   from `--detail`, given once per point, or from an agent's `DETAIL:` lines.
   A detail with a finding's shape, a severity in brackets or a severity word
   followed by `:` or a place in backticks, is refused: give it as `--finding`.
-  `wm check` reports a line under any other record as `misplaced-detail`.
+  `wm check` reports a line under any other record as `misplaced-detail`, and a
+  finding under anything but a review or self-review as `misplaced-finding`.
 
 A finding's place is a path relative to the project's top folder, such as
 `src/limit.py:12`, or `<repo>/<path>` for a code repo in an atlas. When
@@ -266,10 +277,14 @@ other absolute path is refused, so no machine's folders reach the record.
 The acceptance names the items it covers: **adding** an item keeps it, while
 **changing** or removing an accepted item withdraws it.
 
+**Written by** `/wm-propose`, revised with `/wm-update`; the ticks and the
+`## Log` only by `wm`.
+
 **Checks:** `item-incomplete`, `item-number`, `section-number`,
 `item-order`, `item-without-repo`, `unknown-build-tag`, `log-section-last`,
-`misplaced-record`, `malformed-record`,
-`malformed-finding`, `changes-without-items`.
+`misplaced-record`, `malformed-record`, `malformed-finding`, `misplaced-finding`,
+`misplaced-detail`, `unknown-item` (a record naming an item the list doesn't
+have), `changes-without-items`, and the warning `revised-ticked-item`.
 
 ```markdown
 - [x] 1.1 Cap the result count
@@ -301,8 +316,8 @@ roadmap that lists them, in one file. Created by `wm new milestone <name>`.
 | `## Roadmap` | One list line per change. Only lines here, outside comments, are roadmap entries. |
 | `## Log` | Optional, always last, written by `wm`: a record for each change to the plan. |
 
-A change not proposed yet is a plain line, such as `- add-cache: cache hot
-queries`; a proposed one links to its proposal. Archiving a change ticks its
+A change not proposed yet is a plain line, such as
+`- add-cache: cache hot queries`; a proposed one links to its proposal. Archiving a change ticks its
 line and rewrites the link, and `wm status` counts the progress.
 
 You change the roadmap only through `wm`. An agent's edit that adds, changes or
@@ -318,12 +333,12 @@ are allowed.
 Each change to the plan writes a record in the milestone's `## Log`, which `wm`
 creates at the end of the file the first time:
 
-```
-2026-11-20 (added) add-cache by planner for Ada: cache hot queries
-2026-11-20 (moved) add-cache first by planner for Ada
-2026-11-21 (proposed) add-limit by planner for Ada
-2026-11-21 (dropped) add-cache by planner for Ada: the index is fast enough
-2026-11-22 (archived) add-limit by Ada
+```markdown
+- 2026-11-20 (added) add-cache by planner for Ada: cache hot queries
+- 2026-11-20 (moved) add-cache first by planner for Ada
+- 2026-11-21 (proposed) add-limit by planner for Ada
+- 2026-11-21 (dropped) add-cache by planner for Ada: the index is fast enough
+- 2026-11-22 (archived) add-limit by Ada
 ```
 
 `(proposed)` comes from `wm new change --milestone`, and `(archived)` from
@@ -347,8 +362,8 @@ proposal. A change without the line belongs to no milestone.
 - **Its agents:** the implement and review context packs of a member change
   carry the milestone's name, Goal and Non-goals, not its Done when or roadmap.
 
-**Checks:** `milestone-file` (a leftover `goal.md` or `roadmap.md`),
-`missing-file`, `section-order`, `missing-section`, `log-section-last` (a
+**Checks:** `unexpected-file` (any file other than `milestone.md`),
+`missing-file`, `malformed-record` (a Log line that isn't a record), `section-order`, `missing-section`, `log-section-last` (a
 `## Log` that isn't the last section). On an active change's
 proposal: `unknown-milestone` (no active milestone has that name),
 `milestone-unlinked` (the named milestone's roadmap doesn't link the change),
@@ -382,8 +397,8 @@ it are re-aimed:
   milestone it led to is archived or closed. A target still active keeps it
   where it is.
 - **Dropped:** `wm exploration drop` adds the reason as the last paragraph of
-  its Conclusion and moves it in one step. An exploration that led somewhere is
-  refused: it ends when its work does.
+  its Conclusion and moves it in one step. `wm exploration drop` refuses an
+  exploration that led somewhere; it ends when its work does.
 
 `wm show <name>` finds an archived exploration by its name or its dated name,
 and `wm ls explorations --archived` lists them. The explore context pack lists
@@ -442,7 +457,8 @@ All six sections are always there; one that doesn't apply holds `None.`.
 
 ## Records
 
-Every line `wm` writes is a dated record. It names who wrote it, by its kind:
+Every record `wm` writes is a dated line of one shape. It names who wrote it, by
+its kind:
 
 - **Your acts** name your git name, such as `by Ada`: `(accepted)`,
   `(override)`, `(resolved)`, `(archived)`, and the `(ticked)` record of a
@@ -470,17 +486,17 @@ record and the blocker stays.
 |---|---|---|
 | `(accepted)` | Log | `wm accept`: the fingerprint and the items it covers |
 | `(revised)` | Log | `wm revise`: the parts an edit after acceptance changed, and why; `wm accept` refuses to accept a change again without one |
-| `(synced)` | Log | `wm sync`: the deltas merged before the archive |
+| `(synced)` | Log | `wm sync`: the deltas merged before the archive, with the acceptance's fingerprint taken again |
 | `(self-review)` | Log | `wm review --self`, with `covers <items>` and findings |
 | `(review)` | Log | `wm verdict`, or the reviewer's ending: `pass`, `changes <items>` or `spec-gap`, then `covers <items>` |
 | `(override)` | Log | `wm archive --override`: your reason for archiving past a missing review |
 | `(archived)` | Log | `wm archive`: who archived the change |
-| `(ticked)` | item | `wm tick`, or an implementer's `done` |
-| `(blocked)` | item | `wm block`, or an implementer's `blocked` |
-| `(gap)` | item | `wm gap`, or an implementer's `spec-gap` |
-| `(note)` | item | `wm note`, or an implementer's `partial` |
-| `(reopened)` | item | `wm reopen`: a review named it to rebuild, or, with `--reason`, any ticked item, the reason as its text. Once ticked again after a passing review, the item gets a review of its own. A ticked item a revision changed must be reopened before any review or archive |
-| `(resolved)` | item or Log | `wm resolve`: what you decided |
+| `(ticked)` | Log, naming the item | `wm tick`, or an implementer's `done` |
+| `(blocked)` | Log, naming the item | `wm block`, or an implementer's `blocked` |
+| `(gap)` | Log, naming the item | `wm gap`, or an implementer's `spec-gap` |
+| `(note)` | Log, naming the item | `wm note`, or an implementer's `partial` |
+| `(reopened)` | Log, naming the item | `wm reopen`: a review named it to rebuild, or, with `--reason`, any ticked item, the reason as its text. Once ticked again after a passing review, the item gets a review of its own. For a ticked item a revision changed, `wm instructions` makes the reopen the next step and `wm archive` refuses until it is done, even with `--override` |
+| `(resolved)` | Log, with or without an item | `wm resolve`: what you decided |
 | `(added)` | milestone Log | `wm roadmap add`: the change and its description |
 | `(dropped)` | milestone Log | `wm roadmap drop`: the change and the reason |
 | `(moved)` | milestone Log | `wm roadmap move`: the change, then `after <change>` or `first` |

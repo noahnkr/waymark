@@ -33,8 +33,10 @@ reads the same in every skill and every agent tool:
 
 **Guard rails.** In Claude Code, hooks hold what matters most: agents can't run
 `wm accept` or the archive override, commit messages must be conventional with an
-allowed scope, a delegated implementer edits only its item's code, and a reviewer
-edits nothing.
+allowed scope, an implementer edits nothing in the record but resources (and, in
+an atlas, only its item's repo) and may write only `wm note ... --by implementer`,
+an implementer started on a `human` item is refused, and a reviewer edits
+nothing. All the gates are in [Concepts](concepts.md#the-gates).
 
 ---
 
@@ -116,6 +118,9 @@ exploration with `/wm-explore <exploration>`.
 |---|---|
 | `wm context --for explore`; `wm show <spec\|change\|exploration>`, with `--from <atlas>` for a referenced atlas; `wm show <name> --kind resource`; the code, without changing it | an exploration through `wm new exploration`, or its sections; `wm exploration drop`; or a milestone with its Goal, created with `--from` when it comes from an exploration, and its Roadmap lines through `wm roadmap add` |
 
+**Shows you** what the record says, the problem, the open questions numbered Q1,
+Q2, the approaches lettered A, B with their cost, its recommendation, and the
+four offers numbered 1 to 4, so an answer can't be mistaken for a choice.
 **Stops** when you pick an offer (it does that one only), when you want to stop
 (it makes the offers), or when the idea is already in flight or in the specs.
 
@@ -128,7 +133,8 @@ anything you want built or changed, from a typo to a new feature.
 **How it works**
 
 1. **Look at the work:** it's tiny when no requirement changes, short when the
-   specs change and nothing is left to settle, and full otherwise.
+   change is small, needs no design and nothing is left to settle, and full
+   otherwise.
 2. **The tiny path:** shows one line, `Tiny: <what it will change>; keeps <the
    requirement>`, and builds nothing until you say yes. Then it branches, builds
    only what it said, runs the checks, the full checks and `wm check`, commits
@@ -136,7 +142,8 @@ anything you want built or changed, from a typo to a new feature.
    It writes nothing to the record. If the work turns out to change a
    requirement, it stops building and drafts a change.
 3. **Questions:** lists what the record and your words don't settle (scope,
-   edges, names, what's out) and asks you, each with the answer it recommends.
+   edges, names, what's out) and asks you, numbered Q1, Q2, each with the answer
+   it recommends; options are lettered A, B.
    A question still open puts the change on the full path, under the design's
    Open questions, which block acceptance until you answer.
 4. **Name:** a kebab-case name starting with a verb; `wm new change <name>`.
@@ -173,22 +180,26 @@ conflict, a decision to settle, a review's findings or a change of scope.
 **How it works:** finds out what needs to change and why; tells you whether each
 edit withdraws acceptance (editing the proposal, a delta, the design or an
 accepted item does; adding an item or a note doesn't); makes each edit only after
-your yes; works through the revised steps' checklists and runs `wm check`; asks
-you to accept again if acceptance was withdrawn.
+your yes and, when the change was accepted before, records it right after with
+`wm revise <change> "<why>" --parts <part>,...`; works through the revised
+steps' checklists and runs `wm check`; asks you to accept again if acceptance
+was withdrawn. A ticked item the revision changed goes back to apply once you
+accept, at the step `wm instructions` gives.
 
 **Common cases**
 
 | Case | What it does |
 |---|---|
-| A spec gap | Writes your answer into the delta or the item's criteria; then `wm resolve`. |
+| A spec gap | Writes your answer into the delta or the item's criteria; then, once you accept again, `wm resolve`. |
 | A conflict | Rewrites the delta against the spec as it now reads. |
 | A decision to settle | `- **Status:** decided` and `- **Decided by:** human`; `None.` once no question is left. |
 | The Impact out of step | Updates `- **Specs:**` to match the deltas. |
 | A rename | A RENAMED section; MODIFIED under the new name to change the text too. |
 | New work | Appends new items; never renumbers. |
 
-**Writes** any of the change's notes, edit by edit, and `wm resolve` or `wm note`
-records, with `--by` when you decided. **Stops** when you decline an edit, when a
+**Writes** any of the change's notes, edit by edit, a `wm revise` record after
+each edit to an accepted change, and `wm resolve` or `wm note` records, with
+`--by` when someone else decided. **Stops** when you decline an edit, when a
 decision only you can make comes up, when the revision grows into new behavior
 (it offers a new change instead), and when acceptance was withdrawn.
 
@@ -201,6 +212,9 @@ and handles the verdict. **Use it** when a change is accepted and ready to build
 **How it works**
 
 1. Checks the step, and gets on the change's branch (in an atlas, every repo's).
+   When `wm instructions` gives `wm reopen` first, it runs that before building:
+   for an item a review named, or, with `--reason`, for a ticked item a revision
+   changed.
 2. **Apply:** for an item it builds itself, reads the item's context pack
    (`wm context <change> <item> --for implement`), builds exactly that item, runs
    its verification, then records `wm tick`, `wm block` or `wm gap`.
@@ -220,7 +234,7 @@ and handles the verdict. **Use it** when a change is accepted and ready to build
 
 | Reads | Writes |
 |---|---|
-| `wm instructions --change <name>`; each item's context pack; `wm show` after an agent returns | code, one commit per item; ticks; in the Log, `(blocked)`, `(gap)` and `(note)` naming their item, `(self-review)` or `(review)`, and `(resolved)` |
+| `wm instructions --change <name>`; each item's context pack; `wm show` after an agent returns | code, one commit per item; ticks; in the Log, `(ticked)`, `(blocked)`, `(gap)`, `(note)` and `(reopened)` naming their item, `(self-review)` or `(review)`, and `(resolved)` |
 
 **Shows you**, after each item, what was built, the checks and their result, and
 the commit; after the review, the verdict and each finding. **Stops** when the
@@ -245,10 +259,11 @@ offers `/wm-pr`.
 
 | Reads | Writes |
 |---|---|
-| `wm instructions`; `wm show <change>`, for the outcome | the specs, through the merge; `## Outcome` with `- **Built:**` and `- **Differs:**`; the change folder moved to `changes/archive/`; through `wm archive`, the milestone's Roadmap line and an `(archived)` record in its Log |
+| `wm instructions`; `wm show <change>`, for the outcome | the specs, through the merge; `## Outcome` with `- **Built:**` and `- **Differs:**`; the change folder moved to `changes/archive/`; through `wm archive`, the milestone's Roadmap line and an `(archived)` record in its Log, and `<date> (archived) by <you>` at the end of the change's own Log |
 
-If the archive is refused for an unaccepted change, unticked items or a conflict,
-it goes back to `/wm-apply` or `/wm-update`; a missing review only you may
+If the archive is refused for an unaccepted change, unticked items, a conflict,
+or an item revised after it was ticked, it goes back to `/wm-apply` or
+`/wm-update`; a missing review only you may
 override. If the pull request needs more work, it reverts the archive commit and
 archives again once the work is done.
 
@@ -271,8 +286,10 @@ gives you the link.
 ## `wm-implementer`
 
 A fresh agent that builds one item marked `- **Build:** implementer`, from the record
-alone. `/wm-apply` starts it with exactly `<change> <item>` for a large item,
-parallel work, or a cold check that the record is enough to build from.
+alone. `/wm-apply` starts it with exactly `<change> <item>` for each item marked
+`implementer`; `/wm-propose` gives that role to a large item, parallel work, or
+one where a cold check that the record is enough to build from is worth its
+cost.
 
 **How it works:** runs `wm context <change> <item> --for implement` (a refusal
 ends it as `blocked`); reads the whole pack; builds exactly the item, so its
@@ -312,4 +329,4 @@ VERDICT: <pass | changes <item>... | spec-gap>: <reasons>
 
 | Reads | Writes |
 |---|---|
-| the review pack: the items to review (every item, or those no passing review covers) with their criteria, verification and location, the deltas, the resources that serve their specs, the design, earlier reviews and resolutions, Context, the project's rules, the severity rubric; the code | nothing: `wm` records its ending as a `(review)` record with each finding under it; a `changes` verdict reopens the items it names; `wm` refuses a pass with a critical finding |
+| the review pack: the items to review (every item, or those no passing review covers) with their criteria, verification and location, the deltas, the resources that serve their specs, the design, earlier reviews and resolutions, which items you did yourself, Context, the project's rules, the severity rubric; the code | nothing: `wm` records its ending as a `(review)` record with each finding under it; a `changes` verdict reopens the items it names; `wm` refuses a pass with a critical finding |

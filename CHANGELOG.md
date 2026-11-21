@@ -2,30 +2,16 @@
 
 All notable changes to Waymark, one entry per release.
 
-## [Unreleased]
+## [0.6.0] - 2026-11-20
 
-- **Reopen any ticked item.** `wm reopen <change> <item> --reason "<why>"`
-  sends a ticked item back to apply even when no review names it, and the
-  `(reopened)` record carries the reason. Once ticked again after a passing
-  review, the item gets a review of its own.
-- **A revised item goes back to apply.** When a `(revised)` record names a ticked
-  item that nothing reopened or ticked again since, `wm instructions` makes its
-  reopen the next step, before any review or archive, `wm archive` refuses the
-  change even with `--override`, and `wm check` warns as `revised-ticked-item`.
-- **Records as lists.** `wm note`, `wm block`, `wm gap`, `wm resolve`,
-  `wm review --self`, `wm verdict` and `wm revise` take a repeatable
-  `--detail "<text>"`, written as a sub-bullet under the record, after any
-  findings. Implementers and reviewers give details as `DETAIL:` lines before
-  their ending. A detail with a finding's shape, such as `warning: <text>`, is
-  refused. `wm check` reports a sub-line under a record that takes no details as
-  `misplaced-detail`.
-- **`wm revise` says what comes next.** It asks for `wm accept` only when the
-  acceptance was withdrawn, and says it still holds after an added item.
-- **Outcome as a list.** `wm archive` takes `--built` and `--differs` more than
-  once; several values are written as nested bullets under the label.
-- **JSON:** each record in `wm show --json` has `details`, at `show.change`
-  version 5. In the implement pack, notes are objects with `text` and
-  `details`, and earlier reviews in both packs have `details`, at version 4.
+The record says who did what: items name the role that builds them, records name
+who wrote them, ticks, archives and revisions are recorded, and records can be
+lists.
+
+- **Behavior change: an item's Build line names a role.** The roles are
+  `planner`, `implementer` and `human`. `implementer` replaces `delegate`, which
+  `wm check` now reports as unknown: change `- **Build:** delegate` to
+  `- **Build:** implementer` in any active change, then accept it again.
 - **Behavior change: records name who wrote them by their kind.** Your acts
   (`(accepted)`, `(override)`, `(resolved)`, `(archived)` and the tick of a `human`
   item) name your git name. What the planner writes names `planner for <your
@@ -33,43 +19,65 @@ All notable changes to Waymark, one entry per release.
   `wm-implementer` and `wm-reviewer`). `--by` still overrides it, and records
   already written keep their names. An implementer's own `wm note` must say
   `--by implementer`.
-- **New records.** `wm tick` writes `(ticked) <item>` and takes `--by`.
-  `wm archive` ends the change's own Log with `(archived)`.
-- **New command: `wm revise`.** `wm revise <change> "<why>" --parts <part>,...`
-  records why an accepted change was edited. **Behavior change:** `wm accept`
-  refuses to accept a change a second time until a `(revised)` record follows its
-  last acceptance.
-- **Behavior change: an item's Build line names a role.** The roles are
-  `planner`, `implementer` and `human`. `implementer` replaces `delegate`, which
-  `wm check` now reports as unknown: change `- **Build:** delegate` to
-  `- **Build:** implementer` in any active change, then accept it again.
-- **Items only you can do.** A `- **Build:** human` item, such as filling in a
-  form, a manual test or setting up a platform, is handed to you by
-  `wm instructions` with its steps, and ticked by the planner after your yes. While
-  it waits, the planner blocks it and goes on with the other items. An
-  implementer started on one is refused, and the review pack and review guidance
-  name the items you did.
-- **JSON:** `wm show --json` gives each item `build` (`planner`, `implementer`,
-  `human` or null) in place of `delegate`, at `show.change` version 4. The
-  implement and review packs carry each item's `build`, and the review pack
-  `human_items` and `human_note`, at version 3.
-- **Skills ask less of you.** `wm-archive` shows the outcome it will write and
-  runs `wm archive` itself once you say yes, instead of asking you to type the
-  command. `wm-explore` and `wm-propose` label open questions Q1, Q2, options
-  A, B and closing offers 1 to 4, so an answer can't be mistaken for a choice.
-  `wm-propose` writes its own bold step names with the colon inside the bold,
-  as `wm check` expects of labels.
+- **Behavior change: accepting again needs a revision.** `wm accept` refuses to
+  accept a change a second time until a `(revised)` record, written by the new
+  `wm revise`, follows its last acceptance.
+- **Behavior change: a revised item goes back to apply.** When a `(revised)`
+  record names a ticked item that nothing reopened or ticked again since,
+  `wm instructions` makes its reopen the next step, before any review or archive,
+  `wm archive` refuses the change even with `--override`, and `wm check` warns as
+  `revised-ticked-item`.
 - **Behavior change: every change has a Review line.** `wm new change` writes
   `- **Review:** <level>` with the project's `default_review` (`self` on the
   short path when the default is `independent`), and `wm check` reports an active
   change without one as `missing-review`. The level is read from the line, so
   changing `default_review` no longer changes the level of a change already
   written.
+- **Items only you can do.** A `- **Build:** human` item, such as filling in a
+  form, a manual test or setting up a platform, is handed to you by
+  `wm instructions` with its steps, and ticked by the planner after your yes. While
+  it waits, the planner blocks it and goes on with the other items. An
+  implementer started on one is refused, and the review pack and review guidance
+  name the items you did.
+- **New command: `wm revise`.** `wm revise <change> "<why>" --parts <part>,...`
+  records why an accepted change was edited. It asks for `wm accept` only when
+  the acceptance was withdrawn.
+- **Reopen any ticked item.** `wm reopen <change> <item> --reason "<why>"`
+  sends a ticked item back to apply even when no review names it, and the
+  `(reopened)` record carries the reason. Once ticked again after a passing
+  review, the item gets a review of its own.
+- **New records.** `wm tick` writes `(ticked) <item>` and takes `--by`.
+  `wm archive` ends the change's own Log with `(archived)`.
+- **Records as lists.** `wm note`, `wm block`, `wm gap`, `wm resolve`,
+  `wm review --self`, `wm verdict` and `wm revise` take a repeatable
+  `--detail "<text>"`, written as a sub-bullet under the record, after any
+  findings. Implementers and reviewers give details as `DETAIL:` lines before
+  their ending. A detail with a finding's shape, such as `warning: <text>`, is
+  refused. `wm check` reports a sub-line under a record that takes no details as
+  `misplaced-detail`.
+- **Outcome as a list.** `wm archive` takes `--built` and `--differs` more than
+  once; several values are written as nested bullets under the label.
+- **Skills ask less of you.** `wm-archive` shows the outcome it will write and
+  runs `wm archive` itself once you say yes, instead of asking you to type the
+  command. `wm-explore` and `wm-propose` label open questions Q1, Q2, options
+  A, B and closing offers 1 to 4, so an answer can't be mistaken for a choice.
+  `wm-propose` writes its own bold step names with the colon inside the bold,
+  as `wm check` expects of labels.
 - **New explorations have no comment under their Status line.** The other
   sections keep their comments and examples.
 - **`wm check --fix` makes charter glossary entries bold.** An entry written
   `- <term>: <meaning>` or `- **<term>**: <meaning>` becomes
   `- **<term>:** <meaning>`.
+- **JSON:** in `wm show --json`, at `show.change` version 5, each item has
+  `build` (`planner`, `implementer`, `human` or null) in place of `delegate`, and
+  each record has `details`. At version 4 of the implement and review packs,
+  each item carries its `build`, notes are objects with `text` and `details`,
+  earlier reviews have `details`, and the review pack has `human_items` and
+  `human_note`.
+- **Record format:** unchanged. `wm` reads a 0.5.0 record as it is; only an
+  active change with `- **Build:** delegate` or no Review line needs editing.
+
+Smoke test: passed on 2026-11-20 with Claude Code 2.1.330 on Windows 10.
 
 ## [0.5.0] - 2026-11-19
 
