@@ -36,8 +36,9 @@ def append_log(
     *,
     untick: str | None = None,
     tick: str | None = None,
+    details: Sequence[str] = (),
 ) -> str:
-    """Append a record, and the findings under it, to the change's Log section.
+    """Append a record, and the findings and then the details under it, to the change's Log.
 
     The section is created at the end of the task list when it isn't there yet.
     ``untick`` names an item whose tick comes off in the same edit, as a reopening
@@ -49,7 +50,7 @@ def append_log(
         _set_tick(tasks, lines, untick, ticked=False)
     if tick is not None:
         _set_tick(tasks, lines, tick, ticked=True)
-    return _append_to_section(tasks, lines, LOG_SECTION, record, findings)
+    return _append_to_section(tasks, lines, LOG_SECTION, record, [*findings, *details])
 
 
 def _append_to_section(

@@ -122,6 +122,7 @@ RECORD = _object(
         "findings": _array(
             _object({"severity": _enum(ReviewSeverity), "place": STRING, "text": STRING})
         ),
+        "details": NAMES,
     }
 )
 
@@ -333,10 +334,17 @@ _PACK_REVIEW = _object(
         "findings": _array(
             _object({"severity": _enum(ReviewSeverity), "place": STRING, "text": STRING})
         ),
+        "details": NAMES,
     }
 )
+_PACK_NOTE = _object({"text": STRING, "details": NAMES})
 _PACK_ITEM = _object(
-    {**_DEFINITION, "notes": NAMES, "reviews": _array(_PACK_REVIEW), "resolutions": NAMES}
+    {
+        **_DEFINITION,
+        "notes": _array(_PACK_NOTE),
+        "reviews": _array(_PACK_REVIEW),
+        "resolutions": NAMES,
+    }
 )
 _DELTAS = _array(_object({"spec": STRING, "text": STRING}))
 _BACKGROUNDS = _array(_object({"spec": STRING, "text": STRING}))

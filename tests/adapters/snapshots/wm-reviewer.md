@@ -37,15 +37,16 @@ If the command is refused, end with a `VERDICT: spec-gap` line that quotes the r
 
 ## How you finish
 
-Give each finding on a line of its own, then end your reply with the two lines `CHANGE:` and `VERDICT:`, and nothing after them:
+Give each finding on a line of its own, and each point of your reasons that doesn't fit the verdict line on a `DETAIL:` line, then end your reply with the two lines `CHANGE:` and `VERDICT:`, and nothing after them:
 
 ```
 FINDING: <critical | warning | suggestion>: <place>: <what is wrong, in one line>
+DETAIL: <one point of your reasons, in one line>
 CHANGE: <change>
 VERDICT: <pass | changes <item> <item>... | spec-gap>: <your reasons, in one line>
 ```
 
-- A place that holds `: ` goes in backticks, for example ``FINDING: warning: `docs: setup`: <text>``. `wm` writes each finding under your verdict as ``[warning] `<place>`: <text>``, and the verdict itself as `<date> (review) pass covers <items> by reviewer: <reasons>` in the change's `## Log`, where `<items>` are the items your pack held, separated by `, `.
+- A place that holds `: ` goes in backticks, for example ``FINDING: warning: `docs: setup`: <text>``. `wm` writes each finding under your verdict as ``[warning] `<place>`: <text>``, and the verdict itself as `<date> (review) pass covers <items> by reviewer: <reasons>` in the change's `## Log`, where `<items>` are the items your pack held, separated by `, `. Each `DETAIL:` line is written as a sub-bullet under the verdict, after the findings, so keep the verdict line to a short summary and list the rest as details.
 - Grade each finding by the severity rubric in your context pack: `critical`, `warning` or `suggestion`, the higher when it could be either.
 - `pass`: every criterion holds and every scenario is met. A pass has no critical finding.
 - `changes`: something must be fixed. Name the items to rebuild after the word, for example `VERDICT: changes 1.2 2.1: <reasons>`, and say what, precisely enough to act on.

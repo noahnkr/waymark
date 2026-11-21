@@ -73,6 +73,8 @@ class ReviewRecord:
     """The item a record about one item is about; None for a record about the change."""
     parts: tuple[str, ...] = ()
     """The parts a ``(revised)`` record names."""
+    details: tuple[str, ...] = ()
+    """The details written under the record, after its findings."""
 
     @property
     def line(self) -> str:
@@ -492,37 +494,44 @@ class _Parser:
             )
         self.log.append(_from_record(found, index))
 
-    def log_finding(self, index: int, text: str) -> None:
-        """Add a finding line to the record above it in the Log."""
-        parsed = records.parse_finding(text)
+    def log_sub_line(self, index: int, text: str) -> None:
+        """Add a sub-line to the record above it in the Log: a finding or a detail."""
         last = self.log[-1] if self.log else None
-        if parsed is None:
+        if last is None or last.kind not in records.DETAILED:
             self.problem(
                 index,
-                "malformed-finding",
-                f'A finding under a review is written "  - {records.FINDING_SHAPE}".',
+                "misplaced-detail",
+                "Only these records have lines under them: "
+                f"{records.detailed_kinds()}. Move the line, or remove it.",
             )
             return
-        if last is None or last.kind not in (RecordKind.REVIEW, RecordKind.SELF_REVIEW):
+        if last.kind in (RecordKind.REVIEW, RecordKind.SELF_REVIEW):
+            self.review_sub_line(index, text, last)
+            return
+        if records.looks_like_finding(text):
             self.problem(
                 index,
                 "misplaced-finding",
                 "A finding goes under a review or a self-review. Move it, or remove it.",
             )
             return
-        finding = Finding(parsed.severity, parsed.place, parsed.text, index)
-        self.log[-1] = ReviewRecord(
-            last.kind,
-            last.date,
-            last.verdict,
-            last.text,
-            last.index,
-            last.items,
-            (*last.findings, finding),
-            last.who,
-            last.fingerprint,
-            last.covers,
-        )
+        self.log[-1] = dataclasses.replace(last, details=(*last.details, text))
+
+    def review_sub_line(self, index: int, text: str, last: ReviewRecord) -> None:
+        """Under a review: a finding, a finding missing its brackets, or a detail."""
+        parsed = records.parse_finding(text)
+        if parsed is not None:
+            finding = Finding(parsed.severity, parsed.place, parsed.text, index)
+            self.log[-1] = dataclasses.replace(last, findings=(*last.findings, finding))
+            return
+        if records.looks_like_finding(text) or records.starts_with_severity(text):
+            self.problem(
+                index,
+                "malformed-finding",
+                f'A finding under a review is written "  - {records.FINDING_SHAPE}".',
+            )
+            return
+        self.log[-1] = dataclasses.replace(last, details=(*last.details, text))
 
     def log_body(self, section: Section) -> None:
         """Read the Log section: the change's records and the findings under them."""
@@ -536,14 +545,15 @@ class _Parser:
             if record_match:
                 self.log_record(index, record_match.group(1).strip())
             elif field_match:
-                self.log_finding(index, field_match.group(1).strip())
+                self.log_sub_line(index, field_match.group(1).strip())
             else:
                 self.problem(
                     index,
                     "unrecognized-log-line",
                     f"The {LOG_SECTION} section holds only the records wm writes, each "
-                    '"- YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>", and findings under '
-                    f'reviews, each "  - {records.FINDING_SHAPE}".',
+                    '"- YYYY-MM-DD (<kind>) [<args>] [by <who>]: <text>", findings under '
+                    f'reviews, each "  - {records.FINDING_SHAPE}", and details under a record, '
+                    'each "  - <text>".',
                 )
 
     def check_named_items(self) -> None:

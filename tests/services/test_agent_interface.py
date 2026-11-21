@@ -574,6 +574,7 @@ def test_reviewer_pack_carries_the_earlier_reviews_of_the_change(project: Worksp
             "findings": [
                 {"severity": "critical", "place": "src/search.py:12", "text": "fifty-one come back"}
             ],
+            "details": [],
         }
     ]
     assert "[critical] `src/search.py:12`: fifty-one come back" in render.to_text(built, PLAIN)
@@ -583,7 +584,9 @@ def test_scenario_note_in_the_implementers_pack(project: Workspace) -> None:
     accepted(project)
     lifecycle.add_note(project.root, NAME, "1.2", "partial: the parser is done", DAY)
     assert "(note) 1.2" in project.read(f"{FOLDER}/tasks.md").split("## Log")[1]
-    assert pack(project, "implement", "1.2")["item"]["notes"] == ["partial: the parser is done"]
+    assert pack(project, "implement", "1.2")["item"]["notes"] == [
+        {"text": "partial: the parser is done", "details": []}
+    ]
     assert pack(project, "implement", "1.1")["item"]["notes"] == []
     text = render.to_text(pack(project, "implement", "1.2"), PLAIN)
     assert "- Note from earlier work: partial: the parser is done" in text
@@ -605,7 +608,7 @@ def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     item = pack(project, "implement")["item"]
-    assert item["notes"] == ["half done"]
+    assert item["notes"] == [{"text": "half done", "details": []}]
     assert item["resolutions"] == ["use an inclusive bound"]
     assert item["reviews"] == [
         {
@@ -615,6 +618,7 @@ def test_implementer_pack_carries_earlier_notes_reviews_and_decisions(
             "items": ["1.1"],
             "covers": ["1.1"],
             "findings": [],
+            "details": [],
         }
     ]
     assert "review_level" not in item

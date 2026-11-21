@@ -147,7 +147,7 @@ except the Outcome.
 | `## What changes` | What will be different once the change is archived. |
 | `## Non-goals` | What a reader might expect and won't get. |
 | `## Impact` | Three lines, each with text or nested bullets: `- **Specs:**`, `- **User-visible:**`, `- **Code:**`. |
-| `## Outcome` | Written by `wm archive`: `- **Built:** <text>` and `- **Differs:** <text>` (`none` when nothing differs). |
+| `## Outcome` | Written by `wm archive`: `- **Built:** <text>` and `- **Differs:** <text>` (`none` when nothing differs). Given more than once, `--built` or `--differs` is written as nested bullets under its label. |
 
 - **`- **Specs:**`** names each spec the change has a delta for, in backticks, such
   as ``- **Specs:** `search` (modified)``, or says `- **Specs:** none`, the only way to
@@ -249,7 +249,11 @@ syncs and reviews.
   The records about the whole change are `(accepted)`, `(revised)`, `(synced)`,
   `(self-review)`, `(review)`, `(resolved)` without an item, `(override)` and
   `(archived)`. A review's findings sit under
-  it as ``- [<severity>] `<place>`: <text>``.
+  it as ``- [<severity>] `<place>`: <text>``. A `(note)`, `(blocked)`, `(gap)`,
+  `(resolved)`, `(revised)`, `(self-review)` or `(review)` record may have
+  details under it, `- <text>`, one point each, after any findings. They come
+  from `--detail`, given once per point, or from an agent's `DETAIL:` lines.
+  `wm check` reports a line under any other record as `misplaced-detail`.
 
 A finding's place is a path relative to the project's top folder, such as
 `src/limit.py:12`, or `<repo>/<path>` for a code repo in an atlas. When
@@ -446,9 +450,19 @@ Every line `wm` writes is a dated record. It names who wrote it, by its kind:
 - **An agent's ending** names `implementer` or `reviewer`.
 
 The name given with `--by` takes the place of any of these. Records written
-before this rule keep the names they were written with. A later record
-supersedes an earlier one; `wm resolve` adds a `(resolved)` record and the
-blocker stays.
+before this rule keep the names they were written with.
+
+A record's text is a one-line summary. When it has several points, each goes
+under it as a detail, `- <text>`, from a `--detail` given once per point:
+
+```text
+- 2026-11-20 (note) 1.2 by planner for Ada: partly built
+  - the parser is done
+  - the CLI flag is not
+```
+
+A later record supersedes an earlier one; `wm resolve` adds a `(resolved)`
+record and the blocker stays.
 
 | Record | Where | Written by |
 |---|---|---|

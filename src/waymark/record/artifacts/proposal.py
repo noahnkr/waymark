@@ -99,12 +99,22 @@ class Proposal:
 
     @property
     def outcome_lines(self) -> dict[str, str]:
-        """The Outcome's ``Built`` and ``Differs`` lines that have text."""
+        """The Outcome's ``Built`` and ``Differs`` lines that have text, on the line or as
+        nested bullets under it, one per line."""
         found: dict[str, str] = {}
-        for line in (self.outcome or "").split("\n"):
+        lines = (self.outcome or "").split("\n")
+        for index, line in enumerate(lines):
             label = labels.read_label(line)
-            if label and label.bullet and label.name in (BUILT, DIFFERS) and label.value:
-                found.setdefault(label.name, label.value)
+            if not (label and label.bullet and label.name in (BUILT, DIFFERS)):
+                continue
+            nested = []
+            for following in lines[index + 1 :]:
+                if not following.startswith("  - "):
+                    break
+                nested.append(following[4:].strip())
+            value = label.value or "\n".join(nested)
+            if value:
+                found.setdefault(label.name, value)
         return found
 
     def accepted_text(self) -> str:

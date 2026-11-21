@@ -37,9 +37,10 @@ Follow the stopping rules in your context pack, under "When to stop". Each one n
 
 ## How you finish
 
-End your reply with these two lines, and nothing after them:
+End your reply with these two lines, and nothing after them. Before them, you may give `DETAIL:` lines, one point each, which `wm` writes as sub-bullets under a `partial`, `spec-gap` or `blocked` record:
 
 ```
+DETAIL: <one point, in one line>
 ITEM: <change> <item>
 RESULT: <done | partial | spec-gap | blocked>: <a short note>
 ```

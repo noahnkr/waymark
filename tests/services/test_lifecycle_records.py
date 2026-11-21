@@ -5,7 +5,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
 
-from tests.support import TASKS, Workspace
+from tests.support import TASKS, Workspace, proposal
 from waymark.record.evidence import records
 from waymark.record.evidence.records import RecordKind
 from waymark.record.machine.atlas import Found, Location
@@ -462,3 +462,163 @@ def test_an_absolute_path_through_dot_dot_is_resolved() -> None:
     assert records.relative_place(r"C:\work\shop\..\shop\src\a.py", SHOP) == "src/a.py"
     assert records.relative_place(r"C:\work\shop\..\other\a.py", SHOP) is None
     assert records.relative_place("/home/sam/api/../api/b.py", ATLAS) == "api/b.py"
+
+
+TWO = ("the parser is done", "the CLI flag is not")
+UNDER = "  - the parser is done\n  - the CLI flag is not\n"
+
+
+def test_scenario_note_with_details(latest: Workspace) -> None:
+    """Requirement "Details under a record": each detail is a sub-bullet, in order."""
+    accepted(latest)
+    lifecycle.add_note(latest.root, NAME, "1.2", "partly built", DAY, details=TWO)
+    assert latest.read(TASKS_FILE).endswith(
+        "\n- 2026-11-20 (note) 1.2 by planner for Sam Doe: partly built\n" + UNDER
+    )
+
+
+def test_scenario_self_review_with_a_finding_and_details(latest: Workspace) -> None:
+    """Requirement "Review recorded in the task list": findings come first, then details."""
+    built(latest)
+    lifecycle.self_review(
+        latest.root,
+        NAME,
+        "every criterion holds",
+        DAY,
+        findings=["suggestion: src/a.py: name the constant"],
+        details=["pytest passes", "wm check is healthy"],
+    )
+    assert latest.read(TASKS_FILE).endswith(
+        ": every criterion holds\n"
+        "  - [suggestion] `src/a.py`: name the constant\n"
+        "  - pytest passes\n"
+        "  - wm check is healthy\n"
+    )
+
+
+def test_scenario_detail_that_looks_like_a_finding(latest: Workspace) -> None:
+    """Requirement "Details under a record": a detail with a bracketed severity is refused."""
+    accepted(latest)
+    before = latest.read(TASKS_FILE)
+    for detail in ("[warning] not a finding", "", "two\nlines"):
+        with pytest.raises(Refusal):
+            lifecycle.add_note(latest.root, NAME, "1.2", "<text>", DAY, details=[detail])
+    assert latest.read(TASKS_FILE) == before
+    with pytest.raises(Refusal, match="severity in brackets"):
+        lifecycle.add_note(latest.root, NAME, "1.2", "<text>", DAY, details=["[warning] x"])
+
+
+def test_block_gap_resolve_verdict_and_revise_take_details(latest: Workspace) -> None:
+    accepted(latest)
+    lifecycle.block(latest.root, NAME, "1.1", "stuck", DAY, details=TWO)
+    assert log(latest).endswith(": stuck\n" + UNDER)
+    lifecycle.resolve(latest.root, NAME, "1.1", "go on", DAY, details=TWO)
+    assert log(latest).endswith(": go on\n" + UNDER)
+    lifecycle.report_gap(latest.root, NAME, "1.2", "unclear", DAY, details=TWO)
+    assert log(latest).endswith(": unclear\n" + UNDER)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"], details=TWO)
+    assert log(latest).endswith(": reworded\n" + UNDER)
+
+
+def test_verdict_takes_details(latest: Workspace) -> None:
+    latest.change(tasks=TASKS, proposal_text=proposal(review="independent"))
+    lifecycle.accept(latest.root, NAME, DAY)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(latest.root, NAME, number, DAY)
+    lifecycle.verdict(latest.root, NAME, Verdict.PASS, "fine", DAY, by="reviewer", details=TWO)
+    assert log(latest).endswith(" by reviewer: fine\n" + UNDER)
+
+
+def test_scenario_details_in_the_views(latest: Workspace) -> None:
+    """Requirement "Details under a record": wm show, both packs and wm pr show details."""
+    from waymark.services.context import context_pack  # noqa: PLC0415
+    from waymark.views import payloads, render  # noqa: PLC0415
+    from waymark.views.style import Style  # noqa: PLC0415
+
+    accepted(latest)
+    lifecycle.add_note(latest.root, NAME, "1.2", "partly built", DAY, details=TWO)
+    shown = payloads.show(latest.record(), NAME)
+    [note] = next(item for item in shown["items"] if item["number"] == "1.2")["records"]
+    assert note["details"] == list(TWO)
+    assert "  - the CLI flag is not" in render.to_text(shown, Style(width=100))
+
+    implement = context_pack(latest.record(), "implement", NAME, "1.2")
+    assert implement["item"]["notes"] == [{"text": "partly built", "details": list(TWO)}]
+    assert "  - the parser is done" in render.to_text(implement, Style())
+
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    lifecycle.self_review(latest.root, NAME, "fine", DAY, details=["pytest passes"])
+    assert "  - pytest passes" in describe(latest.record(), NAME)["body"]
+
+
+def test_the_review_pack_shows_the_details_of_earlier_reviews(latest: Workspace) -> None:
+    from waymark.services.context import context_pack  # noqa: PLC0415
+
+    latest.change(tasks=TASKS, proposal_text=proposal(review="independent"))
+    lifecycle.accept(latest.root, NAME, DAY)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(latest.root, NAME, number, DAY)
+    lifecycle.verdict(
+        latest.root,
+        NAME,
+        Verdict.CHANGES,
+        "off by one",
+        DAY,
+        items=["1.1"],
+        by="reviewer",
+        details=["fifty-one come back"],
+    )
+    lifecycle.reopen(latest.root, NAME, "1.1", DAY)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    built = context_pack(latest.record(), "review", NAME, None)
+    assert [review["details"] for review in built["reviews"]] == [["fifty-one come back"]]
+
+
+def test_a_detail_starting_with_a_severity_word_reads_back_as_a_detail(latest: Workspace) -> None:
+    """Item 2.3: only a line with a finding's shape is reported as a finding."""
+    built(latest)
+    lifecycle.self_review(
+        latest.root, NAME, "fine", DAY, details=["warning signs remain", "critical path covered"]
+    )
+    change = latest.record().changes[NAME]
+    assert change.problems == ()
+    assert change.tasks is not None
+    [review] = [r for r in change.tasks.log if r.kind is RecordKind.SELF_REVIEW]
+    assert review.details == ("warning signs remain", "critical path covered")
+
+
+def test_scenario_detail_with_a_findings_shape_but_no_brackets(latest: Workspace) -> None:
+    """Requirement "Details under a record": a finding's shape is refused, bracketed or not."""
+    built(latest)
+    before = latest.read(TASKS_FILE)
+    for detail in ("warning: the retry is slow", "critical `path` covered"):
+        with pytest.raises(Refusal, match="finding's shape"):
+            lifecycle.self_review(latest.root, NAME, "<summary>", DAY, details=[detail])
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_scenario_detail_that_starts_with_a_severity_word(latest: Workspace) -> None:
+    """Requirement "Details under a record": other text starting with a severity word is fine."""
+    built(latest)
+    lifecycle.self_review(latest.root, NAME, "<summary>", DAY, details=["warning signs remain"])
+    assert latest.read(TASKS_FILE).endswith(": <summary>\n  - warning signs remain\n")
+    assert latest.record().changes[NAME].problems == ()
+
+
+def test_a_reviewers_detail_with_a_findings_shape_is_refused(latest: Workspace) -> None:
+    from waymark.hooks.decide import decide  # noqa: PLC0415
+    from waymark.hooks.events import Event, EventKind, Role  # noqa: PLC0415
+
+    latest.change(tasks=TASKS, proposal_text=proposal(review="independent"))
+    lifecycle.accept(latest.root, NAME, DAY)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(latest.root, NAME, number, DAY)
+    before = latest.read(TASKS_FILE)
+    message = "DETAIL: warning: the retry is slow\nCHANGE: add-limit\nVERDICT: pass: fine"
+    event = Event(EventKind.AGENT_STOP, latest.root, role=Role.REVIEWER, message=message)
+    decision = decide(event, DAY)
+    assert not decision.allow
+    assert "finding's shape" in decision.reason
+    assert latest.read(TASKS_FILE) == before

@@ -4,6 +4,17 @@ All notable changes to Waymark, one entry per release.
 
 ## [Unreleased]
 
+- **Records as lists.** `wm note`, `wm block`, `wm gap`, `wm resolve`,
+  `wm review --self`, `wm verdict` and `wm revise` take a repeatable
+  `--detail "<text>"`, written as a sub-bullet under the record, after any
+  findings. Implementers and reviewers give details as `DETAIL:` lines before
+  their ending. `wm check` reports a sub-line under a record that takes no
+  details as `misplaced-detail`.
+- **Outcome as a list.** `wm archive` takes `--built` and `--differs` more than
+  once; several values are written as nested bullets under the label.
+- **JSON:** each record in `wm show --json` has `details`, at `show.change`
+  version 5. In the implement pack, notes are objects with `text` and
+  `details`, and earlier reviews in both packs have `details`, at version 4.
 - **Behavior change: records name who wrote them by their kind.** Your acts
   (`(accepted)`, `(override)`, `(resolved)`, `(archived)` and the tick of a `human`
   item) name your git name. What the planner writes names `planner for <your

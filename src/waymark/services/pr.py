@@ -73,6 +73,7 @@ def _review_lines(record: Record, change: Change) -> list[str]:
         for shown_record in shown:
             lines.append(written[shown_record.index].text.strip())
             lines += [f"  {written[f.index].text.strip()}" for f in shown_record.findings]
+            lines += [f"  - {detail}" for detail in shown_record.details]
     override = change.tasks.latest(RecordKind.OVERRIDE) if change.tasks else None
     if override is not None:
         by = f" by {override.who}" if override.who else ""

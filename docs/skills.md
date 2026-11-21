@@ -278,9 +278,10 @@ parallel work, or a cold check that the record is enough to build from.
 ends it as `blocked`); reads the whole pack; builds exactly the item, so its
 criteria hold and the scenarios pass; runs the item's verification; stays inside
 its item (in an atlas, its item's repo), putting other work in a `wm note`; stops
-by the stopping rules; ends with two lines:
+by the stopping rules; ends with two lines, after any `DETAIL:` lines:
 
 ```text
+DETAIL: <one point>
 ITEM: <change> <item>
 RESULT: <done | partial | spec-gap | blocked>: <a short note>
 ```
@@ -304,6 +305,7 @@ changes were made; grades each finding by the severity rubric; ends with:
 
 ```text
 FINDING: <critical | warning | suggestion>: <place>: <what is wrong>
+DETAIL: <one point of its reasons>
 CHANGE: <change>
 VERDICT: <pass | changes <item>... | spec-gap>: <reasons>
 ```

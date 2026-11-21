@@ -104,6 +104,14 @@ def _who(record: Record, kind: RecordKind, by: str | None, *, human: bool = Fals
         raise Refusal(str(error)) from error
 
 
+def _details(details: Sequence[str]) -> tuple[str, ...]:
+    """The details to write under a record, each checked; refused before anything is written."""
+    try:
+        return tuple(records.check_detail(detail) for detail in details)
+    except RecordError as error:
+        raise Refusal(str(error)) from error
+
+
 def _render(entry: records.Record) -> str:
     try:
         return records.render(entry)
@@ -203,11 +211,13 @@ def _add_stopper(  # noqa: PLR0913 - the item, the stopper and who recorded it w
     *,
     today: datetime.date | None,
     by: str | None,
+    details: Sequence[str] = (),
 ) -> Done:
     record, change, state = _open(start, name)
     _require_accepted(state)
     item = find_item(change, number)
     note = one_line(text, "a reason")
+    listed = _details(details)
     if item.ticked:
         raise Refusal(f"Item {number} is already ticked, so there is nothing left to stop.")
     open_now = item.blocked if kind is RecordKind.BLOCKED else item.spec_gap
@@ -218,11 +228,11 @@ def _add_stopper(  # noqa: PLR0913 - the item, the stopper and who recorded it w
         )
     entry = records.Record(kind, _today(today), who=_who(record, kind, by), text=note, item=number)
     line = _render(entry)
-    paths = _write_tasks(record, change, append_log(_tasks(change), line))
+    paths = _write_tasks(record, change, append_log(_tasks(change), line, details=listed))
     return Done(f'Wrote "{line}" to the Log of {name}.', paths)
 
 
-def block(
+def block(  # noqa: PLR0913 - the item, the reason, its details and who
     start: Path,
     name: str,
     number: str,
@@ -230,12 +240,15 @@ def block(
     today: datetime.date | None = None,
     *,
     by: str | None = None,
+    details: Sequence[str] = (),
 ) -> Done:
     """Record that an item is blocked, and why."""
-    return _add_stopper(start, name, number, RecordKind.BLOCKED, reason, today=today, by=by)
+    return _add_stopper(
+        start, name, number, RecordKind.BLOCKED, reason, today=today, by=by, details=details
+    )
 
 
-def report_gap(
+def report_gap(  # noqa: PLR0913 - the item, what is missing, its details and who
     start: Path,
     name: str,
     number: str,
@@ -243,12 +256,15 @@ def report_gap(
     today: datetime.date | None = None,
     *,
     by: str | None = None,
+    details: Sequence[str] = (),
 ) -> Done:
     """Record that the record wasn't enough to build an item: a spec gap."""
-    return _add_stopper(start, name, number, RecordKind.GAP, note, today=today, by=by)
+    return _add_stopper(
+        start, name, number, RecordKind.GAP, note, today=today, by=by, details=details
+    )
 
 
-def revise(
+def revise(  # noqa: PLR0913 - the reason, the parts it changed, its details and who
     start: Path,
     name: str,
     why: str,
@@ -256,10 +272,12 @@ def revise(
     *,
     parts: Sequence[str] = (),
     by: str | None = None,
+    details: Sequence[str] = (),
 ) -> Done:
     """Record why an accepted change was edited, and which parts the edit changed."""
     record, change, _ = _open(start, name)
     text = one_line(why, "why the change was revised")
+    listed = _details(details)
     if change.acceptance is None:
         raise Refusal(
             f'The change "{name}" has never been accepted, so there is no acceptance to revise. '
@@ -280,7 +298,7 @@ def revise(
         text=text,
         parts=tuple(dict.fromkeys(parts)) or None,
     )
-    paths = _write_tasks(record, change, append_log(_tasks(change), _render(entry)))
+    paths = _write_tasks(record, change, append_log(_tasks(change), _render(entry), details=listed))
     return Done(
         f'Recorded the revision of "{name}". The human accepts it again with "wm accept {name}".',
         paths,
@@ -311,7 +329,7 @@ def _unrevised(change: Change) -> bool:
     return not any(entry.kind is RecordKind.REVISED for entry in log[accepted[-1] + 1 :])
 
 
-def add_note(
+def add_note(  # noqa: PLR0913 - the item, the note, its details and who
     start: Path,
     name: str,
     number: str,
@@ -319,6 +337,7 @@ def add_note(
     today: datetime.date | None = None,
     *,
     by: str | None = None,
+    details: Sequence[str] = (),
 ) -> Done:
     """Write a note about an item that is still to be finished, such as a partial result, into
     the change's Log."""
@@ -326,6 +345,7 @@ def add_note(
     _require_accepted(state)
     item = find_item(change, number)
     text = one_line(note, "a note")
+    listed = _details(details)
     if item.ticked:
         raise Refusal(f"Item {number} is already ticked, so there is nothing left to note.")
     entry = records.Record(
@@ -336,7 +356,7 @@ def add_note(
         item=number,
     )
     line = _render(entry)
-    paths = _write_tasks(record, change, append_log(_tasks(change), line))
+    paths = _write_tasks(record, change, append_log(_tasks(change), line, details=listed))
     return Done(f'Wrote "{line}" to the Log of {name}. Item {number} is still to apply.', paths)
 
 
@@ -403,7 +423,7 @@ def _require_reviewable(name: str, state: ChangeState) -> None:
         )
 
 
-def self_review(
+def self_review(  # noqa: PLR0913 - the summary, its findings and details, and who
     start: Path,
     name: str,
     summary: str,
@@ -411,11 +431,13 @@ def self_review(
     *,
     findings: Sequence[str] = (),
     by: str | None = None,
+    details: Sequence[str] = (),
 ) -> Done:
     """Record the planner's own review of the change, or of the items no review covers yet."""
     record, change, state = _open(start, name)
     _require_accepted(state)
     text = one_line(summary, "a summary of the review")
+    listed = _details(details)
     written, critical = _findings(record, findings)
     _require_reviewable(name, state)
     level = state.review.level
@@ -440,7 +462,7 @@ def self_review(
         text=text,
         covers=state.review.to_review,
     )
-    new_text = append_log(_tasks(change), _render(entry), written)
+    new_text = append_log(_tasks(change), _render(entry), written, details=listed)
     paths = _write_tasks(record, change, new_text)
     return Done(f"Recorded the self-review of {name}.", paths)
 
@@ -455,11 +477,13 @@ def verdict(  # noqa: PLR0913 - the verdict, and the items and findings it names
     items: Sequence[str] = (),
     findings: Sequence[str] = (),
     by: str | None = None,
+    details: Sequence[str] = (),
 ) -> Done:
     """Record a reviewer's verdict on the change, or on the items no review covers yet."""
     record, change, state = _open(start, name)
     _require_accepted(state)
     text = one_line(reasons, "the reviewer's reasons")
+    listed = _details(details)
     written, critical = _findings(record, findings)
     for number in items:
         find_item(change, number)
@@ -485,7 +509,7 @@ def verdict(  # noqa: PLR0913 - the verdict, and the items and findings it names
         text=text,
         covers=state.review.to_review,
     )
-    new_text = append_log(_tasks(change), _render(entry), written)
+    new_text = append_log(_tasks(change), _render(entry), written, details=listed)
     paths = _write_tasks(record, change, new_text)
     return Done(f"Recorded the verdict {result.value} on {name}.", paths)
 
@@ -516,7 +540,7 @@ def reopen(
     )
 
 
-def resolve(
+def resolve(  # noqa: PLR0913 - what was decided, its details and who
     start: Path,
     name: str,
     target: str,
@@ -524,6 +548,7 @@ def resolve(
     today: datetime.date,
     *,
     by: str | None = None,
+    details: Sequence[str] = (),
 ) -> Done:
     """Record what the human decided about an item or the review, and free it.
 
@@ -531,6 +556,7 @@ def resolve(
     """
     record, change, state = _open(start, name)
     text = one_line(decision, "what was decided")
+    listed = _details(details)
     entry = records.Record(
         RecordKind.RESOLVED, today, who=_who(record, RecordKind.RESOLVED, by), text=text
     )
@@ -542,7 +568,7 @@ def resolve(
                 f'Nothing about the review of "{name}" went to the human, so there is nothing '
                 "to resolve."
             )
-        paths = _write_tasks(record, change, append_log(_tasks(change), line))
+        paths = _write_tasks(record, change, append_log(_tasks(change), line, details=listed))
         return Done(f"Resolved the review of {name}. The change is reviewed again.", paths)
     item = find_item(change, target)
     item_state = _item_state(state, target)
@@ -552,7 +578,7 @@ def resolve(
             f"so there is nothing to resolve. For the change's review, run \"wm resolve {name} "
             f'{REVIEW_TARGET} "<what was decided>"".'
         )
-    new_text = append_log(_tasks(change), item_line, untick=target)
+    new_text = append_log(_tasks(change), item_line, untick=target, details=listed)
     paths = _write_tasks(record, change, new_text)
     return Done(f"Resolved item {target} of {name}. It is ready to be applied again.", paths)
 
@@ -657,20 +683,46 @@ _OUTCOME_FORM = (
 )
 
 
-def _outcome(name: str, proposal: Proposal, built: str | None, differs: str | None) -> str:
+def _values(given: str | Sequence[str] | None) -> list[str]:
+    """--built or --differs as a list: given once, more than once, or not at all."""
+    if given is None:
+        return []
+    return [given] if isinstance(given, str) else list(given)
+
+
+def _outcome_line(label: str, values: Sequence[str], what: str) -> str:
+    """One Outcome label: its value on the line, or several as nested bullets under it."""
+    texts = [one_line(value, what) for value in values]
+    if len(texts) == 1:
+        return label_line(label, texts[0])
+    return "\n".join([label_line(label), *(f"  - {text}" for text in texts)])
+
+
+def _outcome(
+    name: str,
+    proposal: Proposal,
+    built: str | Sequence[str] | None,
+    differs: str | Sequence[str] | None,
+) -> str:
     """The Outcome to write: from --built and --differs, or the one in the proposal."""
-    if differs is not None and built is None:
+    built_values, differs_values = _values(built), _values(differs)
+    if differs_values and not built_values:
         raise Refusal("--differs goes with --built. Pass both, or neither.")
     existing = proposal.outcome
-    if built is not None:
+    if built_values:
         if existing:
             raise Refusal(
                 f'The proposal of "{name}" already has an outcome. Drop --built and --differs, '
                 "or edit the outcome in the proposal."
             )
-        text = one_line(built, "what was built")
-        diff = one_line(differs, "how it differs from the proposal") if differs else NONE
-        return f"{label_line(BUILT, text)}\n{label_line(DIFFERS, diff)}"
+        return "\n".join(
+            [
+                _outcome_line(BUILT, built_values, "what was built"),
+                _outcome_line(
+                    DIFFERS, differs_values or [NONE], "how it differs from the proposal"
+                ),
+            ]
+        )
     if not existing:
         raise Refusal(
             'Archiving records what came of the change. Pass --built "<what was built>" and, '
@@ -793,8 +845,8 @@ def archive(  # noqa: PLR0913 - the outcome's two parts, the override and who
     name: str,
     today: datetime.date,
     *,
-    built: str | None = None,
-    differs: str | None = None,
+    built: str | Sequence[str] | None = None,
+    differs: str | Sequence[str] | None = None,
     override: str | None = None,
     by: str | None = None,
 ) -> Done:

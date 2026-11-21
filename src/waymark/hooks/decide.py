@@ -49,6 +49,7 @@ _VERDICT = re.compile(
     re.MULTILINE,
 )
 _FINDING = re.compile(r"^\s*FINDING:\s*(.*?)\s*$", re.MULTILINE)
+_DETAIL = re.compile(r"^\s*DETAIL:\s*(.*?)\s*$", re.MULTILINE)
 
 _AGENT_ROLES = {assets.IMPLEMENTER: IMPLEMENT, assets.REVIEWER: REVIEW}
 _HANDBACK_TRIES = 2
@@ -377,6 +378,11 @@ def _ending(role: Role) -> str:
     )
 
 
+def _details(message: str) -> list[str]:
+    """The DETAIL lines of an agent's message, in order, leaving out empty ones."""
+    return [detail for detail in _DETAIL.findall(message) if detail]
+
+
 def _record_verdict(project: Project, message: str, today: datetime.date) -> Done:
     """Write the reviewer's verdict on the change, with the items and findings it names."""
     address = _CHANGE_LINE.findall(message)
@@ -402,6 +408,7 @@ def _record_verdict(project: Project, message: str, today: datetime.date) -> Don
         items=items,
         findings=findings,
         by=REVIEWER,
+        details=_details(message),
     )
 
 
@@ -417,12 +424,15 @@ def _record(project: Project, role: Role, message: str, today: datetime.date) ->
     root = project.root
     if word == "done":
         return lifecycle.tick(root, name, number, today, by=IMPLEMENTER)
+    details = _details(message)
     if word == "blocked":
-        return lifecycle.block(root, name, number, note, today, by=IMPLEMENTER)
+        return lifecycle.block(root, name, number, note, today, by=IMPLEMENTER, details=details)
     if word == "spec-gap":
-        return lifecycle.report_gap(root, name, number, note, today, by=IMPLEMENTER)
+        return lifecycle.report_gap(
+            root, name, number, note, today, by=IMPLEMENTER, details=details
+        )
     text = f"partial: {note}" if note else "partial"
-    return lifecycle.add_note(root, name, number, text, today, by=IMPLEMENTER)
+    return lifecycle.add_note(root, name, number, text, today, by=IMPLEMENTER, details=details)
 
 
 def _gave_up(role: Role, refusal: Refusal) -> Decision:
