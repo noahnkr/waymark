@@ -21,6 +21,7 @@ from waymark.record.state import (
     derive_state,
     led_to_done,
     milestone_links,
+    revised_ticked,
 )
 from waymark.record.terms import ReviewLevel
 from waymark.services.common import install_hint, open_record
@@ -63,6 +64,7 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
             )
             found.append(Finding(Severity.WARNING, path, WHOLE_FILE, "not-archived", message))
         found.extend(_review_level_findings(record, name))
+        found.extend(_revised_ticked_findings(record, name))
     found.extend(
         Finding(Severity.WARNING, "changes", WHOLE_FILE, "overlap", conflict.message)
         for conflict in state.overlaps
@@ -93,6 +95,30 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
                 )
             )
     return found
+
+
+def _revised_ticked_findings(record: Record, name: str) -> list[Finding]:
+    """A revision that changed an item already ticked, which nothing reopened or ticked since.
+
+    Whether an item was ticked is read from the Log: its latest ``(ticked)``,
+    ``(reopened)`` or item ``(resolved)`` record before the revision.
+    """
+    tasks = record.changes[name].tasks
+    if tasks is None:
+        return []
+    pending = revised_ticked(tasks)
+    return [
+        Finding(
+            Severity.WARNING,
+            tasks.doc.path,
+            index + 1,
+            "revised-ticked-item",
+            f"Item {number} was revised after it was ticked, and nothing reopened it since. "
+            f'Reopen it with "wm reopen {name} {number} --reason "<why>"", or tick it again '
+            "once its new criteria hold.",
+        )
+        for number, index in pending.items()
+    ]
 
 
 def _review_level_findings(record: Record, name: str) -> list[Finding]:

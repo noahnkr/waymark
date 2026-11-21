@@ -19,7 +19,7 @@ from waymark.record.artifacts.changes import (
 from waymark.record.artifacts.deltas import delta_is_merged, delta_mismatches
 from waymark.record.artifacts.explorations import Exploration
 from waymark.record.artifacts.milestones import Milestone, RoadmapEntry
-from waymark.record.artifacts.tasks import Item, ReviewRecord
+from waymark.record.artifacts.tasks import Item, ReviewRecord, Tasks
 from waymark.record.evidence.fingerprint import change_fingerprint
 from waymark.record.evidence.records import RecordKind
 from waymark.record.markdown import labels
@@ -165,6 +165,8 @@ class ChangeState:
     review: ReviewState
     conflicts: tuple[Conflict, ...]
     next_step: NextStep
+    revised: tuple[str, ...] = ()
+    """Ticked items a revision changed that nothing has reopened or ticked again since."""
 
     @property
     def applied(self) -> bool:
@@ -274,7 +276,18 @@ def review_state(change: Change, default: ReviewLevel) -> ReviewState:
     numbers = tuple(item.number for item in items)
     uncovered: tuple[str, ...] = ()
     if passing and level is not ReviewLevel.NONE:
-        covered = {number for record in passing for number in _covered(record, numbers)}
+        reopened = {
+            item.number: max(
+                (r.index for r in item.records if r.kind is RecordKind.REOPENED), default=-1
+            )
+            for item in items
+        }
+        covered = {
+            number
+            for record in passing
+            for number in _covered(record, numbers)
+            if reopened.get(number, -1) < record.index
+        }
         uncovered = tuple(
             item.number for item in items if item.ticked and item.number not in covered
         )
@@ -401,10 +414,41 @@ def _named(numbers: tuple[str, ...]) -> str:
     return f"item {numbers[0]}" if len(numbers) == 1 else f"items {', '.join(numbers)}"
 
 
-def _item_step(items: tuple[ItemState, ...], review: ReviewState) -> NextStep:
+def revised_ticked(tasks: Tasks | None) -> dict[str, int]:
+    """Items a revision changed while the Log shows them ticked, which no later
+    ``(ticked)``, ``(reopened)`` or item ``(resolved)`` record settles, with the line index
+    of the revision. An item the change no longer has is left out, in the task list's order."""
+    if tasks is None:
+        return {}
+    ticked: dict[str, bool] = {}
+    pending: dict[str, int] = {}
+    for entry in tasks.log:
+        number = entry.item
+        if entry.kind is RecordKind.TICKED and number:
+            ticked[number] = True
+            pending.pop(number, None)
+        elif entry.kind in (RecordKind.REOPENED, RecordKind.RESOLVED) and number:
+            ticked[number] = False
+            pending.pop(number, None)
+        elif entry.kind is RecordKind.REVISED:
+            for part in entry.parts:
+                if ticked.get(part):
+                    pending[part] = entry.index
+    return {item.number: pending[item.number] for item in tasks.items if item.number in pending}
+
+
+REVISED_REASON = "Reopen the item: it was revised after it was ticked."
+"""The reason on the step that asks for a revised ticked item to be reopened."""
+
+
+def _item_step(  # noqa: PLR0911 - one return per kind of step
+    items: tuple[ItemState, ...], review: ReviewState, revised: tuple[str, ...] = ()
+) -> NextStep:
     """The next item to apply, the change's review, or what waits on the human."""
     if review.escalated:
         return NextStep(StepKind.RESOLVE_ITEMS, human=True, reason=review.escalated)
+    if revised:
+        return NextStep(StepKind.APPLY, revised[0], reason=REVISED_REASON)
     for item in items:
         if item.redo and item.number in review.reopen:
             return NextStep(
@@ -437,6 +481,7 @@ def change_state(
         item_state(item, review_records) for item in (change.tasks.items if change.tasks else ())
     )
     review = review_state(change, record.default_review)
+    revised = tuple(revised_ticked(change.tasks))
     blocking = mismatches(record, change)
     conflicts = (*blocking, *(c for c in record_overlaps if change.name in c.changes))
     acceptance = acceptance_state(record, change)
@@ -454,7 +499,7 @@ def change_state(
         )
         next_step = NextStep(StepKind.ACCEPT, human=True, reason=why)
     else:
-        next_step = _item_step(items, review)
+        next_step = _item_step(items, review, revised)
         if next_step.kind is StepKind.ARCHIVE and not blocking:
             phase = Phase.APPLIED
         else:
@@ -474,6 +519,7 @@ def change_state(
         review=review,
         conflicts=tuple(conflicts),
         next_step=next_step,
+        revised=revised,
     )
 
 

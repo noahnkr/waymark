@@ -63,7 +63,7 @@ Every command that writes a record SHALL accept `--by <who>`, and `--by` SHALL t
 - THEN it is refused with a reason that names `--by implementer`, and nothing is written
 
 ### Requirement: Item records
-`wm` SHALL write the records about one item into the change's `## Log`, naming the item straight after the kind: `(ticked)` from `wm tick` and from an implementer's `done` ending, `(blocked)` from `wm block`, `(gap)` from `wm gap`, `(note)` from `wm note`, `(reopened)` from `wm reopen` and `(resolved)` from `wm resolve <change> <item>`. An item SHALL be blocked while the Log has a `(blocked)` or `(gap)` record for it with no `(resolved)` record for it after that one. Resolving an item SHALL add the `(resolved)` record and keep the records it resolves. An item's tick SHALL stay its checkbox, and a `(ticked)` record SHALL NOT withdraw acceptance.
+`wm` SHALL write the records about one item into the change's `## Log`, naming the item straight after the kind: `(ticked)` from `wm tick` and from an implementer's `done` ending, `(blocked)` from `wm block`, `(gap)` from `wm gap`, `(note)` from `wm note`, `(reopened)` from `wm reopen`, with the reason given as its text when there is one, and `(resolved)` from `wm resolve <change> <item>`. An item SHALL be blocked while the Log has a `(blocked)` or `(gap)` record for it with no `(resolved)` record for it after that one. Resolving an item SHALL add the `(resolved)` record and keep the records it resolves. An item's tick SHALL stay its checkbox, and a `(ticked)` record SHALL NOT withdraw acceptance.
 
 #### Scenario: Blocked item
 - GIVEN an accepted change with item 1.2 not ticked, and a git user named Ada
@@ -94,6 +94,12 @@ Every command that writes a record SHALL accept `--by <who>`, and `--by` SHALL t
 - GIVEN an accepted change with item 1.3 not ticked
 - WHEN its implementer ends with `ITEM: <change> 1.3` and `RESULT: done: <note>` on 2026-11-20
 - THEN item 1.3 is ticked, and the Log ends with `2026-11-20 (ticked) 1.3 by implementer`
+
+
+#### Scenario: Reopened with a reason
+- GIVEN an accepted change with item 1.2 ticked and no open review naming it, and a git user named Ada
+- WHEN the planner runs `wm reopen <change> 1.2 --reason "its criteria changed"` on 2026-11-20
+- THEN the Log ends with `2026-11-20 (reopened) 1.2 by planner for Ada: its criteria changed`
 
 ### Requirement: Notes written with wm note
 `wm note <change> <item> "<text>"` SHALL write a `(note)` record naming the item into the `## Log` of an accepted change whose item isn't ticked. It SHALL refuse an item that is already ticked, and a change that isn't accepted. A note SHALL NOT withdraw acceptance.

@@ -245,14 +245,15 @@ wm verdict <change> <pass|changes|spec-gap> <reasons> [--items ITEM] [--finding 
 
 ## wm reopen
 
-Reopen an item that a review of its change named to rebuild.
+Reopen an item that a review of its change named to rebuild, or any ticked item given a reason.
 
 ```
-wm reopen <change> <item> [--by NAME]
+wm reopen <change> <item> [--reason TEXT] [--by NAME]
 ```
 
 - `change`: the change's name
 - `item`: the item's number, for example 1.2
+- `--reason`: why the item goes back to apply; needed when no review names it
 - `--by`: who the record names as its writer (default: your git name for your own acts, "planner for <your git name>" for what the planner writes)
 
 ## wm resolve

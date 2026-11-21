@@ -109,6 +109,8 @@ class KindSpec:
     has_text: bool
     level: Level
     shape: str
+    optional_text: bool = False
+    """Whether a kind without required text may still carry one, as ``(reopened)`` may."""
 
 
 HUMAN_KINDS = frozenset(
@@ -160,7 +162,8 @@ KINDS: dict[RecordKind, KindSpec] = {
         Grammar.ITEM,
         has_text=False,
         level=Level.ITEM,
-        shape="YYYY-MM-DD (reopened) <item> [by <who>]",
+        shape="YYYY-MM-DD (reopened) <item> [by <who>][: <reason>]",
+        optional_text=True,
     ),
     RecordKind.BLOCKED: KindSpec(
         Grammar.ITEM,
@@ -327,6 +330,8 @@ def render(record: Record) -> str:
         if not record.text:
             raise RecordError(f'A "{record.kind.value}" record needs a text.')
         line += _TEXT_SEPARATOR + record.text
+    elif spec.optional_text and record.text:
+        line += _TEXT_SEPARATOR + record.text
     return line
 
 
@@ -391,12 +396,15 @@ def parse(text: str) -> Record | ParseError | None:  # noqa: PLR0911 - one retur
         return _fail(kind, "Put a space after the colon.")
     if spec.has_text and (not separator or not line_text.strip()):
         return _fail(kind, "The text after the colon is missing.")
-    if not spec.has_text and separator:
+    if not spec.has_text and separator and not spec.optional_text:
         return _fail(kind, "This kind of record has no text after a colon.")
+    if spec.optional_text and separator and not line_text.strip():
+        return _fail(kind, "The text after the colon is missing.")
     words, who = _split_who(body.strip())
     if who == "":
         return _fail(kind, 'The name after "by" is missing.')
-    text_value = line_text.strip() if spec.has_text else None
+    text_value = line_text.strip() if spec.has_text or spec.optional_text else None
+    text_value = text_value or None
     return _built(Record(kind, date, who=who, text=text_value), spec.grammar, words)
 
 

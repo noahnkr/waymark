@@ -276,7 +276,9 @@ def _verdict(args: argparse.Namespace) -> int:
 
 
 def _reopen(args: argparse.Namespace) -> int:
-    return _report(lifecycle.reopen(_here(), args.change, args.item, _today(), by=args.by))
+    return _report(
+        lifecycle.reopen(_here(), args.change, args.item, _today(), by=args.by, reason=args.reason)
+    )
 
 
 def _resolve(args: argparse.Namespace) -> int:
@@ -649,14 +651,19 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915 - one flat list 
     _by(verdict)
     _detail(verdict)
     verdict.set_defaults(handler=_verdict)
-    _by(
-        _item_command(
-            commands,
-            "reopen",
-            _reopen,
-            "Reopen an item that a review of its change named to rebuild.",
-        )
+    reopen = _item_command(
+        commands,
+        "reopen",
+        _reopen,
+        "Reopen an item that a review of its change named to rebuild, or any ticked item "
+        "given a reason.",
     )
+    reopen.add_argument(
+        "--reason",
+        metavar="TEXT",
+        help="why the item goes back to apply; needed when no review names it",
+    )
+    _by(reopen)
     summary = (
         "Record what was decided about an item or a change's review that went to the human, "
         "and free it."

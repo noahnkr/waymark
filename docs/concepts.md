@@ -168,6 +168,14 @@ item as `misplaced-record`.
 - **Revisions:** after editing an accepted change, the planner records why with
   `wm revise <change> "<why>" --parts <part>,...`. `wm accept` won't accept a
   change a second time until it has.
+- **Reopening:** a ticked item goes back to apply with
+  `wm reopen <change> <item> --reason "<why>"`, when its criteria change or your
+  decision on an escalated review rebuilds it. A review that named it needs no
+  reason. Once ticked again after a passing review, the item is reviewed again on
+  its own. When a revision names a ticked item that nothing reopened since,
+  `wm instructions` makes its reopen the next step, before any review or archive,
+  `wm archive` refuses the change, even with `--override`, and `wm check` warns
+  as `revised-ticked-item`.
 - **Never edited:** a later record supersedes an earlier one. `wm resolve` adds
   a `(resolved)` record and the blocker stays.
 - **Notes:** `wm note <change> <item> "<text>"` writes one about an unticked

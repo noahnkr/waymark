@@ -4,6 +4,14 @@ All notable changes to Waymark, one entry per release.
 
 ## [Unreleased]
 
+- **Reopen any ticked item.** `wm reopen <change> <item> --reason "<why>"`
+  sends a ticked item back to apply even when no review names it, and the
+  `(reopened)` record carries the reason. Once ticked again after a passing
+  review, the item gets a review of its own.
+- **A revised item goes back to apply.** When a `(revised)` record names a ticked
+  item that nothing reopened or ticked again since, `wm instructions` makes its
+  reopen the next step, before any review or archive, `wm archive` refuses the
+  change even with `--override`, and `wm check` warns as `revised-ticked-item`.
 - **Records as lists.** `wm note`, `wm block`, `wm gap`, `wm resolve`,
   `wm review --self`, `wm verdict` and `wm revise` take a repeatable
   `--detail "<text>"`, written as a sub-bullet under the record, after any

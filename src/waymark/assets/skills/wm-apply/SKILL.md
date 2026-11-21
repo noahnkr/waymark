@@ -26,7 +26,7 @@ You are the planner. You build each item yourself, from the record, unless its `
 
 ### Step `apply`
 
-- If the commands start with `wm reopen`, run it first: a review of the change named this item to rebuild. Read what the review found with `wm show <name>` before you start.
+- If the commands start with `wm reopen`, run it first. Either a review of the change named this item to rebuild, and you read what it found with `wm show <name>` before you start; or the item was revised after it was ticked, and you give `--reason` with what the revision changed. `wm` asks for this before any review or archive, and `wm archive` refuses until it is done.
 - `wm instructions` says who builds the item. An item with `- **Build:** planner`, you build yourself; one with `- **Build:** implementer`, you delegate to an implementer; one with `- **Build:** human`, you hand to the human.
 
 **An item with `- **Build:** planner`.**
@@ -86,7 +86,7 @@ Commit the review record once it is written.
 
 ### Step `resolve-items`
 
-Only what waits on the human is left. Run `wm inbox` and bring each one to them: the blocker, the spec gap, or the verdict. A spec gap is fixed by revising the change with the `wm-update` skill. When the fix, or a review, only needs more work and no change to the deltas or the design, add a new item through the `wm-update` skill, with the human's confirmation: it keeps the acceptance, and is built like any other. Once they have decided, run `wm resolve <name> <item> "<what was decided>"` for an item, or `wm resolve <name> review "<what was decided>"` for the change's review.
+Only what waits on the human is left. Run `wm inbox` and bring each one to them: the blocker, the spec gap, or the verdict. A spec gap is fixed by revising the change with the `wm-update` skill. When the fix, or a review, only needs more work and no change to the deltas or the design, add a new item through the `wm-update` skill, with the human's confirmation: it keeps the acceptance, and is built like any other. Once they have decided, run `wm resolve <name> <item> "<what was decided>"` for an item, or `wm resolve <name> review "<what was decided>"` for the change's review. Resolving the review closes what it named, so when their decision is to rebuild items, reopen each one after it with `wm reopen <name> <item> --reason "<the decision>"`. Each one gets a review of its own once it is ticked again.
 
 ### What `wm` writes
 

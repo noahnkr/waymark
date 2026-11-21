@@ -640,3 +640,195 @@ def test_a_reviewers_detail_with_a_findings_shape_is_refused(latest: Workspace) 
     assert not decision.allow
     assert "finding's shape" in decision.reason
     assert latest.read(TASKS_FILE) == before
+
+
+def test_scenario_ticked_item_reopened_with_a_reason(latest: Workspace) -> None:
+    """Requirement "Reopening a ticked item": the tick comes off, with the reason recorded."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    lifecycle.reopen(latest.root, NAME, "1.1", DAY, reason="its criteria changed")
+    text = latest.read(TASKS_FILE)
+    assert "- [ ] 1.1" in text
+    assert text.endswith(
+        "\n- 2026-11-20 (reopened) 1.1 by planner for Sam Doe: its criteria changed\n"
+    )
+    state = latest.change_state()
+    assert state.acceptance is AcceptanceState.VALID
+    assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
+
+
+def test_scenario_reopened_with_a_reason(latest: Workspace) -> None:
+    """Requirement "Item records": a (reopened) record may carry a reason."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="its criteria changed")
+    assert log(latest).endswith("(reopened) 1.2 by planner for Sam Doe: its criteria changed\n")
+    assert latest.record().changes[NAME].problems == ()
+
+
+def test_scenario_no_reason_given(latest: Workspace) -> None:
+    """Requirement "Reopening a ticked item": no review names it, so a reason is needed."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match="--reason"):
+        lifecycle.reopen(latest.root, NAME, "1.1", DAY)
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_scenario_item_not_ticked(latest: Workspace) -> None:
+    """Requirement "Reopening a ticked item": an item still to apply isn't reopened."""
+    accepted(latest)
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match=r"isn't ticked"):
+        lifecycle.reopen(latest.root, NAME, "1.1", DAY, reason="<why>")
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_an_unaccepted_change_is_not_reopened(latest: Workspace) -> None:
+    latest.change(tasks=TASKS)
+    with pytest.raises(Refusal):
+        lifecycle.reopen(latest.root, NAME, "1.1", DAY, reason="<why>")
+
+
+def test_scenario_item_reopened_after_a_pass(latest: Workspace) -> None:
+    """Requirement "Review of items added after a review": a reopened item is reviewed again."""
+    built(latest)
+    lifecycle.self_review(latest.root, NAME, "fine", DAY)
+    assert latest.change_state().applied
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="its criteria changed")
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    state = latest.change_state()
+    assert state.next_step.kind is StepKind.REVIEW
+    assert state.review.uncovered == ("1.2",)
+    with pytest.raises(Refusal, match=r"1\.2"):
+        lifecycle.archive(latest.root, NAME, DAY, built="Done.")
+    lifecycle.self_review(latest.root, NAME, "rebuilt", DAY)
+    assert log(latest).endswith("(self-review) covers 1.2 by planner for Sam Doe: rebuilt\n")
+    assert latest.change_state().applied
+
+
+def revised_codes(project: Workspace) -> list[tuple[str, str]]:
+    from waymark.services import check  # noqa: PLC0415
+
+    found = check.check(project.root, datetime.datetime(2026, 11, 20, tzinfo=datetime.UTC))
+    return [(f.code, f.message) for f in found if f.code == "revised-ticked-item"]
+
+
+def test_scenario_revised_item_still_ticked(latest: Workspace) -> None:
+    """Requirement "Revised item left ticked": a revision of a ticked item is reported."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    [(_, message)] = revised_codes(latest)
+    assert "Item 1.2 was revised after it was ticked" in message
+    assert "wm reopen add-limit 1.2" in message
+
+
+def test_scenario_revised_item_reopened(latest: Workspace) -> None:
+    """Requirement "Revised item left ticked": a reopen settles it."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    lifecycle.accept(latest.root, NAME, DAY)
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="its criteria changed")
+    assert revised_codes(latest) == []
+
+
+def test_scenario_revised_item_not_yet_ticked(latest: Workspace) -> None:
+    """Requirement "Revised item left ticked": an item still to apply isn't reported."""
+    accepted(latest)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    assert revised_codes(latest) == []
+
+
+def revised_after_a_pass(project: Workspace) -> None:
+    """Items 1.1 and 1.2 ticked and self-reviewed, then 1.2 revised and accepted again."""
+    built(project)
+    lifecycle.self_review(project.root, NAME, "fine", DAY)
+    project.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(project.root, NAME, "reworded", DAY, parts=["1.2"])
+    lifecycle.accept(project.root, NAME, DAY)
+
+
+def test_scenario_revised_item_is_the_next_step(latest: Workspace) -> None:
+    """Requirement "Revised item reopened before review": wm asks for the reopen first."""
+    from waymark.services.instructions import instructions  # noqa: PLC0415
+
+    revised_after_a_pass(latest)
+    step = instructions(latest.record(), None, NAME)
+    assert (step["step"], step["item"]) == ("apply", "1.2")
+    assert step["commands"][0] == (f'wm reopen {NAME} 1.2 --reason "<what the revision changed>"')
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="reworded")
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    assert latest.change_state().next_step.kind is StepKind.REVIEW
+
+
+def test_scenario_archive_refused_for_a_revised_item(latest: Workspace) -> None:
+    """Requirement "Revised item reopened before review": the archive can't pass it, even
+    with an override."""
+    revised_after_a_pass(latest)
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match=r"item 1\.2 was revised") as refusal:
+        lifecycle.archive(latest.root, NAME, DAY, built="Done.", override="looks fine")
+    assert "wm reopen" in str(refusal.value)
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_a_revised_item_since_removed_is_left_out(latest: Workspace) -> None:
+    """A revised ticked item that the change no longer has asks for nothing, and nothing breaks."""
+    revised_after_a_pass(latest)
+    latest.replace(
+        TASKS_FILE,
+        "- [x] 1.2 Document the limit\n"
+        "  - **Build:** planner\n"
+        "  - **Criteria:** the help names the limit\n"
+        "  - **Verify:** read the help text\n",
+        "",
+    )
+    from waymark.services.instructions import instructions  # noqa: PLC0415
+    from waymark.views import payloads  # noqa: PLC0415
+
+    lifecycle.revise(latest.root, NAME, "dropped 1.2", DAY)
+    state = latest.change_state()
+    assert state.revised == ()
+    assert revised_codes(latest) == []
+    assert instructions(latest.record(), None, NAME)["item"] != "1.2"
+    assert payloads.show(latest.record(), NAME)["name"] == NAME
+
+
+def test_an_item_resolution_settles_a_revised_item(latest: Workspace) -> None:
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    lifecycle.accept(latest.root, NAME, DAY)
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="reworded")
+    lifecycle.block(latest.root, NAME, "1.2", "waiting for the wording", DAY)
+    lifecycle.resolve(latest.root, NAME, "1.2", "use the old wording", DAY)
+    assert latest.change_state().revised == ()
+    assert revised_codes(latest) == []
+
+
+def test_an_escalated_review_comes_before_the_revised_item(latest: Workspace) -> None:
+    """Requirement "Revised item reopened before review": only a review sent to the human first."""
+    latest.change(tasks=TASKS, proposal_text=proposal(review="independent"))
+    lifecycle.accept(latest.root, NAME, DAY)
+    for number in ("1.1", "1.2"):
+        lifecycle.tick(latest.root, NAME, number, DAY)
+    for _ in range(2):
+        lifecycle.verdict(
+            latest.root, NAME, Verdict.CHANGES, "off", DAY, items=["1.1"], by="reviewer"
+        )
+        if latest.change_state().next_step.kind is StepKind.APPLY:
+            lifecycle.reopen(latest.root, NAME, "1.1", DAY)
+            lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    lifecycle.accept(latest.root, NAME, DAY)
+    state = latest.change_state()
+    assert state.revised == ("1.2",)
+    assert state.next_step.kind is StepKind.RESOLVE_ITEMS

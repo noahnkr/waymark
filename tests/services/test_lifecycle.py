@@ -286,14 +286,14 @@ def test_changes_verdict_names_items_the_change_has(project: Workspace) -> None:
 
 def test_changes_verdict_is_reopened_then_needs_an_independent_pass(project: Workspace) -> None:
     built(project)
-    assert "nothing to reopen" in refused(project, "reopen", "1.1", DAY)
+    assert "--reason" in refused(project, "reopen", "1.1", DAY)
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "off by one", DAY, items=["1.1"])
     assert (
         "- 2026-01-15 (review) changes 1.1; covers 1.1, 1.2 by planner for Sam Doe: off by one"
         in project.read(TASKS_FILE)
     )
     assert "wm reopen add-limit 1.1" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
-    assert "nothing to reopen" in refused(project, "reopen", "1.2", DAY)
+    assert "--reason" in refused(project, "reopen", "1.2", DAY)
 
     lifecycle.reopen(project.root, NAME, "1.1", DAY)
     text = project.read(TASKS_FILE)
@@ -320,7 +320,7 @@ def test_second_changes_verdict_waits_for_the_human_until_resolved(project: Work
     lifecycle.verdict(project.root, NAME, Verdict.CHANGES, "still off", DAY, items=["1.1"])
     state = project.change_state()
     assert (state.next_step.kind, state.next_step.human) == (StepKind.RESOLVE_ITEMS, True)
-    assert "nothing to reopen" in refused(project, "reopen", "1.1", DAY)
+    assert "--reason" in refused(project, "reopen", "1.1", DAY)
     assert "waits on the human" in refused(project, "verdict", Verdict.PASS, "fine", DAY)
 
     lifecycle.resolve(project.root, NAME, "review", "use an inclusive bound", DAY)
