@@ -37,3 +37,16 @@ In both, the record shows an item as done when it isn't.
   - A reopened item gets a review of its own once it is ticked again.
   - `wm check` warns about a revised item left ticked.
 - **Code:** the `(reopened)` kind in `record/evidence/records.py`, `reopen` in `services/lifecycle.py` and `cli.py`, the review state in `record/state.py`, a check in `services/check.py`, the `wm-update` and `wm-apply` skills, the docs and CHANGELOG.
+
+## Outcome
+
+- **Built:**
+  - wm reopen <change> <item> --reason reopens any ticked item of an accepted change, and the (reopened) record carries the reason.
+  - A review no longer covers an item reopened after it, so the item gets a review of its own.
+  - When a revision changes a ticked item, wm instructions makes its reopen the next step, wm archive refuses even with --override, and wm check warns as revised-ticked-item.
+  - The skills follow that step; the docs and CHANGELOG match.
+- **Differs:**
+  - Item 2.1 took two review rounds because skill wording kept missing the all-ticked case; the human's decision on the second review moved the rule into wm instructions and wm archive, added item 1.4, and named an item (resolved) in the warning's spec.
+  - The third review found a crash when a revised ticked item is removed; it was fixed with a test, and the fourth review passed.
+  - 2.1 and 2.2 were reopened and rebuilt through the change's own new step.
+  - Three suggestions are left open: design step 6's wording, the warning's offer to tick again, and nested quotes in the messages.

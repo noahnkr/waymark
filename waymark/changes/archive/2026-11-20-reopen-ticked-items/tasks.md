@@ -90,3 +90,4 @@
   - [suggestion] `waymark/changes/reopen-ticked-items/design.md Approach 6`: it still says wm-update step 3 runs `wm reopen` right after the revision, which contradicts the later decision "Who makes sure a revised item is reopened" and the skill as built
   - [suggestion] `src/waymark/services/check.py _revised_ticked_findings`: the warning offers "or tick it again once its new criteria hold", but `wm tick` refuses an item that is already ticked, so in practice reopening is the only way out; the wording comes from the acceptance delta
   - [suggestion] `src/waymark/services/lifecycle.py reopen and _archive_gate, src/waymark/services/check.py _revised_ticked_findings`: the messages still nest double quotes around the `wm reopen ... --reason "<why>"` command, which makes it hard to read and copy
+- 2026-11-20 (archived) by Noah Roberts
