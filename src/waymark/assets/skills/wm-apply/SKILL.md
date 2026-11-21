@@ -26,6 +26,7 @@ You are the planner. You build each item yourself, from the record, unless its `
 
 ### Step `apply`
 
+- First run `wm check`. For each `revised-ticked-item` warning, an item was revised after it was ticked: reopen it with `wm reopen <name> <item> --reason "<what the revision changed>"`, so it is built again against its new definition.
 - If the commands start with `wm reopen`, run it first: a review of the change named this item to rebuild. Read what the review found with `wm show <name>` before you start.
 - `wm instructions` says who builds the item. An item with `- **Build:** planner`, you build yourself; one with `- **Build:** implementer`, you delegate to an implementer; one with `- **Build:** human`, you hand to the human.
 

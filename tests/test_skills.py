@@ -154,3 +154,15 @@ def test_scenario_proposal_from_an_exploration() -> None:
     steps = section(assets.skill("wm-propose"), "Steps")
     naming = next(line for line in steps.splitlines() if line.startswith("3. **Name.**"))
     assert "--from <exploration>" in naming
+
+
+def test_skills_reopen_a_revised_item_after_acceptance_and_what_a_decision_rebuilds() -> None:
+    """Item 2.1 of reopen-ticked-items: the skills send a revised or rebuilt item back to apply."""
+    update = section(assets.skill("wm-update"), "Steps")
+    assert "once the human has accepted again, reopen it with `wm reopen" in update
+    assert "`wm reopen` needs an accepted change" in update
+    apply = assets.skill("wm-apply")
+    assert "`revised-ticked-item` warning" in apply
+    assert (
+        'reopen each one after it with `wm reopen <name> <item> --reason "<the decision>"`' in apply
+    )

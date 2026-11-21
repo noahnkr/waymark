@@ -48,3 +48,10 @@
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.2 by planner for Noah Roberts
+- 2026-11-20 (review) changes 2.1; covers 1.1, 1.2, 1.3, 2.1, 2.2 by reviewer: wm-update tells the planner to run wm reopen right after revising a ticked item, which is refused because the revision withdrew acceptance, and the skill stops before re-acceptance; it should say to reopen after wm accept when acceptance was withdrawn. 1.1, 1.2, 1.3 and 2.2 meet their criteria and scenarios.
+  - [critical] `src/waymark/assets/skills/wm-update/SKILL.md step 3`: it says to reopen a revised ticked item right after wm revise, but changing a ticked item's definition withdraws acceptance and wm reopen refuses a withdrawn change, while step 5 and When to stop end the skill until the human accepts again, so 2.1's criterion (wm-update reopens each ticked item a revision changes, with --reason) does not hold; fix by telling the planner to reopen right after the revision only when acceptance holds (for example an added item), and otherwise to reopen each revised ticked item once the human has run wm accept, in step 5, Show the human and When to stop as well
+  - [warning] `src/waymark/services/check.py _revised_ticked_findings`: an item (resolved) record also clears a pending warning, but the requirement names only later (ticked) or (reopened) records; no test covers this
+  - [warning] `tests/test_skills.py`: no test checks the new reopen text in wm-update or wm-apply, so a later edit could remove it unnoticed
+  - [suggestion] `src/waymark/services/lifecycle.py reopen and src/waymark/services/check.py`: the messages nest double quotes around the wm reopen command, which is hard to read and to copy
+- 2026-11-20 (reopened) 2.1 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
