@@ -19,7 +19,7 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       Terminal: the welcome screen's star grows in, the text appears, and the
       star twinkles until Enter. Answer the questions: a project, Claude Code
       selected, and no to the CI workflow. `wm init` lists what it created and
-      ends with the next step. Then: nothing is staged,
+      ends with the next step. Afterwards nothing is staged,
       `git status` shows only `waymark/` and `.gitignore` as new, and
       `git config core.hooksPath` prints nothing. `waymark/specs/`,
       `changes/`, `changes/archive/`, `explorations/`, `explorations/archive/`,
@@ -31,6 +31,9 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       run `wm init` there: it sets up this machine and changes nothing in
       `waymark/`. `git status` is clean, and `wm doctor` has no errors. Delete
       the clone.
+- [ ] **Retired skills.** Copy `.claude/skills/wm-pr/` to
+      `.claude/skills/wm-old/`, then run `wm update`. It prints
+      `removed: .claude/skills/wm-old/SKILL.md`, and the folder is gone.
 
 ## Keys in a raw terminal
 
@@ -54,10 +57,11 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 
 ## Propose and accept
 
-- [ ] Run `/wm-propose` for a small change with **three** items: one with
-      `- **Build:** planner` and two with `- **Build:** implementer`. Its proposal has
-      `- **Review:** independent`.
-      Not on the short path.
+- [ ] Run `/wm-propose` for a small change with **four** items: one with
+      `- **Build:** planner`, two with `- **Build:** implementer` and one with
+      `- **Build:** human`, such as a manual check. Its proposal has
+      `- **Review:** independent`. It is not on the short path. Its questions
+      are numbered Q1, Q2, and any options lettered A, B.
 - [ ] Ask the agent to run `wm accept <change>`. **The hook refuses it**, and the
       agent tells you to run it yourself.
 - [ ] Run `wm accept <change>` yourself.
@@ -66,58 +70,83 @@ Allow about an hour. Work in a scratch repository, never in a real project.
 
 - [ ] Run `/wm-apply`. **The planner builds the `planner` item itself**: it reads
       `wm context <change> <item> --for implement`, runs the checks the item
-      touches and ticks the item with `wm tick`. It starts no implementer.
-- [ ] For an `implementer` item, the planner starts the `wm-implementer` agent with a
-      prompt of exactly `<change> <item>`.
+      touches and ticks the item with `wm tick`. It starts no implementer. The
+      Log gets `<date> (ticked) <item> by planner for <you>`.
+- [ ] For an `implementer` item, the planner starts the `wm-implementer` agent
+      with a prompt of exactly `<change> <item>`.
 - [ ] Ask the planner to delegate an item with extra words in the prompt
       ("build 1.1 carefully"). **The hook refuses the delegation.**
 - [ ] While an implementer runs, check in its transcript that it starts from
       `wm context <change> <item> --for implement`.
-- [ ] **Agent type (G46).** The hooks recognize the implementer: an implementer's
+- [ ] **Agent type.** The hooks recognize the implementer: an implementer's
       attempt to edit the proposal or a spec is refused with wm's reason. If it
       doesn't try, ask the planner to delegate an item whose criteria invite it.
-- [ ] **The denial reaches the agent (G46).** A refused tool call shows wm's
-      reason to the agent, and the agent changes course.
-- [ ] **Edits are read correctly (G46).** After an agent edits a record file, a
+- [ ] **The implementer's note.** An implementer's `wm note` without
+      `--by implementer` is refused with the hook's reason; with it, the note is
+      written `by implementer`.
+- [ ] **The denial reaches the agent.** A refused tool call shows wm's reason to
+      the agent, and the agent changes course.
+- [ ] **Edits are read correctly.** After an agent edits a record file, a
       deliberately malformed line is reported back right away (ask the planner to
       add a stray line under an item in `tasks.md`).
-- [ ] **The ending is recorded in the background (G46).** Claude Code runs
-      agents in the background by default, and they hand their report back
-      through `SubagentHandback`. Let the planner start an implementer as it
-      chooses. When the implementer hands back its report, its `ITEM:` and
-      `RESULT:` lines are recorded: the item is ticked in `tasks.md` without
-      anyone running `wm tick`. The agent then stops without being asked for
-      its ending again.
-- [ ] **The ending is recorded in the foreground (G46).** Ask the planner to run
-      the next implementer in the foreground and wait for it. When the
-      implementer stops, the `ITEM:` and `RESULT:` lines in its final message are
-      recorded: the item is ticked in `tasks.md` without anyone running
-      `wm tick`.
-- [ ] The planner commits each item's work with a conventional message once
-      the item is ticked. No item gets a review of its own.
-- [ ] Once every item is ticked, the planner starts the `wm-reviewer` agent
-      with a prompt of exactly `<change>`. Ask it to start one with
-      `<change> <item>` first: **the hook refuses it**.
-- [ ] The reviewer reads `wm context <change> --for review`. Its verdict is
-      written in the `## Log` section at the end of `tasks.md` as a
-      `<date> (review) <verdict> by reviewer` record in the reviewer's own
-      words, with any `FINDING:` lines under it. The reviewer can't edit files (ask it to fix something; it is
-      refused).
+- [ ] **The ending is recorded in the background.** Claude Code runs agents in
+      the background by default, and they hand their report back through
+      `SubagentHandback`. Let the planner start an implementer as it chooses.
+      When the implementer hands back its report, its `ITEM:` and `RESULT:`
+      lines are recorded: the item is ticked in `tasks.md`, and the Log gets
+      `<date> (ticked) <item> by implementer`, without anyone running `wm tick`.
+      The agent then stops without being asked for its ending again.
+- [ ] **The ending is recorded in the foreground.** Ask the planner to run the
+      next implementer in the foreground and wait for it. When it stops, the
+      `ITEM:` and `RESULT:` lines in its final message are recorded the same way.
+- [ ] **Details.** Ask for an implementer ending of `partial` or `blocked` with
+      two `DETAIL:` lines before it: both appear as sub-bullets under its record.
+- [ ] **The human item.** The planner hands you the `human` item with its
+      criteria and verification as steps, and ticks it only after your yes; the
+      Log names you. Ask it to delegate that item: **the hook refuses it**.
+- [ ] The planner commits each item's work with a conventional message once the
+      item is ticked. No item gets a review of its own.
+- [ ] Once every item is ticked, and before the review is recorded, try to
+      archive: **refused**, saying the change is missing the independent review
+      of the change.
+- [ ] The planner starts the `wm-reviewer` agent with a prompt of exactly
+      `<change>`. Ask it to start one with `<change> <item>` first: **the hook
+      refuses it**.
+- [ ] The reviewer reads `wm context <change> --for review`, which names the
+      item you did. Its verdict is written in the `## Log` section at the end of
+      `tasks.md` as `<date> (review) <verdict> covers <items> by reviewer:
+      <reasons>`, in the reviewer's own words, with any `FINDING:` and `DETAIL:`
+      lines under it. The reviewer can't edit files (ask it to fix something;
+      it is refused).
 - [ ] **A request for changes.** If the reviewer asked for changes, the items
       it named are reopened, rebuilt and ticked, and the reviewer is started
       again. Otherwise record one yourself with
       `wm verdict <change> changes "<reasons>" --items <item>` and check that
-      `wm instructions` reopens that item.
+      `wm instructions` gives `wm reopen <change> <item>` as its first command.
+
+## Revise a ticked item
+
+- [ ] After a passing review, run `/wm-update` to change the criteria of a ticked
+      item. It confirms the edit first, then records
+      `wm revise <change> "<why>" --parts <item>`.
+- [ ] Before that record, `wm accept <change>` is refused, naming `wm revise`.
+      After it, run `wm accept <change>` yourself.
+- [ ] `wm instructions` gives
+      `wm reopen <change> <item> --reason "<what the revision changed>"` as the
+      next step, and `wm archive <change> --override "x"` is **refused**, naming
+      the item. `wm check` warns `revised-ticked-item`.
+- [ ] Let `/wm-apply` reopen, rebuild and tick the item: it gets a review of its
+      own, covering that item only.
 
 ## Archive
 
-- [ ] Before the review is recorded, try to archive: **refused**, naming the
-      missing review of the change.
 - [ ] Ask the agent to run `wm archive <change> --override "x"`. **Refused**.
-- [ ] Run `/wm-archive` on the change's branch, before any pull request. The
-      change moves to `changes/archive/<date>-<change>/`, the deltas are in the
-      specs, and the proposal has an Outcome with `- **Built:**` and `- **Differs:**` lines. The archive is committed on the
-      branch.
+- [ ] Run `/wm-archive` on the change's branch, before any pull request. It
+      shows the outcome it will write and runs `wm archive` itself after your
+      yes. The change moves to `changes/archive/<date>-<change>/`, the deltas are
+      in the specs, the proposal has an Outcome with `- **Built:**` and
+      `- **Differs:**` lines, and the change's Log ends with
+      `<date> (archived) by <you>`. The archive is committed on the branch.
 - [ ] Run `wm pr <change>`: it describes the archived change, with its
       Outcome, and links to the proposal in the archived folder.
 - [ ] `wm check` passes, and `wm status` shows the change as recently archived.
@@ -140,18 +169,15 @@ Allow about an hour. Work in a scratch repository, never in a real project.
       `wm status` shows no change in flight.
 - [ ] Ask `/wm-propose` for something that changes a requirement. It picks the
       short or full path itself and says why, without asking you which.
-- [ ] Copy `.claude/skills/wm-pr/` to `.claude/skills/wm-old/`, then run
-      `wm update`. It prints `removed: .claude/skills/wm-old/SKILL.md`, and the
-      folder is gone.
 
 ## Atlas (when the release touches multi-repo)
 
 - [ ] Make a scratch atlas and two code repos beside it. Run `wm init --atlas`,
       add the repos to the settings, `wm atlas register`, `wm atlas doctor`.
-- [ ] **Attached folders (G57).** Start Claude Code in the atlas: it can read
+- [ ] **Attached folders.** Start Claude Code in the atlas: it can read
       files in both code repos without `/add-dir`, from
       `.claude/settings.local.json`.
-- [ ] **Hooks see those edits (G57).** An implementer's edit in the wrong code
+- [ ] **Hooks see those edits.** An implementer's edit in the wrong code
       repo is refused; in its item's repo it is allowed.
 - [ ] **The planner's edits.** While an item with `- **Build:** planner` that
       names one repo is being built, the planner's edit in that repo is
@@ -166,4 +192,5 @@ Smoke test: passed on <date> with Claude Code <version> on <operating system>.
 ```
 
 List anything that failed and how it was fixed. In the README, replace the
-"Version last verified" value with the version you tested.
+"Version last verified" value with the Claude Code version and the operating
+system you tested on.

@@ -1,7 +1,7 @@
 # Getting started
 
 This guide takes you from nothing to your first change, made with Waymark on your
-own code. It takes one sitting. The first change is the tutorial: there is no demo
+own code. It takes one sitting. The first change is the tutorial. There is no demo
 project.
 
 ## 1. Install
@@ -49,7 +49,9 @@ output isn't a terminal, as when an agent runs it.
 This writes:
 
 - `waymark/`, the record: `config.toml` (the settings, including the `wm`
-  version this project pins) and `charter.md` (a skeleton to fill in);
+  version this project pins), `charter.md` (a skeleton to fill in), and the
+  empty record folders (`specs/`, `changes/`, `explorations/`, `milestones/`,
+  `resources/` and their `archive/` folders), each with a `.gitkeep`;
 - the skills in `.agents/skills/`, with copies in `.claude/skills/`, the two
   agent definitions in `.claude/agents/`, and the hooks in
   `.claude/settings.json` (merged into any settings you already have);
@@ -60,8 +62,8 @@ This writes:
 `wm init` installs no git hooks and changes no git setting.
 
 Commit `waymark/` and `.gitignore`, and the workflow if `wm init` added it.
-They are the only files `wm init` wrote that `git status` shows. Then run `wm doctor` to check that everything is in place; it
-changes nothing.
+They are the only files `wm init` wrote that `git status` shows. Then run
+`wm doctor` to check that everything is in place; it changes nothing.
 
 The block sits between two marker lines. `wm` rewrites what is between them, and
 leaves the rest of `.gitignore` alone. With Claude Code, the block lists:
@@ -91,12 +93,16 @@ and sets up this machine: it writes the agent tool files and
 adds the `.gitignore` block if it is missing. It doesn't change anything in
 `waymark/`. Run it again and it says the machine is already set up.
 
+In a clone, `wm init` takes no `--atlas` or `--tool`: it sets the machine up from
+the project's settings, and you change the agent tools by editing `agent_tools`
+in `waymark/config.toml`, then running `wm update`.
+
 `wm init` is refused in a clone when the installed `wm` isn't the pinned
 version; the message gives the command that installs it. It is also refused
 when the record is in another format than the installed `wm` reads; the message
 says to install the `wm` version that wrote it.
 
-## 3. Write the charter: the `wm-kickoff` skill
+## 3. Write the charter: `/wm-kickoff`
 
 Start Claude Code in the repository and run the **`/wm-kickoff`** skill. It
 interviews you about what the project is for (its vision, goals, non-goals,
@@ -104,7 +110,7 @@ constraints and glossary), looks at the repository to fill in the facts every
 agent must know, and drafts `waymark/charter.md` and the settings. You edit and
 approve the result. Nothing in the charter is taken from a guess.
 
-## 4. Your first change: the `wm-onboard` skill
+## 4. Your first change: `/wm-onboard`
 
 At the end of the kickoff, accept its offer of **`/wm-onboard`** (or run it
 yourself). It takes one real, small change on your own code through every step,
@@ -112,14 +118,14 @@ and explains each one as it happens:
 
 1. **Propose.** The agent drafts a proposal: why, what changes, non-goals,
    impact (the specs it touches, what users will see change, and the code), and
-   the change's review level when it isn't the project default. A
-   small change takes the short path: proposal and tasks, no design. Work that
+   its `- **Review:**` level, which starts at the project default. A small
+   change takes the short path: proposal, deltas and tasks, no design. Work that
    changes no requirement needs no change at all: `/wm-propose` takes it on
    the [tiny path](concepts.md#paths).
 2. **Specs.** It writes the change's deltas against the living specs. On an
    existing codebase, this is where the first spec for that area is born.
-3. **Tasks.** It writes the task list: each item with criteria and how to
-   verify it.
+3. **Tasks.** It writes the task list: each item with its `- **Build:**` line,
+   criteria and how to verify it.
 4. **Accept.** You read the change and run `wm accept <change>` yourself. Agents
    are blocked from running it. A design decision still marked `proposed`, or a
    question listed under its Open questions, has to be settled first.
@@ -168,8 +174,8 @@ installs the pinned one. To upgrade a project: change the pin, install that
 version, and run `wm update`. When it changes the record, `.gitignore` or the CI
 workflow, it names them and asks you to review and commit the changes. It never
 asks you to commit the agent tool files. `wm update` and `wm init` also delete
-any skill folder named `wm-*` that the installed `wm` doesn't ship, and list
-each file as `removed:`. Folders with other names are left
+any skill folder named `wm-*` that the installed `wm` doesn't ship; `wm update`,
+and `wm init` in a clone, list each file as `removed:`. Folders with other names are left
 alone, so don't name your own skills `wm-*`. `wm update` never changes the
 record's format. A record in another format than the installed `wm` reads is
 refused, its format named, and nothing changes.

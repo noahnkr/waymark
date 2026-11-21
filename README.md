@@ -58,7 +58,7 @@ Here's how a change goes:
   Then it checks the whole change against the plan. For a risky change, a second
   agent that never saw the build does the check.
 - **Archive.** `/wm-archive` folds the spec edits into your specs and notes what
-  was built. You run the command; it's your second sign-off.
+  was built. It runs once you say yes; that's your second sign-off.
 - **Merge.** `/wm-pr` opens a pull request with the code and the updated specs,
   once you say yes. You merge it.
 
@@ -83,8 +83,9 @@ Then, in Claude Code:
 - **`/wm-kickoff`** interviews you for the project's charter, one section at a time.
 - **`/wm-onboard`** takes one real, small change on your own code through every step.
 
-The package is `waymark-cli`; the command is `wm`. Commit `waymark/` and
-`.gitignore`; the skills, agents and hooks are set up per machine.
+The package is `waymark-cli`; the command is `wm`. Commit `waymark/`,
+`.gitignore`, and `.github/workflows/waymark.yml` if `wm init` added it; the
+skills, agents and hooks are set up per machine.
 
 <details>
 <summary><strong>Setting up a new or existing project, in one repository or several</strong></summary>
@@ -124,9 +125,10 @@ Each task's `- **Build:**` line names who builds it: `planner` for your
 session, which builds most tasks; `implementer` for a fresh agent that builds it
 from the plan alone; or `human` for work only you can do, such as a manual test
 or setting up a platform, which your session hands to you and ticks after your
-yes. `/wm-apply` starts the implementer, and a reviewer that checks a risky
-change. [Skills and agents](docs/skills.md) covers what each one reads, writes
-and shows you.
+yes ([who builds a task](docs/concepts.md#who-builds-an-item)). `/wm-apply`
+starts the implementer, and a reviewer for a risky change.
+[Skills and agents](docs/skills.md) covers what each one reads, writes and shows
+you.
 
 ## See it in action
 
@@ -366,10 +368,11 @@ that can go in them.
   from that, the specs and the resources. If something's missing, it asks or
   writes it down instead of guessing.
 - **Every change gets checked.** When it's built, the whole change is checked
-  against the plan, and what the check found stays with the change.
+  against the plan at its review level, and what the check found stays with the
+  change.
 - **Pick up anywhere.** Everything lives in files in your repository, so any
   session on any machine can see where things stand.
-- **Light for small work, thorough for big work.** A typo is just a commit. A
+- **Light for small work, thorough for big work.** A typo takes your yes and one commit. A
   risky change gets a design and a second agent to review it.
 
 <details>
@@ -398,7 +401,8 @@ for organizations that need access control or approval chains.
 
 - Nothing is built until you accept the change.
 - A change can't be accepted while a design decision or question is still open.
-- A change can't be archived until every task is done and the change has been checked.
+- A change can't be archived until every task is done and the review its level
+  asks for is recorded ([the gates](docs/concepts.md#the-gates)).
 - A check can't pass while it lists a critical problem.
 - Two changes that edit the same part of a spec are flagged before the second is archived.
 - `wm check`, run in CI, keeps every file in the record well formed.
@@ -458,7 +462,7 @@ edit the same requirement are caught once both are on the same branch. See
 - **[Architecture](docs/architecture.md)**: how `wm` is built, and how to add an agent tool
 - **[Smoke test](docs/smoke-test.md)**: the manual walk-through before a release
 
-Works with Claude Code. Version last verified: **2.1.328**, on Windows.
+Works with Claude Code. Version last verified: **2.1.330**, on Windows.
 
 ## License
 
