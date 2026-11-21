@@ -86,3 +86,7 @@
   - [suggestion] `src/waymark/services/lifecycle.py reopen and _archive_gate, src/waymark/services/check.py _revised_ticked_findings`: the messages still put double quotes inside double quotes around the `wm reopen ... --reason "<why>"` command, which makes it hard to read and to copy.
 - 2026-11-20 (reopened) 1.4 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.4 by planner for Noah Roberts
+- 2026-11-20 (review) pass covers 1.1, 1.2, 1.3, 1.4, 2.1, 2.2 by reviewer: the requested 1.4 fix is in (revised_ticked skips items the change no longer has, with a test), the resolved-item and escalated-review edges now have tests, every criterion of 1.1 to 2.2 holds, and pytest (1541), ruff, format, mypy, codespell, tools.docs --check and wm check all pass
+  - [suggestion] `waymark/changes/reopen-ticked-items/design.md Approach 6`: it still says wm-update step 3 runs `wm reopen` right after the revision, which contradicts the later decision "Who makes sure a revised item is reopened" and the skill as built
+  - [suggestion] `src/waymark/services/check.py _revised_ticked_findings`: the warning offers "or tick it again once its new criteria hold", but `wm tick` refuses an item that is already ticked, so in practice reopening is the only way out; the wording comes from the acceptance delta
+  - [suggestion] `src/waymark/services/lifecycle.py reopen and _archive_gate, src/waymark/services/check.py _revised_ticked_findings`: the messages still nest double quotes around the `wm reopen ... --reason "<why>"` command, which makes it hard to read and copy
