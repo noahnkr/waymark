@@ -20,6 +20,19 @@
 - WHEN the planner runs `wm reopen <change> 2.3 --reason "<why>"`
 - THEN it is refused with a reason that says item 2.3 isn't ticked, and nothing is written
 
+### Requirement: Revised item reopened before review
+When an accepted change has an item that a `(revised)` record names while its Log shows it ticked, and no later `(ticked)`, `(reopened)` or item `(resolved)` record for it follows, `wm instructions` SHALL make the next step reopening and applying that item, with `wm reopen <change> <item> --reason "<what the revision changed>"` first among its commands, before any review or archive. Only a review that went to the human SHALL come before it. `wm archive` SHALL refuse such a change, naming the item, and the refusal SHALL NOT be overridable.
+
+#### Scenario: Revised item is the next step
+- GIVEN an accepted change with items 1.1 and 1.2 ticked, whose item 1.2 was then revised with `wm revise <change> "<why>" --parts 1.2`, and the change accepted again
+- WHEN the planner runs `wm instructions --change <change>`
+- THEN the step applies item 1.2, and its first command is `wm reopen <change> 1.2 --reason "<what the revision changed>"`
+
+#### Scenario: Archive refused for a revised item
+- GIVEN the same change, with every item ticked and a passing review recorded before the revision
+- WHEN `wm archive <change> --override "<reason>"` runs
+- THEN it is refused with a reason that names item 1.2 and `wm reopen`, and nothing is written
+
 ## MODIFIED Requirements
 
 ### Requirement: Review of items added after a review

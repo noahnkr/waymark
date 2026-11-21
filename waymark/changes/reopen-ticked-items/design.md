@@ -19,7 +19,8 @@
    `cli.py` adds `--reason` to `wm reopen`.
 3. **Reviewed again.** In `record/state.py`, a passing review covers an item only when no `(reopened)` record for that item comes after the review in the Log. `uncovered` then lists a reopened item once it is ticked again, so `wm instructions` asks for a review of it alone, and `wm archive` refuses until one passes. A `changes` verdict's reopen keeps its own rule, which already asks for an independent review.
 4. **The warning.** `services/check.py` walks each active change's Log in order and keeps, per item, whether its latest `(ticked)`, `(reopened)` or item `(resolved)` record was a `(ticked)`. When a `(revised)` record names an item that is ticked at that point, and no `(ticked)` or `(reopened)` record for it comes later, it adds the warning `revised-ticked-item`.
-5. **Skills and docs.** `wm-update` step 3: after a revision that changes a ticked item, run `wm reopen <change> <item> --reason "<why>"`. `wm-apply`'s `resolve-items`: when the human's decision rebuilds items, record it with `wm resolve <change> review`, then reopen each one with `--reason`. `docs/record.md` and `docs/concepts.md` describe `--reason` and the warning; the CHANGELOG says what users see; the CLI reference is regenerated.
+5. **`wm` asks for the reopen.** The Log walk of step 4 moves into `record/state.py` as `revised_ticked(tasks)`, used by the check and by the state. `_item_step` returns, right after an escalated review, an `apply` step with a reason for the first revised ticked item. `services/instructions.py` puts `wm reopen <change> <item>` first among its commands, adding `--reason "<what the revision changed>"` when no review names the item. `_archive_gate` in `services/lifecycle.py` refuses a change with a revised ticked item, before the override is looked at.
+6. **Skills and docs.** `wm-update` step 3: after a revision that changes a ticked item, run `wm reopen <change> <item> --reason "<why>"`. `wm-apply`'s `resolve-items`: when the human's decision rebuilds items, record it with `wm resolve <change> review`, then reopen each one with `--reason`. `docs/record.md` and `docs/concepts.md` describe `--reason` and the warning; the CHANGELOG says what users see; the CLI reference is regenerated.
 
 ## Decisions
 
@@ -68,6 +69,15 @@
   - from the item's checkbox as it stands now
 - **Choice:** from the Log
 - **Why:** the checkbox only says what is true now. The Log says what was true when the revision was written. An active change from before `(ticked)` records were written has none, so it gets no warning rather than a wrong one.
+
+### Decision: Who makes sure a revised item is reopened
+- **Status:** decided
+- **Decided by:** human
+- **Options:**
+  - `wm instructions` makes the reopen the next step, and `wm archive` refuses until it is done
+  - the skills tell the planner to run `wm check` and reopen what it warns about
+- **Choice:** `wm instructions` and `wm archive`
+- **Why:** two review rounds showed the skills alone miss it: after the human accepts again with every item ticked, the next step is review or archive, which no skill wording reliably catches. `wm` already reads the case from the Log, so it can ask for the reopen itself.
 
 ## Open questions
 

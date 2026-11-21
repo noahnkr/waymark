@@ -22,18 +22,27 @@
     - it says nothing once the item is reopened or ticked again, nor when the item wasn't ticked at the revision
   - **Verify:** tests named after the scenarios Revised item still ticked, Revised item reopened and Revised item not yet ticked
 
+- [ ] 1.4 Ask for the reopen in wm instructions, and refuse the archive
+  - **Build:** planner
+  - **Criteria:**
+    - a ticked item that a `(revised)` record names, with no later `(ticked)`, `(reopened)` or item `(resolved)` record, makes the next step an apply of that item, right after an escalated review and before any other step
+    - that step's first command is `wm reopen <change> <item> --reason "<what the revision changed>"`, without `--reason` when a review names the item
+    - `wm archive` refuses such a change, naming the item and `wm reopen`, even with `--override`, and writes nothing
+    - the `wm check` warning and this step read the Log the same way
+  - **Verify:** tests named after the scenarios Revised item is the next step, Archive refused for a revised item, Revised item still ticked, Revised item reopened and Revised item not yet ticked
+
 ## 2. Skills and docs
 
 - [x] 2.1 Teach the skills to reopen
   - **Build:** planner
   - **Criteria:**
-    - `wm-update` reopens each ticked item a revision changes, with `--reason`
-    - `wm-apply`'s `resolve-items` step reopens the items the human's decision on an escalated review names, after recording the decision
+    - `wm-update` says a revised ticked item goes back to apply once the human accepts again, in its steps, Show the human and When to stop, and that `wm instructions` will ask for the reopen
+    - `wm-apply` follows the reopen command `wm instructions` gives, and its `resolve-items` step reopens the items the human's decision on an escalated review names, after recording the decision
   - **Verify:** `tests/test_skills.py` and the full pytest run
 - [x] 2.2 Update the docs and CHANGELOG
   - **Build:** planner
   - **Criteria:**
-    - `docs/record.md` and `docs/concepts.md` describe `wm reopen --reason`, a reopened item's review and the `revised-ticked-item` warning
+    - `docs/record.md` and `docs/concepts.md` describe `wm reopen --reason`, a reopened item's review, the `revised-ticked-item` warning, and that `wm instructions` asks for the reopen and `wm archive` refuses until it is done
     - `CHANGELOG.md` under `## [Unreleased]` carries the User-visible lines
     - the generated docs are regenerated
   - **Verify:**
@@ -61,3 +70,7 @@
   - [warning] `src/waymark/services/check.py _revised_ticked_findings`: an item `(resolved)` record still clears a pending warning, while the requirement names only later `(ticked)` or `(reopened)` records, and no test covers this (carried over from the earlier review)
   - [suggestion] `src/waymark/services/lifecycle.py reopen and src/waymark/services/check.py`: the messages still nest double quotes around the wm reopen command, which is hard to read and to copy
 - 2026-11-20 (resolved) by Noah Roberts: wm instructions makes reopening a revised ticked item the next step before review or archive, and wm archive refuses until it is reopened; the acceptance delta names an item (resolved) too; reopen 2.1 and 2.2 for the skill and docs wording
+- 2026-11-20 (revised) specs/review, specs/acceptance, design, 1.4, 2.1, 2.2 by planner for Noah Roberts: wm itself asks for the reopen, as the human decided on the second review
+  - wm instructions makes reopening a revised ticked item the next step; wm archive refuses until it is done
+  - the warning's requirement names an item (resolved) too
+  - added 1.4 for the code; 2.1 and 2.2 now describe what wm does
