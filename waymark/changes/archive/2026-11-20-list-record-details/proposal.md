@@ -36,3 +36,16 @@ Every record is one line. When a note, a blocker, a review summary or a revision
   - `wm archive` takes `--built` and `--differs` more than once.
   - `wm show --json` gives each record its `details`, at a new schema version, and the context packs and `wm pr` show them.
 - **Code:** the records module in `record/evidence/records.py`, the task list parser and Log writer in `record/artifacts/tasks.py` and `record/writing/edits.py`, the outcome in `record/artifacts/proposal.py` and `record/writing/edits.py`, the commands in `services/lifecycle.py` and `cli.py`, the agents' endings in `hooks/decide.py`, the views and packs in `views/` and `services/context.py`, `services/pr.py`, the skills and agent definitions, the docs and CHANGELOG.
+
+## Outcome
+
+- **Built:**
+  - Seven writing commands take a repeatable --detail, written as sub-bullets under the record after any findings, and agents give DETAIL lines before their ending.
+  - A detail can't have a finding's shape, bracketed or not, and the Log reader uses the same rule, so what wm writes reads back clean.
+  - wm archive takes --built and --differs more than once, as nested bullets.
+  - Details show in wm show, both packs and wm pr; the skills, agents, docs and CHANGELOG match.
+- **Differs:**
+  - The first review asked for changes to 2.2 (a broken code fence in docs/record.md, missing DETAIL lines in the endings); both were fixed, and 2.3 was added for a detail starting with a severity word reading as a finding.
+  - The second review asked for changes to 2.3 again, so it went to the human, who chose one rule for a finding's shape; the deltas, design and 2.3 were revised, the change was accepted again, and the third review passed.
+  - Item 2.3's new criterion was built on the already-ticked item, because wm reopen couldn't reopen it after the review was resolved.
+  - Two suggestions are left open: the proposal's wording, and the docs not mentioning the refusal.

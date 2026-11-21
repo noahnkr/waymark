@@ -95,7 +95,7 @@ A proposal's `## Impact` section SHALL hold a `- **Specs:**` line, a `- **User-v
 - THEN it reports an error on the proposal that names `ranking`
 
 ### Requirement: Structured outcome
-`wm archive` SHALL take `--built` and `--differs` instead of `--outcome`, and SHALL write them as `- **Built:** <text>` and `- **Differs:** <text>` lines under the archived proposal's `## Outcome`. `--differs` MAY be left out, and SHALL then be written as `none`. `wm pr` SHALL show both lines.
+`wm archive` SHALL take `--built` and `--differs` instead of `--outcome`, each one or more times, and SHALL write them under the archived proposal's `## Outcome` as a `- **Built:**` and a `- **Differs:**` line. A value given once SHALL be written on its label's line, as `- **Built:** <text>`. Several values SHALL be written as nested bullets under the label, one per value, in the order given. `--differs` MAY be left out, and SHALL then be written as `none`. `wm pr` SHALL show both, with their nested bullets.
 
 #### Scenario: Archived with an outcome
 - GIVEN an applied change
@@ -106,6 +106,11 @@ A proposal's `## Impact` section SHALL hold a `- **Specs:**` line, a `- **User-v
 - GIVEN an applied change
 - WHEN the planner runs `wm archive <change> --built "The result limit."`
 - THEN the archived proposal's Outcome has the line `- **Differs:** none`
+
+#### Scenario: Outcome as a list
+- GIVEN an applied change
+- WHEN the planner runs `wm archive <change> --built "The result limit." --built "A flag to change it." --differs "Fifty, not twenty."`
+- THEN the archived proposal's Outcome has `- **Built:**`, then `  - The result limit.` and `  - A flag to change it.`, then `- **Differs:** Fifty, not twenty.`
 
 ### Requirement: Numbered goals, constraints and rules
 The charter's Goals, Constraints and Rules SHALL be numbered lists, `1. <text>`, numbered from 1 without gaps; Rules MAY be empty. `wm check` SHALL report a line in another form, a heading under Rules included, or a number out of order, with the form expected.

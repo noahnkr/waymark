@@ -96,3 +96,4 @@
 - 2026-11-20 (review) pass covers 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3 by reviewer: item 2.3's criteria and the scenarios "Detail with a finding's shape but no brackets" and "Detail that starts with a severity word" hold; check_detail and the Log reader share one rule; the delta and design now give that rule; the earlier reviews' fixes are made and every check passes
   - [suggestion] `waymark/changes/list-record-details/proposal.md:13`: still says a sub-bullet under a review without a severity in brackets is a detail, while the revised review delta reports one with a finding's shape but no brackets as a finding; the wording should match the narrowed rule
   - [suggestion] `docs/record.md:252`: the docs (and the CHANGELOG `--detail` line) don't say that a detail with a finding's shape, bracketed or not, is refused, which a user now sees as a refusal
+- 2026-11-20 (archived) by Noah Roberts
