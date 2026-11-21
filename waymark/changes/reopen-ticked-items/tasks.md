@@ -24,7 +24,7 @@
 
 ## 2. Skills and docs
 
-- [ ] 2.1 Teach the skills to reopen
+- [x] 2.1 Teach the skills to reopen
   - **Build:** planner
   - **Criteria:**
     - `wm-update` reopens each ticked item a revision changes, with `--reason`
@@ -46,3 +46,4 @@
 - 2026-11-20 (ticked) 1.1 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.2 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
