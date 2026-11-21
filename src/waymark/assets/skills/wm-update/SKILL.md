@@ -24,7 +24,7 @@ You are the planner. You revise a change that already exists. Every edit is conf
    - A record about an item, such as a note, does not; `wm` writes it in the Log.
 3. For each edit: say what you will change and why, wait for the human to confirm, then make it. If the change was accepted before, record that edit right after it with `wm revise <name> "<why>" --parts <part>,...`, naming the parts it changed: item numbers, `proposal`, `design` or `specs/<area>`. Do this for an added item too, so each edit has its own `(revised)` record. When one edit changes several things, keep the reason short and list them with `--detail "<text>"`, one per point. `wm accept` refuses to accept a change again until a `(revised)` record follows its last acceptance. In short: the Impact has `- **Specs:**`, `- **User-visible:**` and `- **Code:**` lines; each design decision has `- **Status:** proposed|decided` and `- **Decided by:** human|planner` lines, and the design an `## Open questions` section; an item's lines come in the order `- **Build:**`, `- **Repo:**`, `- **Criteria:**`, `- **Verify:**`, and its Criteria and Verify may each be a nested list, one per bullet; a decision's options are a nested list under `- **Options:**`, one per bullet.
 4. Work through the checklist of each step you revised, and run `wm check`. Fix every error in the files you touched.
-5. If acceptance was withdrawn, summarize what changed and ask the human to run `wm accept <name>`. When the revision changed an item that is already ticked, say that it goes back to apply: once the human has accepted again, reopen it with `wm reopen <name> <item> --reason "<why>"`. It can't be reopened before, because `wm reopen` needs an accepted change; until it is, `wm check` warns about a revised item left ticked.
+5. If acceptance was withdrawn, summarize what changed and ask the human to run `wm accept <name>`. When the revision changed an item that is already ticked, say that it goes back to apply once the human accepts again: `wm instructions` then makes its reopen the next step, and `wm archive` refuses until it is done.
 
 ## Common cases
 
@@ -50,14 +50,14 @@ Before each edit:
 - **Why:** the gap, conflict or finding it answers.
 - **Acceptance:** whether it withdraws acceptance.
 
-After the edits, if acceptance was withdrawn, a short list of what changed, then ask for `wm accept <name>`.
+After the edits, if acceptance was withdrawn, a short list of what changed, and which ticked items go back to apply once it is accepted, then ask for `wm accept <name>`.
 
 ## When to stop
 
 - The human declines an edit: don't make it.
 - The fix needs a decision only the human can make: ask, and wait.
 - The revision grows into new behavior the change wasn't for: stop, and offer a new change with `wm-propose` instead.
-- Acceptance was withdrawn: summarize and stop. Only the human accepts again.
+- Acceptance was withdrawn: summarize and stop. Only the human accepts again. A ticked item the revision changed is reopened after that, at the step `wm instructions` gives, not before.
 
 ## Rules
 

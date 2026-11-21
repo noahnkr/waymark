@@ -158,11 +158,13 @@ def test_scenario_proposal_from_an_exploration() -> None:
 
 def test_skills_reopen_a_revised_item_after_acceptance_and_what_a_decision_rebuilds() -> None:
     """Item 2.1 of reopen-ticked-items: the skills send a revised or rebuilt item back to apply."""
-    update = section(assets.skill("wm-update"), "Steps")
-    assert "once the human has accepted again, reopen it with `wm reopen" in update
-    assert "`wm reopen` needs an accepted change" in update
+    update = assets.skill("wm-update")
+    assert "goes back to apply once the human accepts again" in section(update, "Steps")
+    assert "which ticked items go back to apply" in section(update, "Show the human")
+    assert "at the step `wm instructions` gives, not before" in section(update, "When to stop")
     apply = assets.skill("wm-apply")
-    assert "`revised-ticked-item` warning" in apply
+    assert "the item was revised after it was ticked" in apply
+    assert "`wm archive` refuses until it is done" in apply
     assert (
         'reopen each one after it with `wm reopen <name> <item> --reason "<the decision>"`' in apply
     )
