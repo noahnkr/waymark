@@ -70,6 +70,9 @@ ONE_OF_EACH = [
     Record(RecordKind.RESOLVED, DAY, who="Ada", text="use the test key: it is enough"),
     Record(RecordKind.REOPENED, DAY, who="Ada Lovelace"),
     Record(RecordKind.REOPENED, DAY),
+    Record(
+        RecordKind.REOPENED, DAY, who="planner for Ada", item="1.2", text="its criteria changed"
+    ),
     Record(RecordKind.BLOCKED, DAY, who="Ada", text="the API key is missing"),
     Record(RecordKind.GAP, DAY, text="the limit's maximum"),
     Record(RecordKind.NOTE, DAY, who="implementer", text="partial: the parser is done"),
@@ -182,7 +185,6 @@ def test_scenario_malformed_record() -> None:
         "2026-11-20 (blocked) soon: reason",
         "2026-11-20 (blocked):reason",
         "2026-13-40 (blocked): reason",
-        "2026-11-20 (reopened): why",
         "2026-11-20 (review) by Ada: no verdict",
         "2026-11-20 (review) maybe: reasons",
         "2026-11-20 (review) pass 1.2: only changes names items",

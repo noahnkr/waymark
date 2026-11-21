@@ -2,7 +2,7 @@
 
 ## 1. Reopening
 
-- [ ] 1.1 Reopen any ticked item with a reason
+- [x] 1.1 Reopen any ticked item with a reason
   - **Build:** planner
   - **Criteria:**
     - `(reopened)` reads and renders with or without a reason after a colon
@@ -43,3 +43,4 @@
 ## Log
 
 - 2026-11-20 (accepted) fingerprint 129122ca3ad7b588 items 1.1, 1.2, 1.3, 2.1, 2.2 by Noah Roberts
+- 2026-11-20 (ticked) 1.1 by planner for Noah Roberts

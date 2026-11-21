@@ -622,3 +622,52 @@ def test_a_reviewers_detail_with_a_findings_shape_is_refused(latest: Workspace) 
     assert not decision.allow
     assert "finding's shape" in decision.reason
     assert latest.read(TASKS_FILE) == before
+
+
+def test_scenario_ticked_item_reopened_with_a_reason(latest: Workspace) -> None:
+    """Requirement "Reopening a ticked item": the tick comes off, with the reason recorded."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    lifecycle.reopen(latest.root, NAME, "1.1", DAY, reason="its criteria changed")
+    text = latest.read(TASKS_FILE)
+    assert "- [ ] 1.1" in text
+    assert text.endswith(
+        "\n- 2026-11-20 (reopened) 1.1 by planner for Sam Doe: its criteria changed\n"
+    )
+    state = latest.change_state()
+    assert state.acceptance is AcceptanceState.VALID
+    assert (state.next_step.kind, state.next_step.item) == (StepKind.APPLY, "1.1")
+
+
+def test_scenario_reopened_with_a_reason(latest: Workspace) -> None:
+    """Requirement "Item records": a (reopened) record may carry a reason."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="its criteria changed")
+    assert log(latest).endswith("(reopened) 1.2 by planner for Sam Doe: its criteria changed\n")
+    assert latest.record().changes[NAME].problems == ()
+
+
+def test_scenario_no_reason_given(latest: Workspace) -> None:
+    """Requirement "Reopening a ticked item": no review names it, so a reason is needed."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.1", DAY)
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match="--reason"):
+        lifecycle.reopen(latest.root, NAME, "1.1", DAY)
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_scenario_item_not_ticked(latest: Workspace) -> None:
+    """Requirement "Reopening a ticked item": an item still to apply isn't reopened."""
+    accepted(latest)
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match=r"isn't ticked"):
+        lifecycle.reopen(latest.root, NAME, "1.1", DAY, reason="<why>")
+    assert latest.read(TASKS_FILE) == before
+
+
+def test_an_unaccepted_change_is_not_reopened(latest: Workspace) -> None:
+    latest.change(tasks=TASKS)
+    with pytest.raises(Refusal):
+        lifecycle.reopen(latest.root, NAME, "1.1", DAY, reason="<why>")

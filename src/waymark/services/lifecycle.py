@@ -515,29 +515,43 @@ def verdict(  # noqa: PLR0913 - the verdict, and the items and findings it names
 
 
 def reopen(
-    start: Path, name: str, number: str, today: datetime.date, *, by: str | None = None
+    start: Path,
+    name: str,
+    number: str,
+    today: datetime.date,
+    *,
+    by: str | None = None,
+    reason: str | None = None,
 ) -> Done:
-    """Reopen an item that a review named to rebuild."""
+    """Reopen an item: one a review named to rebuild, or any ticked item, given a reason."""
     record, change, state = _open(start, name)
     _require_accepted(state)
-    find_item(change, number)
-    if number not in state.review.reopen:
-        raise Refusal(
-            f"No open review of {name} names item {number} to rebuild, so there is nothing "
-            "to reopen."
-        )
-    line = _render(
-        records.Record(
-            RecordKind.REOPENED, today, who=_who(record, RecordKind.REOPENED, by), item=number
-        )
+    item = find_item(change, number)
+    why = one_line(reason, "why the item is reopened") if reason is not None else None
+    named = number in state.review.reopen
+    if not named:
+        if not item.ticked:
+            raise Refusal(f"Item {number} isn't ticked, so there is nothing to reopen.")
+        if why is None:
+            raise Refusal(
+                f"No open review of {name} names item {number} to rebuild. To reopen it "
+                f'anyway, say why: "wm reopen {name} {number} --reason "<why>"".'
+            )
+    entry = records.Record(
+        RecordKind.REOPENED,
+        today,
+        who=_who(record, RecordKind.REOPENED, by),
+        item=number,
+        text=why,
     )
-    text = append_log(_tasks(change), line, untick=number)
+    text = append_log(_tasks(change), _render(entry), untick=number)
     paths = _write_tasks(record, change, text)
-    return Done(
-        f"Reopened item {number} of {name}. The change needs an independent review once it "
-        "is rebuilt.",
-        paths,
+    then = (
+        "The change needs an independent review once it is rebuilt."
+        if named
+        else "Once it is ticked again, it gets a review of its own."
     )
+    return Done(f"Reopened item {number} of {name}. {then}", paths)
 
 
 def resolve(  # noqa: PLR0913 - what was decided, its details and who
