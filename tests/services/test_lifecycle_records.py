@@ -671,3 +671,20 @@ def test_an_unaccepted_change_is_not_reopened(latest: Workspace) -> None:
     latest.change(tasks=TASKS)
     with pytest.raises(Refusal):
         lifecycle.reopen(latest.root, NAME, "1.1", DAY, reason="<why>")
+
+
+def test_scenario_item_reopened_after_a_pass(latest: Workspace) -> None:
+    """Requirement "Review of items added after a review": a reopened item is reviewed again."""
+    built(latest)
+    lifecycle.self_review(latest.root, NAME, "fine", DAY)
+    assert latest.change_state().applied
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="its criteria changed")
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    state = latest.change_state()
+    assert state.next_step.kind is StepKind.REVIEW
+    assert state.review.uncovered == ("1.2",)
+    with pytest.raises(Refusal, match=r"1\.2"):
+        lifecycle.archive(latest.root, NAME, DAY, built="Done.")
+    lifecycle.self_review(latest.root, NAME, "rebuilt", DAY)
+    assert log(latest).endswith("(self-review) covers 1.2 by planner for Sam Doe: rebuilt\n")
+    assert latest.change_state().applied

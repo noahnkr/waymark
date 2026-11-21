@@ -274,7 +274,18 @@ def review_state(change: Change, default: ReviewLevel) -> ReviewState:
     numbers = tuple(item.number for item in items)
     uncovered: tuple[str, ...] = ()
     if passing and level is not ReviewLevel.NONE:
-        covered = {number for record in passing for number in _covered(record, numbers)}
+        reopened = {
+            item.number: max(
+                (r.index for r in item.records if r.kind is RecordKind.REOPENED), default=-1
+            )
+            for item in items
+        }
+        covered = {
+            number
+            for record in passing
+            for number in _covered(record, numbers)
+            if reopened.get(number, -1) < record.index
+        }
         uncovered = tuple(
             item.number for item in items if item.ticked and item.number not in covered
         )

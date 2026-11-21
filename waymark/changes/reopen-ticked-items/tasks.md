@@ -9,7 +9,7 @@
     - `wm reopen <change> <item> --reason "<why>"` reopens a ticked item of an accepted change that no open review names, takes its tick off and writes `(reopened) <item>` with the reason, keeping the acceptance
     - without `--reason` such an item is refused naming `--reason`; an unticked item and an unaccepted change are refused; an item a review names reopens as before, `--reason` optional
   - **Verify:** tests named after the scenarios Ticked item reopened with a reason, No reason given, Item not ticked and Reopened with a reason, and the existing reopen tests
-- [ ] 1.2 Review a reopened item again
+- [x] 1.2 Review a reopened item again
   - **Build:** planner
   - **Criteria:**
     - a passing review covers an item only when no `(reopened)` record for it follows the review
@@ -44,3 +44,4 @@
 
 - 2026-11-20 (accepted) fingerprint 129122ca3ad7b588 items 1.1, 1.2, 1.3, 2.1, 2.2 by Noah Roberts
 - 2026-11-20 (ticked) 1.1 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.2 by planner for Noah Roberts
