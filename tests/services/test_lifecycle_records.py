@@ -688,3 +688,40 @@ def test_scenario_item_reopened_after_a_pass(latest: Workspace) -> None:
     lifecycle.self_review(latest.root, NAME, "rebuilt", DAY)
     assert log(latest).endswith("(self-review) covers 1.2 by planner for Sam Doe: rebuilt\n")
     assert latest.change_state().applied
+
+
+def revised_codes(project: Workspace) -> list[tuple[str, str]]:
+    from waymark.services import check  # noqa: PLC0415
+
+    found = check.check(project.root, datetime.datetime(2026, 11, 20, tzinfo=datetime.UTC))
+    return [(f.code, f.message) for f in found if f.code == "revised-ticked-item"]
+
+
+def test_scenario_revised_item_still_ticked(latest: Workspace) -> None:
+    """Requirement "Revised item left ticked": a revision of a ticked item is reported."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    [(_, message)] = revised_codes(latest)
+    assert "Item 1.2 was revised after it was ticked" in message
+    assert "wm reopen add-limit 1.2" in message
+
+
+def test_scenario_revised_item_reopened(latest: Workspace) -> None:
+    """Requirement "Revised item left ticked": a reopen settles it."""
+    accepted(latest)
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    lifecycle.accept(latest.root, NAME, DAY)
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="its criteria changed")
+    assert revised_codes(latest) == []
+
+
+def test_scenario_revised_item_not_yet_ticked(latest: Workspace) -> None:
+    """Requirement "Revised item left ticked": an item still to apply isn't reported."""
+    accepted(latest)
+    latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
+    assert revised_codes(latest) == []

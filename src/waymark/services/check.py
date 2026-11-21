@@ -7,6 +7,7 @@ from pathlib import Path
 
 from waymark import __version__
 from waymark.record.artifacts.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
+from waymark.record.evidence.records import RecordKind
 from waymark.record.machine import git
 from waymark.record.machine.branches import Branches
 from waymark.record.machine.project import RECORD_DIR
@@ -63,6 +64,7 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
             )
             found.append(Finding(Severity.WARNING, path, WHOLE_FILE, "not-archived", message))
         found.extend(_review_level_findings(record, name))
+        found.extend(_revised_ticked_findings(record, name))
     found.extend(
         Finding(Severity.WARNING, "changes", WHOLE_FILE, "overlap", conflict.message)
         for conflict in state.overlaps
@@ -93,6 +95,43 @@ def _state_findings(record: Record, state: RecordState) -> list[Finding]:
                 )
             )
     return found
+
+
+def _revised_ticked_findings(record: Record, name: str) -> list[Finding]:
+    """A revision that changed an item already ticked, which nothing reopened or ticked since.
+
+    Whether an item was ticked is read from the Log: its latest ``(ticked)``,
+    ``(reopened)`` or item ``(resolved)`` record before the revision.
+    """
+    tasks = record.changes[name].tasks
+    if tasks is None:
+        return []
+    ticked: dict[str, bool] = {}
+    pending: dict[str, int] = {}
+    for entry in tasks.log:
+        number = entry.item
+        if entry.kind is RecordKind.TICKED and number:
+            ticked[number] = True
+            pending.pop(number, None)
+        elif entry.kind in (RecordKind.REOPENED, RecordKind.RESOLVED) and number:
+            ticked[number] = False
+            pending.pop(number, None)
+        elif entry.kind is RecordKind.REVISED:
+            for part in entry.parts:
+                if ticked.get(part):
+                    pending[part] = entry.index
+    return [
+        Finding(
+            Severity.WARNING,
+            tasks.doc.path,
+            index + 1,
+            "revised-ticked-item",
+            f"Item {number} was revised after it was ticked, and nothing reopened it since. "
+            f'Reopen it with "wm reopen {name} {number} --reason "<why>"", or tick it again '
+            "once its new criteria hold.",
+        )
+        for number, index in sorted(pending.items())
+    ]
 
 
 def _review_level_findings(record: Record, name: str) -> list[Finding]:

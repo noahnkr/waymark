@@ -15,7 +15,7 @@
     - a passing review covers an item only when no `(reopened)` record for it follows the review
     - an item reopened after a pass and ticked again makes the next step a review of that item only, and `wm archive` refuses the change until one passes
   - **Verify:** tests named after the scenarios Item reopened after a pass, Item added after a pass and Archive before the added item is reviewed
-- [ ] 1.3 Warn about a revised item left ticked
+- [x] 1.3 Warn about a revised item left ticked
   - **Build:** planner
   - **Criteria:**
     - `wm check` warns, naming the item and `wm reopen`, when a `(revised)` record names an item that its Log shows ticked then, and no later `(ticked)` or `(reopened)` record for it follows
@@ -45,3 +45,4 @@
 - 2026-11-20 (accepted) fingerprint 129122ca3ad7b588 items 1.1, 1.2, 1.3, 2.1, 2.2 by Noah Roberts
 - 2026-11-20 (ticked) 1.1 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.2 by planner for Noah Roberts
+- 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
