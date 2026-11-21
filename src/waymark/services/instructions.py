@@ -340,7 +340,9 @@ def _working(  # noqa: PLR0911 - one return per step
         built = change.tasks.item(item) if change.tasks and item else None
         guidance, commands = _apply(name, number, built.build if built else None)
         if state.next_step.reason:
-            commands.insert(0, f"wm reopen {name} {number}")
+            named = number in state.review.reopen
+            reason = "" if named else ' --reason "<what the revision changed>"'
+            commands.insert(0, f"wm reopen {name} {number}{reason}")
         return guidance, commands
     if step is StepKind.REVIEW:
         finding = '--finding "<critical|warning|suggestion>: <place>: <text>"'

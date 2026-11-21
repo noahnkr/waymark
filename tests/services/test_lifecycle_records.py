@@ -725,3 +725,36 @@ def test_scenario_revised_item_not_yet_ticked(latest: Workspace) -> None:
     latest.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
     lifecycle.revise(latest.root, NAME, "reworded", DAY, parts=["1.2"])
     assert revised_codes(latest) == []
+
+
+def revised_after_a_pass(project: Workspace) -> None:
+    """Items 1.1 and 1.2 ticked and self-reviewed, then 1.2 revised and accepted again."""
+    built(project)
+    lifecycle.self_review(project.root, NAME, "fine", DAY)
+    project.replace(TASKS_FILE, "the help text names the limit", "the help names the limit")
+    lifecycle.revise(project.root, NAME, "reworded", DAY, parts=["1.2"])
+    lifecycle.accept(project.root, NAME, DAY)
+
+
+def test_scenario_revised_item_is_the_next_step(latest: Workspace) -> None:
+    """Requirement "Revised item reopened before review": wm asks for the reopen first."""
+    from waymark.services.instructions import instructions  # noqa: PLC0415
+
+    revised_after_a_pass(latest)
+    step = instructions(latest.record(), None, NAME)
+    assert (step["step"], step["item"]) == ("apply", "1.2")
+    assert step["commands"][0] == (f'wm reopen {NAME} 1.2 --reason "<what the revision changed>"')
+    lifecycle.reopen(latest.root, NAME, "1.2", DAY, reason="reworded")
+    lifecycle.tick(latest.root, NAME, "1.2", DAY)
+    assert latest.change_state().next_step.kind is StepKind.REVIEW
+
+
+def test_scenario_archive_refused_for_a_revised_item(latest: Workspace) -> None:
+    """Requirement "Revised item reopened before review": the archive can't pass it, even
+    with an override."""
+    revised_after_a_pass(latest)
+    before = latest.read(TASKS_FILE)
+    with pytest.raises(Refusal, match=r"item 1\.2 was revised") as refusal:
+        lifecycle.archive(latest.root, NAME, DAY, built="Done.", override="looks fine")
+    assert "wm reopen" in str(refusal.value)
+    assert latest.read(TASKS_FILE) == before

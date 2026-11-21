@@ -653,6 +653,14 @@ def _archive_gate(state: ChangeState, override: str | None) -> None:
             f"{state.phase}). This can't be overridden; the human accepts it with "
             f'"wm accept {name}".'
         )
+    if state.revised:
+        number = state.revised[0]
+        raise Refusal(
+            f'"{name}" can\'t be archived: item {number} was revised after it was ticked, '
+            f'and nothing reopened it since. Reopen it with "wm reopen {name} {number} '
+            '--reason "<what the revision changed>"" and build it again. This can\'t be '
+            "overridden."
+        )
     blocking = [c for c in state.conflicts if c.kind is ConflictKind.MISMATCH]
     if blocking:
         raise Refusal(

@@ -22,7 +22,7 @@
     - it says nothing once the item is reopened or ticked again, nor when the item wasn't ticked at the revision
   - **Verify:** tests named after the scenarios Revised item still ticked, Revised item reopened and Revised item not yet ticked
 
-- [ ] 1.4 Ask for the reopen in wm instructions, and refuse the archive
+- [x] 1.4 Ask for the reopen in wm instructions, and refuse the archive
   - **Build:** planner
   - **Criteria:**
     - a ticked item that a `(revised)` record names, with no later `(ticked)`, `(reopened)` or item `(resolved)` record, makes the next step an apply of that item, right after an escalated review and before any other step
@@ -74,3 +74,5 @@
   - wm instructions makes reopening a revised ticked item the next step; wm archive refuses until it is done
   - the warning's requirement names an item (resolved) too
   - added 1.4 for the code; 2.1 and 2.2 now describe what wm does
+- 2026-11-20 (accepted) fingerprint 55b9d54abe405029 items 1.1, 1.2, 1.3, 1.4, 2.1, 2.2 by Noah Roberts
+- 2026-11-20 (ticked) 1.4 by planner for Noah Roberts

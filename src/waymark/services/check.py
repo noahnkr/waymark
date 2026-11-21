@@ -7,7 +7,6 @@ from pathlib import Path
 
 from waymark import __version__
 from waymark.record.artifacts.config import CONFIG_FILE, RECORD_FORMAT, other_format_reason
-from waymark.record.evidence.records import RecordKind
 from waymark.record.machine import git
 from waymark.record.machine.branches import Branches
 from waymark.record.machine.project import RECORD_DIR
@@ -22,6 +21,7 @@ from waymark.record.state import (
     derive_state,
     led_to_done,
     milestone_links,
+    revised_ticked,
 )
 from waymark.record.terms import ReviewLevel
 from waymark.services.common import install_hint, open_record
@@ -106,20 +106,7 @@ def _revised_ticked_findings(record: Record, name: str) -> list[Finding]:
     tasks = record.changes[name].tasks
     if tasks is None:
         return []
-    ticked: dict[str, bool] = {}
-    pending: dict[str, int] = {}
-    for entry in tasks.log:
-        number = entry.item
-        if entry.kind is RecordKind.TICKED and number:
-            ticked[number] = True
-            pending.pop(number, None)
-        elif entry.kind in (RecordKind.REOPENED, RecordKind.RESOLVED) and number:
-            ticked[number] = False
-            pending.pop(number, None)
-        elif entry.kind is RecordKind.REVISED:
-            for part in entry.parts:
-                if ticked.get(part):
-                    pending[part] = entry.index
+    pending = revised_ticked(tasks)
     return [
         Finding(
             Severity.WARNING,
