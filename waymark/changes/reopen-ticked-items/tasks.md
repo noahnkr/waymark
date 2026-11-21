@@ -30,7 +30,7 @@
     - `wm-update` reopens each ticked item a revision changes, with `--reason`
     - `wm-apply`'s `resolve-items` step reopens the items the human's decision on an escalated review names, after recording the decision
   - **Verify:** `tests/test_skills.py` and the full pytest run
-- [ ] 2.2 Update the docs and CHANGELOG
+- [x] 2.2 Update the docs and CHANGELOG
   - **Build:** planner
   - **Criteria:**
     - `docs/record.md` and `docs/concepts.md` describe `wm reopen --reason`, a reopened item's review and the `revised-ticked-item` warning
@@ -47,3 +47,4 @@
 - 2026-11-20 (ticked) 1.2 by planner for Noah Roberts
 - 2026-11-20 (ticked) 1.3 by planner for Noah Roberts
 - 2026-11-20 (ticked) 2.1 by planner for Noah Roberts
+- 2026-11-20 (ticked) 2.2 by planner for Noah Roberts

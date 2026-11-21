@@ -477,7 +477,7 @@ record and the blocker stays.
 | `(blocked)` | item | `wm block`, or an implementer's `blocked` |
 | `(gap)` | item | `wm gap`, or an implementer's `spec-gap` |
 | `(note)` | item | `wm note`, or an implementer's `partial` |
-| `(reopened)` | item | `wm reopen`: a review named it to rebuild |
+| `(reopened)` | item | `wm reopen`: a review named it to rebuild, or, with `--reason`, any ticked item, the reason as its text. Once ticked again after a passing review, the item gets a review of its own |
 | `(resolved)` | item or Log | `wm resolve`: what you decided |
 | `(added)` | milestone Log | `wm roadmap add`: the change and its description |
 | `(dropped)` | milestone Log | `wm roadmap drop`: the change and the reason |
